@@ -45,7 +45,8 @@ public sealed class Scavenger : RoleBase, IImpostor
     private static bool IsEatUpKillLimit;
     private static int LimitMaxCount;
 
-    static int limitCount = 15;
+    // 1 人ごとに持つ
+    int limitCount;
 
     private static void SetUpOptionItem()
     {

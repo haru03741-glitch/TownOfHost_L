@@ -62,6 +62,8 @@ namespace TownOfHostL
             if (AmongUsClient.Instance.AmHost)
             {
                 AntiBlackout.RestoreIsDead(doSend: false);
+                // 各クライアントの追放の演出の締め (試合が終わるはずかの判定) を待ってから戻す
+                _ = new LateTask(AntiBlackout.RevertFilledCrew, 2f, "AntiBlackout.RevertFilledCrew");
                 if (exiled != null)
                 {
                     var role = exiled.GetCustomRole();
@@ -70,7 +72,8 @@ namespace TownOfHostL
                     if (!AntiBlackout.OverrideExiledPlayer && info?.IsDesyncImpostor == true)
                         exiled.Object?.ResetPlayerCam(1f);
 
-                    exiled.IsDead = true;
+                    // 暗転対策で生きたクルーに見せている追放者は、客の締めの判定が済むまで死を送らない
+                    if (!AntiBlackout.DeferDeathIfFilled(exiled.PlayerId)) exiled.IsDead = true;
                     if (role != CustomRoles.AntiComplete || PlayerState.GetByPlayerId(exiled.PlayerId).DeathReason == CustomDeathReason.etc)
                         PlayerState.GetByPlayerId(exiled.PlayerId).DeathReason = CustomDeathReason.Vote;
 
@@ -83,6 +86,7 @@ namespace TownOfHostL
                     if (CustomWinnerHolder.WinnerTeam != CustomWinner.Terrorist) PlayerState.GetByPlayerId(exiled.PlayerId).SetDead();
                 }
                 AntiBlackout.SendGameData();
+                Modules.Net.OutfitSync.FlushPending();
             }
             AfterMeetingTasks();
         }
@@ -123,7 +127,9 @@ namespace TownOfHostL
             FallFromLadder.Reset();
             Utils.CountAlivePlayers(true);
             Utils.AfterMeetingTasks();
-            Utils.NotifyRoles();
+            // 会議と追放の間に客の画面で名前の色が役職の色 (インポスターの赤) に塗り直されることがある。
+            // 会議中と同じ名前だと送り済みと見なされて色が残るので、覚え書きを見ずに全員分を送り直す
+            Utils.NotifyRoles(NoCache: true);
             Utils.SyncAllSettings();
         }
 

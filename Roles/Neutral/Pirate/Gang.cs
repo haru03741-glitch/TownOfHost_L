@@ -20,7 +20,7 @@ public sealed class Gang : RoleBase, IAdditionalWinner
             null,
             "一味",
             "#cc4b33",
-            flags: RoleFlags.DontShowOption
+            flags: RoleFlags.DontShowOption | RoleFlags.KeepsTasksWhenDead
         );
     public Gang(PlayerControl player)
     : base(

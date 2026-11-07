@@ -11,7 +11,8 @@ public sealed class Engineer : RoleBase
             typeof(Engineer),
             player => new Engineer(player),
             RoleTypes.Engineer,
-            "#8cffff"
+            "#8cffff",
+            flags: RoleFlags.NoComingOutOption
         );
     public Engineer(PlayerControl player)
     : base(

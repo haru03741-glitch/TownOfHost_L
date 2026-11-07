@@ -15,7 +15,8 @@ public sealed class MadJester : RoleBase
             (int)Options.offsetId.MadY + 600,
             SetupOptionItem,
             "マッドジェスター",
-            introSound: () => GetIntroSound(RoleTypes.Impostor)
+            introSound: () => GetIntroSound(RoleTypes.Impostor),
+            flags: RoleFlags.NoTeamWin
         );
     public MadJester(PlayerControl player)
     : base(

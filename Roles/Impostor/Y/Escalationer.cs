@@ -76,11 +76,13 @@ public sealed class Escalationer : RoleBase, IImpostor
 
             foreach (var player in Main.AllPlayerControls)
             {
-                Main.AllPlayerSpeed[player.PlayerId] += SpeedUpRate;
+                TownOfHostL.Modules.PlayerSpeed.Add(player.PlayerId, SpeedKey, TownOfHostL.Modules.PlayerSpeed.GetAdd(player.PlayerId, SpeedKey) + SpeedUpRate);
             }
             Utils.SyncAllSettings();
         }
     }
+
+    private string SpeedKey => $"Escalationer{Player.PlayerId}";
 
     public override void AfterMeetingTasks()
     {
@@ -89,10 +91,7 @@ public sealed class Escalationer : RoleBase, IImpostor
         nowKillcool = KillCooldown;
         Player.ResetKillCooldown();
 
-        foreach (var player in Main.AllPlayerControls)
-        {
-            Main.AllPlayerSpeed[player.PlayerId] = Main.RealOptionsData.GetFloat(FloatOptionNames.PlayerSpeedMod);
-        }
+        TownOfHostL.Modules.PlayerSpeed.RemoveFromAll(SpeedKey);
         Utils.SyncAllSettings();
     }
 }

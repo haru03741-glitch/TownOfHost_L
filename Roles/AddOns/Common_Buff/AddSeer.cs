@@ -14,7 +14,9 @@ public static class AddSeer
         "#61b26c",
         "Ｓ",
         setupOptions: SetupCustomOption,
-        onAdd: Add);
+        onAdd: Add,
+        chatCommand: "シーイング",
+        assignAtRandom: true);
 
     private static readonly int Id = (int)offsetId.AddonBuff + 300;
     private static List<byte> playerIdList = new();

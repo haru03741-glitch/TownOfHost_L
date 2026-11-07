@@ -90,7 +90,7 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
 
     public override void Add()
     {
-        PlayerSpeed = Main.AllPlayerSpeed[Player.PlayerId];
+        PlayerSpeed = HamoSpeedTable.Instance[Player.PlayerId];
         PlayerColor = Player.Data.DefaultOutfit.ColorId;
         spawnCooldownStarted = false;
     }
@@ -101,7 +101,7 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
 
         if (IsCharging || ShowBeamMark || IsFiring)
         {
-            Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
+            HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
             Player.MarkDirtySettings();
             if (AmongUsClient.Instance.AmHost)
             {
@@ -137,7 +137,7 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
         Charging = true;
         chargeTimer = 0f;
         TownOfHostL.Modules.ClientEffects.Charge(Player, ChargeTime, new Color(1f, 0.55f, 0.2f));
-        Main.AllPlayerSpeed[Player.PlayerId] = Main.MinSpeed;
+        HamoSpeedTable.Instance[Player.PlayerId] = Main.MinSpeed;
         Player.MarkDirtySettings();
         Utils.AllPlayerKillFlash();
         Main.AllPlayerKillCooldown[Player.PlayerId] = 60f;
@@ -174,7 +174,7 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
         HasHit = false;
         _prevCharging = false;
         _prevBeamMark = false;
-        Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
+        HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
         Player.MarkDirtySettings();
         Player.RpcSetColor((byte)PlayerColor);
         SetRoleTextHeight(false);
@@ -246,7 +246,7 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
                 Charging = false;
                 ShowBeamMark = false; _prevBeamMark = false;
                 SetRoleTextHeight(false); IsFiring = false;
-                Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
+                HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
                 Player.MarkDirtySettings();
                 Player.RpcSetColor((byte)PlayerColor);
                 UtilsNotifyRoles.NotifyRoles(); SendRpc(); return;
@@ -260,12 +260,12 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
             if (!HasHit && SelfDestructOnMiss)
             {
                 Player.RpcSetColor((byte)PlayerColor);
-                Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed; Player.MarkDirtySettings();
+                HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed; Player.MarkDirtySettings();
                 PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = CustomDeathReason.Suicide;
                 Player.RpcMurderPlayerV2(Player); IsFiring = false; return;
             }
             Player.RpcSetColor((byte)PlayerColor);
-            Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed; Player.MarkDirtySettings();
+            HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed; Player.MarkDirtySettings();
             _ = new LateTask(() =>
             {
                 if (!Player.IsAlive()) { IsFiring = false; return; }
@@ -434,7 +434,7 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
             Charging = false;
             ShowBeamMark = false; _prevBeamMark = false;
             SetRoleTextHeight(false); IsFiring = false;
-            Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
+            HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
             Player.MarkDirtySettings();
             UtilsNotifyRoles.NotifyRoles(); SendRpc(); return;
         }
@@ -445,7 +445,7 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
         ShowBeamMark = false; _prevBeamMark = false;
         SetRoleTextHeight(false);
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true); SendRpc();
-        Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed; Player.MarkDirtySettings();
+        HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed; Player.MarkDirtySettings();
         var charge = OptionChargeTime.GetFloat() - chargeTimer;
         var waittime = OptionBeamTime.GetFloat() + charge;
         _ = new LateTask(() =>

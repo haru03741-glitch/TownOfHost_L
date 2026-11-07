@@ -21,6 +21,9 @@ public abstract class HamoRoleBase : RoleBase
     /// <summary>ゲーム開始後にインスタンス作成された時に呼ばれる</summary>
     public virtual void ChengeRoleAdd() { }
 
+    /// <summary>勝者がほぼ決まった後 (確定敗北の後) に呼ばれる。勝者を足したり外したりできる</summary>
+    public virtual void CheckWinner(GameOverReason reason) { }
+
     // ===== RPC =====
     protected new class RoleRPCSender : IDisposable
     {

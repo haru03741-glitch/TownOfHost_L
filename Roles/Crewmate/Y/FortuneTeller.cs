@@ -73,6 +73,8 @@ public sealed class FortuneTeller : RoleBase
         OptionKillerOnly = BooleanOptionItem.Create(RoleInfo, 14, OptionName.FortuneTellerKillerOnly, true, false);
     }
 
+    public override bool NeedsSeenNames => HasForecastResult();
+
     public override (byte? votedForId, int? numVotes, bool doVote) ModifyVote(byte voterId, byte sourceVotedForId, bool isIntentional)
     {
         // 既定値
@@ -147,40 +149,21 @@ public sealed class FortuneTeller : RoleBase
         if (!isMeeting) return;
         if (!ForecastResult.ContainsKey(seen.PlayerId)) return;
         if (KillerOnly &&
-            !(seen.GetCustomRole().IsImpostor() || seen.IsNeutralKiller() || seen.IsCrewKiller()
-            || seen.Is(CustomRoles.MadSheriff) || seen.Is(CustomRoles.GrudgeSheriff))) return;
+            !TownOfHostL.Core.PlayerTraits.IsKillerForDivination(seen)) return;
 
         enabled = true;
 
         if (!ConfirmCamp) return;   //役職表示
 
-        //陣営表示
-        if (seen.GetCustomRole().IsImpostor() || seen.GetCustomRole().IsMadmate())
-        {
-            roleText = GetString("TeamImpostor").Color(Palette.ImpostorRed);
-        }
-        else if (seen.GetCustomRole().IsNeutral())
-        {
-            roleText = GetString("Neutral").Color(Palette.Orange);
-        }
-        else
-        {
-            roleText = GetString("TeamCrewmate").Color(Palette.CrewmateBlue);
-        }
+        roleText = TownOfHostL.Core.NameParts.TeamText(seen);   //陣営表示
     }
-    public static bool KnowTargetRoleColor(PlayerControl seer, PlayerControl target, bool isMeeting)
-    {
-        if (seer == null) return false;
-        if (!seer.Is(CustomRoles.FortuneTeller)) return false;
-        return ((FortuneTeller)seer.GetRoleClass()).KnowTargetRoleColor(target, isMeeting);
-    }
-    private bool KnowTargetRoleColor(PlayerControl target, bool isMeeting)
+    public override bool KnowsRoleColorOf(PlayerControl target, bool isMeeting)
     {
         if (!isMeeting) return false;
         if (!ForecastResult.ContainsKey(target.PlayerId)) return false;
         if (ConfirmCamp) return false;
         if (KillerOnly &&
-            !(target.GetCustomRole().IsImpostor() || target.IsNeutralKiller() || target.IsCrewKiller())) return false;
+            !TownOfHostL.Core.PlayerTraits.IsKillerForDivination(target)) return false;
         return true;
     }
 

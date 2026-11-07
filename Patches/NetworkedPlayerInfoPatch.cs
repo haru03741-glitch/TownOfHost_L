@@ -1,4 +1,5 @@
 //参考：TOH-K
+using System.Collections.Generic;
 using HarmonyLib;
 
 namespace TownOfHostL;
@@ -33,7 +34,7 @@ class GameDataSerializePatch
             return true;
         }
 
-        if (Options.CurrentGameMode != CustomGameMode.Standard
+        if (!Core.Modes.ModeCatalog.Current.UsesStandardRoles
             || !GameStates.IsMeeting
             || ExileController.Instance != null
             || AntiBlackout.IsCached)
@@ -57,10 +58,21 @@ class GameDataSerializePatch
     // PlayerInfo は全員に送られるので、送る間だけ本当の名前に戻し、ホストに見えている情報を他の人へ流さない。
     private static NetworkedPlayerInfo swappedInfo;
     private static string swappedName;
+
+    /// <summary>
+    /// 全員に同じ名前を一時的に見せている人の、その名前 (Revealer の追放の画面など)。PlayerInfo もこの名前で送る。
+    /// 本当の名前で送ると、送った時点で客の画面の名前が本当の名前に戻ってしまう
+    /// </summary>
+    public static readonly Dictionary<byte, string> SharedNameOverride = new();
+    [Attributes.GameModuleInitializer]
+    public static void Init() => SharedNameOverride.Clear();
+
     private static void SendRealName(NetworkedPlayerInfo info)
     {
         var outfit = info.DefaultOutfit;
-        if (outfit == null || !Main.AllPlayerNames.TryGetValue(info.PlayerId, out var realName) || outfit.PlayerName == realName) return;
+        if (outfit == null || !Main.AllPlayerNames.TryGetValue(info.PlayerId, out var realName)) return;
+        if (SharedNameOverride.TryGetValue(info.PlayerId, out var sharedName)) realName = sharedName;
+        if (outfit.PlayerName == realName) return;
         swappedInfo = info;
         swappedName = outfit.PlayerName;
         outfit.PlayerName = realName;

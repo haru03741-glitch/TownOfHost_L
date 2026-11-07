@@ -7,6 +7,8 @@ using UnityEngine;
 using TownOfHostL.Roles.Core;
 using static TownOfHostL.Translator;
 
+using TownOfHostL.Core.Modes;
+
 namespace TownOfHostL;
 
 [HarmonyPatch(typeof(IntroCutscene), nameof(IntroCutscene.CoBegin))]
@@ -27,9 +29,10 @@ class SetUpRoleTextPatch
         if (!GameStates.IsModHost) return;
         _ = new LateTask(() =>
         {
-            CustomRoles role = PlayerControl.LocalPlayer.GetCustomRole();
+            // 他の役職として見せる役職は、その役職のイントロにする
+            CustomRoles role = PlayerControl.LocalPlayer.GetRoleClass()?.DisplayedRole ?? PlayerControl.LocalPlayer.GetCustomRole();
 
-            if (!role.IsVanilla() && role != CustomRoles.Potentialist)
+            if (!role.IsVanilla())
             {
                 __instance.YouAreText.color = Utils.GetRoleColor(role);
                 __instance.RoleText.text = Utils.GetRoleName(role);
@@ -106,7 +109,7 @@ class CoBeginPatch
         foreach (var t in tmp) logger.Info(t);
         logger.Info("------------詳細設定------------");
         foreach (var o in OptionItem.AllOptions)
-            if (!o.IsHiddenOn(Options.CurrentGameMode) && (o.Parent == null ? !o.GetString().Equals("0%") : o.Parent.GetBool()))
+            if (o.IsShown() && (o.Parent == null ? !o.GetString().Equals("0%") : o.Parent.GetBool()))
                 logger.Info($"{(o.Parent == null ? o.Name.PadRightV2(40) : $"┗ {o.Name}".PadRightV2(41))}:{o.GetString().RemoveHtmlTags()}");
         logger.Info("-------------その他-------------");
         logger.Info($"プレイヤー数: {Main.AllPlayerControls.Count()}人");
@@ -129,7 +132,7 @@ class BeginCrewmatePatch
 {
     public static void Prefix(IntroCutscene __instance, ref Il2CppSystem.Collections.Generic.List<PlayerControl> teamToDisplay)
     {
-        if (PlayerControl.LocalPlayer.Is(CustomRoleTypes.Neutral) || PlayerControl.LocalPlayer.Is(CustomRoles.StrayWolf)
+        if (PlayerControl.LocalPlayer.Is(CustomRoleTypes.Neutral) || PlayerControl.LocalPlayer.GetCustomRole().IsLoneImpostor()
             || PlayerControl.LocalPlayer.GetCustomRole().IsCCLeaderRoles())
         {
             var soloTeam = new Il2CppSystem.Collections.Generic.List<PlayerControl>();
@@ -181,35 +184,23 @@ class BeginCrewmatePatch
                     break;
             }
 
-            switch (role)
+            var roleInfo = role.GetRoleInfo();
+            // 組で動く役職は、組の役職の名前と色の帯にする
+            if (roleInfo?.IntroTeam is CustomRoles team)
             {
-                case CustomRoles.Jackal:
-                case CustomRoles.JClient:
-                    __instance.TeamTitle.text = Utils.GetRoleName(CustomRoles.Jackal);
-                    __instance.TeamTitle.color = Utils.GetRoleColor(CustomRoles.Jackal);
-                    __instance.ImpostorText.gameObject.SetActive(true);
-                    __instance.ImpostorText.text = GetString("TeamJackal");
-                    __instance.BackgroundBar.material.color = Utils.GetRoleColor(CustomRoles.Jackal);
-                    break;
-
-                case CustomRoles.FoxSpirit:
-                case CustomRoles.Immoralist:
-                    __instance.TeamTitle.text = Utils.GetRoleName(CustomRoles.FoxSpirit);
-                    __instance.TeamTitle.color = Utils.GetRoleColor(CustomRoles.FoxSpirit);
-                    __instance.ImpostorText.gameObject.SetActive(true);
-                    __instance.ImpostorText.text = GetString("TeamFoxSpirit");
-                    __instance.BackgroundBar.material.color = Utils.GetRoleColor(CustomRoles.FoxSpirit);
-                    break;
-
-                case CustomRoles.MadSheriff:
-                case CustomRoles.MadConnecter:
-                case CustomRoles.jO:
-                    __instance.ImpostorText.gameObject.SetActive(true);
-                    __instance.ImpostorText.text = numImpostors == 1
-                        ? DestroyableSingleton<TranslationController>.Instance.GetString(StringNames.NumImpostorsS)
-                        : string.Format(DestroyableSingleton<TranslationController>.Instance.GetString(StringNames.NumImpostorsP), numImpostors);
-                    __instance.ImpostorText.text = __instance.ImpostorText.text.Replace("[FF1919FF]", "<color=#FF1919FF>").Replace("[]", "</color>");
-                    break;
+                __instance.TeamTitle.text = Utils.GetRoleName(team);
+                __instance.TeamTitle.color = Utils.GetRoleColor(team);
+                __instance.ImpostorText.gameObject.SetActive(true);
+                __instance.ImpostorText.text = GetString($"Team{team}");
+                __instance.BackgroundBar.material.color = Utils.GetRoleColor(team);
+            }
+            if (roleInfo?.IntroShowsImpostorCount == true)
+            {
+                __instance.ImpostorText.gameObject.SetActive(true);
+                __instance.ImpostorText.text = numImpostors == 1
+                    ? DestroyableSingleton<TranslationController>.Instance.GetString(StringNames.NumImpostorsS)
+                    : string.Format(DestroyableSingleton<TranslationController>.Instance.GetString(StringNames.NumImpostorsP), numImpostors);
+                __instance.ImpostorText.text = __instance.ImpostorText.text.Replace("[FF1919FF]", "<color=#FF1919FF>").Replace("[]", "</color>");
             }
         }
         else
@@ -220,14 +211,9 @@ class BeginCrewmatePatch
                     __instance.TeamTitle.text = Utils.GetRoleName(role);
                     __instance.TeamTitle.color = Utils.GetRoleColor(role);
                     __instance.ImpostorText.gameObject.SetActive(true);
-                    __instance.ImpostorText.text = role switch
-                    {
-                        CustomRoles.Egoist => GetString("TeamEgoist"),
-                        CustomRoles.Jackal => GetString("TeamJackal"),
-                        CustomRoles.JSidekick => GetString("TeamJackal"),
-                        CustomRoles.JClient => GetString("TeamJackal"),
-                        _ => GetString("NeutralInfo"),
-                    };
+                    __instance.ImpostorText.text = role.GetRoleInfo()?.IntroTeam is CustomRoles team
+                        ? GetString($"Team{team}")
+                        : GetString("NeutralInfo");
                     __instance.BackgroundBar.material.color = Utils.GetRoleColor(role);
                     break;
 
@@ -242,16 +228,14 @@ class BeginCrewmatePatch
 
         switch (role)
         {
-            case CustomRoles.StrayWolf:
+            case var r when r.IsLoneImpostor():
                 __instance.TeamTitle.text = GetString("Impostor");
                 __instance.TeamTitle.color = Palette.ImpostorRed;
                 __instance.ImpostorText.gameObject.SetActive(false);
                 __instance.BackgroundBar.material.color = Palette.ImpostorRed;
                 break;
 
-            case CustomRoles.Sheriff:
-            case CustomRoles.Hunter:
-            case CustomRoles.SillySheriff:
+            case var r when r.IsCountedCrewKiller():
                 __instance.BackgroundBar.material.color = Palette.CrewmateBlue;
                 __instance.ImpostorText.gameObject.SetActive(true);
                 __instance.ImpostorText.text = numImpostors == 1
@@ -260,7 +244,7 @@ class BeginCrewmatePatch
                 __instance.ImpostorText.text = __instance.ImpostorText.text.Replace("[FF1919FF]", "<color=#FF1919FF>").Replace("[]", "</color>");
                 break;
 
-            case CustomRoles.GM:
+            case var r when r.IsSpectator():
                 __instance.TeamTitle.text = Utils.GetRoleName(role);
                 __instance.TeamTitle.color = Utils.GetRoleColor(role);
                 __instance.BackgroundBar.material.color = Utils.GetRoleColor(role);
@@ -268,7 +252,7 @@ class BeginCrewmatePatch
                 break;
         }
 
-        if (Options.IsCCMode)
+        if (ModeCatalog.IsCatchCat)
         {
             if (role.IsCCLeaderRoles())
             {
@@ -353,9 +337,7 @@ class BeginImpostorPatch
 {
     public static bool Prefix(IntroCutscene __instance, ref Il2CppSystem.Collections.Generic.List<PlayerControl> yourTeam)
     {
-        if (PlayerControl.LocalPlayer.Is(CustomRoles.Sheriff)
-            || PlayerControl.LocalPlayer.Is(CustomRoles.Hunter)
-            || PlayerControl.LocalPlayer.Is(CustomRoles.SillySheriff)
+        if (PlayerControl.LocalPlayer.IsCountedCrewKiller()
             || PlayerControl.LocalPlayer.Is(CustomRoles.jO))
         {
             yourTeam = new Il2CppSystem.Collections.Generic.List<PlayerControl>();
@@ -370,7 +352,7 @@ class BeginImpostorPatch
         }
 
         var localRole = PlayerControl.LocalPlayer.GetCustomRole();
-        if (localRole.GetCustomRoleTypes() == CustomRoleTypes.Impostor || localRole == CustomRoles.StrayWolf)
+        if (localRole.GetCustomRoleTypes() == CustomRoleTypes.Impostor || localRole.IsLoneImpostor())
         {
             BeginCrewmatePatch.Prefix(__instance, ref yourTeam);
             return true;
@@ -383,7 +365,7 @@ class BeginImpostorPatch
     public static void Postfix(IntroCutscene __instance, ref Il2CppSystem.Collections.Generic.List<PlayerControl> yourTeam)
     {
         var role = PlayerControl.LocalPlayer.GetCustomRole();
-        if (role.GetCustomRoleTypes() != CustomRoleTypes.Impostor && role != CustomRoles.StrayWolf)
+        if (role.GetCustomRoleTypes() != CustomRoleTypes.Impostor && !role.IsLoneImpostor())
         {
             BeginCrewmatePatch.Postfix(__instance, ref yourTeam);
         }
@@ -398,6 +380,8 @@ class IntroCutsceneDestroyPatch
         if (!GameStates.IsInGame) return;
 
         Main.introDestroyed = true;
+        Main.IntroEndTime = DateTime.Now;
+        if (AmongUsClient.Instance.AmHost) Modules.Net.OutfitSync.FlushPending();
         var mapId = Main.NormalOptions.MapId;
 
         if (AmongUsClient.Instance.AmHost)
@@ -414,7 +398,7 @@ class IntroCutsceneDestroyPatch
                 }
             }
 
-            if (PlayerControl.LocalPlayer.Is(CustomRoles.GM))
+            if (PlayerControl.LocalPlayer.GetCustomRole().IsSpectator())
             {
                 PlayerControl.LocalPlayer.RpcExile();
                 PlayerState.GetByPlayerId(PlayerControl.LocalPlayer.PlayerId).SetDead();

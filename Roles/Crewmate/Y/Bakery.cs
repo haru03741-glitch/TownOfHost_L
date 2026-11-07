@@ -6,10 +6,12 @@ using UnityEngine;
 using AmongUs.GameOptions;
 using static TownOfHostL.Translator;
 using static TownOfHostL.Utils;
+using TownOfHostL.Core.Win;
 using TownOfHostL.Roles.Core;
+using TownOfHostL.Roles.Core.Interfaces;
 
 namespace TownOfHostL.Roles.Crewmate;
-public sealed class Bakery : RoleBase
+public sealed class Bakery : RoleBase, ISoloWinner
 {
     public static readonly SimpleRoleInfo RoleInfo =
          SimpleRoleInfo.Create(
@@ -23,6 +25,7 @@ public sealed class Bakery : RoleBase
             "パン屋",
             "#b58428"
         );
+    public override string GetRoleKey(bool infoLong) => IsNeutral(Player) ? "NBakery" : null;
     public Bakery(PlayerControl player)
     : base(
         RoleInfo,
@@ -34,10 +37,14 @@ public sealed class Bakery : RoleBase
 
         CustomRoleManager.MarkOthers.Add(GetMarkOthers);
     }
+    // 同じ役職が複数いる時に、1 人の作成や破棄で他の持ち主の分まで消さないよう、共有の一覧は試合の開始で空にし、破棄では自分の分だけ外す
+    [TownOfHostL.Attributes.GameModuleInitializer]
+    public static void Init() => nBakeries.Clear();
     public override void OnDestroy()
     {
-        nBakeries.Clear();
-        CustomRoleManager.MarkOthers.Remove(GetMarkOthers);
+        nBakeries.Remove(this);
+        // GetMarkOthers は static なので登録は 1 つに畳まれる。最後の 1 人が消える時だけ外す
+        if (!CustomRoleManager.AllActiveRoles.Values.Any(r => r is Bakery && r != this)) CustomRoleManager.MarkOthers.Remove(GetMarkOthers);
     }
 
     public static OptionItem OptionChangeChances;
@@ -57,7 +64,6 @@ public sealed class Bakery : RoleBase
     }
     public override void Add()
     {
-        nBakeries.Clear();
         PoisonPlayer = null;
     }
     private void SendRPC(byte targetId = byte.MaxValue)
@@ -87,6 +93,18 @@ public sealed class Bakery : RoleBase
             if (target != null && nBakery.PoisonPlayer == target) return true;
         }
         return false;
+    }
+    public override bool WinsWithBaseTeam => !IsNeutral(Player);
+    public SoloWinTier SoloWinTier => SoloWinTier.Steal;
+    /// <summary>闇パン屋は、インポスターの勝ち (妨害を除く) とクルーの勝ち (タスクを除く) を横取りする</summary>
+    public bool CheckSoloWin(WinnerResolver.Context ctx, out CustomWinner winner)
+    {
+        winner = CustomWinner.NBakery;
+        var original = ctx.Original;
+        return IsNeutral(Player) && Player.IsAlive()
+            && ((original == CustomWinner.Impostor && ctx.Reason != GameOverReason.ImpostorsBySabotage)
+                || original == CustomWinner.NBakery
+                || (original == CustomWinner.Crewmate && ctx.Reason != GameOverReason.CrewmatesByTask));
     }
     public static bool IsNeutral(PlayerControl bakery)
     {

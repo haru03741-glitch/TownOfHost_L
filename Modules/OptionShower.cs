@@ -7,6 +7,8 @@ using TownOfHostL.Roles;
 using TownOfHostL.Roles.Core;
 using static TownOfHostL.Translator;
 
+using TownOfHostL.Core.Modes;
+
 namespace TownOfHostL
 {
     public static class OptionShower
@@ -100,14 +102,14 @@ namespace TownOfHostL
                     sb.Clear();
                 }
                 else */
-                if (Options.CurrentGameMode == CustomGameMode.Standard)
+                if (ModeCatalog.Current.UsesStandardRoles)
                 {
                     //有効な役職一覧
                     if (Options.EnableGM.GetBool())
                         sb.Append($"<color={Utils.GetRoleColorCode(CustomRoles.GM)}>{Utils.GetRoleName(CustomRoles.GM)}:</color> {Options.EnableGM.GetString()}\n\n");
                     sb.Append(GetString("ActiveRolesList")).Append('\n');
                     foreach (var kvp in Options.CustomRoleSpawnChances)
-                        if (!kvp.Value.IsHiddenOn(Options.CurrentGameMode) && kvp.Value.GetBool()) //スタンダードか全てのゲームモードで表示する役職
+                        if (kvp.Value.IsShown() && kvp.Value.GetBool()) //スタンダードか全てのゲームモードで表示する役職
                         {
                             var role = kvp.Key;
                             // 陣営ごとのマーク
@@ -131,11 +133,11 @@ namespace TownOfHostL
                     sb.Append('\n');
                 }
                 nameAndValue(Options.EnableGM);
-                if (!Options.IsCCMode)
+                if (!ModeCatalog.IsCatchCat)
                 {
                     foreach (var kvp in Options.CustomRoleSpawnChances)
                     {
-                        if (!kvp.Key.IsEnable() || kvp.Value.IsHiddenOn(Options.CurrentGameMode)) continue;
+                        if (!kvp.Key.IsEnable() || !kvp.Value.IsShown()) continue;
                         sb.Append('\n');
                         sb.Append($"{Utils.ColorString(Utils.GetRoleColor(kvp.Key), Utils.GetRoleName(kvp.Key))}: {kvp.Value.GetString()}×{kvp.Key.GetCount()}");
                         if (kvp.Key.IsPairRole()) sb.Append(GetString("Pair"));
@@ -161,7 +163,7 @@ namespace TownOfHostL
                         }
                     }
                 }
-                foreach (var opt in OptionItem.AllOptions.Where(x => x.IsFeatureOption && !x.IsHiddenOn(Options.CurrentGameMode) && x.Parent == null))
+                foreach (var opt in OptionItem.AllOptions.Where(x => x.IsFeatureOption && x.IsShown() && x.Parent == null))
                 {
                     if (opt.IsText) sb.Append('\n');
                     else

@@ -4,6 +4,8 @@ using HarmonyLib;
 using UnityEngine;
 using TownOfHostL.Roles.Core;
 
+using TownOfHostL.Core.Modes;
+
 namespace TownOfHostL;
 
 public static class ModGameOptionsMenu
@@ -309,7 +311,7 @@ public static class GameOptionsMenuPatch
 
     private static bool IsOptionEnabled(OptionItem option)
     {
-        if (option.IsHiddenOn(Options.CurrentGameMode)) return false;
+        if (!option.IsShown()) return false;
 
         return option.Parent == null || (IsOptionEnabled(option.Parent) && option.Parent.GetBool());
     }

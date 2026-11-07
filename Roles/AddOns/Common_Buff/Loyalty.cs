@@ -14,7 +14,8 @@ public static class Loyalty
         AddOnGroup.Buff,
         "#b8fb4f",
         "Lo",
-        onAdd: Add);
+        onAdd: Add,
+        chatCommand: "ロイヤルティ");
 
     private static List<byte> playerIdList = new();
 

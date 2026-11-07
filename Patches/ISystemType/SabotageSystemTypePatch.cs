@@ -5,6 +5,8 @@ using TownOfHostL.Modules;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
 
+using TownOfHostL.Core.Modes;
+
 namespace TownOfHostL.Patches.ISystemType;
 
 [HarmonyPatch(typeof(SabotageSystemType), nameof(SabotageSystemType.UpdateSystem))]
@@ -33,9 +35,7 @@ public static class SabotageSystemTypeUpdateSystemPatch
         var nextSabotage = (SystemTypes)amount;
         logger.Info($"PlayerName: {player.GetNameWithRole()}, SabotageType: {nextSabotage}");
 
-        //HASモードではサボタージュ不可
-        if (Options.CurrentGameMode == CustomGameMode.HideAndSeek || Options.IsStandardHAS) return false;
-        if (Options.IsCCMode) return false;
+        if (!ModeCatalog.Current.AllowsSabotage) return false;
         if (!CustomRoleManager.OnSabotage(player, nextSabotage))
         {
             return false;

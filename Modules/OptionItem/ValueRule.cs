@@ -44,9 +44,10 @@ namespace TownOfHostL
         public override int GetValueByIndex(int index)
             => RepeatIndex(index) * Step + MinValue;
 
+        // 範囲の外の値は端の目盛りにする (RepeatIndex に渡すと反対側へ折り返して別の値に化ける)
         public override int GetNearestIndex(int num)
         {
-            return (int)Math.Round((num - MinValue) / (float)Step);
+            return Math.Clamp((int)Math.Round((num - MinValue) / (float)Step), 0, (MaxValue - MinValue) / Step);
         }
     }
 
@@ -75,9 +76,10 @@ namespace TownOfHostL
             return (float)ss;
         }
 
+        // 範囲の外の値は端の目盛りにする (RepeatIndex に渡すと反対側へ折り返して別の値に化ける)
         public override int GetNearestIndex(float num)
         {
-            return (int)Math.Round((num - MinValue) / Step);
+            return Math.Clamp((int)Math.Round((num - MinValue) / Step), 0, (int)((MaxValue - MinValue) / Step));
         }
     }
 }

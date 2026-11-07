@@ -1,5 +1,6 @@
 using HarmonyLib;
 using Hazel;
+using TownOfHostL.Core;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
 using TownOfHostL.Roles.Crewmate;
@@ -20,15 +21,9 @@ public static class HudOverrideSystemTypeUpdateSystemPatch
         }
 
         var playerRole = player.GetRoleClass();
-        var isMadmate =
-            player.Is(CustomRoles.SKMadmate) ||
-            // マッド属性化時に削除
-            (playerRole is SchrodingerCat schrodingerCat && schrodingerCat.AmMadmate);
+        var isMadmate = PlayerTraits.IsMadmateForSabotage(player, playerRole);
         if ((amount & HudOverrideSystemType.DamageBit) <= 0 && ((isMadmate && !Options.MadmateCanFixComms.GetBool())
-                                                                || player.Is(CustomRoles.Clumsy)
-                                                                || (player.Is(CustomRoles.Sheriff) && Sheriff.IsClumsy.GetBool())
-                                                                || (player.Is(CustomRoles.SillySheriff) && SillySheriff.IsClumsy.GetBool())
-                                                                || (player.Is(CustomRoles.Hunter) && Hunter.IsClumsy.GetBool())))
+                                                                || PlayerTraits.IsClumsy(player)))
         {
             return false;
         }

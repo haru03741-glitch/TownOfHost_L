@@ -1,12 +1,13 @@
 using System.Linq;
 using AmongUs.GameOptions;
 
+using TownOfHostL.Core.Win;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
 
 namespace TownOfHostL.Roles.Neutral;
 
-public sealed class FoxSpirit : RoleBase, ISystemTypeUpdateHook
+public sealed class FoxSpirit : RoleBase, ISystemTypeUpdateHook, ISoloWinner
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
@@ -26,7 +27,11 @@ public sealed class FoxSpirit : RoleBase, ISystemTypeUpdateHook
                 AssignCountRule = new(1, 1, 1),
                 IsInitiallyAssignableCallBack = () => (MapNames)Main.NormalOptions.MapId is not MapNames.Polus and not MapNames.Fungle
             },
-            flags: RoleFlags.FixedCount
+            flags: RoleFlags.FixedCount | RoleFlags.CannotReport,
+            introTeam: CustomRoles.FoxSpirit,
+            // ワークホースになった後は、ワークホースの数のまま
+            taskCount: pc => pc.Is(CustomRoles.Workhorse) ? null : TaskData,
+            onlyVentCleaningTask: true
         );
     public FoxSpirit(PlayerControl player)
     : base(
@@ -37,12 +42,16 @@ public sealed class FoxSpirit : RoleBase, ISystemTypeUpdateHook
     {
         KilledAfterFinishTask = OptionKilledAfterFinishTask.GetBool();
         IgnoreGhostTask = OptionIgnoreGhostTask.GetBool();
+        CustomRoleManager.TaskExemptionsOthers.Add(IsGhostTaskIgnored);
     }
     private static OptionItem OptionTaskCount;
     private static OptionItem OptionKilledAfterFinishTask;
     private static OptionItem OptionIgnoreGhostTask;
     private bool KilledAfterFinishTask;
-    public static bool IgnoreGhostTask;
+    private static bool IgnoreGhostTask;
+    /// <summary>妖狐が配られた試合で、死後のタスクを免除する設定なら、死んだ人のタスクを免除する</summary>
+    private static bool IsGhostTaskIgnored(NetworkedPlayerInfo p)
+        => IgnoreGhostTask && p.IsDead && CustomRoles.FoxSpirit.IsPresent() && !TownOfHostL.Core.PlayerTraits.KeepsTasksWhenDead(p.Object);
     private enum OptionName
     {
         FoxSpiritTaskCount,
@@ -58,10 +67,13 @@ public sealed class FoxSpirit : RoleBase, ISystemTypeUpdateHook
         OptionIgnoreGhostTask = BooleanOptionItem.Create(RoleInfo, 12, OptionName.FoxSpiritIgnoreGhostTask, true, false);
     }
     public static (bool, int, int) TaskData => (false, 0, OptionTaskCount.GetInt());
-    public static bool CheckWin()
+    public SoloWinTier SoloWinTier => SoloWinTier.Tasks;
+    /// <summary>妖狐の誰かがタスクを終えて生きていれば、生きている妖狐が全員勝つ。妨害の勝ちは横取りしない</summary>
+    public bool CheckSoloWin(WinnerResolver.Context ctx, out CustomWinner winner)
     {
-        return Main.AllAlivePlayerControls.ToArray()
-                .Any(p => p.Is(CustomRoles.FoxSpirit) && p.GetPlayerTaskState().IsTaskFinished);
+        winner = CustomWinner.FoxSpirit;
+        return Player.IsAlive() && ctx.Reason != GameOverReason.ImpostorsBySabotage
+            && Main.AllAlivePlayerControls.Any(p => p.Is(CustomRoles.FoxSpirit) && p.GetPlayerTaskState().IsTaskFinished);
     }
 
     public override bool OnCheckMurderAsTarget(MurderInfo info)

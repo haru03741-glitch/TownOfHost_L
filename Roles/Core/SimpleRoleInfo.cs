@@ -32,6 +32,20 @@ public partial class SimpleRoleInfo
     private Func<bool> canMakeMadmate;
     public bool CanMakeMadmate => canMakeMadmate?.Invoke() == true;
     public RoleAssignInfo AssignInfo { get; }
+    /// <summary>
+    /// イントロで、この役職が属す組として見せる役職 (ジャッカルの組・妖狐の組など)。
+    /// 既定のイントロではその役職の名前と色の帯と「Team役職名」の文、ChangeIntro では第三陣営の文を「Team役職名」にする。null なら陣営の既定の表示
+    /// </summary>
+    public CustomRoles? IntroTeam { get; private set; }
+    /// <summary>既定のイントロで、インポスターの人数の文を出す (インポスター側に見えないデシンクのキル役など)</summary>
+    public bool IntroShowsImpostorCount { get; private set; }
+    /// <summary>
+    /// 配るタスクの数を役職が決める。呼ぶ時点の数は、設定の上書きと属性 (Workhorse) を通した後の物。null を返すとそのまま。
+    /// タスクを配る時は役職クラスがまだ無いことがあるので、クラスでなく登録で持つ
+    /// </summary>
+    public Func<PlayerControl, (bool hasCommonTasks, int numLong, int numShort)?> TaskCount { get; private set; }
+    /// <summary>短いタスクを掃除 (VentCleaning) だけにし、共通タスクを配らない</summary>
+    public bool OnlyVentCleaningTask { get; private set; }
 
     private SimpleRoleInfo(
         Type classType,
@@ -108,13 +122,17 @@ public partial class SimpleRoleInfo
         Func<bool> canMakeMadmate = null,
         CountTypes? countType = null,
         RoleAssignInfo assignInfo = null,
-        RoleFlags flags = RoleFlags.None
+        RoleFlags flags = RoleFlags.None,
+        CustomRoles? introTeam = null,
+        bool introShowsImpostorCount = false,
+        Func<PlayerControl, (bool hasCommonTasks, int numLong, int numShort)?> taskCount = null,
+        bool onlyVentCleaningTask = false
     )
     {
         countType ??= customRoleType == CustomRoleTypes.Impostor ? CountTypes.Impostor : CountTypes.Crew;
         assignInfo ??= new RoleAssignInfo(roleName, customRoleType);
 
-        return
+        SimpleRoleInfo info =
             new(
                 classType,
                 createInstance,
@@ -133,6 +151,11 @@ public partial class SimpleRoleInfo
                 assignInfo,
                 flags
             );
+        info.IntroTeam = introTeam;
+        info.IntroShowsImpostorCount = introShowsImpostorCount;
+        info.TaskCount = taskCount;
+        info.OnlyVentCleaningTask = onlyVentCleaningTask;
+        return info;
     }
     public static SimpleRoleInfo CreateForVanilla(
         Type classType,

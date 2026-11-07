@@ -15,7 +15,8 @@ public sealed class Bait : RoleBase
             (int)Options.offsetId.CrewTOH + 100,
             SetUpOptionItem,
             "ベイト",
-            "#00f7ff"
+            "#00f7ff",
+            flags: RoleFlags.ReportableByAll
         );
     public Bait(PlayerControl player)
     : base(

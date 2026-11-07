@@ -22,16 +22,29 @@ namespace TownOfHostL
         public static TextMeshPro HideName;
         private static PassiveButton cancelButton;
 
+        /// <summary>TOHL を休ませている間に作られたロビーなら、Start の後置で足す物を今のロビーに足す。</summary>
+        public static void EnsureLobbyUi(GameStartManager instance)
+        {
+            if (instance == null) return;
+            if (HideName != null && instance.GameRoomNameCode != null && HideName.transform.parent == instance.GameRoomNameCode.transform)
+            {
+                instance.MinPlayers = 1;
+                return;
+            }
+            GameStartManagerStartPatch.Postfix(instance);
+        }
+
         [HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.Start))]
         public class GameStartManagerStartPatch
         {
             public static void Postfix(GameStartManager __instance)
             {
+                if (__instance == null) return;
+                __instance.MinPlayers = 1;
+                // フリープレイではロビー用の表示が無い
+                if (__instance.GameRoomNameCode == null) return;
                 try
                 {
-                    if (__instance == null) return;
-
-                    __instance.MinPlayers = 1;
 
                     __instance.GameRoomNameCode.text = GameCode.IntToGameName(AmongUsClient.Instance.GameId);
                     // Reset lobby countdown timer
@@ -90,7 +103,8 @@ namespace TownOfHostL
             {
                 try
                 {
-                    if (__instance == null) return;
+                    // フリープレイではロビー用の表示が無い (毎フレーム例外を出さない)
+                    if (__instance == null || __instance.GameRoomNameCode == null) return;
 
                     // Lobby code
                     if (DataManager.Settings.Gameplay.StreamerMode)
@@ -169,7 +183,7 @@ namespace TownOfHostL
                         {
                             ErrorText.Instance.NotHostFlag = true;
                             ErrorText.Instance.AddError(ErrorCode.NotHostUnload);
-                            Harmony.UnpatchAll();
+                            TownOfHostL.Core.VanillaHideAndSeek.UnpatchForUnload();
                             Main.Instance?.Unload();
                         }
                     }

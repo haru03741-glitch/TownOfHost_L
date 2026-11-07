@@ -114,7 +114,7 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
     public override void Add()
     {
         CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
-        PlayerSpeed = Main.AllPlayerSpeed[Player.PlayerId];
+        PlayerSpeed = HamoSpeedTable.Instance[Player.PlayerId];
         PlayerColor = Player.Data.DefaultOutfit.ColorId;
         BeamColorModeValue = OptionBeamColorMode.GetValue();
         BeamUnlockTaskCount = OptionBeamUnlockTask.GetInt();
@@ -211,7 +211,7 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
         IsFiring = true;
         IsCharging = true;
         chargeTimer = 0f;
-        Main.AllPlayerSpeed[Player.PlayerId] = Main.MinSpeed;
+        HamoSpeedTable.Instance[Player.PlayerId] = Main.MinSpeed;
         Player.MarkDirtySettings();
         Utils.AllPlayerKillFlash();
         Player.SyncSettings();
@@ -242,7 +242,7 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
         chargeTimer = 0f;
         _prevCharging = false;
         _prevBeamMark = false;
-        Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
+        HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
         Player.MarkDirtySettings();
         SetRoleTextHeight(false);
     }
@@ -333,7 +333,7 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
             {
                 ShowBeamMark = false; _prevBeamMark = false;
                 SetRoleTextHeight(false); IsFiring = false;
-                Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
+                HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
                 Player.MarkDirtySettings();
                 Player.RpcSetColor((byte)PlayerColor);
                 UtilsNotifyRoles.NotifyRoles(); SendRpc(); return;
@@ -347,7 +347,7 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
             if (!HasHit && SelfDestructOnMiss)
             {
                 Player.RpcSetColor((byte)PlayerColor);
-                Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
+                HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
                 Player.MarkDirtySettings();
                 PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = CustomDeathReason.Suicide;
                 Player.RpcMurderPlayerV2(Player);
@@ -358,7 +358,7 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
             }
 
             Player.RpcSetColor((byte)PlayerColor);
-            Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
+            HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
             Player.MarkDirtySettings();
             nowcool = Cooldown;
             LastCooltime = (int)Cooldown;

@@ -56,6 +56,8 @@ static partial class CustomRolesHelper
     public static bool IsNewRole(this CustomRoles role) => role.Def().Has(RoleFlags.NewRole);
     public static bool IsPairRole(this CustomRoles role) => role.Def().Has(RoleFlags.Pair);
     public static bool IsFixedCountRole(this CustomRoles role) => role.Def().Has(RoleFlags.Pair | RoleFlags.FixedCount);
+    /// <summary>試合に加わらない観戦者 (GM)</summary>
+    public static bool IsSpectator(this CustomRoles role) => role.Def().Has(RoleFlags.Spectator);
     public static bool IsDontShowOptionRole(this CustomRoles role) => role.Def().Has(RoleFlags.DontShowOption);
     public static bool IsDontSelectLoyaltyRole(this CustomRoles role) => role.Def().Has(RoleFlags.DontSelectLoyalty);
     public static bool IsAddAddOn(this CustomRoles role) => role.IsMadmate() || role.Def().Has(RoleFlags.AddAddOn);
@@ -65,6 +67,15 @@ static partial class CustomRolesHelper
     public static bool IsOtherAddOn(this CustomRoles role) => role.Def().Has(RoleFlags.OtherAddOn);
     public static bool IsFirstWriteAddOn(this CustomRoles role) => role.Def().Has(RoleFlags.FirstWriteAddOn);
     public static bool IsDirectKillRole(this CustomRoles role) => role.Def().Has(RoleFlags.DirectKill);
+    public static bool IsLoneImpostor(this CustomRoles role) => role.Def().Has(RoleFlags.LoneImpostor);
+    public static bool IsNeutralKiller(this CustomRoles role) => role.Def().Has(RoleFlags.NeutralKiller) || role.IsHamoNeutralKiller();
+    public static bool IsCrewKiller(this CustomRoles role) => role.Def().Has(RoleFlags.CrewKiller);
+    /// <summary>他の役職の能力が「キル役」として扱う第三陣営 (RoleFlags.CountedAsKiller)</summary>
+    public static bool IsCountedNeutralKiller(this CustomRoles role) => role.IsNeutral() && role.Def().Has(RoleFlags.CountedAsKiller);
+    /// <summary>他の役職の能力が「キル役」として扱うクルー (RoleFlags.CountedAsKiller)。シェリフ系のイントロもこれを見る</summary>
+    public static bool IsCountedCrewKiller(this CustomRoles role) => role.IsCrewmate() && role.Def().Has(RoleFlags.CountedAsKiller);
+    /// <summary>印のどれかを持つか (Enum.HasFlag と取り違えないよう名前を分けている)</summary>
+    public static bool HasRoleFlag(this CustomRoles role, RoleFlags flags) => role.Def().Has(flags);
 
     //CC
     public static bool IsCCRole(this CustomRoles role) => role.Def().Has(RoleFlags.CCLeader | RoleFlags.CCColorCat | RoleFlags.CCNoCat);

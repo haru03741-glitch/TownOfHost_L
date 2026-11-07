@@ -480,7 +480,7 @@ public sealed class Spelunker : HamoRoleBase, ISystemTypeUpdateHook
 
 
 
-        if (!Main.AllPlayerSpeed.TryGetValue(Player.PlayerId, out var speedBefore))
+        if (!HamoSpeedTable.Instance.TryGetValue(Player.PlayerId, out var speedBefore))
 
             speedBefore = Main.MinSpeed;
 
@@ -492,7 +492,7 @@ public sealed class Spelunker : HamoRoleBase, ISystemTypeUpdateHook
 
             if (!CanDieNow(checkMeeting: true)) return;
 
-            Main.AllPlayerSpeed[Player.PlayerId] = Main.MinSpeed;
+            HamoSpeedTable.Instance[Player.PlayerId] = Main.MinSpeed;
 
             Player.SyncSettings();
 
@@ -504,7 +504,7 @@ public sealed class Spelunker : HamoRoleBase, ISystemTypeUpdateHook
 
         {
 
-            Main.AllPlayerSpeed[Player.PlayerId] = speedBefore;
+            HamoSpeedTable.Instance[Player.PlayerId] = speedBefore;
 
             Player.SyncSettings();
 

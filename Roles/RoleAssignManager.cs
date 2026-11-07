@@ -6,6 +6,8 @@ using AmongUs.GameOptions;
 using TownOfHostL.Roles.Core;
 using static TownOfHostL.Translator;
 
+using TownOfHostL.Core.Modes;
+
 namespace TownOfHostL.Roles
 {
     public static class RoleAssignManager
@@ -310,7 +312,8 @@ namespace TownOfHostL.Roles
             foreach (var role in AllMainRoles)
             {
                 if (!role.IsAssignable()) continue;
-                if (!Options.IsCCMode && role.IsCCLeaderRoles()) continue;
+                // 今のモードで設定を出していない役職 (他のモード専用の物) は、確率が残っていても配らない
+                if (Options.CustomRoleSpawnChances.TryGetValue(role, out var spawnOption) && !ModeCatalog.Current.ShowsOption(spawnOption)) continue;
 
                 var chance = role.GetChance();
                 var count = role.GetAssignCount();

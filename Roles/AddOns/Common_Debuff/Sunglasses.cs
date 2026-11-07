@@ -16,7 +16,9 @@ public static class Sunglasses
         "Sg",
         setupOptions: SetupCustomOption,
         onAdd: Add,
-        applyGameOptions: ApplyGameOptions);
+        applyGameOptions: ApplyGameOptions,
+        chatCommand: "サングラス",
+        assignAtRandom: true);
 
     private static readonly int Id = (int)offsetId.AddonDebuff + 0;
     private static List<byte> playerIdList = new();

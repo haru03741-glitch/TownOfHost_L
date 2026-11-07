@@ -16,7 +16,7 @@ public sealed class MadDilemma : RoleBase
             null,
             "マッドジレンマ",
             introSound: () => GetIntroSound(RoleTypes.Impostor),
-            flags: RoleFlags.DontShowOption | RoleFlags.DontSelectLoyalty
+            flags: RoleFlags.DontShowOption | RoleFlags.DontSelectLoyalty | RoleFlags.LearnsExiledTeam
         );
     public MadDilemma(PlayerControl player)
     : base(

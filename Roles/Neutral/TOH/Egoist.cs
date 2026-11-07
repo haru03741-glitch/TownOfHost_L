@@ -8,6 +8,7 @@ using TownOfHostL.Roles.Core.Interfaces;
 namespace TownOfHostL.Roles.Neutral;
 public sealed class Egoist : RoleBase, ISidekickable, IKiller, ISchrodingerCatOwner
 {
+    public override bool SeesNamesInMushroomMixup => true;
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
             typeof(Egoist),
@@ -27,7 +28,9 @@ public sealed class Egoist : RoleBase, ISidekickable, IKiller, ISchrodingerCatOw
                 IsInitiallyAssignableCallBack =
                     () => Main.RealOptionsData.GetInt(Int32OptionNames.NumImpostors) > 1,
                 AssignCountRule = new(1, 1, 1)
-            }
+            },
+            flags: RoleFlags.NeutralKiller | RoleFlags.CountedAsKiller,
+            introTeam: CustomRoles.Egoist
         );
     public Egoist(PlayerControl player)
     : base(

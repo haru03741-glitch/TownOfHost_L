@@ -199,11 +199,6 @@ namespace TownOfHostL
         /// <summary>機能の設定 (offsetId.FeatSpecial 以降の帯。役職とゲームモード以外の設定一覧に出す物)</summary>
         public bool IsFeatureOption => Id >= (int)Options.offsetId.FeatSpecial;
 
-        // Hidden判定
-        public virtual bool IsHiddenOn(CustomGameMode mode)
-        {
-            return IsHidden || (GameMode != CustomGameMode.All && GameMode != mode);
-        }
 
         public string ApplyFormat(string value)
         {
@@ -223,6 +218,8 @@ namespace TownOfHostL
         // 外部からの操作
         public virtual void Refresh()
         {
+            // メニューを閉じると行は破棄される。is の型判定は破棄済み (Unity の null) を弾かないので先に見る
+            if (OptionBehaviour == null) return;
             if (OptionBehaviour is StringOption stringOption)
             {
                 stringOption.TitleText.text = GetName();

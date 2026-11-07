@@ -47,6 +47,8 @@ public sealed class Medic : RoleBase
             .SetValueFormat(OptionFormat.Pieces);
     }
     // 試合を跨いで前の試合のインスタンスが残らないようにする
+    public override bool NeedsSeenNames => true;
+
     public override void OnDestroy()
     {
         Medics.Remove(this);

@@ -10,7 +10,8 @@ public sealed class Scientist : RoleBase
             typeof(Scientist),
             player => new Scientist(player),
             RoleTypes.Scientist,
-            "#8cffff"
+            "#8cffff",
+            flags: RoleFlags.NoComingOutOption
         );
     public Scientist(PlayerControl player)
     : base(

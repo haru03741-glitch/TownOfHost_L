@@ -44,7 +44,6 @@ namespace TownOfHostL
         SetEvilDiviner,
         SetLawyerTarget,
         SetRemoveLawyerTarget,
-        EvilHackerWarpSync,
         SyncPsychicResult,
         SetLoyalDoggyMaster,
         CustomRoleSync,
@@ -465,7 +464,7 @@ namespace TownOfHostL
                     callId = (byte)RpcCalls.ProtectPlayer;
                     break;
                 case RpcCalls.SnapTo:
-                    Modules.Net.SnapToWatch.Record();
+                    Modules.Net.SnapToBudget.Record();
                     break;
             }
 

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using AmongUs.GameOptions;
+using TownOfHostL.Attributes;
 
 using TownOfHostL.Roles.Core;
 
@@ -19,7 +20,9 @@ public sealed class Rabbit : RoleBase
             (int)Options.offsetId.CrewY + 1600,
             SetupOptionItem,
             "ラビット",
-            "#88d2ff"
+            "#88d2ff",
+            // タスクを終えた後の配り直しは、ラビットの数にする
+            taskCount: pc => IsFinish(pc) ? TaskData : null
         );
     public Rabbit(PlayerControl player)
     : base(
@@ -40,8 +43,11 @@ public sealed class Rabbit : RoleBase
         {
             NumShortTasks = Main.NormalOptions.NumShortTasks;
         }
-        taskFinish = new();
     }
+
+    // 2 人目のラビットで 1 人目の一巡目の完了を消さないよう試合の始めにだけ空にする
+    [GameModuleInitializer]
+    public static void Init() => taskFinish.Clear();
 
     private static OptionItem OptionTaskTrigger;
     private static OptionItem OptionNumLongTasks;
@@ -54,7 +60,7 @@ public sealed class Rabbit : RoleBase
     private static int TaskTrigger;
     private static int NumLongTasks;
     private static int NumShortTasks;
-    private static List<PlayerControl> taskFinish = new();
+    private static readonly HashSet<byte> taskFinish = new();
     public static (bool, int, int) TaskData => (false, NumLongTasks, NumShortTasks);
 
     private static void SetupOptionItem()
@@ -68,7 +74,7 @@ public sealed class Rabbit : RoleBase
     }
 
     string showArrow = string.Empty;
-    public static bool IsFinish(PlayerControl pc) => taskFinish.Contains(pc);
+    public static bool IsFinish(PlayerControl pc) => taskFinish.Contains(pc.PlayerId);
     public override void Add()
     {
         showArrow = string.Empty;
@@ -84,7 +90,7 @@ public sealed class Rabbit : RoleBase
             {
                 return true;
             }
-            if (IsTaskFinished) taskFinish.Add(Player);
+            if (IsTaskFinished) taskFinish.Add(Player.PlayerId);
         }
 
         var Impostors = Main.AllAlivePlayerControls.Where(pc=>pc.Is(CustomRoleTypes.Impostor)).ToArray();

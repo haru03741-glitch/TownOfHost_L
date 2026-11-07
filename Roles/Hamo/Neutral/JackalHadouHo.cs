@@ -420,7 +420,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
     {
 
-        PlayerSpeed = Main.AllPlayerSpeed[Player.PlayerId];
+        PlayerSpeed = HamoSpeedTable.Instance[Player.PlayerId];
 
         PlayerColor = Player.Data.DefaultOutfit.ColorId;
 
@@ -468,7 +468,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
         {
 
-            Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
+            HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
 
             Player.MarkDirtySettings();
 
@@ -826,7 +826,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
 
 
-        Main.AllPlayerSpeed[Player.PlayerId] = Main.MinSpeed;
+        HamoSpeedTable.Instance[Player.PlayerId] = Main.MinSpeed;
 
         Player.MarkDirtySettings();
 
@@ -926,7 +926,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
         _prevBeamMark = false;
 
-        Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
+        HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
 
         Player.MarkDirtySettings();
 
@@ -1240,7 +1240,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
             SetRoleTextHeight(false); IsFiring = false;
 
-            Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
+            HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
 
             Player.MarkDirtySettings(); Player.RpcSetColor((byte)PlayerColor);
 
@@ -1266,7 +1266,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
             Player.RpcSetColor((byte)PlayerColor);
 
-            Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
+            HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
 
             Player.MarkDirtySettings();
 
@@ -1282,7 +1282,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
         Player.RpcSetColor((byte)PlayerColor);
 
-        Main.AllPlayerSpeed[Player.PlayerId] = PlayerSpeed;
+        HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
 
         Player.MarkDirtySettings();
 

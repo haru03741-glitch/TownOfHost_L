@@ -163,7 +163,7 @@
 "ChargerInfoLong","(Impostors):\nUse the kill button to charge the number of kills,Use the Vanish button to kill.\nNormal kills and Vanish are not possible. The second and subsequent targets on the same turn can be selected with no cooldown.\nThe charge increases the number of kills possible when one gauge is fully accumulated.","[インポスター陣営]\nキルボタンを使ってキル回数をチャージ、消えるボタンで溜まったキル回数を使ってキルをする。\n通常キル・透明化不可。同ターン2人目以降はクールダウン無しでキルできる。\nチャージは１ゲージ溜まり切るとキル可能回数が増加する。"
 "ChaserInfoLong","(Impostors):\nA role that allows you to warp by transforming.\nDetects a nearby vent with a transformed target and warps there.\nYou can also return to the original position in the settings.\nIt would be funny if there were other players in front of you.\n","[インポスター陣営]\n近くに移動したいターゲットをシェイプボタンで選択すると、そのターゲットから一番近いベントにワープすることができる。ワープ時、他視点からチェイサーはそのベントから出てきたように見える(ベント開閉あり)。\n元の位置に戻る設定がONの時、設定時間後に元居た場所の近くのベントに戻る。"
 "CharismaStarInfoLong","(Impostors):\nImpostor that allows any player to assemble to the nearest vent from himself.\nThe kill button uses double clicks. The single-click kill button allows the user to select a member, while the double-click kill button is used for normal kills. Multiple members can be set up, and by pressing the disappear button, the members can be gathered into a vent near you.\nWhen the setting that allows everyone to assemble is turned on, if no one has decided on a member, everyone can assemble.\nWhen a gathering is called, if the target player is using a ladder or lift, the gathering cannot take place. If a player cannot assemble, he or she will self-suiside.","[インポスター陣営]\nプレイヤーを自身から近いベントへ集合させることができるインポスター。\nキルボタンはダブルクリックを使い分ける。シングルクリックでは集合メンバーを決め、ダブルクリックでは通常キルをする。集合メンバーは複数人設定することができ、消えるボタンを押すことでそのメンバーを自身付近のベントに集めることができる。\n全員集合できる設定をONにしている時、誰もメンバーを決めていないと全員を集合させることができる。\n集合をかけた時、対象プレイヤーがはしごを使用していると集まることが出来ない。設定により、集まれないプレイヤーは自爆する。",
-"EvilHackerInfoLong","(Impostors):\nImposter that allows Admin to be seen from anywhere.\nUse the disappear button to move to the Admin location.\nIt can be viewed by pressing the View button at the destination.\nAfter a few seconds it returns to its original position.\nNote that you have to press the View button to see it.\nYou can't move while watching.\n","[インポスター陣営]\n※本家TOHと仕様が異なります。\nアドミンが見れるインポスター。消えるボタンでアドミン前へワープし、手動でアドミンボタンを押すことで見ることが出来る。アドミン前へワープした時、アドミン前に立っている姿は他の人から見えないが、元の位置からも姿は消える。なお、約3秒後に元の位置へ戻る。戻った先でもアドミンを見続けることが出来るが、見ている最中は動けない。",
+"EvilHackerInfoLong","(Impostors):\nImposter that allows Admin to be seen from anywhere.\nUse the disappear button to move to the Admin location.\nIt can be viewed by pressing the View button at the destination.\nAfter a few seconds it returns to its original position.\nNote that you have to press the View button to see it.\nYou can't move while watching.\n","[インポスター陣営]\n※本家TOHと仕様が異なります。\nアドミンが見れるインポスター。消えるボタンでアドミン前へワープし、手動でアドミンボタンを押すことで見ることが出来る。アドミン前へワープした時、アドミン前に立っている姿は他の人から見えないが、元の位置からも姿は消える。なお、ワープから約2.5秒後に元の位置へ戻る。戻った先でもアドミンを見続けることが出来るが、見ている最中は動けない。",
 "TelekineticInfoLong","(Impostors):\nA kill can be made without causing a kill motion. Also, setting makes death reason of a Telekinetic kill a Telekinesis.","[インポスター陣営]\nキルモーション無しでキルができる。設定により、テレキネスキルの死因が念殺になる。",
 "AdministerInfoLong","(Impostors):\nDuring the meeting, he will know the room all the survivors were in before the meeting.","[インポスター陣営]\n会議中、生存者全員の会議前にいた部屋を知ることができる。",
 
@@ -432,7 +432,7 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "PirateInfoLong","(Neutrals):\nFirst, someone kills.The killed Crew member dies, but becomes a member of the pirate Gang and the victory condition changes to Pirate Victory.\nThe gang has a task, and the pirate's ability is expanded according to the gang's completion of the task.\nIf the Impostor is wiped out and the number of pirates equals or exceeds the number of crew members, wins alone.\n[Pirate ability by Gang task]\n25%：Can Vent\n50%：Can Kill\n75%：Grant Buff-Add-On\n100%：Know Impostor","[ニュートラル]\nはじめに誰かキルする。そのキルされた人は死亡するが、海賊の一味となり勝利条件が「海賊の勝利」に変化する。\n一味はタスクを持ち、一味のタスク完了度により海賊の能力が拡大する。\nインポスターの全滅かつ、海賊の数がクルーと同数または上回ると単独で勝利する。\n[一味のタスクによる海賊の能力]\n25%完了：ベント使用可能\n50%完了：キル可能\n75%完了：バフ属性の付与\n100%完了：インポスターが誰か分かる",
 "GangInfoLong","(Neutrals):\nLet's aim for a pirate victory. The gang has a task, and the pirate's ability is expanded according to the gang's completion of the task.\n[task]\n25%：Can Vent\n50%：Can Kill\n75%：Grant Buff-Add-On\n100%：Know Impostor","[ニュートラル]\n海賊の勝利を目指そう。一味のタスク完了度により海賊の能力が拡大する。\n[タスク]\n25%完了：ベント使用可能\n50%完了：キル可能\n75%完了：バフ属性の付与\n100%完了：インポスターが誰か分かる",
 "ChainShifterInfoLong","(Neutrals):\nYou lose if you end the game with ChainShifter.\nChainShifter can be transferred to another opponent by being nearby for a while.\nYou can win with the changed role after transferring the ChainShifter.","[ニュートラル]\nチェインシフターでゲームを終了すると負けになる役職。\nチェインシフターは他のクルーの近くにしばらくいることで相手に移すことができる。\nチェインシフターを移した後に変化した役職で勝利できる。","","","",""
-"VendettaInfoLong","(Neutrals)","[ニュートラル]\n自身が生存していてかつ自身で選択した対象が死亡した状態でいずれかの陣営が勝利した時、追加勝利できる。\n初ターン以外で任意のプレイヤーをキルできる。ただし、キルはターン中に1回のみ。\n対象は初手会議に相手に投票して指定する。初手会議の投票時、ヴェンデッタの投票先は全視点で見えない。初手会議で対象を決定しないと自殺する。\n設定により、自身が対象をキルしていないと勝利できないようにできる。",
+"VendettaInfoLong","(Neutrals):\nIf you are alive and the target you chose is dead when any team wins, you win in addition.\nFrom the second turn on, you can kill any player, but only once per turn.\nChoose the target by voting for them in the first meeting. Your vote in the first meeting is hidden from everyone. If you do not choose a target in the first meeting, you die.\nAn option can require you to kill the target yourself to win.","[ニュートラル]\n自身が生存していてかつ自身で選択した対象が死亡した状態でいずれかの陣営が勝利した時、追加勝利できる。\n初ターン以外で任意のプレイヤーをキルできる。ただし、キルはターン中に1回のみ。\n対象は初手会議に相手に投票して指定する。初手会議の投票時、ヴェンデッタの投票先は全視点で見えない。初手会議で対象を決定しないと自殺する。\n設定により、自身が対象をキルしていないと勝利できないようにできる。",
 
 
 # Unit-Role
@@ -816,7 +816,6 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "DisplayTeamMarkInfoLong","","役職名の前に陣営マークを表示する機能。\nⒾ：インポスター陣営(インポスター役職)\nⓂ：インポスター陣営(マッド役職)\nⒸ：クルー陣営\nⓃ：第三陣営"
 
 
-"FixSpawnPacketSize","(Experimental) Only if disconnection occurs with above 8 people.","(試験的機能) ８人以上で切断が発生する場合のみオン"
 
 "## モード説明"
 "HideAndSeekInfo","Hide and Seek:\nNo emergency meetings. Crewmates (Blue) can only win by finishing tasks\nand impostors (Red) can only win by killing all crewmates.","かくれんぼ:\n会議を開くことはできず、クルーはタスク完了、インポスターは全クルー殺害でのみ勝利することができる。\nインポスターは赤、クルーは青に体の色が変更される。","躲猫猫:\n不能开会；船员只能通过完成任务获得胜利；\n内鬼需要杀死所有船员来获得胜利；\n内鬼的皮肤颜色将变为红色，船员变为蓝色，以示区分。","躲貓貓:\n不能拍桌或舉報，船員只能做任務\n偽裝者的勝利條件為殺光所有船員\n狼人的顏色會轉變為紅色，船員則會變為藍色。","Прятки:\nНикто не может созвать срочное собрание, Члены Экипажа могут победить, только выполняя задания. \nПредатели меняют цвет тела на красный, а экипажи на синий.","Esconde-Esconde:\nNão há reuniões de emergência. Tripulantes (Azul) podem ganhar apenas ao completar todas as tarefas,\ne Impostores (Vermelho) ganham apenas quando matarem todos os tripulantes."
@@ -1250,6 +1249,9 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "HideAndSeekWaitingTime","Impostor Standby Time(S)","インポスターの待機時間(秒)","内鬼阵营在游戏开始后的等待时间","偽裝者在遊戲開始後的等待時間(秒)","Время ожидания Предателей(Секунды)","Tempo de Espera do Impostor (S)"
 "IgnoreVent","Disable Vents","ベントの使用を禁止する","禁止使用管道","禁止使用管道","Отключить Вентиляцию","Desativar Dutos"
 "HideAndSeekRoles","Hide and Seek Roles","かくれんぼの役職","躲猫猫职业","躲貓貓職業","Роли в Прятках","Classes do Esconde-Esconde"
+"HideAndSeekRolePool","Roles","配る役職","职业","職業","Роли","Classes","Funções"
+"HideAndSeekRolePool.Own","Hide and Seek Roles","かくれんぼ専用の役職","躲猫猫专用职业","躲貓貓專用職業","Роли Пряток","Classes do Esconde-Esconde","Funções do Escondidas"
+"HideAndSeekRolePool.Standard","Standard Roles","通常モードの役職","普通模式的职业","一般模式的職業","Обычные роли","Classes do Modo Padrão","Funções do Modo Normal"
 
 "## 死因"
 "DeathReason.Kill","Kill","キル","被杀","被殺","Убит","Abatido"
@@ -1436,7 +1438,7 @@ PanAlive25,\nBread was served by the bakery.\nㅤ,\nパン屋は{0}に向けて�
 "Warning.AutoExitAtMismatchedVersion","The host has no or a different version of {0}\nYou will be kicked in {1}","{0} のバージョンがホストと合致しません。\nあと {1} 秒で切断されます。","{0} 的版本与主机不符。\n 将在 {1} 秒后被踢出。","","Версия {0} не соответствует Хосту лобби. \nВы будете исключены через {1} секунды",""
 "Warning.NotMatchImpostorCount","Max/min number of Impostor roles is greater than the number of Impostors.","インポスター役職の最小/最大割り当て人数がインポスターより多すぎます。","内鬼数量过小或过大","","Макс./Мин. количество Предательских ролей больше, чем общее количество Предателей.",""
 "Warning.NotMatchRoleCount","The role is not cast correctly because the minimum number of roles is greater than the number of players.","ロールの最少人数合計がプレイヤーより多いため正常に配役されません。","职业数量设置大于玩家数量","","Роль подобрана неправильно, так как минимальное количество ролей больше, чем количество игроков.",""
-"Warning.GameModeChangedNotice","Warning: Other game modes are currently unavailable.","現在、他のゲームモードは使用できません。","警告: 当前无法使用其他游戏模式。","警告：目前無法使用其他遊戲模式。","Внимание: Другие игровые режимы в данный момент недоступны."
+"Warning.GameModeChangedNotice","To open the settings for the changed game mode, please reopen the game settings menu.","変更したゲームモードの設定を開くには、ゲーム設定編集画面を開きなおしてください。","更改游戏模式后请重新打开游戏设置菜单以打开更改后的游戏模式的设置。","更改遊戲模式後請重新打開遊戲設定選單以打開更改後的遊戲模式的設定。","Чтобы открыть настройки измененного режима игры, пожалуйста, откройте меню настроек игры заново.","Para abrir as configurações do modo de jogo alterado, por favor, reabra o menu de configurações do jogo."
 
 "## エラー"
 "Error.CommandFailed","To use a command, put /cmd at the very beginning.\n\n(Example)\n/cmd n\n/cmd h r Jackal","コマンドを使うには一番最初に「/cmd」を付けてください。\n\n(例)\n/cmd n\n/cmd h r ジャッカル","","","","",""
@@ -1504,7 +1506,6 @@ PanAlive25,\nBread was served by the bakery.\nㅤ,\nパン屋は{0}に向けて�
 "FireworksReadyFirePhase","Fire!","打ち上げろ！","烟花来咯，大型烟花秀开始！","準備就緒，煙火秀開始!","Огонь!","Lançar!"
 "SelfBomberFirePhase","Fire by Vanish","消えるで自爆","","","",""
 "StandardHAS","Hide And Seek with Roles","役職入りでかくれんぼ","在躲猫猫模式中加入职业","在躲貓貓中加入多職業模式中的職業","Прятки с Ролями","Esconde-Esconde com Classes"
-"StandardHASWaitingTime","Standby","待機時間","躲猫猫猎人等待时间","躲貓貓偽裝者等待時間","Время ожидания","Tempo de Espera"
 "Prerelease","Pre-release","プレリリース","","","","",""
 "InvalidArgs","Invalid Args","無効な引数","无效参数","無效的參數","Недопустимые Аргументы","Argumento Inválido"
 "On","ON","オン","开启","開啟","ВКЛ","Ativado"
@@ -1520,6 +1521,7 @@ PanAlive25,\nBread was served by the bakery.\nㅤ,\nパン屋は{0}に向けて�
 "Roles","Roles","役職","职业","職業","Роли","Classes"
 "Settings","Settings","設定","设定","設定","Настройки","Configurações"
 "Addons","Add-Ons","属性","附加效果","屬性","Атрибут","Atributos"
+"SummaryKillCount","Kills: {0}","キル: {0}","击杀: {0}","擊殺: {0}","Убийств: {0}","Abates: {0}","Abates: {0}"
 "LastResult","Match Results","試合結果","游戏结果","上一局的遊戲結果","Результат матча","Resultados da Partida"
 "KillLog","Kill Log","キル履歴","击杀日志","擊殺紀錄","История убийств",""
 "Maximum","Max","最大数","最多人数","最大數量","Максимум","Máximo"
@@ -5935,3 +5937,12 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "MadProxySettings","【Mad Proxy Setting】","【マッドプロキシ設定】"
 "PhantomInvisText","Vent → Exit Invisible","ベント・ファントムボタン → 透明化解除"
 "PhantomInfoLong","","ファントムボタンを押すことで一定時間透明になることができる。\n透明化中にベントを使うまたはもう一度ファントムボタンを押すと透明化を途中で解除できる。"
+"ModeSwitch.Usage","/mode hns: switch to vanilla Hide and Seek (TOHL rests until you switch back)\n/mode normal: switch back to Classic","/mode hns: 本編のかくれんぼに切り替えます (戻すまで TOHL は休みます)\n/mode normal: 通常のモードに戻します","","","","",""
+"ModeSwitch.HostOnly","Only the host can switch the mode.","モードを切り替えられるのはホストだけです。","","","","",""
+"ModeSwitch.LobbyOnly","The mode can only be switched in the lobby.","モードはロビーでしか切り替えられません。","","","","",""
+"ModeSwitch.Starting","The mode cannot be switched while the game is starting.","ゲーム開始のカウントダウン中はモードを切り替えられません。","","","","",""
+"ModeSwitch.Busy","The mode is already being switched.","モードの切り替え中です。","","","","",""
+"ModeSwitch.Already","The room is already in that mode.","すでにそのモードです。","","","","",""
+"ModeSwitch.Failed","Could not switch the mode. The room stays in the previous mode.","モードを切り替えられませんでした。前のモードのままです。","","","","",""
+"ModeSwitch.DoneHns","Switched to Hide and Seek. TOHL is resting. Type /mode normal to switch back.","かくれんぼに切り替えました。TOHL は休んでいます。/mode normal で通常のモードに戻せます。","","","","",""
+"ModeSwitch.DoneNormal","Switched back to Classic. TOHL is active again.","通常のモードに戻しました。TOHL が再び動いています。","","","","",""

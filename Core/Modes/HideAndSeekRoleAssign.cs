@@ -1,21 +1,15 @@
 using AmongUs.GameOptions;
-using HarmonyLib;
 
 using TownOfHostL.Roles;
 using TownOfHostL.Roles.Core;
 
 namespace TownOfHostL;
 
-[HarmonyPatch(typeof(RoleManager), nameof(RoleManager.SelectRoles))]
-class SelectRolesHASModePatch
+/// <summary>かくれんぼ専用の役職 (狐・荒らし) で遊ぶ時の割り当て。</summary>
+static class HideAndSeekRoleAssign
 {
-    public static bool Prefix(RoleManager __instance)
+    public static void Assign()
     {
-        if (!AmongUsClient.Instance.AmHost) return false;
-
-        //HideAndSeek用
-        if (!Options.IsHASMode) return false;
-
         //CustomRpcSenderとRpcSetRoleReplacerの初期化
         RpcSetRoleReplacer.StartReplace();
 
@@ -27,6 +21,9 @@ class SelectRolesHASModePatch
         //MODの役職割り当て
         RpcSetRoleReplacer.Release(); //保存していたSetRoleRpcを一気に書く
 
+        // GetRoleTypePlayers が本編の役職から既定の役職 (Impostor / Crewmate) を入れるので、色分けはその後に行う。
+        // 狐と荒らしの色は、この後の割り当ての中で塗り直す
+        var roleTypePlayers = SelectRolesPatch.GetRoleTypePlayers();
         SetColorPatch.IsAntiGlitchDisabled = true;
         foreach (var pc in Main.AllPlayerControls)
         {
@@ -36,7 +33,6 @@ class SelectRolesHASModePatch
                 pc.RpcSetColor(1);
         }
 
-        var roleTypePlayers = SelectRolesPatch.GetRoleTypePlayers();
         //役職設定処理
         if (roleTypePlayers.TryGetValue(RoleTypes.Crewmate, out var list))
         {
@@ -56,7 +52,5 @@ class SelectRolesHASModePatch
         Utils.CountAlivePlayers(true);
         Utils.SyncAllSettings();
         SetColorPatch.IsAntiGlitchDisabled = false;
-
-        return false;
     }
 }

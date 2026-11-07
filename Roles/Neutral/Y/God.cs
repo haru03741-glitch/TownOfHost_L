@@ -2,11 +2,12 @@ using System.Linq;
 using UnityEngine;
 using AmongUs.GameOptions;
 
+using TownOfHostL.Core.Win;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
 namespace TownOfHostL.Roles.Neutral;
 
-public sealed class God : RoleBase, ISystemTypeUpdateHook
+public sealed class God : RoleBase, ISystemTypeUpdateHook, ISoloWinner
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
@@ -54,6 +55,8 @@ public sealed class God : RoleBase, ISystemTypeUpdateHook
         OptionViewVoteFor = BooleanOptionItem.Create(RoleInfo, 11, OptionName.GodViewVoteFor, false, false);
         Tasks = Options.OverrideTasksData.Create(RoleInfo, 20);
     }
+    public override bool NeedsSeenNames => true;
+
     public override void ApplyGameOptions(IGameOptions opt)
     {
         if (viewVoteFor)
@@ -65,7 +68,14 @@ public sealed class God : RoleBase, ISystemTypeUpdateHook
     {
         enabled = true;
     }
-    public static bool CheckWin()
+    public SoloWinTier SoloWinTier => SoloWinTier.Survival;
+    /// <summary>勝てる神が 1 人でも生きていれば、生きている神が全員勝つ</summary>
+    public bool CheckSoloWin(WinnerResolver.Context ctx, out CustomWinner winner)
+    {
+        winner = CustomWinner.God;
+        return Player.IsAlive() && AnyGodCanWin();
+    }
+    private static bool AnyGodCanWin()
     {
         return Main.AllAlivePlayerControls.ToArray()
                 .Any(p => p.Is(CustomRoles.God) &&

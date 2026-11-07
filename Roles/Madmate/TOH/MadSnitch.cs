@@ -22,6 +22,7 @@ public sealed class MadSnitch : RoleBase
             introSound: () => GetIntroSound(RoleTypes.Impostor),
             flags: RoleFlags.DontSelectLoyalty
         );
+    public override string GetRoleKey(bool infoLong) => Madmate.TaskMadmateRoleKey(Player, infoLong);
     public MadSnitch(PlayerControl player)
     : base(
         RoleInfo,

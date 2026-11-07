@@ -22,7 +22,8 @@ public sealed class JO : RoleBase, IKiller
             "オー",
             countType:CountTypes.Crew,
             introSound: () => GetIntroSound(RoleTypes.Impostor),
-            flags: RoleFlags.DontShowOption | RoleFlags.DontSelectLoyalty | RoleFlags.DirectKill
+            flags: RoleFlags.DontShowOption | RoleFlags.DontSelectLoyalty | RoleFlags.DirectKill,
+            introShowsImpostorCount: true
         );
     public JO(PlayerControl player)
     : base(
@@ -46,6 +47,8 @@ public sealed class JO : RoleBase, IKiller
     int sendRoleLimit;
     HashSet<byte> DetectPlayers = new(15);
     HashSet<byte> DidntDetectPlayers = new(15);
+
+    public override bool NeedsSeenNames => true;
 
     public override void Add()
     {

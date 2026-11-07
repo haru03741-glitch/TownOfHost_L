@@ -3,7 +3,6 @@ using AmongUs.GameOptions;
 
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
-using Hazel;
 
 namespace TownOfHostL.Roles.Impostor;
 public sealed class EvilHacker : RoleBase, IImpostor
@@ -22,8 +21,7 @@ public sealed class EvilHacker : RoleBase, IImpostor
             assignInfo: new(CustomRoles.EvilHacker, CustomRoleTypes.Impostor)
             {
                 IsInitiallyAssignableCallBack = () => (MapNames)Main.NormalOptions.MapId is not MapNames.Fungle
-            },
-            flags: RoleFlags.DontShowOption  // 封印中
+            }
         );
     public EvilHacker(PlayerControl player)
     : base(
@@ -31,6 +29,7 @@ public sealed class EvilHacker : RoleBase, IImpostor
         player
     )
     {
+        playerId = player.PlayerId;
         KillCooldown = OptionKillCooldown.GetFloat();
         AdminCooldown = OptionAdminCooldown.GetFloat();
     }
@@ -38,9 +37,15 @@ public sealed class EvilHacker : RoleBase, IImpostor
     private static OptionItem OptionAdminCooldown;
     private static float KillCooldown;
     private static float AdminCooldown;
+    // 切断の後も足止めを外せるよう、PlayerControl を経ずに引く
+    private readonly byte playerId;
     public float CalculateKillCooldown() => KillCooldown;
-    public override void ApplyGameOptions(IGameOptions opt) => AURoleOptions.PhantomCooldown = AdminCooldown;
-    private Vector2 LastPosition; // 元の位置を保存する変数
+    public override void ApplyGameOptions(IGameOptions opt)
+    {
+        AURoleOptions.PhantomCooldown = AdminCooldown;
+        // 戻ってから少しして姿が出るようにし、アドミンの前で姿が出ないようにする
+        AURoleOptions.PhantomDuration = WarpDelay + StayTime + 0.5f;
+    }
     enum OptionName
     {
         EvilHackerAdminCooldown,
@@ -52,69 +57,78 @@ public sealed class EvilHacker : RoleBase, IImpostor
         OptionAdminCooldown = FloatOptionItem.Create(RoleInfo, 11, OptionName.EvilHackerAdminCooldown, new(2.5f, 180f, 2.5f), 30f, false)
                 .SetValueFormat(OptionFormat.Seconds);
     }
-    private Vector2 GetTeleportPosition()
+    // アドミンの前の位置。Dleks はスケルドを左右に反転した形なので x を反転する。
+    // ファングルは IsInitiallyAssignableCallBack で配らない。
+    private static Vector2? GetAdminPosition()
     {
-        // マップに応じた座標を選択
-        switch ((MapNames)Main.NormalOptions.MapId)
+        return (MapNames)Main.NormalOptions.MapId switch
         {
-            case MapNames.Airship:
-                return new Vector2(-22.13f, 0.56f);
-            case MapNames.Skeld:
-                return new Vector2(2.96f, -8.62f);
-            case MapNames.Polus:
-                return new Vector2(22.63f, -21.75f);
-            case MapNames.MiraHQ:
-                return new Vector2(22.22f, 18.77f);
-            default:
-                // デフォルトの座標（必要に応じて設定）
-                return new Vector2(0f, 0f);
-        }
+            MapNames.Skeld => new Vector2(2.96f, -8.62f),
+            MapNames.Dleks => new Vector2(-2.96f, -8.62f),
+            MapNames.MiraHQ => new Vector2(22.22f, 18.77f),
+            MapNames.Polus => new Vector2(22.63f, -21.75f),
+            MapNames.Airship => new Vector2(-22.13f, 0.56f),
+            _ => null,
+        };
     }
+    const float WarpDelay = 2.5f;
+    const float StayTime = 2.5f;
+    // ワープの最中に会議・死亡・試合の終わりが来たら、この番号を進めて残りの LateTask を捨てる
+    private int warpId;
+    // 続けてよいか。死亡や試合の終わりで止まる時は、ここで足止めを外す
+    private bool CanContinueWarp(int id)
+    {
+        if (id != warpId) return false;
+        if (Player != null && Player.IsAlive() && GameStates.IsInTask) return true;
+        warpId++;
+        EndWarp();
+        return false;
+    }
+
     public override bool OnCheckVanish(ref float killCooldown, ref bool canResetAbilityCooldown)
     {
-        // 移動前の位置を保持
-        LastPosition = Player.GetTruePosition();
+        if (GetAdminPosition() is not Vector2 adminPosition) return true;
 
-        // プレイヤーの足止め
-        Main.AllPlayerSpeed[Player.PlayerId] = Main.MinSpeed;
-        Player.MarkDirtySettings();
-        Logger.Info($"{Player.GetNameWithRole()} : プレイヤーの足止め", "EvilHacker");
+        var id = ++warpId;
+        // SnapTo は transform の位置で受けるので、足元 (GetTruePosition) ではなく transform の位置で戻す
+        var lastPosition = (Vector2)Player.transform.position;
+        Freeze();
 
-        //透明化後に指定された位置へ強制移動する。
         _ = new LateTask(() =>
+        {
+            if (!CanContinueWarp(id)) return;
+            if (!Player.SnapToTeleport(adminPosition))
             {
-                var teleportPosition = GetTeleportPosition();
-                Player.SnapToTeleport(teleportPosition);
-                SendRPC(Player.PlayerId);
-                Utils.NotifyRoles();
-
-                _ = new LateTask(() =>
-                    {
-                        Player.SnapToTeleport(LastPosition);//元の位置へ。
-                        SendRPC(Player.PlayerId);
-                        Utils.NotifyRoles();
-
-                        // ターゲットの足止め解除
-                        Main.AllPlayerSpeed[Player.PlayerId] = Main.RealOptionsData.GetFloat(FloatOptionNames.PlayerSpeedMod);
-                        Player.MarkDirtySettings();
-                        Logger.Info($"{Player.GetNameWithRole()} : プレイヤーの足止め解除", "EvilHacker");
-                        LastPosition = default;
-                        Player.RpcResetAbilityCooldown();
-                    }, 2.5f, "ReturnPosition");
-            }, 2.5f, "Warp");
+                EndWarp();
+                return;
+            }
+            _ = new LateTask(() =>
+            {
+                if (!CanContinueWarp(id)) return;
+                Player.SnapToTeleport(lastPosition, force: true);
+                EndWarp();
+                Player.RpcResetAbilityCooldown();
+            }, StayTime, "EvilHacker.Return");
+        }, WarpDelay, "EvilHacker.Warp");
         return true;
     }
-    private void SendRPC(byte targetId)
+    public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target) => CancelWarp();
+    public override void OnStartMeeting() => CancelWarp();
+    // 会議の後は全員が出現位置へ戻るので、元の位置へは戻さず足止めだけ外す
+    private void CancelWarp()
     {
-        if (!AmongUsClient.Instance.AmHost) return;
-        using var sender = CreateSender(CustomRPC.EvilHackerWarpSync);
-        sender.Writer.Write(targetId);
+        warpId++;
+        EndWarp();
     }
-
-    public override void ReceiveRPC(MessageReader reader, CustomRPC rpcType)
+    private void Freeze()
     {
-        if (rpcType != CustomRPC.EvilHackerWarpSync) return;
-
-        var targetId = reader.ReadByte();
+        TownOfHostL.Modules.PlayerSpeed.Freeze(playerId, "EvilHacker");
+        Player.MarkDirtySettings();
+    }
+    private void EndWarp()
+    {
+        if (!TownOfHostL.Modules.PlayerSpeed.Has(playerId, "EvilHacker")) return;
+        TownOfHostL.Modules.PlayerSpeed.Remove(playerId, "EvilHacker");
+        if (Player != null) Player.MarkDirtySettings();
     }
 }

@@ -14,7 +14,8 @@ namespace TownOfHostL.Roles.AddOns.Impostor
             AddOnGroup.Impostor,
             "#ff1919",
             setupOptions: SetupCustomOption,
-            flags: RoleFlags.FirstWriteAddOn | RoleFlags.DontSelectLoyalty);
+            flags: RoleFlags.FirstWriteAddOn | RoleFlags.DontSelectLoyalty,
+            chatCommand: "ラストインポスター");
 
         private static readonly int Id = (int)offsetId.AddonImp + 0;
         public static byte currentId = byte.MaxValue;
@@ -62,7 +63,7 @@ namespace TownOfHostL.Roles.AddOns.Impostor
         {
             //ラストインポスターがすでにいれば処理不要
             if (currentId != byte.MaxValue) return;
-            if (CurrentGameMode == CustomGameMode.HideAndSeek
+            if (TownOfHostL.Core.Modes.ModeCatalog.IsHideAndSeekWithOwnRoles
                 || !CustomRoles.LastImpostor.IsPresent() || Main.AliveImpostorCount != 1)
                 return;
             foreach (var pc in Main.AllAlivePlayerControls)

@@ -7,6 +7,7 @@ namespace TownOfHostL.Roles.Impostor;
 
 public sealed class NekoKabocha : RoleBase, IImpostor//, INekomata
 {
+    public override bool RevengesOnExile => revengeOnExile;
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
             typeof(NekoKabocha),

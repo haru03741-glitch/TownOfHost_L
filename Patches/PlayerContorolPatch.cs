@@ -17,6 +17,8 @@ using static TownOfHostL.Translator;
 using TownOfHostL.Roles.Impostor;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 
+using TownOfHostL.Core.Modes;
+
 namespace TownOfHostL;
 
 [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.CheckProtect))]
@@ -26,9 +28,7 @@ class CheckProtectPatch
     {
         if (!AmongUsClient.Instance.AmHost) return false;
         Logger.Info("CheckProtect発生: " + __instance.GetNameWithRole() + "=>" + target.GetNameWithRole(), "CheckProtect");
-        if (__instance.Is(CustomRoles.Sheriff)
-            || __instance.Is(CustomRoles.SillySheriff)
-            || __instance.Is(CustomRoles.Hunter)
+        if (__instance.IsCountedCrewKiller()
             || __instance.Is(CustomRoles.MadSheriff))
         {
             if (__instance.Data.IsDead)
@@ -70,7 +70,7 @@ class CheckMurderPatch
     private static void RevealVisualRoleBeforeMurder(PlayerControl killer, PlayerControl target)
     {
 
-        bool killerIsViper = killer.Is(CustomRoles.Viper) || killer.Is(CustomRoles.NormalViper);
+        bool killerIsViper = killer.Is(RoleTypes.Viper);
         if (killerIsViper)
         {
             foreach (var seer in Main.AllPlayerControls)
@@ -93,7 +93,7 @@ class CheckMurderPatch
             }, 2f, "RevertViperVisualReveal");
         }
 
-        bool targetIsNoisemaker = target.Is(CustomRoles.Noisemaker) || target.Is(CustomRoles.NormalNoisemaker);
+        bool targetIsNoisemaker = target.Is(RoleTypes.Noisemaker);
         if (targetIsNoisemaker)
         {
             foreach (var seer in Main.AllPlayerControls)
@@ -157,7 +157,7 @@ class CheckMurderPatch
         TimeSinceLastKill[killer.PlayerId] = 0f;
 
         // HideAndSeek_キルボタンが使用可能か
-        if ((Options.CurrentGameMode == CustomGameMode.HideAndSeek || Options.IsStandardHAS) && Options.HideAndSeekKillDelayTimer > 0)
+        if (ModeCatalog.Current.IsHideAndSeek && Options.HideAndSeekKillDelayTimer > 0)
         {
             Logger.Info("HideAndSeekの待機時間中だったため、キルをキャンセルしました。", "CheckMurder");
             return false;
@@ -219,7 +219,7 @@ class MurderPlayerPatch
                     target.RpcShapeshift(target, false);
                 }
             }
-            Camouflage.RpcSetSkin(Camouflage.IsCamouflage, target, ForceRevert: true, RevertToDefault: true);
+            Camouflage.RpcSetSkin(Camouflage.IsCamouflage, target, ForceRevert: true);
             if (Options.IsSyncColorMode && Options.SCM_RestoredDeadPlayer.GetBool())
             {
                 SkinChangeMode.RpcSetSkin(target, target);
@@ -240,7 +240,7 @@ class MurderPlayerPatch
             AntiBlackout.SetRoleChange(__instance);
         }, 0.5f, "PostMurderSetRoleChange");
         var killer = __instance;
-        bool killerIsViper = killer.Is(CustomRoles.Viper) || killer.Is(CustomRoles.NormalViper);
+        bool killerIsViper = killer.Is(RoleTypes.Viper);
         if (killerIsViper)
         {
             foreach (var seer in Main.AllPlayerControls)
@@ -380,8 +380,14 @@ class ShapeshiftPatch
 
         if (!shapeshifting) Camouflage.RpcSetSkin(Camouflage.IsCamouflage, __instance);
 
-        //変身解除のタイミングがずれて名前が直せなかった時のために強制書き換え
-        if (!shapeshifting)
+        // 本編の変身は名前を変身先の名前に、解除は本名に戻すので、見る人ごとの名前 (役職表示や通信妨害中の隠した名前) を配り直す。
+        // 変身はすぐに送る (送り直しの元になる LastNotifyNames を変身先の名前にしておく)。
+        // 解除はタイミングがずれて名前が直せないことがあるので、少し待ってから送る
+        if (shapeshifting)
+        {
+            Utils.NotifyRoles(NoCache: true);
+        }
+        else
         {
             _ = new LateTask(() =>
             {
@@ -553,16 +559,13 @@ partial class ReportDeadBodyPatch
             goto confirmed;
         }
         if (SpecialMeeting) return true;
-        if (Options.IsStandardHAS && target != null && __instance == target.Object) return true; //[StandardHAS] ボタンでなく、通報者と死体が同じなら許可
-        if (Options.CurrentGameMode == CustomGameMode.HideAndSeek || Options.IsStandardHAS) return false;
-        if (Options.IsCCMode && CatchCat.Option.IgnoreReport.GetBool() && target != null) return false;
+        if (!ModeCatalog.Current.AllowsReport(__instance, target)) return false;
         if (target == null && Options.DisableButtonInMushroomMixup.GetBool() && MushroomMixupUpdateSystemPatch.InSabotage)
         {
             Logger.Info("DisableButton InMushroomMixup", "ReportDeadBody");
             return false;
         }
-        if ((reporter.Object.Is(CustomRoles.NonReport) || reporter.Object.Is(CustomRoles.FoxSpirit)) &&
-            target != null && !target.Object.Is(CustomRoles.Bait) && !target.Object.Is(CustomRoles.AddBait))
+        if (target != null && TownOfHostL.Core.PlayerTraits.CannotReport(reporter.Object, target.Object))
         {
             DontReportMarkList.Add(reporter.PlayerId);
             Utils.NotifyRoles(SpecifySeer: reporter.Object);
@@ -652,7 +655,7 @@ partial class ReportDeadBodyPatch
             // 変身解除処理
             if (Main.CheckShapeshift.ContainsKey(pc.PlayerId))
             {
-                Camouflage.RpcSetSkin(Camouflage.IsCamouflage, pc, RevertToDefault: true);
+                Camouflage.RpcSetSkin(Camouflage.IsCamouflage, pc);
             }
         }
 
@@ -720,8 +723,7 @@ class SetColorPatch
     {
         //色変更バグ対策
         if (!AmongUsClient.Instance.AmHost || __instance.CurrentOutfit.ColorId == bodyColor || IsAntiGlitchDisabled) return true;
-        if ((AmongUsClient.Instance.IsGameStarted && Options.CurrentGameMode == CustomGameMode.HideAndSeek)
-            || (AmongUsClient.Instance.IsGameStarted && Options.IsCCMode))
+        if (AmongUsClient.Instance.IsGameStarted && ModeCatalog.Current.KillsOnColorChange)
         {
             //ゲーム中に色を変えた場合
             __instance.RpcMurderPlayer(__instance);
@@ -736,7 +738,7 @@ class CoEnterVentPatch
     {
         if (AmongUsClient.Instance.AmHost)
         {
-            if (Options.CurrentGameMode == CustomGameMode.HideAndSeek && Options.IgnoreVent.GetBool())
+            if (ModeCatalog.Current.BootsFromVents)
                 __instance.RpcBootFromVent(id);
 
             // ホストが RpcEnterVent を呼んだ時は、その中で CoEnterVent も走る。役職へは RpcEnterVent の後置処理から 1 回だけ渡す
@@ -816,7 +818,7 @@ class PlayerControlCompleteTaskPatch
         ret &= Workhorse.OnCompleteTask(pc);
         CompreteCrew.OnCompleteTask(pc);
 
-        if (Options.IsCCMode) CatchCat.CatPlayer.OnCompleteTask(pc, taskState);
+        if (ModeCatalog.IsCatchCat) CatchCat.CatPlayer.OnCompleteTask(pc, taskState);
 
         Utils.NotifyRoles();
         return ret;

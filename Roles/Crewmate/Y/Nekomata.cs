@@ -5,6 +5,7 @@ using TownOfHostL.Roles.Core;
 namespace TownOfHostL.Roles.Crewmate;
 public sealed class Nekomata : RoleBase
 {
+    public override bool RevengesOnExile => true;
     public static readonly SimpleRoleInfo RoleInfo =
          SimpleRoleInfo.Create(
             typeof(Nekomata),

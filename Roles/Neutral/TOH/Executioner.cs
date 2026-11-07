@@ -37,7 +37,6 @@ public sealed class Executioner : RoleBase, IAdditionalWinner
 
         TargetExiled = false;
     }
-    public static byte WinnerID;
 
     private static OptionItem OptionCanTargetImpostor;
     private static OptionItem OptionCanTargetNeutralKiller;
@@ -69,6 +68,8 @@ public sealed class Executioner : RoleBase, IAdditionalWinner
         OptionCanTargetNeutralKiller = BooleanOptionItem.Create(RoleInfo, 12, OptionName.ExecutionerCanTargetNeutralKiller, false, false);
         OptionChangeRolesAfterTargetKilled = StringOptionItem.Create(RoleInfo, 11, OptionName.ExecutionerChangeRolesAfterTargetKilled, cRolesString, 1, false);
     }
+    public override bool NeedsSeenNames => true;
+
     public override void Add()
     {
         //ターゲット割り当て
@@ -81,8 +82,8 @@ public sealed class Executioner : RoleBase, IAdditionalWinner
         {
             if (playerId == target.PlayerId) continue;
             else if (!CanTargetImpostor && target.Is(CustomRoleTypes.Impostor)) continue;
-            else if (!CanTargetNeutralKiller && target.IsNeutralKiller()) continue;
-            if (target.Is(CustomRoles.GM)) continue;
+            else if (!CanTargetNeutralKiller && target.IsCountedNeutralKiller()) continue;
+            if (target.GetCustomRole().IsSpectator()) continue;
 
             targetList.Add(target);
         }

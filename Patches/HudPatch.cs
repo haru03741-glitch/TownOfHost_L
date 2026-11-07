@@ -10,6 +10,8 @@ using TMPro;
 using TownOfHostL.Templates;
 using TownOfHostL.Modules;
 
+using TownOfHostL.Core.Modes;
+
 namespace TownOfHostL;
 
 [HarmonyPatch(typeof(HudManager))]
@@ -43,6 +45,22 @@ class HudManagerPatch
     [HarmonyPatch(nameof(HudManager.Start)), HarmonyPostfix]
     public static void StartPostfix(HudManager __instance)
     {
+        CreateOptionShower(__instance);
+        optionShowerText.transform.position = new Vector3(-3.3f, 2.85f, 1f);
+    }
+
+    /// <summary>TOHL が休んでいる間に HudManager が作られた時に、戻ってから作る。</summary>
+    public static void EnsureOptionShower(HudManager hud)
+    {
+        if (optionShowerText != null) return;
+        CreateOptionShower(hud);
+        // HUD はカメラと一緒に動き、この時のカメラは原点にいない。Start の時と同じ見た目の位置になるよう HUD からの相対で置く
+        var hudPos = hud.transform.position;
+        optionShowerText.transform.position = new Vector3(hudPos.x - 3.3f, hudPos.y + 2.85f, 1f);
+    }
+
+    private static void CreateOptionShower(HudManager __instance)
+    {
         optionShowerText = TMPTemplate.Create(
             "OptionShowerText",
             "",
@@ -51,7 +69,6 @@ class HudManagerPatch
             setActive: false,
             parent: __instance.transform);
         lastOptionText = null;
-        optionShowerText.transform.position = new Vector3(-3.3f, 2.85f, 1f);
     }
     [HarmonyPatch(nameof(HudManager.Update)), HarmonyPostfix]
     public static void UpdatePostfix(HudManager __instance)
@@ -168,14 +185,8 @@ class HudManagerPatch
                     __instance.KillButton.SetDisabled();
                     __instance.KillButton.ToggleVisible(false);
                 }
-                switch (player.GetCustomRole())
-                {
-                    case CustomRoles.Madmate:
-                    case CustomRoles.SKMadmate:
-                    case CustomRoles.Jester:
-                        TaskTextPrefix += GetString(StringNames.FakeTasks);
-                        break;
-                }
+                if (player.GetCustomRole().HasRoleFlag(RoleFlags.FakeTasksLabel))
+                    TaskTextPrefix += GetString(StringNames.FakeTasks);
 
                 bool CanUseVent = player.CanUseImpostorVentButton();
                 __instance.ImpostorVentButton.ToggleVisible(CanUseVent);
@@ -320,7 +331,7 @@ class HudManagerCoShowIntroPatch
     public static bool Prefix(HudManager __instance, ref Il2CppSystem.Collections.IEnumerator __result)
     {
         if (AmongUsClient.Instance.AmHost
-            && Options.CurrentGameMode == CustomGameMode.Standard
+            && ModeCatalog.Current.UsesStandardRoles
             && Cancel)
         {
             Logger.Warn("イントロの表示をキャンセルしました", "CoShowIntro");

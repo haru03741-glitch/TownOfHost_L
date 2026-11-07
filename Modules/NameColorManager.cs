@@ -1,7 +1,6 @@
 using Hazel;
 
 using TownOfHostL.Roles.Core;
-using TownOfHostL.Roles.Crewmate;
 using TownOfHostL.Roles.Impostor;
 using TownOfHostL.Roles.Neutral;
 
@@ -12,7 +11,7 @@ namespace TownOfHostL
         public static string ApplyNameColorData(this string name, PlayerControl seer, PlayerControl target, bool isMeeting)
         {
             if (!AmongUsClient.Instance.IsGameStarted) return name;
-            if (isMeeting && Snitch.IsCannotConfirmKillRoles(seer,target)) return name;
+            if (isMeeting && (seer.GetRoleClass()?.HidesNameColorInMeeting(target) ?? false)) return name;
             if (Options.IsSyncColorMode && isMeeting) return name;
 
             if (!TryGetData(seer, target, out var colorCode))
@@ -20,8 +19,8 @@ namespace TownOfHostL
                 if (KnowTargetRoleColor(seer, target, isMeeting))
                     colorCode = target.GetRoleColorCode();
             }
-            // ジャニターターゲットの色上書き
-            colorCode = Godfather.OverrideNameColorByJanitorTarget(target, colorCode);
+            // 役職に関わらない色の上書き (ジャニターの対象など)。登録はその試合の役職が行う
+            colorCode = CustomRoleManager.ApplyNameColorOthers(seer, target, colorCode);
 
             string openTag = "", closeTag = "";
             if (colorCode != "")
@@ -36,13 +35,10 @@ namespace TownOfHostL
         private static bool KnowTargetRoleColor(PlayerControl seer, PlayerControl target, bool isMeeting)
         {
             return seer == target
-                || target.Is(CustomRoles.GM)
-                || (seer.Is(CustomRoleTypes.Impostor) && target.Is(CustomRoleTypes.Impostor) && !seer.Is(CustomRoles.StrayWolf) && !target.Is(CustomRoles.StrayWolf))
-                || Mare.KnowTargetRoleColor(target, isMeeting)
-                || (target.Is(CustomRoles.Workaholic) && Workaholic.Seen)
-                || target.Is(CustomRoles.Rainbow)
-                || FortuneTeller.KnowTargetRoleColor(seer, target, isMeeting)
-                || (seer.Is(CustomRoles.Psychic) && ((Psychic)seer.GetRoleClass()).KnowTargetRoleColor(target) && isMeeting);
+                || target.GetCustomRole().IsSpectator()
+                || (seer.Is(CustomRoleTypes.Impostor) && target.Is(CustomRoleTypes.Impostor) && !seer.GetCustomRole().IsLoneImpostor() && !target.GetCustomRole().IsLoneImpostor())
+                || (target.GetRoleClass()?.ShowsRoleColorToAll(isMeeting) ?? false)
+                || (seer.GetRoleClass()?.KnowsRoleColorOf(target, isMeeting) ?? false);
         }
         public static bool TryGetData(PlayerControl seer, PlayerControl target, out string colorCode)
         {

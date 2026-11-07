@@ -49,7 +49,7 @@ public static class ModUnloaderScreen
             ClientActionItem.CustomBackground.gameObject.SetActive(false);
             ClientActionItem.ModOptionsButton.gameObject.SetActive(false);
             Logger.Info("ModをUnloadします", nameof(ModUnloaderScreen));
-            Harmony.UnpatchAll();
+            TownOfHostL.Core.VanillaHideAndSeek.UnpatchForUnload();
             Main.Instance.Unload();
         }));
     }

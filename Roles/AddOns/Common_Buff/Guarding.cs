@@ -15,7 +15,9 @@ public static class Guarding
         "#8cffff",
         "Ｇ",
         setupOptions: SetupCustomOption,
-        onAdd: Add);
+        onAdd: Add,
+        chatCommand: "ガーディング",
+        assignAtRandom: true);
 
     private static readonly int Id = (int)offsetId.AddonBuff + 1000;
     private static List<byte> playerIdList = new();

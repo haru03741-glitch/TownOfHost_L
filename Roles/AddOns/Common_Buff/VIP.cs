@@ -14,7 +14,9 @@ public static class VIP
         "#ffff00",
         "Ｖ",
         setupOptions: SetupCustomOption,
-        onAdd: Add);
+        onAdd: Add,
+        chatCommand: "VIP",
+        assignAtRandom: true);
 
     private static readonly int Id = (int)offsetId.AddonBuff + 500;
     private static List<byte> playerIdList = new();

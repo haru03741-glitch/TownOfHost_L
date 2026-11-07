@@ -195,15 +195,15 @@ public sealed class Nova : HamoRoleBase, IImpostor, IUsePhantomButton
     // チャージ中はほぼ止める(歩こうとした向きだけ読めるくらい)。ビーム中は完全に止める
     private void SetSpeed(float speed)
     {
-        if (savedSpeed < 0f) savedSpeed = Main.AllPlayerSpeed[Player.PlayerId];
-        Main.AllPlayerSpeed[Player.PlayerId] = speed;
+        if (savedSpeed < 0f) savedSpeed = HamoSpeedTable.Instance[Player.PlayerId];
+        HamoSpeedTable.Instance[Player.PlayerId] = speed;
         Player.MarkDirtySettings();
     }
 
     private void RestoreSpeed()
     {
         if (savedSpeed < 0f) return;
-        Main.AllPlayerSpeed[Player.PlayerId] = savedSpeed;
+        HamoSpeedTable.Instance[Player.PlayerId] = savedSpeed;
         savedSpeed = -1f;
         Player.MarkDirtySettings();
     }

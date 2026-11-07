@@ -222,7 +222,7 @@ namespace TownOfHostL
                 Vector2 pos = PlayerControl.LocalPlayer.NetTransform.transform.position;
                 foreach(var pc in PlayerControl.AllPlayerControls) {
                     if(!pc.AmOwner) {
-                        pc.NetTransform.RpcSnapTo(pos);
+                        pc.RpcSnapTo(pos);
                         pos.x += 0.5f;
                     }
                 }

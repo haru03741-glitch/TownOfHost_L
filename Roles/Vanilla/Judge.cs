@@ -12,7 +12,8 @@ public sealed class Judge : RoleBase
             typeof(Judge),
             player => new Judge(player),
             RoleTypes.Judge,
-            "#8cffff"
+            "#8cffff",
+            flags: RoleFlags.NoComingOutOption
         );
     public Judge(PlayerControl player)
     : base(

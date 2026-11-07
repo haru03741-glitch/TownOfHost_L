@@ -431,6 +431,8 @@ public class GameSettingMenuPatch
         ModGameOptionsMenu.CategoryHeaderList = new();
         ModGameOptionsMenu.SettingsMenus = new();
         GameOptionsMenuPatch.Instance = null;
+        // 閉じた後にメニューの外 (コマンドやプリセットの切り替え) から値が変わっても、破棄された行を書きにいかない
+        foreach (var option in OptionItem.AllOptions) option.OptionBehaviour = null;
     }
     private static void ReleaseMenu(GameOptionsMenu menu)
     {

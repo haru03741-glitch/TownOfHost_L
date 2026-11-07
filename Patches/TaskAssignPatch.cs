@@ -85,19 +85,18 @@ namespace TownOfHostL
                 NumShortTasks = data.numShortTasks.GetInt();
             }
 
-            if (pc.Is(CustomRoles.VentManager))
-                (hasCommonTasks, NumLongTasks, NumShortTasks) = VentManager.TaskData;
-            if (pc.Is(CustomRoles.FoxSpirit))
-                (hasCommonTasks, NumLongTasks, NumShortTasks) = FoxSpirit.TaskData;
+            // 数の決まりの順: 設定の上書き → 属性 (ワークホース) → 役職の登録の TaskCount
             if (pc.Is(CustomRoles.Workhorse))
                 (hasCommonTasks, NumLongTasks, NumShortTasks) = Workhorse.TaskData;
-            if (pc.Is(CustomRoles.Rabbit) && Rabbit.IsFinish(pc))
-                (hasCommonTasks, NumLongTasks, NumShortTasks) = Rabbit.TaskData;
+            var roleInfo = role.GetRoleInfo();
+            if (roleInfo?.TaskCount?.Invoke(pc) is { } roleTaskCount)
+                (hasCommonTasks, NumLongTasks, NumShortTasks) = roleTaskCount;
+            bool onlyVentCleaning = roleInfo?.OnlyVentCleaningTask == true;
 
             if (taskTypeIds.Count == 0) hasCommonTasks = false;
             if (!hasCommonTasks && NumLongTasks == 0 && NumShortTasks == 0) NumShortTasks = 1;
                        
-            if (!pc.Is(CustomRoles.VentManager) && !pc.Is(CustomRoles.FoxSpirit)
+            if (!onlyVentCleaning
                 && hasCommonTasks && numCommonTasks < 0
                 && NumLongTasks == Main.NormalOptions.NumLongTasks
                 && NumShortTasks == Main.NormalOptions.NumShortTasks)
@@ -132,7 +131,7 @@ namespace TownOfHostL
             Shuffle<NormalPlayerTask>(ShortTasks);
 
            
-            if (pc.Is(CustomRoles.VentManager) || pc.Is(CustomRoles.FoxSpirit))
+            if (onlyVentCleaning)
             {
                 TasksList.Clear();
                 ShortTasks.Clear();

@@ -17,6 +17,8 @@ public sealed class Mafia : RoleBase, IImpostor
             SetUpOptionItem,
             "マフィア"
         );
+    public override string GetRoleKey(bool infoLong)
+        => infoLong ? null : (CanUseKillButton() ? "AfterMafia" : "BeforeMafia");
     public Mafia(PlayerControl player)
     : base(
         RoleInfo,

@@ -3,6 +3,9 @@ using UnityEngine;
 using TownOfHostL.Roles.Core;
 using static TownOfHostL.Options;
 using TownOfHostL.Attributes;
+using TownOfHostL.Core.Win;
+using TownOfHostL.Roles.Core.Interfaces;
+using TownOfHostL.Roles.Neutral;
 
 namespace TownOfHostL.Roles.AddOns.Common;
 
@@ -14,7 +17,9 @@ public static class Lovers
         "#ff6be4",
         setupOptions: SetupCustomOption,
         onAdd: Add,
-        flags: RoleFlags.FirstWriteAddOn | RoleFlags.Pair);
+        flags: RoleFlags.FirstWriteAddOn | RoleFlags.Pair | RoleFlags.TasksNotCountedForWin | RoleFlags.NoTeamWin,
+        win: new(SoloWinTier.Pair, CustomWinner.Lovers, CheckSoloWin, CheckAdditionalWin),
+        chatCommand: "ラバーズ");
 
     private static Color RoleColor => Utils.GetRoleColor(CustomRoles.Lovers);
     private static readonly int Id = (int)offsetId.AddonNeu + 0;
@@ -40,6 +45,14 @@ public static class Lovers
             playersList.Add(lover);
     }
     public static bool IsEnable => playersList.Count > 0;
+
+    /// <summary>追加勝利の設定 (恋人・純愛者のどちらか) が入っていれば、単独勝利せずに追加勝利する</summary>
+    private static bool WinsAdditionally => LoversAddWin.GetBool() || PlatonicLover.AddWin;
+    /// <summary>恋人が全員生きていれば、タスク勝利以外の勝ちを横取りする</summary>
+    private static bool CheckSoloWin(WinnerResolver.Context ctx, PlayerControl pc)
+        => pc.IsAlive() && playersList.Count > 0 && playersList.TrueForAll(p => p.IsAlive())
+           && ctx.Reason != GameOverReason.CrewmatesByTask && !WinsAdditionally;
+    private static bool CheckAdditionalWin(PlayerControl pc) => pc.IsAlive() && WinsAdditionally;
     public static bool IsThisRole(byte playerId)
     {
         var pc = Utils.GetPlayerById(playerId);

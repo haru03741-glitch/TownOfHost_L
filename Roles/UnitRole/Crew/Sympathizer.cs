@@ -47,6 +47,8 @@ public sealed class Sympathizer : RoleBase
         OptionSympaCheckedTasks = IntegerOptionItem.Create(RoleInfo, 10, OptionName.SympaCheckedTasks, new(1, 20, 1), 5, false)
             .SetValueFormat(OptionFormat.Pieces);
     }
+    public override bool NeedsSeenNames => true;
+
     public override string GetMark(PlayerControl seer, PlayerControl seen, bool isForMeeting = false)
     {
         //seenが省略の場合seer

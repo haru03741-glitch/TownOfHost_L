@@ -1,19 +1,13 @@
+using TownOfHostL.Core.Win;
 using TownOfHostL.Roles.Core;
 
 namespace TownOfHostL.CatchCat;
 
-class GameEndPredicate : TownOfHostL.GameEndPredicate
+static class GameEnd
 {
-    public override bool CheckForEndGame(out GameOverReason reason)
-    {
-        reason = GameOverReason.ImpostorsByKill;
-        if (CustomWinnerHolder.WinnerTeam != CustomWinner.Default) return false;
+    public static readonly GameEndRuleSet Rules = new(CheckGameEndByLivingPlayers);
 
-        if (CheckGameEndByLivingPlayers(out reason)) return true;
-        return false;
-    }
-
-    public bool CheckGameEndByLivingPlayers(out GameOverReason reason)
+    public static bool CheckGameEndByLivingPlayers(out GameOverReason reason)
     {
         reason = GameOverReason.ImpostorsByKill;
 

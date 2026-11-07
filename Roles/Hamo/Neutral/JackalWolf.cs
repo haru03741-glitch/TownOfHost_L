@@ -430,7 +430,7 @@ public sealed class JackalWolf : HamoRoleBase, ILNKiller, IUsePhantomButton, IDo
 
     public override RoleTypes? AfterMeetingRole => (AddRole as HamoRoleBase)?.AfterMeetingRole ?? null;
 
-    public override void CheckWinner(GameOverReason reason) => AddRole?.CheckWinner(reason);
+    public override void CheckWinner(GameOverReason reason) => (AddRole as HamoRoleBase)?.CheckWinner(reason);
 
     public bool CanKill => AddRole is IKiller killer ? killer.CanKill : true;
 

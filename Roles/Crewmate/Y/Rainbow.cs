@@ -70,6 +70,9 @@ public sealed class Rainbow : RoleBase
         colorchange += Time.fixedDeltaTime;
     }
 
+    public override bool ShowsRoleColorToAll(bool isMeeting) => true;
+    public override bool KeepsOwnNameInSyncColorMeeting => true;
+
     public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, bool isMeeting, ref bool enabled, ref string roleText)
     {
         if (!(!isMeeting && DontSeeTaskTurn)) enabled = true;

@@ -5,9 +5,10 @@ using AmongUs.GameOptions;
 using UnityEngine;
 
 using TownOfHostL.Roles.Core;
+using TownOfHostL.Roles.Core.Interfaces;
 
 namespace TownOfHostL.Roles.Neutral;
-public sealed class Lawyer : RoleBase
+public sealed class Lawyer : RoleBase, ILateWinner
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
@@ -97,7 +98,7 @@ public sealed class Lawyer : RoleBase
         foreach (var target in Main.AllPlayerControls)
         {
             if (Player == target) continue;
-            if ((target.Is(CustomRoleTypes.Impostor) || target.IsNeutralKiller()) &&
+            if ((target.Is(CustomRoleTypes.Impostor) || target.IsCountedNeutralKiller()) &&
                 (includeLovers || !target.Is(CustomRoles.Lovers))
             ) targetList.Add(target);
         }
@@ -197,29 +198,25 @@ public sealed class Lawyer : RoleBase
         Player.RpcSetCustomRole(CustomRoles.Pursuer);
         Utils.NotifyRoles();
     }
-    public static void EndGameCheck()
+    /// <summary>勝者に依頼人がいれば、生きていれば単独勝利・死んでいれば追加勝利</summary>
+    public void CheckLateWin()
     {
-        foreach (var pc in Main.AllPlayerControls.Where(c => c.GetCustomRole() == CustomRoles.Lawyer))
+        // 勝者に依頼人が含まれている時
+        if (Target != null &&
+            (CustomWinnerHolder.WinnerIds.Contains(Target.PlayerId) ||
+             CustomWinnerHolder.WinnerRoles.Contains(Target.GetCustomRole())))
         {
-            var role = (Lawyer)pc.GetRoleClass();
-
-            // 勝者に依頼人が含まれている時
-            if (role.Target != null &&
-                (CustomWinnerHolder.WinnerIds.Contains(role.Target.PlayerId) ||
-                 CustomWinnerHolder.WinnerRoles.Contains(role.Target.GetCustomRole())))
+            // 弁護士が生きている時 リセットして単独勝利
+            if (Player.IsAlive())
             {
-                // 弁護士が生きている時 リセットして単独勝利
-                if (pc.IsAlive())
-                {
-                    CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Lawyer);
-                    CustomWinnerHolder.WinnerIds.Add(pc.PlayerId);
-                }
-                // 弁護士が死んでいる時 勝者と共に追加勝利
-                else
-                {
-                    CustomWinnerHolder.WinnerIds.Add(pc.PlayerId);
-                    CustomWinnerHolder.AdditionalWinnerRoles.Add(CustomRoles.Lawyer);
-                }
+                CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Lawyer);
+                CustomWinnerHolder.WinnerIds.Add(Player.PlayerId);
+            }
+            // 弁護士が死んでいる時 勝者と共に追加勝利
+            else
+            {
+                CustomWinnerHolder.WinnerIds.Add(Player.PlayerId);
+                CustomWinnerHolder.AdditionalWinnerRoles.Add(CustomRoles.Lawyer);
             }
         }
     }

@@ -45,13 +45,13 @@ public sealed class Trapper : RoleBase
         if (info.IsMeeting) return;
 
         var killer = info.AttemptKiller;
-        var tmpSpeed = Main.AllPlayerSpeed[killer.PlayerId];
-        Main.AllPlayerSpeed[killer.PlayerId] = Main.MinSpeed;    //tmpSpeedで後ほど値を戻すので代入しています。
+        var speedKey = $"Trapper{Player.PlayerId}";
+        TownOfHostL.Modules.PlayerSpeed.Freeze(killer.PlayerId, speedKey);
         ReportDeadBodyPatch.CannotReportList.Add(killer.PlayerId);
         killer.MarkDirtySettings();
         _ = new LateTask(() =>
         {
-            Main.AllPlayerSpeed[killer.PlayerId] = tmpSpeed;
+            TownOfHostL.Modules.PlayerSpeed.Remove(killer.PlayerId, speedKey);
             ReportDeadBodyPatch.CannotReportList.Remove(killer.PlayerId);
             killer.MarkDirtySettings();
             RPC.PlaySoundRPC(killer.PlayerId, Sounds.TaskComplete);

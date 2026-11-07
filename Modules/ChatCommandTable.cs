@@ -93,6 +93,7 @@ public static class ChatCommandTable
             Host = c => ShowNow(c.Arg(1), byte.MaxValue),
             Remote = c => ShowNow(c.Arg(1), c.Player.PlayerId),
         },
+        new("/mode") { Host = c => Core.VanillaHideAndSeek.Command(c.Args) },
         new("/w") { Host = ForceWin },
         new("/dis") { Host = ForceDisconnectEnd },
         new("/h", "/help")

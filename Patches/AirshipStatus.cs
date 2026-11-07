@@ -11,7 +11,7 @@ namespace TownOfHostL
     {
         public static bool Prefix()
         {
-            if (PlayerControl.LocalPlayer.Is(CustomRoles.GM) && // GMは湧き画面をスキップ
+            if (PlayerControl.LocalPlayer.GetCustomRole().IsSpectator() && // 観戦者は湧き画面をスキップ
                 !RandomSpawn.CustomNetworkTransformPatch.FirstTP[PlayerControl.LocalPlayer.PlayerId])
                 return false;
 

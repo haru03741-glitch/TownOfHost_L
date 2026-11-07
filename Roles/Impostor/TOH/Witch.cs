@@ -31,11 +31,15 @@ namespace TownOfHostL.Roles.Impostor
         {
             CustomRoleManager.MarkOthers.Add(GetMarkOthers);
         }
+        // 同じ役職が複数いる時に、1 人の作成や破棄で他の持ち主の分まで消さないよう、共有の一覧は試合の開始で空にし、破棄では自分の分だけ外す
+        [TownOfHostL.Attributes.GameModuleInitializer]
+        public static void Init() => Witches.Clear();
         public override void OnDestroy()
         {
-            Witches.Clear();
+            Witches.Remove(this);
             SpelledPlayer.Clear();
-            CustomRoleManager.MarkOthers.Remove(GetMarkOthers);
+            // GetMarkOthers は static なので登録は 1 つに畳まれる。最後の 1 人が消える時だけ外す
+            if (Witches.Count == 0) CustomRoleManager.MarkOthers.Remove(GetMarkOthers);
         }
         public static OptionItem OptionModeSwitchAction;
         enum OptionName

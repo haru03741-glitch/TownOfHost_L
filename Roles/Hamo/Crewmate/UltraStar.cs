@@ -301,7 +301,7 @@ public sealed class UltraStar : HamoRoleBase, IKiller, ISchrodingerCatOwner
 
     }
 
-    public override void StartGameTasks() => Main.AllPlayerSpeed[Player.PlayerId] += Speed;
+    public override void StartGameTasks() => HamoSpeedTable.Instance[Player.PlayerId] += Speed;
 
 
 
@@ -313,7 +313,7 @@ public sealed class UltraStar : HamoRoleBase, IKiller, ISchrodingerCatOwner
 
     {
 
-        Main.AllPlayerSpeed[Player.PlayerId] -= Speed;
+        HamoSpeedTable.Instance[Player.PlayerId] -= Speed;
 
         base.ChengeRoleAdd();
 

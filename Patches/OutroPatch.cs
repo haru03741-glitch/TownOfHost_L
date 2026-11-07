@@ -12,6 +12,8 @@ using TownOfHostL.Templates;
 using static TownOfHostL.Translator;
 using TownOfHostL.Roles.Neutral;
 
+using TownOfHostL.Core.Modes;
+
 namespace TownOfHostL;
 
 [HarmonyPatch(typeof(AmongUsClient), nameof(AmongUsClient.OnGameEnd))]
@@ -42,7 +44,11 @@ class EndGamePatch
                 if (date == DateTime.MinValue) continue;
                 var killerId = kvp.Value.GetRealKiller();
                 var targetId = kvp.Key;
-                sb.Append($"\n{date:T} {Main.AllPlayerNames[targetId]}({RoleText.GetRoleNameText(targetId, showSubRole:false)}) [{Utils.GetVitalText(kvp.Key)}]");
+                // イントロの後なら試合の経過時間 (分:秒) で、そうでなければ時刻で出す
+                string time = Main.IntroEndTime != DateTime.MinValue && date >= Main.IntroEndTime
+                    ? $"{(int)(date - Main.IntroEndTime).TotalMinutes:00}:{(date - Main.IntroEndTime).Seconds:00}"
+                    : date.ToString("T");
+                sb.Append($"\n{time} {Main.AllPlayerNames[targetId]}({RoleText.GetRoleNameText(targetId, showSubRole:false)}) [{Utils.GetVitalText(kvp.Key)}]");
                 if (killerId != byte.MaxValue && killerId != targetId)
                     sb.Append($"\n\t\t<size=75%>⇐ {Main.AllPlayerNames[killerId]}({RoleText.GetRoleNameText(killerId, showSubRole: false)})</size>");
             }
@@ -69,7 +75,7 @@ class EndGamePatch
             if (CustomWinnerHolder.WinnerTeam != CustomWinner.Draw && CustomWinnerHolder.WinnerTeam != CustomWinner.None)
             {
                 //HideAndSeek専用
-                if (Options.CurrentGameMode == CustomGameMode.HideAndSeek)
+                if (ModeCatalog.IsHideAndSeekWithOwnRoles)
                 {
                     winner = new();
                     foreach (var pc in Main.AllPlayerControls)
@@ -106,7 +112,7 @@ class EndGamePatch
             Main.winnerList = new();
             foreach (var pc in winner)
             {
-                if (CustomWinnerHolder.WinnerTeam is not CustomWinner.Draw && pc.Is(CustomRoles.GM)) continue;
+                if (CustomWinnerHolder.WinnerTeam is not CustomWinner.Draw && pc.GetCustomRole().IsSpectator()) continue;
 
                 EndGameResult.CachedWinners.Add(new CachedPlayerData(pc.Data));
                 Main.winnerList.Add(pc.PlayerId);
@@ -194,11 +200,11 @@ class SetEverythingUpPatch
                     __instance.BackgroundBar.material.color = Utils.GetRoleColor(winnerRole);
                 }
             }
-            if (AmongUsClient.Instance.AmHost && PlayerState.GetByPlayerId(0).GetNowMainRole() == CustomRoles.GM)
+            if (AmongUsClient.Instance.AmHost && PlayerState.GetByPlayerId(0).GetNowMainRole() is var hostRole && hostRole.IsSpectator())
             {
                 __instance.WinText.text = "Game Over";
-                __instance.WinText.color = Utils.GetRoleColor(CustomRoles.GM);
-                __instance.BackgroundBar.material.color = Utils.GetRoleColor(CustomRoles.GM);
+                __instance.WinText.color = Utils.GetRoleColor(hostRole);
+                __instance.BackgroundBar.material.color = Utils.GetRoleColor(hostRole);
             }
             switch (CustomWinnerHolder.WinnerTeam)
             {
@@ -238,7 +244,7 @@ class SetEverythingUpPatch
             }
             if (CustomWinnerHolder.WinnerTeam is not CustomWinner.Draw and not CustomWinner.None)
             {
-                if (Options.IsCCMode)
+                if (ModeCatalog.IsCatchCat)
                 {
                     if (CustomWinnerHolder.WinnerTeam == CustomWinner.RedL)     WinnerText.text = $"<color={CustomWinnerColor}>{GetString("CCRedWin")}</color>";
                     if (CustomWinnerHolder.WinnerTeam == CustomWinner.BlueL)    WinnerText.text = $"<color={CustomWinnerColor}>{GetString("CCBlueWin")}</color>";

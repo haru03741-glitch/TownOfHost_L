@@ -89,7 +89,7 @@ public sealed class Janitor : RoleBase, IImpostor
         // ターゲットの状態を取得
         var targetPlayerState = PlayerState.GetByPlayerId(target.PlayerId);
         JanitorTarget.Remove(target.PlayerId);
-        Main.AllPlayerSpeed[target.PlayerId] = Main.RealOptionsData.GetFloat(FloatOptionNames.PlayerSpeedMod);
+        TownOfHostL.Modules.PlayerSpeed.Remove(target.PlayerId, "Godfather");
         targetPlayerState.CanUseMovingPlatform = true;
         target.NetTransform.Halt();
         target.MarkDirtySettings();

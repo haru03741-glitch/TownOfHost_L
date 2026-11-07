@@ -22,7 +22,9 @@ class DisplayComingOut
         Limit,
         NG,
     }
-    public static EnableComingOut GetEnableComingOut(CustomRoles role) => (EnableComingOut)EachRoles[role].GetValue();
+    /// <summary>役職ごとの設定が無い役職 (NoComingOutOption) は None</summary>
+    public static EnableComingOut GetEnableComingOut(CustomRoles role)
+        => EachRoles.TryGetValue(role, out var option) ? (EnableComingOut)option.GetValue() : EnableComingOut.None;
 
     public static void SetupCustomOption(int id)
     {
@@ -51,7 +53,7 @@ class DisplayComingOut
         int idOffset = baseId + ((int)type + 1) * 100;
         foreach (var role in CustomRolesHelper.AllStandardRoles.Where(x => x.GetCustomRoleTypes() == type).ToArray())
         {
-            if (IsDontShowRole(role)) continue;
+            if (role.HasRoleFlag(RoleFlags.NoComingOutOption)) continue;
 
             var roleName = Utils.GetRoleName(role);
             Dictionary<string, string> replacementDic = new() { { "%role%", Utils.ColorString(Utils.GetRoleColor(role), roleName) } };
@@ -64,8 +66,7 @@ class DisplayComingOut
     public static string GetString(CustomRoles role)
     {
         if (!Enable.GetBool()) return string.Empty;
-        if (role == CustomRoles.GM) return string.Empty;
-        if (!EachTypes[role.GetCustomRoleTypes()].GetBool()) return string.Empty;
+        if (!EachTypes.TryGetValue(role.GetCustomRoleTypes(), out var typeOption) || !typeOption.GetBool()) return string.Empty;
 
         string coStr = string.Empty;
         switch (GetEnableComingOut(role))
@@ -86,21 +87,4 @@ class DisplayComingOut
         return coStr;
     }
 
-    private static bool IsDontShowRole(CustomRoles role)
-    {
-        return role is CustomRoles.Shapeshifter
-            or CustomRoles.Phantom
-
-            or CustomRoles.Engineer
-            or CustomRoles.Scientist
-            or CustomRoles.Tracker
-            or CustomRoles.Noisemaker
-            or CustomRoles.Judge
-            or CustomRoles.Potentialist
-
-            or CustomRoles.EvilHacker // 一旦封印
-
-            or CustomRoles.GM
-            or CustomRoles.GuardianAngel;
-    }
 }

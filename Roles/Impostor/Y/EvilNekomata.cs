@@ -11,6 +11,7 @@ using static TownOfHostL.Options;
 namespace TownOfHostL.Roles.Impostor;
 public sealed class EvilNekomata : RoleBase, IImpostor
 {
+    public override bool RevengesOnExile => true;
     public static readonly SimpleRoleInfo RoleInfo =
          SimpleRoleInfo.Create(
             typeof(EvilNekomata),

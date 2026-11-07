@@ -13,7 +13,8 @@ namespace TownOfHostL.Roles.AddOns.Crewmate
             AddOnGroup.Crewmate,
             "#ffff00",
             setupOptions: SetupCustomOption,
-            flags: RoleFlags.FirstWriteAddOn | RoleFlags.DontSelectLoyalty);
+            flags: RoleFlags.FirstWriteAddOn | RoleFlags.DontSelectLoyalty,
+            chatCommand: "コンプリートクルー");
 
         private static readonly int Id = (int)Options.offsetId.AddonCrew + 100;
         public static List<byte> playerIdList = new();

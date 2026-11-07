@@ -43,7 +43,8 @@ namespace TownOfHostL
             try
             {
                 string result;
-                using (HttpClient client = new())
+                // メインメニューの表示中に同期で待つので、GitHub に届かない時に長く止まらないよう短く切る
+                using (HttpClient client = new() { Timeout = TimeSpan.FromSeconds(5) })
                 {
                     client.DefaultRequestHeaders.Add("User-Agent", "TownOfHost Updater");
                     using var response = await client.GetAsync(new Uri(url), HttpCompletionOption.ResponseContentRead);
@@ -147,10 +148,16 @@ namespace TownOfHostL
                 using var response = await client.GetAsync(url);
                 if (response.IsSuccessStatusCode)
                 {
-                    using var content = response.Content;
-                    using var stream = content.ReadAsStream();
-                    using var file = new FileStream($"BepInEx/plugins/TownOfHost_L-v{latestVersion}.dll", FileMode.Create, FileAccess.Write);
-                    stream.CopyTo(file);
+                    // 途中で切れた時に壊れた DLL が plugins に残らないよう、別名に書き終えてから置き換える
+                    string path = $"BepInEx/plugins/TownOfHost_L-v{latestVersion}.dll";
+                    string tempPath = path + ".download";
+                    using (var content = response.Content)
+                    using (var stream = content.ReadAsStream())
+                    using (var file = new FileStream(tempPath, FileMode.Create, FileAccess.Write))
+                    {
+                        stream.CopyTo(file);
+                    }
+                    File.Move(tempPath, path, true);
                     ShowPopup(GetString("updateRestart"), true);
                     return true;
                 }
@@ -158,6 +165,7 @@ namespace TownOfHostL
             catch (Exception ex)
             {
                 Logger.Error($"ダウンロードに失敗しました。\n{ex}", "DownloadDLL", false);
+                try { File.Delete($"BepInEx/plugins/TownOfHost_L-v{latestVersion}.dll.download"); } catch { }
             }
             ShowPopup(GetString("updateManually"), true);
             return false;

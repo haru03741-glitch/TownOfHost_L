@@ -45,6 +45,6 @@ public sealed class Express : RoleBase
     public override void Add()
     {
         // スピード設定
-        Main.AllPlayerSpeed[Player.PlayerId] = Speed;
+        TownOfHostL.Modules.PlayerSpeed.Override(Player.PlayerId, "Express", Speed);
     }
 }

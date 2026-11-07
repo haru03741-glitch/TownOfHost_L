@@ -15,7 +15,8 @@ namespace TownOfHostL.Roles.AddOns.Crewmate
             AddOnGroup.Crewmate,
             "#00ffff",
             setupOptions: SetupCustomOption,
-            flags: RoleFlags.FirstWriteAddOn);
+            flags: RoleFlags.FirstWriteAddOn,
+            chatCommand: "ワークホース");
 
         public static Color RoleColor => Utils.GetRoleColor(CustomRoles.Workhorse);
         private static readonly int Id = (int)offsetId.AddonCrew + 0;

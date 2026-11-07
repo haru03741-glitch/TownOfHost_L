@@ -43,6 +43,8 @@ public sealed class Doctor : RoleBase, IDeathReasonSeeable
         OptionTaskCompletedBatteryCharge = FloatOptionItem.Create(RoleInfo, 10, OptionName.DoctorTaskCompletedBatteryCharge, new(0f, 10f, 1f), 5f, false, OptionHasVital)
             .SetValueFormat(OptionFormat.Seconds);
     }
+    public override bool NeedsSeenNames => true;
+
     public override void ApplyGameOptions(IGameOptions opt)
     {
         AURoleOptions.ScientistCooldown = 0f;

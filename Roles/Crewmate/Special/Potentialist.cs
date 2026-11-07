@@ -21,7 +21,7 @@ public sealed class Potentialist : RoleBase
             null,
             "ポテンシャリスト",
             "#ffff00",
-            flags: RoleFlags.DontShowOption
+            flags: RoleFlags.DontShowOption | RoleFlags.NoComingOutOption
         );
     public Potentialist(PlayerControl player)
     : base(
@@ -238,9 +238,5 @@ public sealed class Potentialist : RoleBase
         Utils.NotifyRoles(SpecifySeer: player);
     }
 
-    public override void OverrideShowMainRoleText(ref Color roleColor, ref string roleText)
-    {
-        roleText = Utils.GetRoleName(CustomRoles.Crewmate);
-        roleColor = Utils.GetRoleColor(CustomRoles.Crewmate);
-    }
+    public override CustomRoles? DisplayedRole => CustomRoles.Crewmate;
 }

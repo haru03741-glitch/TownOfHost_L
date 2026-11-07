@@ -14,7 +14,9 @@ public static class Refusing
         "#61b26c",
         "Rf",
         setupOptions: SetupCustomOption,
-        onAdd: Add);
+        onAdd: Add,
+        chatCommand: "リフュージング",
+        assignAtRandom: true);
 
     private static readonly int Id = (int)offsetId.AddonBuff + 1200;
     private static List<byte> playerIdList = new();

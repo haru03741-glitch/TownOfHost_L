@@ -8,6 +8,8 @@ using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Crewmate;
 using TownOfHostL.Roles.Neutral;
 
+using TownOfHostL.Core.Modes;
+
 namespace TownOfHostL
 {
     [HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.FixedUpdate))]
@@ -18,7 +20,7 @@ namespace TownOfHostL
             //ここより上、全員が実行する
             if (!AmongUsClient.Instance.AmHost) return;
             //ここより下、ホストのみが実行する
-            if ((Options.CurrentGameMode == CustomGameMode.HideAndSeek || Options.IsStandardHAS) && Main.introDestroyed)
+            if (ModeCatalog.Current.IsHideAndSeek && Main.introDestroyed)
             {
                 if (Options.HideAndSeekKillDelayTimer > 0)
                 {
@@ -88,11 +90,7 @@ namespace TownOfHostL
     {
         public static bool Prefix(ShipStatus __instance)
         {
-            if (Options.CurrentGameMode == CustomGameMode.HideAndSeek && !Options.AllowCloseDoors.GetBool()) return false;
-            if (Options.IsStandardHAS) return false;
-            if (Options.IsCCMode) return false;
-            
-            return true;
+            return ModeCatalog.Current.AllowsDoorSabotage;
         }
     }
     [HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.Start))]

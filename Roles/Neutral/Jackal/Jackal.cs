@@ -11,6 +11,7 @@ namespace TownOfHostL.Roles.Neutral
 {
     public sealed class Jackal : RoleBase, IKiller, ISchrodingerCatOwner
     {
+        public override bool SeesNamesInMushroomMixup => CanSeeNameMushroomMixup;
         public static readonly SimpleRoleInfo RoleInfo =
             SimpleRoleInfo.Create(
                 typeof(Jackal),
@@ -28,7 +29,8 @@ namespace TownOfHostL.Roles.Neutral
                 {
                     AssignCountRule = new(1, 1, 1)
                 },
-                flags: RoleFlags.FixedCount | RoleFlags.DontSelectLoyalty | RoleFlags.AddAddOn
+                flags: RoleFlags.FixedCount | RoleFlags.DontSelectLoyalty | RoleFlags.AddAddOn | RoleFlags.NeutralKiller | RoleFlags.CountedAsKiller,
+                introTeam: CustomRoles.Jackal
             );
         public Jackal(PlayerControl player)
         : base(
@@ -45,7 +47,6 @@ namespace TownOfHostL.Roles.Neutral
             canCreateSidekick = OptionCanCreateSidekick.GetBool();
 
             canSidekickCount = canCreateSidekick ? 1 : 0;
-            sidekickTarget = new();
         }
 
         private static OptionItem OptionKillCooldown;
@@ -67,7 +68,7 @@ namespace TownOfHostL.Roles.Neutral
         private static bool canCreateSidekick;
 
         private int canSidekickCount;
-        private static List<byte> sidekickTarget = new();
+        private readonly List<byte> sidekickTarget = new();
         public static CustomRoles[] AdditionalRoles => canCreateSidekick ? [CustomRoles.JSidekick] : [];
 
         public SchrodingerCat.TeamType SchrodingerCatChangeTo => SchrodingerCat.TeamType.Jackal;

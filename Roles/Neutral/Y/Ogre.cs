@@ -19,7 +19,8 @@ namespace TownOfHostL.Roles.Neutral
                 "鬼",
                 "#fe8b04",
                 true,
-                countType: CountTypes.Crew
+                countType: CountTypes.Crew,
+                flags: RoleFlags.NeutralKiller
             );
         public Ogre(PlayerControl player)
         : base(

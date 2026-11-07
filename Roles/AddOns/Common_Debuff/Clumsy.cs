@@ -14,7 +14,9 @@ public static class Clumsy
         "#696969",
         "Cl",
         setupOptions: SetupCustomOption,
-        onAdd: Add);
+        onAdd: Add,
+        chatCommand: "クラムシー",
+        assignAtRandom: true);
 
     private static readonly int Id = (int)offsetId.AddonDebuff + 100;
     private static List<byte> playerIdList = new();

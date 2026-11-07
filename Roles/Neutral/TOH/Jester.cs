@@ -15,7 +15,8 @@ public sealed class Jester : RoleBase
             (int)Options.offsetId.NeuTOH + 0,
             null,
             "ジェスター",
-            "#ec62a5"
+            "#ec62a5",
+            flags: RoleFlags.FakeTasksLabel
         );
     public Jester(PlayerControl player)
     : base(

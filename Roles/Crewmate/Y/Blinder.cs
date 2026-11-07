@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using AmongUs.GameOptions;
+using TownOfHostL.Attributes;
 
 using TownOfHostL.Roles.Core;
 
@@ -25,9 +26,11 @@ public sealed class Blinder : RoleBase
     )
     {
         BlinderVision = OptionBlinderVision.GetFloat();
-
-        BlindPlayerIdList = new();
     }
+
+    // 2 人目のブラインダーや途中でなった人の分で、他のブラインダーが付けた目隠しを消さないよう試合の始めにだけ空にする
+    [GameModuleInitializer]
+    public static void Init() => BlindPlayerIdList.Clear();
 
     private static OptionItem OptionBlinderVision;
     enum OptionName
@@ -37,7 +40,7 @@ public sealed class Blinder : RoleBase
 
     public static float BlinderVision;
     // ブラインダー全体で管理するリスト
-    public static HashSet<byte> BlindPlayerIdList;
+    public static readonly HashSet<byte> BlindPlayerIdList = new();
     // ブラインダー個人で見た斬られた対象
     PlayerControl blindPlayer;
 

@@ -34,7 +34,6 @@ public sealed class Mare : RoleBase, IImpostor
         SpeedInLightsOut = OptionSpeedInLightsOut.GetFloat();
 
         IsActivateKill = false;
-        IsAccelerated = false;
 
     }
 
@@ -48,7 +47,6 @@ public sealed class Mare : RoleBase, IImpostor
     private float KillCooldownInLightsOut;
     private float SpeedInLightsOut;
     private static bool IsActivateKill;
-    private bool IsAccelerated;  //加速済みかフラグ
 
     public static void SetupCustomOption()
     {
@@ -61,16 +59,9 @@ public sealed class Mare : RoleBase, IImpostor
     public float CalculateKillCooldown() => IsActivateKill ? KillCooldownInLightsOut : DefaultKillCooldown;
     public override void ApplyGameOptions(IGameOptions opt)
     {
-        if (IsActivateKill && !IsAccelerated)
-        { //停電中で加速済みでない場合
-            IsAccelerated = true;
-            Main.AllPlayerSpeed[Player.PlayerId] += SpeedInLightsOut;//Mareの速度を加算
-        }
-        else if (!IsActivateKill && IsAccelerated)
-        { //停電中ではなく加速済みになっている場合
-            IsAccelerated = false;
-            Main.AllPlayerSpeed[Player.PlayerId] -= SpeedInLightsOut;//Mareの速度を減算
-        }
+        // 停電中だけ加速する
+        if (IsActivateKill) TownOfHostL.Modules.PlayerSpeed.Add(Player.PlayerId, "Mare", SpeedInLightsOut);
+        else TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, "Mare");
     }
     private void ActivateKill(bool activate)
     {
@@ -120,6 +111,5 @@ public sealed class Mare : RoleBase, IImpostor
         }
         return true;
     }
-    public static bool KnowTargetRoleColor(PlayerControl target, bool isMeeting)
-        => !isMeeting && IsActivateKill && target.Is(CustomRoles.Mare);
+    public override bool ShowsRoleColorToAll(bool isMeeting) => !isMeeting && IsActivateKill;
 }

@@ -85,8 +85,8 @@ public sealed class Destroyer : HamoRoleBase, IImpostor
         CheckMurderPatch.TimeSinceLastKill[Player.PlayerId] = 0f;
         target.GetPlayerState().CanMove = false;
         target.MarkDirtySettings();
-        if (savedSpeed < 0f) savedSpeed = Main.AllPlayerSpeed[Player.PlayerId];
-        Main.AllPlayerSpeed[Player.PlayerId] = Main.MinSpeed;
+        if (savedSpeed < 0f) savedSpeed = HamoSpeedTable.Instance[Player.PlayerId];
+        HamoSpeedTable.Instance[Player.PlayerId] = Main.MinSpeed;
         Player.MarkDirtySettings();
         Player.SetKillCooldownHamo();
         StartPet();
@@ -107,7 +107,7 @@ public sealed class Destroyer : HamoRoleBase, IImpostor
         }
         if (savedSpeed >= 0f)
         {
-            Main.AllPlayerSpeed[Player.PlayerId] = savedSpeed;
+            HamoSpeedTable.Instance[Player.PlayerId] = savedSpeed;
             savedSpeed = -1f;
             Player.MarkDirtySettings();
         }

@@ -13,6 +13,8 @@ using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Neutral;
 using static TownOfHostL.Translator;
 
+using TownOfHostL.Core.Modes;
+
 namespace TownOfHostL;
 
 
@@ -54,10 +56,9 @@ class ChangeRoleSettings
             Main.NormalOptions.roleOptions.SetRoleRate(RoleTypes.Detective, 0, 0);
             Main.NormalOptions.roleOptions.SetRoleRate(RoleTypes.Judge, 0, 0);
 
-            if (Options.IsCCMode) Main.NormalOptions.NumImpostors = 1;
+            if (ModeCatalog.IsCatchCat) Main.NormalOptions.NumImpostors = 1;
 
             Main.AllPlayerKillCooldown = new Dictionary<byte, float>();
-            Main.AllPlayerSpeed = new Dictionary<byte, float>();
 
             Main.SKMadmateNowCount = 0;
 
@@ -89,6 +90,7 @@ class ChangeRoleSettings
             Logger.Info($"RealOptionsData.NumShortTasks: {Main.RealOptionsData.GetInt(Int32OptionNames.NumShortTasks)}", "ChangeRoleSettings");
 
             Main.introDestroyed = false;
+            Main.IntroEndTime = DateTime.MinValue;
             Main.IsSetRoleFinished = false;
 
             HudManagerCoShowIntroPatch.Cancel = true;
@@ -96,46 +98,54 @@ class ChangeRoleSettings
 
             SelectRolesPatch.roleAssigned = false;
             RpcSetTasksPatch.taskIds.Clear();
+            // 前の試合が途中で閉じて減らし損ねた分を残さない (残ると会議中の PlayerInfo の送信保留が効かない)
+            GameDataSerializePatch.SerializeMessageCount = 0;
 
-            if (Options.CurrentGameMode == CustomGameMode.Standard)
+            if (ModeCatalog.Current.UsesStandardRoles)
             {
                 _ = new LateTask(() =>
                 {
                     GameDataSerializePatch.SerializeMessageCount++;
-                    bool IsSend = false;
-                    var stream = MessageWriter.Get(SendOption.Reliable);
-                    stream.StartMessage(5);
-                    stream.Write(AmongUsClient.Instance.GameId);
-                    foreach (var data in GameData.Instance.AllPlayers)
+                    try
                     {
-                        if (data.PlayerId == 0) continue;
-                        if (IsSend)
+                        bool IsSend = false;
+                        var stream = MessageWriter.Get(SendOption.Reliable);
+                        stream.StartMessage(5);
+                        stream.Write(AmongUsClient.Instance.GameId);
+                        foreach (var data in GameData.Instance.AllPlayers)
                         {
-                            stream = MessageWriter.Get(SendOption.Reliable);
-                            stream.StartMessage(5);
-                            stream.Write(AmongUsClient.Instance.GameId);
-                            IsSend = false;
+                            if (data.PlayerId == 0) continue;
+                            if (IsSend)
+                            {
+                                stream = MessageWriter.Get(SendOption.Reliable);
+                                stream.StartMessage(5);
+                                stream.Write(AmongUsClient.Instance.GameId);
+                                IsSend = false;
+                            }
+                            data.Disconnected = true;
+                            stream.StartMessage(1);
+                            stream.WritePacked(data.NetId);
+                            data.Serialize(stream, false);
+                            stream.EndMessage();
+                            if (stream.Length > 800)
+                            {
+                                IsSend = true;
+                                stream.EndMessage();
+                                AmongUsClient.Instance.SendOrDisconnect(stream);
+                                stream.Recycle();
+                            }
                         }
-                        data.Disconnected = true;
-                        stream.StartMessage(1);
-                        stream.WritePacked(data.NetId);
-                        data.Serialize(stream, false);
-                        stream.EndMessage();
-                        if (stream.Length > 800)
+                        if (!IsSend)
                         {
-                            IsSend = true;
                             stream.EndMessage();
                             AmongUsClient.Instance.SendOrDisconnect(stream);
                             stream.Recycle();
                         }
                     }
-                    if (!IsSend)
+                    finally
                     {
-                        stream.EndMessage();
-                        AmongUsClient.Instance.SendOrDisconnect(stream);
-                        stream.Recycle();
+                        GameDataSerializePatch.SerializeMessageCount--;
                     }
-                    GameDataSerializePatch.SerializeMessageCount--;
 
                     GameDataSerializePatch.DontTouch = true;
                     foreach (var data in GameData.Instance.AllPlayers)
@@ -188,7 +198,6 @@ class ChangeRoleSettings
                 if (!Main.AllPlayerNames.ContainsKey(pc.PlayerId))
                     Main.AllPlayerNames[pc.PlayerId] = pc?.Data?.PlayerName;
                 Main.PlayerColors[pc.PlayerId] = Palette.PlayerColors[colorId];
-                Main.AllPlayerSpeed[pc.PlayerId] = Main.RealOptionsData.GetFloat(FloatOptionNames.PlayerSpeedMod);
                 ReportDeadBodyPatch.WaitReport[pc.PlayerId] = new();
                 pc.cosmetics.nameText.text = pc.name;
 
@@ -207,13 +216,9 @@ class ChangeRoleSettings
             if (__instance.AmHost)
             {
                 RPC.SyncCustomSettingsRPC();
-                if (Options.CurrentGameMode == CustomGameMode.HideAndSeek)
+                if (ModeCatalog.Current.IsHideAndSeek)
                 {
-                    Options.HideAndSeekKillDelayTimer = Options.KillDelay.GetFloat();
-                }
-                if (Options.IsStandardHAS)
-                {
-                    Options.HideAndSeekKillDelayTimer = Options.StandardHASWaitingTime.GetFloat();
+                    Options.HideAndSeekKillDelayTimer = ModeCatalog.Current.StartWaitTime;
                 }
             }
 
@@ -265,7 +270,12 @@ class SelectRolesPatch
     {
         if (!AmongUsClient.Instance.AmHost) return true;
 
-        if (Options.CurrentGameMode != CustomGameMode.Standard) return true;
+        var mode = ModeCatalog.Current;
+        if (!mode.UsesStandardRoles)
+        {
+            mode.SelectRoles();
+            return false;
+        }
 
 
         Dictionary<byte, CustomRpcSender> senders = new();
@@ -336,7 +346,9 @@ class SelectRolesPatch
             Logger.Info($"役職設定(desync): {player?.Data?.PlayerName} = {customRole}", "AssignRoles");
 
             var hostId = PlayerControl.LocalPlayer.PlayerId;
-            var selfRole = player.PlayerId == hostId ? RoleTypes.Crewmate : roleInfo.BaseRoleType.Invoke();
+            var baseRole = roleInfo.BaseRoleType.Invoke();
+            // ホスト自身の役職はローカルにだけ効くので、変身・消失のボタンが要る基底はそのまま持たせる (Crewmate に落とすとボタンが出ない)
+            var selfRole = player.PlayerId == hostId ? (baseRole is RoleTypes.Shapeshifter or RoleTypes.Phantom ? baseRole : RoleTypes.Crewmate) : baseRole;
             var othersRole = player.PlayerId == hostId ? RoleTypes.Crewmate : RoleTypes.Scientist;
 
             foreach (var target in Main.AllPlayerControls)
@@ -506,19 +518,13 @@ class SelectRolesPatch
         List<PlayerControl> allPlayersbySub = new();
         foreach (var pc in Main.AllPlayerControls)
         {
-            if (!pc.Is(CustomRoles.GM)) allPlayersbySub.Add(pc);
+            if (!pc.GetCustomRole().IsSpectator()) allPlayersbySub.Add(pc);
         }
         if (!CustomRoles.PlatonicLover.IsEnable() && CustomRoles.Lovers.IsEnable())
             AssignCustomSubRolesFromList(CustomRoles.Lovers, allPlayersbySub, 2);
-        foreach (var role in new CustomRoles[] {
-            CustomRoles.AddWatch, CustomRoles.Sunglasses, CustomRoles.AddLight,
-            CustomRoles.AddSeer, CustomRoles.Autopsy, CustomRoles.VIP,
-            CustomRoles.Clumsy, CustomRoles.Revenger, CustomRoles.Management,
-            CustomRoles.InfoPoor, CustomRoles.Sending, CustomRoles.TieBreaker,
-            CustomRoles.NonReport, CustomRoles.PlusVote, CustomRoles.Guarding,
-            CustomRoles.AddBait, CustomRoles.Refusing, CustomRoles.Revealer })
+        foreach (var info in TownOfHostL.Roles.AddOns.AddOnList.All)
         {
-            AssignCustomSubRolesDuplicatable(role, allPlayersbySub);
+            if (info.AssignAtRandom) AssignCustomSubRolesDuplicatable(info.Role, allPlayersbySub);
         }
 
         // hamo: 役職ごとに付ける属性
@@ -549,19 +555,19 @@ class SelectRolesPatch
             }
 
             // 通常モードでかくれんぼをする人用
-            if (Options.IsStandardHAS)
+            if (ModeCatalog.IsHideAndSeekWithStandardRoles)
             {
                 foreach (var seer in Main.AllPlayerControls)
                 {
                     if (seer == pc) continue;
-                    if (pc.GetCustomRole().IsImpostor() || pc.IsNeutralKiller())
+                    if (pc.GetCustomRole().IsImpostor() || pc.IsCountedNeutralKiller())
                         NameColorManager.Add(seer.PlayerId, pc.PlayerId);
                 }
             }
             foreach (var seer in Main.AllPlayerControls)
             {
                 if (seer == pc) continue;
-                if (pc.Is(CustomRoles.GM)
+                if (pc.GetCustomRole().IsSpectator()
                     || (pc.Is(CustomRoles.Workaholic) && Workaholic.Seen)
                     || pc.Is(CustomRoles.Rainbow))
                     NameColorManager.Add(seer.PlayerId, pc.PlayerId, pc.GetRoleColorCode());
@@ -588,7 +594,7 @@ class SelectRolesPatch
         SetColorPatch.IsAntiGlitchDisabled = false;
 
 
-        if (Options.CurrentGameMode == CustomGameMode.Standard)
+        if (ModeCatalog.Current.UsesStandardRoles)
             StandardIntroHelper.ShowIntroForVanilla();
     }
 
@@ -614,7 +620,7 @@ class SelectRolesPatch
             PlayerState.GetByPlayerId(player.PlayerId).SetMainRole(role);
             Logger.Info("役職設定(desync):" + player?.Data?.PlayerName + " = " + role.ToString(), "AssignRoles");
 
-            var selfRole = player.PlayerId == hostId ? hostBaseRole : BaseRole;
+            var selfRole = player.PlayerId == hostId ? (BaseRole is RoleTypes.Shapeshifter or RoleTypes.Phantom ? BaseRole : hostBaseRole) : BaseRole;
             var othersRole = player.PlayerId == hostId ? RoleTypes.Crewmate : RoleTypes.Scientist;
 
             foreach (var target in Main.AllPlayerControls)
@@ -648,7 +654,7 @@ class SelectRolesPatch
             PlayerState.GetByPlayerId(player.PlayerId).SetMainRole(role);
             Logger.Info("役職設定(desync):" + player?.Data?.PlayerName + " = " + role.ToString(), "AssignRoles");
 
-            var selfRole = player.PlayerId == hostId ? hostBaseRole : BaseRole;
+            var selfRole = player.PlayerId == hostId ? (BaseRole is RoleTypes.Shapeshifter or RoleTypes.Phantom ? BaseRole : hostBaseRole) : BaseRole;
             var othersRole = player.PlayerId == hostId ? RoleTypes.Crewmate : RoleTypes.Scientist;
 
             if (player.PlayerId == hostId)
@@ -757,7 +763,7 @@ class SelectRolesPatch
             PlayerState.GetByPlayerId(player.PlayerId).SetMainRole(role, true);
             Logger.Info("役職設定:" + player?.Data?.PlayerName + " = " + role.ToString(), "AssignRoles");
 
-            if (Options.CurrentGameMode == CustomGameMode.HideAndSeek)
+            if (ModeCatalog.IsHideAndSeekWithOwnRoles)
             {
                 if (player.Is(CustomRoles.HASTroll))
                     player.RpcSetColor(2);
@@ -859,7 +865,7 @@ public class RpcSetRoleReplacer
     public static void Release()
     {
 
-        if (Options.CurrentGameMode == CustomGameMode.Standard)
+        if (ModeCatalog.Current.UsesStandardRoles)
         {
             foreach (var pair in StoragedData)
                 pair.Item1.StartCoroutine(pair.Item1.CoSetRole(pair.Item2, false));
@@ -1065,7 +1071,8 @@ public static class StandardIntroHelper
                 }, 3f, "StandardIntro_SetTask");
 
                 SelectRolesPatch.roleAssigned = true;
-                GameDataSerializePatch.SerializeMessageCount--;
+                // 待つ間に次の試合の開始で 0 に戻っていることがあるので、負にしない
+                if (GameDataSerializePatch.SerializeMessageCount > 0) GameDataSerializePatch.SerializeMessageCount--;
             }
         }, 0.75f, "StandardIntro_RestoreDisconnected");
 

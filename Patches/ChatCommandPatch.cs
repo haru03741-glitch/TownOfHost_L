@@ -210,6 +210,7 @@ namespace TownOfHostL
         private static void SendChunk(string SendName, string text, string name, PlayerControl sender)
         {
             var crs = CustomRpcSender.Create("AllSend");
+            var restoreName = GameStates.IsInGame ? TownOfHostL.Core.ChatSenderName.RestoreFor(sender) : name;
 
             crs.AutoStartRpc(sender.NetId, (byte)RpcCalls.SetName)
                 .Write(sender.Data.NetId)
@@ -220,13 +221,23 @@ namespace TownOfHostL
                 .EndRpc()
                 .AutoStartRpc(sender.NetId, (byte)RpcCalls.SetName)
                 .Write(sender.Data.NetId)
-                .Write(name)
+                .Write(restoreName)
                 .EndRpc()
                 .SendMessage();
+            TownOfHostL.Core.ChatSenderName.Restored(sender, restoreName, -1);
 
             sender.SetName(SendName);
             DestroyableSingleton<HudManager>.Instance.Chat.AddChat(sender, text);
             sender.SetName(name);
+        }
+
+        // 全員へ同じ名前を一時的に見せた後、見る人ごとの名前へ戻す。記録を捨てて NotifyRoles に全員分を組み直させる
+        internal static void ForgetNotifiedNames(PlayerControl player)
+        {
+            if (player == null || !AmongUsClient.Instance.AmHost || Main.LastNotifyNames == null) return;
+            foreach (var seer in Main.AllPlayerControls)
+                Main.LastNotifyNames[(player.PlayerId, seer.PlayerId)] = null;
+            if (GameStates.IsInGame) Utils.NotifyRoles();
         }
 
 #if DEBUG
@@ -273,7 +284,7 @@ namespace TownOfHostL
                 Utils.SendMessageAutoSplit(string.Format(GetString("Message.SelectRolesNoRole"), roleArg), true);
                 return;
             }
-            if (role.IsAddOn() || role is CustomRoles.GM)
+            if (role.IsAddOn() || role.IsSpectator())
             {
                 Utils.SendMessageAutoSplit(string.Format(GetString("Message.SelectRolesNotMainRole"), Utils.GetRoleName(role)), true);
                 return;
@@ -351,29 +362,8 @@ namespace TownOfHostL
 
                 // 属性
                 roleCommands.Add((CustomRoles)(-5), $"== {GetString("Addons")} ==");  // 区切り用
-                roleCommands.Add(CustomRoles.LastImpostor, "ラストインポスター");
-                roleCommands.Add(CustomRoles.Lovers, "ラバーズ");
-                roleCommands.Add(CustomRoles.Workhorse, "ワークホース");
-                roleCommands.Add(CustomRoles.CompleteCrew, "コンプリートクルー");
-                roleCommands.Add(CustomRoles.AddWatch, "ウォッチング");
-                roleCommands.Add(CustomRoles.Sunglasses, "サングラス");
-                roleCommands.Add(CustomRoles.AddLight, "ライティング");
-                roleCommands.Add(CustomRoles.AddSeer, "シーイング");
-                roleCommands.Add(CustomRoles.Autopsy, "オートプシー");
-                roleCommands.Add(CustomRoles.VIP, "VIP");
-                roleCommands.Add(CustomRoles.Clumsy, "クラムシー");
-                roleCommands.Add(CustomRoles.Revenger, "リベンジャー");
-                roleCommands.Add(CustomRoles.Management, "マネジメント");
-                roleCommands.Add(CustomRoles.InfoPoor, "インフォプアー");
-                roleCommands.Add(CustomRoles.Sending, "センディング");
-                roleCommands.Add(CustomRoles.TieBreaker, "タイブレーカー");
-                roleCommands.Add(CustomRoles.NonReport, "ノンレポート");
-                roleCommands.Add(CustomRoles.Loyalty, "ロイヤルティ");
-                roleCommands.Add(CustomRoles.PlusVote, "プラスボート");
-                roleCommands.Add(CustomRoles.Guarding, "ガーディング");
-                roleCommands.Add(CustomRoles.AddBait, "ベイティング");
-                roleCommands.Add(CustomRoles.Refusing, "リフュージング");
-                roleCommands.Add(CustomRoles.Revealer, "リヴェラー");
+                foreach (var info in TownOfHostL.Roles.AddOns.AddOnList.All)
+                    if (info.ChatCommand != null) roleCommands.Add(info.Role, info.ChatCommand);
 
                 // HAS
                 roleCommands.Add((CustomRoles)(-6), $"== {GetString("HideAndSeek")} ==");  // 区切り用
@@ -407,6 +397,17 @@ namespace TownOfHostL
             if (!AmongUsClient.Instance.AmHost) return;
             Utils.SendMessageAutoSplit(message, true, sendTo: player.PlayerId);
         }
+        // 客 1 人あたり、返事は ReplyInterval 秒に 1 回まで。連打の返事が溜まると、同じ宛先への送信が続いて公式サーバーに切られる恐れがある
+        private const float ReplyInterval = 2f;
+        private static readonly Dictionary<byte, float> lastReplyAt = new();
+        private static bool TryTakeReplySlot(PlayerControl player)
+        {
+            if (player == null || player.AmOwner) return true;
+            float now = UnityEngine.Time.realtimeSinceStartup;
+            if (lastReplyAt.TryGetValue(player.PlayerId, out var last) && now - last < ReplyInterval) return false;
+            lastReplyAt[player.PlayerId] = now;
+            return true;
+        }
         public static void OnReceiveChat(PlayerControl player, string text)
         {
             if (player != null)
@@ -417,8 +418,17 @@ namespace TownOfHostL
 
             if (!AmongUsClient.Instance.AmHost) return;
 
+            bool isNimrodMeeting = Nimrod.IsExecutionMeeting() || MadNimrod.IsExecutionMeeting();
+            // 返事をしない発言はここで終わる
+            if (!isNimrodMeeting && !text.StartsWith("/")) return;
+            if (!TryTakeReplySlot(player))
+            {
+                Logger.Info($"{player?.Data?.PlayerName} の発言は前の返事から {ReplyInterval} 秒以内なので返事をしません", "OnReceiveChat");
+                return;
+            }
+
             // ニムロッド会議中
-            if (Nimrod.IsExecutionMeeting() || MadNimrod.IsExecutionMeeting())
+            if (isNimrodMeeting)
             {
                 if (text.Length > 0)
                 {
@@ -487,12 +497,14 @@ namespace TownOfHostL
                 writer.StartRpc(player.NetId, (byte)RpcCalls.SendChat)
                     .Write(msg)
                     .EndRpc();
+                var restoreName = TownOfHostL.Core.ChatSenderName.RestoreFor(player);
                 writer.StartRpc(player.NetId, (byte)RpcCalls.SetName)
                     .Write(player.Data.NetId)
-                    .Write(player.Data.PlayerName)
+                    .Write(restoreName)
                     .EndRpc();
                 writer.EndMessage();
                 writer.SendMessage();
+                TownOfHostL.Core.ChatSenderName.Restored(player, restoreName, clientId);
             }
             __instance.timeSinceLastMessage = 0f;
         }
@@ -517,6 +529,7 @@ namespace TownOfHostL
             else
             {
                 var writer = CustomRpcSender.Create("CustomSend");
+                var restoreName = TownOfHostL.Core.ChatSenderName.RestoreFor(sender);
                 writer.StartMessage(clientId);
                 writer.StartRpc(sender.NetId, (byte)RpcCalls.SetName)
                     .Write(sender.Data.NetId)
@@ -527,10 +540,11 @@ namespace TownOfHostL
                     .EndRpc()
                     .StartRpc(sender.NetId, (byte)RpcCalls.SetName)
                     .Write(sender.Data.NetId)
-                    .Write(name)
+                    .Write(restoreName)
                     .EndRpc()
                     .EndMessage()
                     .SendMessage();
+                TownOfHostL.Core.ChatSenderName.Restored(sender, restoreName, clientId);
             }
         }
         private static void AddChatAsAlive(PlayerControl player, string msg)
@@ -574,9 +588,10 @@ namespace TownOfHostL
                     writer.StartRpc(host.NetId, (byte)RpcCalls.SendChat)
                         .Write(msg)
                         .EndRpc();
+                    var restoreName = TownOfHostL.Core.ChatSenderName.RestoreFor(host);
                     writer.StartRpc(host.NetId, (byte)RpcCalls.SetName)
                         .Write(host.Data.NetId)
-                        .Write(host.Data.PlayerName)
+                        .Write(restoreName)
                         .EndRpc();
 
                     if (target.IsAlive())
@@ -590,6 +605,7 @@ namespace TownOfHostL
 
                     writer.EndMessage();
                     writer.SendMessage();
+                    TownOfHostL.Core.ChatSenderName.Restored(host, restoreName, targetClientId);
                 }
             }
             finally

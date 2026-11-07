@@ -24,13 +24,17 @@ public sealed class Nimrod : RoleBase
         RoleInfo,
         player
     )
+    { }
+    // 同じ役職が複数いる時に、1 人の作成や破棄で他の持ち主の分まで消さないよう、共有の一覧は試合の開始で空にし、破棄では自分の分だけ外す
+    [TownOfHostL.Attributes.GameModuleInitializer]
+    public static void Init()
     {
         playerIdList = new();
         ExecutionMeetingPlayerId = byte.MaxValue;
     }
     public override void OnDestroy()
     {
-        playerIdList.Clear();
+        playerIdList.Remove(Player.PlayerId);
     }
 
     public static List<byte> playerIdList = new();

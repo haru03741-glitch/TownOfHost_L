@@ -14,7 +14,9 @@ public static class PlusVote
         "#204d42",
         "Pv",
         setupOptions: SetupCustomOption,
-        onAdd: Add);
+        onAdd: Add,
+        chatCommand: "プラスボート",
+        assignAtRandom: true);
 
     private static readonly int Id = (int)offsetId.AddonBuff + 900;
     private static List<byte> playerIdList = new();

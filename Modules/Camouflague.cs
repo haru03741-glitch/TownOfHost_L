@@ -4,7 +4,7 @@ using HarmonyLib;
 using System.Linq;
 using TownOfHostL.Attributes;
 using TownOfHostL.Roles.Impostor;
-using static UnityEngine.GraphicsBuffer;
+using TownOfHostL.Modules.Net;
 namespace TownOfHostL;
 
 static class PlayerOutfitExtension
@@ -71,7 +71,7 @@ public static partial class Camouflage
             Utils.NotifyRoles(NoCache: true);
         }
     }
-    public static void RpcSetSkin(bool isCamouflage, PlayerControl target, NetworkedPlayerInfo.PlayerOutfit camouflageOutfit = null, bool ForceRevert = false, bool RevertToDefault = false)
+    public static void RpcSetSkin(bool isCamouflage, PlayerControl target, NetworkedPlayerInfo.PlayerOutfit camouflageOutfit = null, bool ForceRevert = false)
     {
         if (!(Options.CommsCamouflage.GetBool() || Roles.Core.CustomRoles.EvilDyer.IsEnable()) || Options.IsSyncColorMode) return;
         if (target == null) return;
@@ -92,103 +92,44 @@ public static partial class Camouflage
         if (!isCamouflage || ForceRevert)
         {
             //コミュサボ解除または強制解除
-
-            if (Main.CheckShapeshift.TryGetValue(id, out var shapeshifting) && shapeshifting && !RevertToDefault)
-            {
-                //シェイプシフターなら今の姿のidに変更
-                id = Main.ShapeshiftTarget[id];
-            }
-
-            newOutfit = PlayerSkins[id];
+            // 既定の外見は変身中でも本人の物に戻す。変身の見た目は本編の Shapeshift が持ち、解除した時に既定の外見へ戻る
+            if (!PlayerSkins.TryGetValue(id, out newOutfit)) return;
         }
-        //if (newOutfit == null) return;
-        if (newOutfit.Compare(target.Data.DefaultOutfit)) return;
-        Logger.Info($"newOutfit={newOutfit.GetString()}", "RpcSetSkin");
-
-        var sender = CustomRpcSender.Create(name: $"Camouflage.RpcSetSkin({target.Data.PlayerName})");
-
-        // SetColor のみ送信する（SetHat/SetSkin/SetPet/SetVisor は送信すると落ちるため無効化）
-        target.SetColor(newOutfit.ColorId);
-        sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetColor)
-            .Write(target.Data.NetId)
-            .Write(newOutfit.ColorId)
-            .EndRpc();
-
-        //target.SetHat(newOutfit.HatId, newOutfit.ColorId);
-        //sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetHatStr)
-        //    .Write(newOutfit.HatId)
-        //    .Write(target.GetNextRpcSequenceId(RpcCalls.SetHatStr))
-        //    .EndRpc();
-
-        //target.SetSkin(newOutfit.SkinId, newOutfit.ColorId);
-        //sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetSkinStr)
-        //    .Write(newOutfit.SkinId)
-        //    .Write(target.GetNextRpcSequenceId(RpcCalls.SetSkinStr))
-        //    .EndRpc();
-
-        //target.SetPet(newOutfit.PetId);
-        //sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetPetStr)
-        //    .Write(newOutfit.PetId)
-        //    .Write(target.GetNextRpcSequenceId(RpcCalls.SetPetStr))
-        //    .EndRpc();
-
-        sender.SendMessage();
+        if (newOutfit == null) return;
+        if (OutfitSync.Apply(target, newOutfit))
+            Logger.Info($"newOutfit={newOutfit.GetString()}", "RpcSetSkin");
     }
 }
 
 public static class SkinChangeMode
 {
+    // 全員を同じ外見にする間は、レベルからも見分けが付かないように 49 にそろえ、元に戻す時に返す
+    const uint HiddenLevel = 49;
+    static readonly Dictionary<byte, uint> OriginalLevels = new();
+
+    [GameModuleInitializer]
+    public static void Init() => OriginalLevels.Clear();
+
     public static void RpcSetSkin(PlayerControl target, PlayerControl Changed)
     {
-        if (!Options.IsSyncColorMode || target == null) return;
-
-        var newOutfit = Camouflage.PlayerSkins[Changed.PlayerId];
+        if (!Options.IsSyncColorMode || target == null || Changed == null) return;
+        if (!Camouflage.PlayerSkins.TryGetValue(Changed.PlayerId, out var newOutfit)) return;
         Logger.Info("変更先：" + target.GetRealName() + " / 変身：" + Changed.GetRealName(), "RpcSetSkin");
 
-        var sender = CustomRpcSender.Create(name: $"SkinChangeMode.RpcSetSkin({target.Data.PlayerName})");
+        var data = target.Data;
+        if (target == Changed)
+        {
+            if (OriginalLevels.Remove(target.PlayerId, out var level)) data.PlayerLevel = level;
+        }
+        else
+        {
+            OriginalLevels.TryAdd(target.PlayerId, data.PlayerLevel);
+            data.PlayerLevel = HiddenLevel;
+        }
 
-        // SetColor のみ送信する（SetHat/SetSkin/SetPet/SetVisor/SetNamePlate は送信すると落ちるため無効化）
-        target.SetColor(newOutfit.ColorId);
-        sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetColor)
-            .Write(target.Data.NetId)
-            .Write(newOutfit.ColorId)
-            .EndRpc();
-
-        //target.SetHat(newOutfit.HatId, newOutfit.ColorId);
-        //sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetHatStr)
-        //    .Write(newOutfit.HatId)
-        //    .Write(target.GetNextRpcSequenceId(RpcCalls.SetHatStr))
-        //    .EndRpc();
-
-        //target.SetSkin(newOutfit.SkinId, newOutfit.ColorId);
-        //sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetSkinStr)
-        //    .Write(newOutfit.SkinId)
-        //    .Write(target.GetNextRpcSequenceId(RpcCalls.SetSkinStr))
-        //    .EndRpc();
-
-        //target.SetVisor(newOutfit.VisorId, newOutfit.ColorId);
-
-        //target.SetPet(newOutfit.PetId);
-        //sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetPetStr)
-        //    .Write(newOutfit.PetId)
-        //    .Write(target.GetNextRpcSequenceId(RpcCalls.SetPetStr))
-        //    .EndRpc();
-
-        //target.SetNamePlate(newOutfit.NamePlateId);
-        //sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetNamePlateStr)
-        //    .Write(newOutfit.NamePlateId)
-        //    .Write(target.GetNextRpcSequenceId(RpcCalls.SetNamePlateStr))
-        //    .EndRpc();
+        OutfitSync.Apply(target, newOutfit);
 
         target.SetName(newOutfit.PlayerName);
-
-        target.SetLevel(49);
-        sender.AutoStartRpc(target.NetId, (byte)RpcCalls.SetLevel)
-            .Write(49)
-            .EndRpc();
-
-        sender.SendMessage();
-
         if (target == PlayerControl.LocalPlayer)
             Main.nickName = newOutfit.PlayerName;
     }

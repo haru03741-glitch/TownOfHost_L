@@ -26,7 +26,7 @@ public sealed class Pirate : RoleBase, IKiller
             {
                 AssignCountRule = new(1, 1, 1)
             },
-            flags: RoleFlags.FixedCount | RoleFlags.DirectKill
+            flags: RoleFlags.FixedCount | RoleFlags.DirectKill | RoleFlags.NeutralKiller
         );
     public Pirate(PlayerControl player)
     : base(

@@ -210,7 +210,7 @@ public sealed class Sage : HamoRoleBase
 
         {
 
-            Main.AllPlayerSpeed[Player.PlayerId] =
+            HamoSpeedTable.Instance[Player.PlayerId] =
 
                 Main.RealOptionsData?.GetFloat(FloatOptionNames.PlayerSpeedMod) ?? 1f;
 
@@ -266,7 +266,7 @@ public sealed class Sage : HamoRoleBase
 
 
 
-        Main.AllPlayerSpeed[Player.PlayerId] = Main.MinSpeed;
+        HamoSpeedTable.Instance[Player.PlayerId] = Main.MinSpeed;
 
         Player.MarkDirtySettings();
 
@@ -300,7 +300,7 @@ public sealed class Sage : HamoRoleBase
 
 
 
-        Main.AllPlayerSpeed[Player.PlayerId] =
+        HamoSpeedTable.Instance[Player.PlayerId] =
 
             Main.RealOptionsData?.GetFloat(FloatOptionNames.PlayerSpeedMod) ?? 1f;
 
@@ -394,11 +394,11 @@ public sealed class Sage : HamoRoleBase
 
 
 
-        if (Main.AllPlayerSpeed.TryGetValue(Player.PlayerId, out float spd) && spd > Main.MinSpeed)
+        if (HamoSpeedTable.Instance.TryGetValue(Player.PlayerId, out float spd) && spd > Main.MinSpeed)
 
         {
 
-            Main.AllPlayerSpeed[Player.PlayerId] = Main.MinSpeed;
+            HamoSpeedTable.Instance[Player.PlayerId] = Main.MinSpeed;
 
             Player.MarkDirtySettings();
 

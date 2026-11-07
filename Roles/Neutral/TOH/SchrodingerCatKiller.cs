@@ -4,6 +4,7 @@ using UnityEngine;
 using AmongUs.GameOptions;
 using Hazel;
 
+using TownOfHostL.Attributes;
 using TownOfHostL.Modules;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
@@ -23,16 +24,22 @@ public sealed class SchrodingerCatKiller : RoleBase, IKiller, IAdditionalWinner,
             (int)Options.offsetId.NeuTOH + 390,
             SetupOptionItem,
             "シュレディンガーの猫",
-            "#696969"
+            "#696969",
+            flags: RoleFlags.NeutralKiller
         );
     public SchrodingerCatKiller(PlayerControl player)
     : base(
         RoleInfo,
         player
     )
+    { }
+
+    // 猫が途中でこの役職になるたびに作られるので、まだ切り替わっていない他の猫の予定を消さないよう試合の始めにだけ空にする
+    [GameModuleInitializer]
+    public static void Init()
     {
-        planedCats = new();
-        changeCheckList = new();
+        planedCats.Clear();
+        changeCheckList.Clear();
     }
 
     private static Dictionary<byte, (PlayerControl cat, PlayerControl owner, CustomRoles ownerRole,
@@ -277,7 +284,7 @@ public sealed class SchrodingerCatKiller : RoleBase, IKiller, IAdditionalWinner,
             roleTypes = RoleTypes.Scientist;
             if (sameTeam) roleTypes = RoleTypes.Impostor;
             else if (team == TeamType.Impostor &&
-                     !pc.GetCustomRole().GetRoleInfo().IsDesyncImpostor) roleTypes = RoleTypes.Impostor;
+                     pc.GetCustomRole().GetRoleInfo()?.IsDesyncImpostor != true) roleTypes = RoleTypes.Impostor;
 
             if (pc.PlayerId == PlayerControl.LocalPlayer.PlayerId) cat.SetRoleEx(roleTypes);
             else cat.RpcSetRoleDesync(roleTypes, pc.GetClientId());

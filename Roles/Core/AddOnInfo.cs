@@ -34,6 +34,12 @@ public sealed class AddOnInfo
     public readonly Action<byte> OnAdd;
     /// <summary>持ち主に送る設定を書き換える</summary>
     public readonly Action<IGameOptions> ApplyGameOptions;
+    /// <summary>勝ち方。持たない属性は null</summary>
+    public readonly AddOnWin Win;
+    /// <summary>/r などで引くチャットコマンドの名前。持たない属性は null</summary>
+    public readonly string ChatCommand;
+    /// <summary>試合の開始で、設定の人数と確率に従って無作為に配る (重ねて付けられる)</summary>
+    public readonly bool AssignAtRandom;
 
     public AddOnInfo(
         CustomRoles role,
@@ -43,7 +49,10 @@ public sealed class AddOnInfo
         Action setupOptions = null,
         Action<byte> onAdd = null,
         Action<IGameOptions> applyGameOptions = null,
-        RoleFlags flags = RoleFlags.None)
+        RoleFlags flags = RoleFlags.None,
+        AddOnWin win = null,
+        string chatCommand = null,
+        bool assignAtRandom = false)
     {
         Role = role;
         Group = group;
@@ -52,6 +61,9 @@ public sealed class AddOnInfo
         SetupOptions = setupOptions;
         OnAdd = onAdd;
         ApplyGameOptions = applyGameOptions;
+        Win = win;
+        ChatCommand = chatCommand;
+        AssignAtRandom = assignAtRandom;
         Flags = flags | group switch
         {
             AddOnGroup.Buff => RoleFlags.BuffAddOn,

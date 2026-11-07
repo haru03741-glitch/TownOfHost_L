@@ -11,6 +11,8 @@ using TownOfHostL.Templates;
 using static TownOfHostL.Translator;
 using TownOfHostL.Roles.Crewmate;
 
+using TownOfHostL.Core.Modes;
+
 namespace TownOfHostL
 {
     [HarmonyPatch]
@@ -31,9 +33,7 @@ namespace TownOfHostL
                 sb.Append("\r\n").Append(Main.credentialsText);
 
                 if (Options.NoGameEnd.GetBool()) sb.Append($"\r\n").Append(Utils.ColorString(Color.red, GetString("NoGameEnd")));
-                if (Options.IsStandardHAS) sb.Append($"\r\n").Append(Utils.ColorString(Color.yellow, GetString("StandardHAS")));
-                if (Options.CurrentGameMode == CustomGameMode.HideAndSeek) sb.Append($"\r\n").Append(Utils.ColorString(Color.red, GetString("HideAndSeek")));
-                if (Options.IsCCMode) sb.Append($"\r\n").Append(Utils.ColorString(Color.gray, GetString("CatchCat")));
+                if (ModeCatalog.Current.Label is { } label) sb.Append($"\r\n").Append(Utils.ColorString(label.Color, GetString(label.Key)));
                 //if (Options.IsONMode) sb.Append($"\r\n").Append(Utils.ColorString(Utils.GetRoleColor(CustomRoles.ONVillager), GetString("OneNight")));
                 if (!GameStates.IsModHost) sb.Append($"\r\n").Append(Utils.ColorString(Color.red, GetString("Warning.NoModHost")));
                 if (DebugModeManager.IsDebugMode) sb.Append("\r\n").Append(Utils.ColorString(Color.green, "デバッグモード"));
@@ -43,7 +43,7 @@ namespace TownOfHostL
 
                 if (GameStates.IsLobby)
                 {
-                    if (Options.IsStandardHAS && !CustomRoles.Sheriff.IsEnable() && !CustomRoles.SerialKiller.IsEnable() && CustomRoles.Egoist.IsEnable())
+                    if (ModeCatalog.IsHideAndSeekWithStandardRoles && !CustomRoles.Sheriff.IsEnable() && !CustomRoles.SerialKiller.IsEnable() && CustomRoles.Egoist.IsEnable())
                         sb.Append($"\r\n").Append(Utils.ColorString(Color.red, GetString("Warning.EgoistCannotWin")));
                 }
 
@@ -212,6 +212,8 @@ namespace TownOfHostL
                 try { TownOfHostL.Core.NotifyRolesQueue.Flush(); }
                 catch (System.Exception ex) { Logger.Exception(ex, "ModManagerLateUpdate"); }
                 try { NameRpcBatcher.Flush(); }
+                catch (System.Exception ex) { Logger.Exception(ex, "ModManagerLateUpdate"); }
+                try { Modules.Net.OutfitSync.Tick(); }
                 catch (System.Exception ex) { Logger.Exception(ex, "ModManagerLateUpdate"); }
                 try { OptionSaver.Tick(); }
                 catch (System.Exception ex) { Logger.Exception(ex, "ModManagerLateUpdate"); }

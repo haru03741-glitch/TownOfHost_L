@@ -32,10 +32,14 @@ public sealed class Godfather : RoleBase, IImpostor
         JanitorSeeSelectedTiming = OptionJanitorSeeSelectedTiming.GetBool();
 
         CustomRoleManager.MarkOthers.Add(GetMarkOthers);
+        CustomRoleManager.NameColorOthers.Add(OverrideNameColorByJanitorTarget);
+        CustomRoleManager.KillBlockersOthers.Add(IsLockedByJanitor);
     }
     public override void OnDestroy()
     {
         CustomRoleManager.MarkOthers.Remove(GetMarkOthers);
+        CustomRoleManager.NameColorOthers.Remove(OverrideNameColorByJanitorTarget);
+        CustomRoleManager.KillBlockersOthers.Remove(IsLockedByJanitor);
         godfather = null;
     }
 
@@ -76,7 +80,7 @@ public sealed class Godfather : RoleBase, IImpostor
         JanitorTarget.Add(target.PlayerId);
 
         // ターゲットの足止め
-        Main.AllPlayerSpeed[target.PlayerId] = Main.MinSpeed;
+        TownOfHostL.Modules.PlayerSpeed.Freeze(target.PlayerId, "Godfather");
         target.MarkDirtySettings();
         Logger.Info($"{target.GetNameWithRole()} : ターゲット足止め", "G&J");
 
@@ -118,7 +122,7 @@ public sealed class Godfather : RoleBase, IImpostor
                 target.RpcMurderPlayer(target, true);
 
                 // ターゲットの足止め解除
-                Main.AllPlayerSpeed[target.PlayerId] = Main.RealOptionsData.GetFloat(FloatOptionNames.PlayerSpeedMod);
+                TownOfHostL.Modules.PlayerSpeed.Remove(target.PlayerId, "Godfather");
                 target.MarkDirtySettings();
                 Logger.Info($"{target.GetNameWithRole()} : ジャニター未掃除のターゲット死亡", "G&J");
             }
@@ -183,11 +187,12 @@ public sealed class Godfather : RoleBase, IImpostor
         return Utils.ColorString(Palette.ImpostorRed, "⊥");
     }
 
-    // ターゲットは全視点に名前が紫色になる
-    public static string OverrideNameColorByJanitorTarget(PlayerControl target, string colorCode)
-    {
-        if (!CustomRoles.GodfatherAndJanitor.IsEnable()) return colorCode;
+    // ジャニターに選ばれた人は、ゴッドファーザーがいる間キルできない
+    private static bool IsLockedByJanitor(PlayerControl killer) => JanitorTarget.Contains(killer.PlayerId);
 
+    // ターゲットは全視点に名前が紫色になる
+    private static string OverrideNameColorByJanitorTarget(PlayerControl seer, PlayerControl target, string colorCode)
+    {
         if (JanitorTarget.Contains(target.PlayerId))
         {
             colorCode = "#cc00cc";

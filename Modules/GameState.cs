@@ -85,13 +85,9 @@ public partial class PlayerState
 
         CountType = CustomRoleManager.GetRoleInfo(role) is SimpleRoleInfo roleInfo ?
             roleInfo.CountType :
-            role switch
-            {
-                CustomRoles.GM => CountTypes.OutOfGame,
-                CustomRoles.HASFox or
-                CustomRoles.HASTroll => CountTypes.None,
-                _ => role.IsImpostor() ? CountTypes.Impostor : CountTypes.Crew,
-            };
+            role.IsSpectator() ? CountTypes.OutOfGame :
+            role.HasRoleFlag(RoleFlags.NotCounted) ? CountTypes.None :
+            role.IsImpostor() ? CountTypes.Impostor : CountTypes.Crew;
     }
     public void SetSubRole(CustomRoles role, bool AllReplace = false)
     {
@@ -116,7 +112,32 @@ public partial class PlayerState
         if (AmongUsClient.Instance.AmHost)
         {
             RPC.SendDeathReason(PlayerId, DeathReason);
+            var host = PlayerControl.LocalPlayer;
+            if (host != null && host.PlayerId == PlayerId) CompleteHostTasksOnDeath(host);
         }
+    }
+    /// <summary>
+    /// ホストの死後のタスク免除。残りのタスクを終えたことにする (タスクの合計からは外さない)。
+    /// 死に方 (キル・追放・はしご・自爆など) によらず、死んだ所で 1 度効かせる
+    /// </summary>
+    private static void CompleteHostTasksOnDeath(PlayerControl host)
+    {
+        if (!Options.HostGhostIgnoreTasks.GetBool()) return;
+        if (TownOfHostL.Core.PlayerTraits.KeepsTasksWhenDead(host) || !Utils.HasTasks(host.Data)) return;
+
+        var taskState = host.GetPlayerTaskState();
+        taskState.CompletedTasksCount = taskState.AllTasksCount;
+        Logger.Info($"{host.GetNameWithRole()}: TaskCounts = {taskState.CompletedTasksCount}/{taskState.AllTasksCount}", "HostGhostIgnoreTasks");
+
+        foreach (var task in host.Data.Tasks)
+        {
+            if (!task.Complete)
+            {
+                task.Complete = true;
+                GameData.Instance.CompletedTasks++;
+            }
+        }
+        Logger.Info($"{host.GetNameWithRole()}.Dead TotalTaskCounts = {GameData.Instance.CompletedTasks}/{GameData.Instance.TotalTasks}", "HostGhostIgnoreTasks");
     }
     public bool IsSuicide() { return DeathReason == CustomDeathReason.Suicide; }
     public TaskState GetTaskState() { return taskState; }

@@ -35,11 +35,17 @@ public class Snitch : RoleBase
         //他視点用のMarkメソッド登録
         CustomRoleManager.MarkOthers.Add(GetMarkOthers);
     }
-    public override void OnDestroy()
+    // 共有の一覧は試合の開始で空にし、破棄では自分の分だけ外す (他のスニッチの露見まで消さない)
+    [TownOfHostL.Attributes.GameModuleInitializer]
+    public static void Init()
     {
         TargetList.Clear();
         TargetColorlist.Clear();
         ExposedList.Clear();
+    }
+    public override void OnDestroy()
+    {
+        ExposedList.Remove(Player.PlayerId);
     }
 
     private static OptionItem OptionEnableTargetArrow;
@@ -90,20 +96,11 @@ public class Snitch : RoleBase
     private static bool IsSnitchTarget(PlayerControl target)
     {
         return target.Is(CustomRoleTypes.Impostor)
-            || (CanFindNeutralKiller && target.IsNeutralKiller());
+            || (CanFindNeutralKiller && target.IsCountedNeutralKiller());
     }
-    /// <summary>
-    /// スニッチが会議中ではキラーを視認できない判定
-    /// trueのとき視認できない
-    /// </summary>
-    /// <param name="seer">判定対象</param>
-    /// <param name="target">キラー</param>
-    /// <returns></returns>
-    public static bool IsCannotConfirmKillRoles(PlayerControl seer, PlayerControl target)
-    {
-        return CannotConfirmKillRoles && seer.Is(CustomRoles.Snitch)
-                && (target.Is(CustomRoleTypes.Impostor) || target.IsNeutralKiller());
-    }
+    /// <summary>キル役の確認ができない設定では、会議でキル役の名前の色を見せない</summary>
+    public override bool HidesNameColorInMeeting(PlayerControl target)
+        => CannotConfirmKillRoles && (target.Is(CustomRoleTypes.Impostor) || target.IsCountedNeutralKiller());
 
     /// <summary>
     /// キラーから見たスニッチ警告マーク

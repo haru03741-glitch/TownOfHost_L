@@ -56,7 +56,7 @@ public static class HamoRoleHelper
     public static bool IsGhostRole(this CustomRoles role) => false;
     public static bool IsGhostRole(this PlayerControl pc) => false;
     public static bool IsLovers(this PlayerControl pc) => pc.Is(CustomRoles.Lovers);
-    public static bool IsNeutralKiller(this CustomRoles role)
+    public static bool IsHamoNeutralKiller(this CustomRoles role)
         => role is CustomRoles.Egoist
             or CustomRoles.Jackal
             or CustomRoles.JackalHadouHo

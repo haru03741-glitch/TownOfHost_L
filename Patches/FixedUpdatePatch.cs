@@ -8,6 +8,8 @@ using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Impostor;
 using UnityEngine;
 
+using TownOfHostL.Core.Modes;
+
 namespace TownOfHostL
 {
     [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.FixedUpdate))]
@@ -88,7 +90,7 @@ namespace TownOfHostL
                 if (__instance.AmOwner)
                 {
                     // キルターゲットの上書き処理
-                    if (GameStates.IsInTask && !((__instance.Is(CustomRoleTypes.Impostor) && !__instance.Is(CustomRoles.StrayWolf)) || __instance.Is(CustomRoles.Egoist)) && __instance.CanUseKillButton() && !__instance.Data.IsDead)
+                    if (GameStates.IsInTask && !((__instance.Is(CustomRoleTypes.Impostor) && !__instance.GetCustomRole().IsLoneImpostor()) || __instance.Is(CustomRoles.Egoist)) && __instance.CanUseKillButton() && !__instance.Data.IsDead)
                     {
                         var players = __instance.GetPlayersInAbilityRangeSorted(false);
                         PlayerControl closest = players.Count <= 0 ? null : players[0];
@@ -213,7 +215,7 @@ namespace TownOfHostL
                     {
                         if (target.AmOwner && AmongUsClient.Instance.IsGameStarted)
                         {
-                            if (target.Is(CustomRoles.SeeingOff) || target.Is(CustomRoles.Sending) || target.Is(CustomRoles.MadDilemma))
+                            if (TownOfHostL.Core.PlayerTraits.LearnsExiledTeam(target))
                             {
                                 string str = Sending.RealNameChange();
                                 if (!string.IsNullOrEmpty(str))
@@ -221,7 +223,7 @@ namespace TownOfHostL
                                     RealName = str;
                                 }
                             }
-                            else if (Options.IsCCMode)
+                            else if (ModeCatalog.IsCatchCat)
                             {
                                 RealName = Utils.ColorString(seer.GetRoleColor(), seer.GetRoleInfo());
                             }
@@ -248,7 +250,7 @@ namespace TownOfHostL
                         // Color.clear や Color の比較演算子はゲーム側を呼ぶので、成分を直接比べる
                         (Color c, string t) = (default(Color), "");
                         var targetRoleClass = target.GetRoleClass();
-                        targetRoleClass?.OverrideShowMainRoleText(ref c, ref t);
+                        targetRoleClass?.ApplyShownMainRole(ref c, ref t);
                         if (c.r != 0f || c.g != 0f || c.b != 0f || c.a != 0f)
                         {
                             RealName = RealName.Color(c); // 既存の Color 拡張を利用
@@ -262,22 +264,9 @@ namespace TownOfHostL
                     // Mark / Suffix の組み立て（null 安全に）
                     try
                     {
-                        var seerRole = seer.GetRoleClass();
-                        Mark.Append(seerRole?.GetMark(seer, target, false));
-                        Mark.Append(CustomRoleManager.GetMarkOthers(seer, target, false));
-                        Mark.Append(Lovers.GetMark(seer, target));
-
-                        if (seer == target && ReportDeadBodyPatch.DontReportMarkList.Contains(seer.PlayerId))
-                            Mark.Append(Utils.ColorString(Palette.Orange, "◀×"));
-
-                        Suffix.Append(CustomRoleManager.GetLowerTextOthers(seer, target));
-                        Suffix.Append(seerRole?.GetSuffix(seer, target));
-                        Suffix.Append(CustomRoleManager.GetSuffixOthers(seer, target));
-                        if (seer.Is(CustomRoles.Management))
-                        {
-                            Suffix.Append(Management.GetSuffix(seer, target));
-                        }
-                        Suffix.Append(TargetDeadArrow.GetDeadBodiesArrow(seer, target));
+                        TownOfHostL.Core.NameParts.AppendMark(Mark, seer, target, false);
+                        if (seer == target) TownOfHostL.Core.NameParts.AppendReportMark(Mark, seer);
+                        TownOfHostL.Core.NameParts.AppendSeenSuffix(Suffix, seer, target, false);
                     }
                     catch (Exception ex)
                     {
@@ -286,7 +275,7 @@ namespace TownOfHostL
 
                     try
                     {
-                        if (Utils.IsActive(SystemTypes.Comms) && Options.CommsCamouflage.GetBool() && !Options.IsSyncColorMode)
+                        if (TownOfHostL.Core.NameParts.HideSeenName(false))
                             RealName = $"<size=0>{RealName}</size> ";
                     }
                     catch (Exception ex)
@@ -295,14 +284,11 @@ namespace TownOfHostL
                         Logger.Warn($"IsActive チェックで例外: {ex.Message}", "FixedUpdatePatch");
                     }
 
-                    if (EvilDyer.IsColorCamouflage)
-                        RealName = $"<size=0>{RealName}</size> ";
-
                     string DeathReason = "";
                     try
                     {
-                        if (seer?.Data != null && seer.Data.IsDead && seer.KnowDeathReason(target))
-                            DeathReason = $"({Utils.ColorString(Utils.GetRoleColor(CustomRoles.Doctor), Utils.GetVitalText(target.PlayerId))})";
+                        if (seer?.Data != null)
+                            DeathReason = TownOfHostL.Core.NameParts.DeathReason(seer, target);
                     }
                     catch (Exception ex)
                     {

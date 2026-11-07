@@ -17,7 +17,9 @@ public static class AddWatch
         "Ｗ",
         setupOptions: SetupCustomOption,
         onAdd: Add,
-        applyGameOptions: ApplyGameOptions);
+        applyGameOptions: ApplyGameOptions,
+        chatCommand: "ウォッチング",
+        assignAtRandom: true);
 
     private static readonly int Id = (int)offsetId.AddonBuff + 200;
     private static List<byte> playerIdList = new();

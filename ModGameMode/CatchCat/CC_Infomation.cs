@@ -7,6 +7,8 @@ using static TownOfHostL.CatchCat.Option;
 using static TownOfHostL.CatchCat.Common;
 using UnityEngine;
 
+using TownOfHostL.Core.Modes;
+
 namespace TownOfHostL.CatchCat;
 
 static class Infomation
@@ -127,7 +129,7 @@ static class Infomation
             sb.Append($" ・{M_ColorCatCount.GetName(true)}\n");
 
         sb.Append($"</line-height>\n");
-        foreach (var opt in OptionItem.AllOptions.Where(x => x.GetBool() && x.Parent == null && x.IsFeatureOption && (x.Id < Id || x.Id >= Id + 10000) && !x.IsHiddenOn(Options.CurrentGameMode)))
+        foreach (var opt in OptionItem.AllOptions.Where(x => x.GetBool() && x.Parent == null && x.IsFeatureOption && (x.Id < Id || x.Id >= Id + 10000) && x.IsShown()))
         {
             if (Options.NotShowOption(opt.Name)) continue;
 

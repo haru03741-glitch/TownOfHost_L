@@ -11,6 +11,8 @@ using TownOfHostL.Roles.Impostor;
 using TownOfHostL.Roles.Neutral;
 using UnityEngine;
 using static TownOfHostL.Translator;
+using TownOfHostL.Core.Modes;
+
 namespace TownOfHostL;
 
 [HarmonyPatch]
@@ -24,18 +26,6 @@ public static partial class MeetingHudPatch
             if (!AmongUsClient.Instance.AmHost) return true;
             MeetingVoteManager.Instance?.CheckAndEndMeeting();
             return false;
-        }
-    }
-    [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.VotingComplete))]
-    class VotingCompletePatch
-    {
-        public static void Postfix(MeetingHud __instance, [HarmonyArgument(1)] NetworkedPlayerInfo exiled, [HarmonyArgument(2)] bool tie)
-        {
-            if (exiled == null) return;
-
-            var exiledPc = exiled.Object;
-            // リヴェラー属性
-            Revealer.ChangeName(exiledPc);
         }
     }
     [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.CastVote))]
@@ -139,7 +129,7 @@ public static partial class MeetingHudPatch
             GameStates.AlreadyDied |= !Utils.IsAllAlive;
             Main.AllPlayerControls.Do(x => ReportDeadBodyPatch.WaitReport[x.PlayerId].Clear());
             ChainShifterAddon.OnStartMeeting();
-            foreach (var tm in Main.AllAlivePlayerControls.Where(p => p.Is(CustomRoles.TaskManager) || p.Is(CustomRoles.Management)))
+            foreach (var tm in Main.AllAlivePlayerControls.Where(TownOfHostL.Core.PlayerTraits.RefreshesNameOnMeetingStart))
                 Utils.NotifyRoles(true, tm);
             TargetDeadArrow.OnStartMeeting();
 
@@ -154,7 +144,6 @@ public static partial class MeetingHudPatch
 
             SoundManager.Instance.ChangeAmbienceVolume(0f);
             if (!GameStates.IsModHost) return;
-            var myRole = PlayerControl.LocalPlayer.GetRoleClass();
             foreach (var pva in __instance.playerStates)
             {
                 var pc = Utils.GetPlayerById(pva.PlayerId);
@@ -194,16 +183,7 @@ public static partial class MeetingHudPatch
                 }
 
                 var suffixBuilder = new StringBuilder(32);
-                if (myRole != null)
-                {
-                    suffixBuilder.Append(myRole.GetSuffix(PlayerControl.LocalPlayer, pc, isForMeeting: true));
-                }
-                suffixBuilder.Append(CustomRoleManager.GetSuffixOthers(PlayerControl.LocalPlayer, pc, isForMeeting: true));
-                // Management
-                if (pc.Is(CustomRoles.Management))
-                {
-                    suffixBuilder.Append(Management.GetSuffix(PlayerControl.LocalPlayer, pc, isForMeeting: true));
-                }
+                TownOfHostL.Core.NameParts.AppendSuffix(suffixBuilder, PlayerControl.LocalPlayer, pc, isMeeting: true);
 
                 if (suffixBuilder.Length > 0)
                 {
@@ -244,11 +224,11 @@ public static partial class MeetingHudPatch
                 }
             }
 
-            if (AntiBlackout.OverrideExiledPlayer && !Options.IsCCMode)
+            if (AntiBlackout.OverrideExiledPlayer && !ModeCatalog.IsCatchCat)
             {
                 messageList.Add(GetString("Warning.OverrideExiledPlayer"));
             }
-            if (Options.IsCCMode)
+            if (ModeCatalog.IsCatchCat)
             {
                 CatchCat.Infomation.ShowMeeting();
             }
@@ -312,7 +292,6 @@ public static partial class MeetingHudPatch
             {
                 if (pva == null) continue;
                 var seer = PlayerControl.LocalPlayer;
-                var seerRole = seer.GetRoleClass();
 
                 var target = Utils.GetPlayerById(pva.PlayerId);
                 if (target == null) continue;
@@ -342,7 +321,7 @@ public static partial class MeetingHudPatch
 
                     (Color c, string t) = (pva.NameText.color, "");
                     //trueRoleNameでColor上書きあればそれになる
-                    target.GetRoleClass()?.OverrideShowMainRoleText(ref c, ref t);//colorのみ
+                    target.GetRoleClass()?.ApplyShownMainRole(ref c, ref t);//colorのみ
                     pva.NameText.color = c;
                 }
                 else
@@ -357,13 +336,8 @@ public static partial class MeetingHudPatch
                     pva.NameText.text = pva.NameText.text.ApplyNameColorData(seer, target, true);
                 }
 
-                if (seer.KnowDeathReason(target))
-                    sb.Append($"({Utils.ColorString(Utils.GetRoleColor(CustomRoles.Doctor), Utils.GetVitalText(target.PlayerId))})");
-
-                sb.Append(seerRole?.GetMark(seer, target, true));
-                sb.Append(CustomRoleManager.GetMarkOthers(seer, target, true));
-                //Lovers
-                sb.Append(Lovers.GetMark(seer, target));
+                sb.Append(TownOfHostL.Core.NameParts.DeathReason(seer, target));
+                TownOfHostL.Core.NameParts.AppendMark(sb, seer, target, isMeeting: true);
 
                 //会議画面ではインポスター自身の名前にSnitchマークはつけません。
 
@@ -427,7 +401,7 @@ public static partial class MeetingHudPatch
                 if (!AntiBlackout.IsCached) AntiBlackout.SetIsDead();
                 Utils.AfterMeetingTasks();
 
-                Main.AllPlayerControls.Where(pc => !pc.Is(CustomRoles.GM)).Do(pc => RandomSpawn.CustomNetworkTransformPatch.FirstTP[pc.PlayerId] = true);
+                Main.AllPlayerControls.Where(pc => !pc.GetCustomRole().IsSpectator()).Do(pc => RandomSpawn.CustomNetworkTransformPatch.FirstTP[pc.PlayerId] = true);
 
                 _ = new LateTask(() =>
                 {
@@ -502,11 +476,7 @@ public static partial class MeetingHudPatch
         var player = Utils.GetPlayerById(playerId);
         if (player == null) return;
         //道連れ能力持たない時は下を通さない
-        if (!((player.Is(CustomRoles.SKMadmate) && Options.MadmateRevengeCrewmate.GetBool())
-            || (player.Is(CustomRoles.NekoKabocha) && NekoKabocha.revengeOnExile)
-            || (player.Is(CustomRoles.SchrodingerCat) && SchrodingerCat.RevengeOnExile)
-            || player.Is(CustomRoles.EvilNekomata) || player.Is(CustomRoles.Nekomata)
-            || player.Is(CustomRoles.Immoralist) || player.Is(CustomRoles.Revenger))) return;
+        if (!Core.PlayerTraits.RevengesOnExile(player)) return;
 
         var target = PickRevengeTarget(player, deathReason);
         if (target == null) return;
@@ -528,8 +498,8 @@ public static partial class MeetingHudPatch
                 if (candidate.Is(CustomRoleTypes.Impostor) && !Options.RevengeImpostorByImpostor.GetBool()) continue; //インポスター
                 if (candidate.Is(CustomRoleTypes.Madmate) && !Options.RevengeMadByImpostor.GetBool()) continue; //マッドメイト
             }
-            // 背徳者は妖狐を道連れしない
-            if (exiledplayer.Is(CustomRoles.Immoralist) && candidate.Is(CustomRoles.FoxSpirit)) continue;
+            // 役職ごとの除外 (背徳者は妖狐を道連れしない など)
+            if (!(exiledplayer.GetRoleClass()?.CanRevengeOn(candidate) ?? true)) continue;
 
             // 第三陣営を道連れするか（設定）
             if (candidate.Is(CustomRoleTypes.Neutral) && !Options.RevengeNeutral.GetBool()) continue;

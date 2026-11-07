@@ -70,6 +70,8 @@ public sealed class AntiComplete : RoleBase
         // 20-23を使用
         Tasks = Options.OverrideTasksData.Create(RoleInfo, 20, OptionKnowOption);
     }
+    public override bool NeedsSeenNames => true;
+
     public override void Add()
     {
         GuardCount = StartGuardCount;

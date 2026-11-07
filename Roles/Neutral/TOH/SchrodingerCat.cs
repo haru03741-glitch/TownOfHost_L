@@ -12,6 +12,7 @@ namespace TownOfHostL.Roles.Neutral;
 
 public sealed class SchrodingerCat : RoleBase, IAdditionalWinner, IDeathReasonSeeable, IKillFlashSeeable//MAD時に使用
 {
+    public override bool RevengesOnExile => RevengeOnExile;
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
             typeof(SchrodingerCat),

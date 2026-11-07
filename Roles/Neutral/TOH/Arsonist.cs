@@ -69,6 +69,8 @@ public sealed class Arsonist : RoleBase, IKiller
         OptionDouseCooldown = FloatOptionItem.Create(RoleInfo, 11, GeneralOption.Cooldown, new(5f, 100f, 1f), 10f, false)
             .SetValueFormat(OptionFormat.Seconds);
     }
+    public override bool NeedsSeenNames => true;
+
     public override void Add()
     {
         foreach (var ar in Main.AllPlayerControls)

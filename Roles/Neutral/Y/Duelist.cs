@@ -5,7 +5,7 @@ using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
 
 namespace TownOfHostL.Roles.Neutral;
-public sealed class Duelist : RoleBase, IAdditionalWinner
+public sealed class Duelist : RoleBase, IAdditionalWinner, IAdditionalWinGranter
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
@@ -98,13 +98,12 @@ public sealed class Duelist : RoleBase, IAdditionalWinner
         return Player.IsAlive() && !Archenemy.IsAlive();
     }
 
-    public static bool ArchenemyCheckWin(PlayerControl pc)
+    /// <summary>自分が死んで宿敵が生きていれば、宿敵が追加勝利する</summary>
+    public void GrantAdditionalWins()
     {
-        foreach (var duelist in Duelists)
-        {
-            if (pc == duelist.Archenemy && !duelist.Player.IsAlive() && pc.IsAlive()) return true;
-        }
-        return false;
+        if (Player.IsAlive() || !Archenemy.IsAlive()) return;
+        CustomWinnerHolder.WinnerIds.Add(Archenemy.PlayerId);
+        CustomWinnerHolder.AdditionalWinnerRoles.Add(CustomRoles.Archenemy);
     }
     public static bool CheckNotify(PlayerControl pc)
     {

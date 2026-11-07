@@ -17,7 +17,8 @@ public sealed class SeeingOff : RoleBase
             (int)Options.offsetId.CrewY + 500,
             null,
             "見送り人",
-            "#883fd1"
+            "#883fd1",
+            flags: RoleFlags.LearnsExiledTeam
         );
     public SeeingOff(PlayerControl player)
     : base(

@@ -21,6 +21,7 @@ public sealed class MadGuesser : VoteGuesser
             "マッドゲッサー",
             introSound: () => GetIntroSound(RoleTypes.Impostor)
         );
+    public override string GetRoleKey(bool infoLong) => Madmate.TaskMadmateRoleKey(Player, infoLong);
     public MadGuesser(PlayerControl player)
     : base(
         RoleInfo,

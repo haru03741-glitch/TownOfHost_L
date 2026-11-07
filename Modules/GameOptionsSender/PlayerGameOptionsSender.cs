@@ -154,10 +154,7 @@ namespace TownOfHostL.Modules
                 AURoleOptions.KillCooldown = Mathf.Max(0f, killCooldown);
             }
 
-            if (Main.AllPlayerSpeed.TryGetValue(player.PlayerId, out var speed))
-            {
-                AURoleOptions.PlayerSpeedMod = Mathf.Clamp(speed, Main.MinSpeed, 3f);
-            }
+            AURoleOptions.PlayerSpeedMod = Mathf.Clamp(PlayerSpeed.Get(player.PlayerId), Main.MinSpeed, 3f);
             // hamo: 動けない状態 (ペンギンに捕まった等)
             if (state.CanMove is false) AURoleOptions.PlayerSpeedMod = Main.MinSpeed;
 
@@ -175,7 +172,7 @@ namespace TownOfHostL.Modules
             {
                 opt.SetInt(Int32OptionNames.EmergencyCooldown, 3600);
             }
-            if ((Options.CurrentGameMode == CustomGameMode.HideAndSeek || Options.IsStandardHAS) && Options.HideAndSeekKillDelayTimer > 0)
+            if (Core.Modes.ModeCatalog.Current.IsHideAndSeek && Options.HideAndSeekKillDelayTimer > 0)
             {
                 opt.SetFloat(FloatOptionNames.ImpostorLightMod, 0f);
                 if (player.Is(CountTypes.Impostor))

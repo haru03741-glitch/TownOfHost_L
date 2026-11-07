@@ -24,7 +24,7 @@ public sealed class Vendetta : RoleBase, IKiller, IAdditionalWinner
             {
                 AssignCountRule = new(1, 1, 1)
             },
-            flags: RoleFlags.FixedCount | RoleFlags.DontShowOption  // 封印中
+            flags: RoleFlags.FixedCount | RoleFlags.NeutralKiller
         );
     public Vendetta(PlayerControl player)
     : base(
@@ -61,6 +61,8 @@ public sealed class Vendetta : RoleBase, IKiller, IAdditionalWinner
         OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, 11, GeneralOption.ImpostorVision, false, false);
         OptionSelfKillRequired = BooleanOptionItem.Create(RoleInfo, 12, OptionName.VendettaSelfKillRequired, false, false);
     }
+
+    public override bool NeedsSeenNames => true;
 
     public override void Add()
     {
@@ -140,9 +142,14 @@ public sealed class Vendetta : RoleBase, IKiller, IAdditionalWinner
     {
         killedThisTurn = false;
 
-        if (!Player.IsAlive() || !isChooseTarget) return;
-        Main.AfterMeetingDeathPlayers.TryAdd(Player.PlayerId, CustomDeathReason.Suicide);
-        Logger.Info($"Didn't select target. {Player.name} is suicide.", "Vendetta");
+        if (!Player.IsAlive()) return;
+        // 最初の会議で対象を選ばなかった (投票しなかった) ら自滅する
+        if (!isChooseTarget)
+        {
+            Main.AfterMeetingDeathPlayers.TryAdd(Player.PlayerId, CustomDeathReason.Suicide);
+            Logger.Info($"Didn't select target. {Player.name} is suicide.", "Vendetta");
+            return;
+        }
         Player.SetKillCooldown(killCooldown);
     }
 

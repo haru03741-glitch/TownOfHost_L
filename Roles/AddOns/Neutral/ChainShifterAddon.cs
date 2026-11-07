@@ -12,7 +12,7 @@ public static class ChainShifterAddon
         AddOnGroup.None,
         "#666666",
         onAdd: Add,
-        flags: RoleFlags.FirstWriteAddOn);
+        flags: RoleFlags.FirstWriteAddOn | RoleFlags.TasksNotCountedForWin | RoleFlags.NeverWins);
 
     //private static readonly int Id = (int)offsetId.AddonNeu + 100;
     //public static Color RoleColor = Utils.GetRoleColor(CustomRoles.ChainShifter);

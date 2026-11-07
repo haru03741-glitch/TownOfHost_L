@@ -14,7 +14,8 @@ public sealed class GuardianAngel : RoleBase
             assignInfo: new RoleAssignInfo(CustomRoles.GuardianAngel, CustomRoleTypes.Crewmate)
             {
                 IsInitiallyAssignableCallBack = () => false
-            }
+            },
+            flags: RoleFlags.NoComingOutOption
         );
     public GuardianAngel(PlayerControl player)
     : base(

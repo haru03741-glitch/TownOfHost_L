@@ -21,6 +21,8 @@ public sealed class BestieWolf : RoleBase, IImpostor
             SetupOptionItem,
             "ベスティーウルフ"
         );
+    public override string GetRoleKey(bool infoLong)
+        => infoLong || Main.AliveImpostorCount >= 2 ? null : "AfterBestieWolf";
     public BestieWolf(PlayerControl player)
     : base(
         RoleInfo,

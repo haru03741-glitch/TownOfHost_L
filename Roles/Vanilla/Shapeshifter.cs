@@ -12,7 +12,8 @@ public sealed class Shapeshifter : RoleBase, IImpostor, IKiller, ISidekickable
             typeof(Shapeshifter),
             player => new Shapeshifter(player),
             RoleTypes.Shapeshifter,
-            canMakeMadmate: true
+            canMakeMadmate: true,
+            flags: RoleFlags.NoComingOutOption
         );
     public Shapeshifter(PlayerControl player)
     : base(

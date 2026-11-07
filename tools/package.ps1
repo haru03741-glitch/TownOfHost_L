@@ -4,6 +4,7 @@
 #     … Gurge44/EndlessHostRoles@c2e0b297e の packaging から
 #   Il2CppInterop.Runtime.dll は tools/InteropWbPatch で write barrier を通すように書き換える
 #   doorstop_config.ini は tools/package/doorstop_config.ini (GC_DISABLE_INCREMENTAL を置かない)
+#   BepInEx/config/BepInEx.cfg は tools/package/BepInEx.cfg (interop の先読みを切る)
 #
 # 使い方: pwsh -NoProfile -File tools/package.ps1 -Dll build/TownOfHost_L.dll -Out build/TownOfHost_L.zip
 param(
@@ -50,6 +51,9 @@ try {
     }
     Set-Content -LiteralPath (Join-Path $stage '.doorstop_version') -Value '4.5.1' -NoNewline
     Copy-Item (Join-Path $PSScriptRoot 'package/doorstop_config.ini') (Join-Path $stage 'doorstop_config.ini') -Force
+    # BepInEx.cfg は変えたい項目だけを置く。残りの項目は BepInEx が初回の起動で既定値を書き足す
+    New-Item -ItemType Directory -Force (Join-Path $stage 'BepInEx/config') | Out-Null
+    Copy-Item (Join-Path $PSScriptRoot 'package/BepInEx.cfg') (Join-Path $stage 'BepInEx/config/BepInEx.cfg') -Force
     Copy-Item (Join-Path $PSScriptRoot 'package/THIRD-PARTY-NOTICES.txt') (Join-Path $stage 'THIRD-PARTY-NOTICES.txt') -Force
     Copy-Item (Join-Path $repo 'LICENSE') (Join-Path $stage 'licenses/GPL-3.0.txt') -Force
 

@@ -76,7 +76,7 @@ namespace TownOfHostL
             {
                 AllErrors.RemoveAll(err => ToRemove.Contains(err));
                 UpdateText();
-                if (HnSFlag || PublicFlag || NotHostFlag)
+                if (PublicFlag || NotHostFlag)
                     Destroy(this.gameObject);
             }
         }
@@ -120,7 +120,7 @@ namespace TownOfHostL
             }
             else
             {
-                if (!HnSFlag && !PublicFlag && !NotHostFlag)
+                if (!PublicFlag && !NotHostFlag)
                     text += $"{GetString($"ErrorLevel{maxLevel}")}";
                 Show();
             }
@@ -168,7 +168,6 @@ namespace TownOfHostL
             public void IncreaseTimer() => Timer += Time.deltaTime;
         }
 
-        public bool HnSFlag;
         public bool PublicFlag;
         public bool NotHostFlag;
 
@@ -202,7 +201,6 @@ namespace TownOfHostL
         TestError1 = 0009101, // 000-910-1 Test Error 1
         TestError2 = 0009202, // 000-920-2 Test Error 2
         TestError3 = 0009303, // 000-930-3 Test Error 3
-        HnsUnload = 000_804_1, // 000-804-1 Unloaded By HnS
         NotHostUnload = 000_111_1, // 000-804-1 Unloaded By NOT_host
         ZeroVision = 003_000_1, // 003-000-1 Vision is set to 0
     }

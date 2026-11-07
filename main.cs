@@ -106,10 +106,6 @@ public partial class Main : BasePlugin
     public static bool isChatCommand = false;
     public static Dictionary<byte, float> AllPlayerKillCooldown = new();
     public static HashSet<string> KillFlashAfterDead = new();
-    /// <summary>
-    /// 基本的に速度の代入は禁止.スピードは増減で対応してください.
-    /// </summary>
-    public static Dictionary<byte, float> AllPlayerSpeed = new();
     public const float MinSpeed = 0.0001f;
     public static int AliveImpostorCount;
     public static int SKMadmateNowCount;
@@ -117,7 +113,9 @@ public partial class Main : BasePlugin
     public static Dictionary<byte, byte> ShapeshiftTarget = new();
     public static bool VisibleTasksCount;
     public static string nickName = "";
-    public static bool introDestroyed = false;  
+    public static bool introDestroyed = false;
+    // イントロが終わった時刻。キル履歴を試合の経過時間で出すのに使う
+    public static DateTime IntroEndTime = DateTime.MinValue;  
     public static bool SetRoleOverride = true;   
     public static bool IsroleAssigned
         => !SetRoleOverride || SelectRolesPatch.roleAssigned;
@@ -159,6 +157,7 @@ public partial class Main : BasePlugin
 
         Logger = BepInEx.Logging.Logger.CreateLogSource("TOH_L");
         TownOfHostL.Logger.Enable();
+        TownOfHostL.Modules.ConsoleQuickEdit.Disable();
         TownOfHostL.Logger.Disable("NotifyRoles");
         TownOfHostL.Logger.Disable("SendRPC");
         TownOfHostL.Logger.Disable("ReceiveRPC");
@@ -230,7 +229,8 @@ public partial class Main : BasePlugin
         ClassInjector.RegisterTypeInIl2Cpp<BooleanOptionItem.BooleanGameSetting>();
         ClassInjector.RegisterTypeInIl2Cpp<LabelHoverBehaviour>();
 
-        TownOfHostL.Modules.DelegateTypeCache.Install(Harmony);
+        // かくれんぼの間に休ませる仕組みと delegate 型のキャッシュは、TOHL の Harmony を外しても残る別の Harmony に置く
+        TownOfHostL.Core.VanillaHideAndSeek.Init(this);
         Harmony.PatchAll();
         Application.quitting += new Action(Utils.SaveNowLog);
         // まとめて保存する設定を、終了前に書き切る

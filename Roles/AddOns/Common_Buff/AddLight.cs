@@ -16,7 +16,9 @@ public static class AddLight
         "Ｌ",
         setupOptions: SetupCustomOption,
         onAdd: Add,
-        applyGameOptions: ApplyGameOptions);
+        applyGameOptions: ApplyGameOptions,
+        chatCommand: "ライティング",
+        assignAtRandom: true);
 
     private static readonly int Id = (int)offsetId.AddonBuff + 0;
     private static List<byte> playerIdList = new();

@@ -486,7 +486,7 @@ public sealed class Assassin : HamoRoleBase, IImpostor, IUsePhantomButton, IDoub
     }
     public override CustomRoles TellResults(PlayerControl player) => (AddRole as HamoRoleBase)?.TellResults(player) ?? CustomRoles.NotAssigned;
     public override RoleTypes? AfterMeetingRole => (AddRole as HamoRoleBase)?.AfterMeetingRole ?? null;
-    public override void CheckWinner(GameOverReason reason) => AddRole?.CheckWinner(reason);
+    public override void CheckWinner(GameOverReason reason) => (AddRole as HamoRoleBase)?.CheckWinner(reason);
 
 
     bool IImpostor.CanBeLastImpostor => AddRole is IImpostor impostor ? impostor.CanBeLastImpostor : true;

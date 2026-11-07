@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
-using HarmonyLib;
+
 
 using TownOfHostL.Modules;
 using TownOfHostL.Roles;
@@ -9,16 +9,11 @@ using TownOfHostL.Roles.Core;
 
 namespace TownOfHostL;
 
-[HarmonyPatch(typeof(RoleManager), nameof(RoleManager.SelectRoles))]
-class SelectRolesCCModePatch
+/// <summary>CatchCat の割り当て。</summary>
+static class CatchCatRoleAssign
 {
-    public static bool Prefix(RoleManager __instance)
+    public static void Assign()
     {
-        if (!AmongUsClient.Instance.AmHost) return false;
-
-        //CCMode用
-        if (!Options.IsCCMode) return false;
-
         //CustomRpcSenderとRpcSetRoleReplacerの初期化
         RpcSetRoleReplacer.StartReplace();
 
@@ -112,7 +107,5 @@ class SelectRolesCCModePatch
         Utils.CountAlivePlayers(true);
         Utils.SyncAllSettings();
         SetColorPatch.IsAntiGlitchDisabled = false;
-
-        return false;
     }
 }

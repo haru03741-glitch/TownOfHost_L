@@ -14,7 +14,9 @@ public static class Revenger
         "#00ffff",
         "Ｒ",
         setupOptions: SetupCustomOption,
-        onAdd: Add);
+        onAdd: Add,
+        chatCommand: "リベンジャー",
+        assignAtRandom: true);
 
     private static readonly int Id = (int)offsetId.AddonBuff + 600;
     private static List<byte> playerIdList = new();

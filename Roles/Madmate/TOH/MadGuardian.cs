@@ -18,6 +18,7 @@ public sealed class MadGuardian : RoleBase
             "マッドガーディアン",
             introSound: () => GetIntroSound(RoleTypes.Impostor)
         );
+    public override string GetRoleKey(bool infoLong) => Madmate.TaskMadmateRoleKey(Player, infoLong);
     public MadGuardian(PlayerControl player)
     : base(
         RoleInfo,

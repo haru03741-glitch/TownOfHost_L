@@ -15,7 +15,9 @@ public static class TieBreaker
         "#204d42",
         "Tb",
         setupOptions: SetupCustomOption,
-        onAdd: Add);
+        onAdd: Add,
+        chatCommand: "タイブレーカー",
+        assignAtRandom: true);
 
     private static readonly int Id = (int)offsetId.AddonBuff + 800;
     private static List<byte> playerIdList = new();

@@ -17,7 +17,8 @@ public sealed class TaskManager : RoleBase
             SetupOptionItem,
             "タスクマネージャー",
             "#80ffdd",
-            introSound: () => GetIntroSound(RoleTypes.Scientist)
+            introSound: () => GetIntroSound(RoleTypes.Scientist),
+            flags: RoleFlags.RefreshesNameOnMeetingStart
         );
     public TaskManager(PlayerControl player)
     : base(

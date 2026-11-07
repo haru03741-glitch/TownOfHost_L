@@ -16,6 +16,8 @@ using TownOfHostL.Roles.AddOns.Impostor;
 using static TownOfHostL.Translator;
 using AmongUs.Data;
 
+using TownOfHostL.Core.Modes;
+
 namespace TownOfHostL;
 
 static partial class ExtendedPlayerControl
@@ -131,10 +133,7 @@ static partial class ExtendedPlayerControl
     }
     public static void RpcSetNameEx(this PlayerControl player, string name)
     {
-        foreach (var seer in Main.AllPlayerControls)
-        {
-            Main.LastNotifyNames[(player.PlayerId, seer.PlayerId)] = name;
-        }
+        // 送った名前の覚え書きは RpcSetName の後置 (RpcSetNameMirrorPatch) で全員分を書き換える
         HudManagerPatch.LastSetNameDesyncCount++;
 
         Logger.Info($"Set:{player?.Data?.PlayerName}:{name} for All", "RpcSetNameEx");
@@ -147,7 +146,7 @@ static partial class ExtendedPlayerControl
         //seer: 上の変更を確認することができるプレイヤー
         if (player == null || name == null || !AmongUsClient.Instance.AmHost) return;
         if (seer == null) seer = player;
-        if (!force && Main.LastNotifyNames[(player.PlayerId, seer.PlayerId)] == name)
+        if (!force && Main.LastNotifyNames.TryGetValue((player.PlayerId, seer.PlayerId), out var lastName) && lastName == name)
         {
             //Logger.info($"Cancel:{player.name}:{name} for {seer.name}", "RpcSetNamePrivate");
             return;
@@ -386,7 +385,7 @@ static partial class ExtendedPlayerControl
 
         (Color c, string t) = (Color.clear, "");
         //trueRoleNameでColor上書きあればそれになる
-        player.GetRoleClass()?.OverrideShowMainRoleText(ref c, ref t);//colorのみ
+        player.GetRoleClass()?.ApplyShownMainRole(ref c, ref t);//colorのみ
         if (c != Color.clear) return ColorUtility.ToHtmlStringRGB(c);
         else return Utils.GetRoleColorCode(role);
     }
@@ -401,7 +400,7 @@ static partial class ExtendedPlayerControl
 
         (Color c, string t) = (Color.clear, "");
         //trueRoleNameでColor上書きあればそれになる
-        player.GetRoleClass()?.OverrideShowMainRoleText(ref c, ref t);//colorのみ
+        player.GetRoleClass()?.ApplyShownMainRole(ref c, ref t);//colorのみ
         if (c != Color.clear) return c;
         else return Utils.GetRoleColor(role);
     }
@@ -497,7 +496,7 @@ static partial class ExtendedPlayerControl
     public static void ResetKillCooldown(this PlayerControl player)
     {
         Main.AllPlayerKillCooldown[player.PlayerId] = (player.GetRoleClass() as IKiller)?.CalculateKillCooldown() ?? Options.DefaultKillCooldown; //キルクールをデフォルトキルクールに変更
-        if (Options.IsCCMode && player.GetCustomRole().IsCCLeaderRoles())
+        if (ModeCatalog.IsCatchCat && player.GetCustomRole().IsCCLeaderRoles())
             Main.AllPlayerKillCooldown[player.PlayerId] = CatchCat.LeaderPlayer.CalculateKillCooldown(player);
         if (player.PlayerId == LastImpostor.currentId)
             LastImpostor.SetKillCooldown(player);
@@ -603,21 +602,13 @@ static partial class ExtendedPlayerControl
         return rangePlayers;
     }
     public static bool IsNeutralKiller(this PlayerControl player)
-    {
-        return
-            player.GetCustomRole() is
-            CustomRoles.Egoist or
-            CustomRoles.Jackal or
-            CustomRoles.DarkHide;
-    }
+        => player.GetCustomRole().IsNeutralKiller();
     public static bool IsCrewKiller(this PlayerControl player)
-    {
-        return
-            player.GetCustomRole() is
-            CustomRoles.Sheriff or
-            CustomRoles.SillySheriff or
-            CustomRoles.Hunter;
-    }
+        => player.GetCustomRole().IsCrewKiller();
+    public static bool IsCountedNeutralKiller(this PlayerControl player)
+        => player.GetCustomRole().IsCountedNeutralKiller();
+    public static bool IsCountedCrewKiller(this PlayerControl player)
+        => player.GetCustomRole().IsCountedCrewKiller();
     public static bool KnowDeathReason(this PlayerControl seer, PlayerControl seen)
     {
         // targetが生きてたらfalse
@@ -647,61 +638,19 @@ static partial class ExtendedPlayerControl
     }
     public static string GetRoleInfo(this PlayerControl player, bool InfoLong = false)
     {
-        var roleClass = player.GetRoleClass();
-        var role = player.GetCustomRole();
-
-        role = role.VanillaRoleConversion();//変換
-
-        var Prefix = "";
+        var role = player.GetCustomRole().VanillaRoleConversion();
         var text = role.ToString();
-        var Info = "";
-        switch (role)
-        {
-            case CustomRoles.Crewmate:
-            case CustomRoles.Impostor:
-                if (InfoLong)
-                {
-                    return "\n" + GetString($"{text}Blurb");
-                }
-                break;
-            case CustomRoles.Mafia:
-                if (InfoLong) break;
-                if (roleClass is not Mafia mafia) break;
-                Prefix = mafia.CanUseKillButton() ? "After" : "Before";
-                break;
-            case CustomRoles.MadSnitch:
-            case CustomRoles.MadGuesser:
-            case CustomRoles.MadGuardian:
-                if (InfoLong) break;
-                text = CustomRoles.Madmate.ToString();
-                Prefix = player.GetPlayerTaskState().IsTaskFinished ? "" : "Before";
-                break;
-            case CustomRoles.Bakery:
-                if (Bakery.IsNeutral(player))
-                    text = "NBakery";
-                break;
-            case CustomRoles.BestieWolf:
-                if (InfoLong) break;
-                Prefix = Main.AliveImpostorCount >= 2 ? "" : "After";
-                break;
-        }
 
         if (role.IsVanilla())
         {
-            if (InfoLong)
-            {
-                Info = "BlurbLong";
-                return "\n" + GetString($"{Prefix}{text}{Info}");
-            }
-
-            Info = "Blurb";
-        }
-        else
-        {
-            Info = InfoLong ? "InfoLong" : "Info";
+            if (!InfoLong) return GetString($"{text}Blurb");
+            // クルーメイトとインポスターは長い説明を持たないので、短い説明を出す
+            return "\n" + GetString(role is CustomRoles.Crewmate or CustomRoles.Impostor ? $"{text}Blurb" : $"{text}BlurbLong");
         }
 
-        return GetString($"{Prefix}{text}{Info}");
+        // 状態で説明が変わる役職は、翻訳キーの根を役職側が決める
+        text = player.GetRoleClass()?.GetRoleKey(InfoLong) ?? text;
+        return GetString($"{text}{(InfoLong ? "InfoLong" : "Info")}");
     }
     public static void SetRoleEx(this PlayerControl player, RoleTypes role)
     {
@@ -765,12 +714,17 @@ static partial class ExtendedPlayerControl
         }
         return null;
     }
-    public static void RpcSnapTo(this PlayerControl pc, Vector2 position)
+    // 以下の TP は、公式サーバーで SnapTo を送りすぎている時は何もせず false を返す (Modules.Net.SnapToBudget)。
+    // force は、取りやめるとプレイヤーが戻れなくなる送信 (元の位置へ戻す TP など) にだけ使う。
+    public static bool RpcSnapTo(this PlayerControl pc, Vector2 position, bool force = false)
     {
+        if (!force && !Modules.Net.SnapToBudget.CanSend()) return false;
         pc.NetTransform.RpcSnapTo(position);
+        return true;
     }
-    public static void SnapToTeleport(this PlayerControl pc, Vector2 position)
+    public static bool SnapToTeleport(this PlayerControl pc, Vector2 position, bool force = false)
     {
+        if (!force && !Modules.Net.SnapToBudget.CanSend()) return false;
         var netTransform = pc.NetTransform;
         if (AmongUsClient.Instance.AmClient)
         {
@@ -781,15 +735,18 @@ static partial class ExtendedPlayerControl
         NetHelpers.WriteVector2(position, messageWriter);
         messageWriter.Write(newSid);
         AmongUsClient.Instance.FinishRpcImmediately(messageWriter);
+        return true;
     }
-    public static void RpcSnapToDesync(this PlayerControl pc, PlayerControl target, Vector2 position)
+    public static bool RpcSnapToDesync(this PlayerControl pc, PlayerControl target, Vector2 position, bool force = false)
     {
+        if (!force && !Modules.Net.SnapToBudget.CanSend()) return false;
         var net = pc.NetTransform;
         var num = (ushort)(net.lastSequenceId + 2);
         MessageWriter messageWriter = AmongUsClient.Instance.StartRpcImmediately(net.NetId, (byte)RpcCalls.SnapTo, SendOption.None, target.GetClientId());
         NetHelpers.WriteVector2(position, messageWriter);
         messageWriter.Write(num);
         AmongUsClient.Instance.FinishRpcImmediately(messageWriter);
+        return true;
     }
     /// <summary>現在守護されているかどうか</summary>
     public static bool IsProtected(this PlayerControl self) => self.protectedByGuardianId > -1;
@@ -826,8 +783,14 @@ static partial class ExtendedPlayerControl
         PlayerState.GetByPlayerId(player.PlayerId).SetDead();
         player.Data.IsDead = true;
         GameDataSerializePatch.SerializeMessageCount++;
-        RpcSyncAllNetworkedPlayer();
-        GameDataSerializePatch.SerializeMessageCount--;
+        try
+        {
+            RpcSyncAllNetworkedPlayer();
+        }
+        finally
+        {
+            GameDataSerializePatch.SerializeMessageCount--;
+        }
     }
     // 参考元: SuperNewRoles / TOH-K
     public static void RpcSyncAllNetworkedPlayer(int targetClientId = -1, SendOption sendOption = SendOption.None)
@@ -880,6 +843,22 @@ static partial class ExtendedPlayerControl
         writer.EndMessage();
         AmongUsClient.Instance.SendOrDisconnect(writer);
         writer.Recycle();
+    }
+}
+
+/// <summary>
+/// 本編の RpcSetName は全員に同じ名前を送る。RpcSetNamePrivate の「前と同じなら送らない」は送った名前の覚え書きを見るので、
+/// 覚え書きを全員分その名前に書き換えておく。書き換えないと、客の画面は変わったのに覚え書きは古いままになり、
+/// 次に同じ名前を組み立てた時に送られず、客の画面が戻らない。
+/// </summary>
+[HarmonyLib.HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.RpcSetName))]
+static class RpcSetNameMirrorPatch
+{
+    public static void Postfix(PlayerControl __instance, string name)
+    {
+        if (!AmongUsClient.Instance.AmHost || Main.LastNotifyNames == null || __instance == null) return;
+        foreach (var seer in Main.AllPlayerControls)
+            Main.LastNotifyNames[(__instance.PlayerId, seer.PlayerId)] = name;
     }
 }
 

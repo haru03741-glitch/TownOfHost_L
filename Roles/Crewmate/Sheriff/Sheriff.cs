@@ -24,7 +24,8 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
             "シェリフ",
             "#f8cd46",
             isDesyncImpostor: true,
-            introSound: () => GetIntroSound(RoleTypes.Crewmate)
+            introSound: () => GetIntroSound(RoleTypes.Crewmate),
+            flags: RoleFlags.CrewKiller | RoleFlags.CountedAsKiller
         );
     public Sheriff(PlayerControl player)
     : base(
@@ -39,8 +40,10 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
 
     private static OptionItem KillCooldown;
     private static OptionItem ShotLimitOpt;
-    public static OptionItem IsInfoPoor;
-    public static OptionItem IsClumsy;
+    private static OptionItem OptionIsInfoPoor;
+    private static OptionItem OptionIsClumsy;
+    public override bool IsInfoPoor => OptionIsInfoPoor.GetBool();
+    public override bool IsClumsy => OptionIsClumsy.GetBool();
     private static OptionItem CanKillAllAlive;
     public static OptionItem CanKillNeutrals;
     enum OptionName
@@ -69,8 +72,8 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
             .SetValueFormat(OptionFormat.Seconds);
         ShotLimitOpt = IntegerOptionItem.Create(RoleInfo, 12, OptionName.SheriffShotLimit, new(1, 15, 1), 1, false)
             .SetValueFormat(OptionFormat.Times);
-        IsInfoPoor = BooleanOptionItem.Create(RoleInfo, 16, OptionName.SheriffIsInfoPoor, false, false);
-        IsClumsy = BooleanOptionItem.Create(RoleInfo, 17, OptionName.SheriffIsClumsy, false, false);
+        OptionIsInfoPoor = BooleanOptionItem.Create(RoleInfo, 16, OptionName.SheriffIsInfoPoor, false, false);
+        OptionIsClumsy = BooleanOptionItem.Create(RoleInfo, 17, OptionName.SheriffIsClumsy, false, false);
         CanKillAllAlive = BooleanOptionItem.Create(RoleInfo, 15, OptionName.SheriffCanKillAllAlive, true, false);
         SetUpKillTargetOption(CustomRoles.Madmate, 13);
         CanKillNeutrals = StringOptionItem.Create(RoleInfo, 14, OptionName.SheriffCanKillNeutrals, KillOption, 0, false);

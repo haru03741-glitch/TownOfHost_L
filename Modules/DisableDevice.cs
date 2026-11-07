@@ -29,10 +29,7 @@ namespace TownOfHostL
                         (map == MapNames.Airship && (Options.DisableDevices_Airship?.GetBool() ?? false)) ||
                         (map == MapNames.Fungle && (Options.DisableDevices_Fungle?.GetBool() ?? false));
 
-                   
-                    bool standardHas = Options.IsStandardHAS;
-
-                    return byMap || standardHas || IsPoorEnableSafe();
+                    return byMap || Core.Modes.ModeCatalog.Current.DisablesDevices || IsPoorEnableSafe();
                 }
                 catch (Exception ex)
                 {
@@ -82,18 +79,9 @@ namespace TownOfHostL
 
         public static bool IsInfoPoor(PlayerControl pc)
         {
-            try
-            {
-                if (pc == null) return false;
-                return ((pc.Is(CustomRoles.Sheriff) && (Sheriff.IsInfoPoor?.GetBool() ?? false))
-                        || (pc.Is(CustomRoles.SillySheriff) && (SillySheriff.IsInfoPoor?.GetBool() ?? false))
-                        || (pc.Is(CustomRoles.Hunter) && (Hunter.IsInfoPoor?.GetBool() ?? false))
-                        || pc.Is(CustomRoles.InfoPoor));
-            }
-            catch
-            {
-                return false;
-            }
+            // 抜けた直後の破棄済みの PlayerControl でも止まらないように
+            try { return Core.PlayerTraits.IsInfoPoor(pc); }
+            catch { return false; }
         }
 
         public static bool IsPoorEnableSafe()
@@ -233,7 +221,7 @@ namespace TownOfHostL
 
             bool PcIsPoor = DisableDevice.IsInfoPoor(player);
 
-            bool ignore = player.Is(CustomRoles.GM) ||
+            bool ignore = player.GetCustomRole().IsSpectator() ||
                 !player.IsAlive() ||
                 ((Options.DisableDevicesIgnoreImpostors?.GetBool() ?? false) && player.Is(CustomRoleTypes.Impostor)) ||
                 ((Options.DisableDevicesIgnoreMadmates?.GetBool() ?? false) && player.Is(CustomRoleTypes.Madmate)) ||

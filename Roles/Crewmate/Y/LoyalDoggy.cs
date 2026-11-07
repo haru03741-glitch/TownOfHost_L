@@ -33,11 +33,14 @@ public sealed class LoyalDoggy : RoleBase
         IgnoreTaskAfterDeadMaster = OptionIgnoreTaskAfterDeadMaster.GetBool();
 
         CustomRoleManager.MarkOthers.Add(GetMarkOthers);
+        CustomRoleManager.TaskExemptionsOthers.Add(IgnoreTask);
         LoyalDoggies.Add(this);
         Master = null;
         masterDecision = false;
         masterIsDead = false;
     }
+    public override bool NeedsSeenNames => true;
+
     public override void OnDestroy()
     {
         LoyalDoggies.Remove(this);
@@ -120,7 +123,8 @@ public sealed class LoyalDoggy : RoleBase
             if (OptionIsClumsy.GetBool()) Player.RpcSetCustomRole(CustomRoles.Clumsy);
         }
     }
-    public static bool IgnoreTask(NetworkedPlayerInfo p)
+    /// <summary>主人が死んだらタスクを免除する設定なら、主人を決めた忠犬のタスクを主人の死後に免除する</summary>
+    private static bool IgnoreTask(NetworkedPlayerInfo p)
     {
         if (!IgnoreTaskAfterDeadMaster) return false;
 

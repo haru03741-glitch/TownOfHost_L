@@ -25,7 +25,7 @@ namespace TownOfHostL
                 // 読み込みは進まないので、終わっていなければ記録だけ残す
                 if (!Options.IsLoaded) Logger.Warn("設定の読み込みが完了していない状態で部屋に入りました", "OnGameJoined");
 
-                Logger.Info($"{__instance?.GameId}に参加", "OnGameJoined");
+                Logger.Info($"{__instance?.GameId}に参加 (公式サーバー: {Modules.Net.OfficialServer.IsActive})", "OnGameJoined");
                 Main.playerVersion = new Dictionary<byte, PlayerVersion>();
                 try { RPC.RpcVersionCheck(); } catch { }
                 try { if (SoundManager.Instance != null) SoundManager.Instance.ChangeAmbienceVolume(DataManager.Settings.Audio.AmbienceVolume); } catch { }
@@ -154,7 +154,9 @@ namespace TownOfHostL
                 }
                 else
                 {
-                    if (GameStates.IsInGame)
+                    // 試合の開始からイントロまでの間 (IsInGame がまだ false) に抜けた人も、試合中の離脱として扱う
+                    if ((GameStates.IsInGame || AmongUsClient.Instance.IsGameStarted)
+                        && PlayerState.GetByPlayerId(data.Character.PlayerId) is PlayerState state)
                     {
                         if (data.Character.Is(CustomRoles.Lovers) && !data.Character.Data.IsDead)
                         {
@@ -164,7 +166,6 @@ namespace TownOfHostL
                                 PlayerState.GetByPlayerId(lovers.PlayerId).RemoveSubRole(CustomRoles.Lovers);
                             }
                         }
-                        var state = PlayerState.GetByPlayerId(data.Character.PlayerId);
                         if (state.DeathReason == CustomDeathReason.etc) //死因が設定されていなかったら
                         {
                             state.DeathReason = CustomDeathReason.Disconnected;

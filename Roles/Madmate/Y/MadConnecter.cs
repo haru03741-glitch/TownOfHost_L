@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using AmongUs.GameOptions;
+using TownOfHostL.Attributes;
 
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
@@ -21,7 +22,8 @@ public sealed class MadConnecter : RoleBase, IKiller, IKillFlashSeeable
             SetupOptionItem,
             "マッドコネクター",
             isDesyncImpostor: true,
-            flags: RoleFlags.DontSelectLoyalty | RoleFlags.DirectKill
+            flags: RoleFlags.DontSelectLoyalty | RoleFlags.DirectKill,
+            introShowsImpostorCount: true
         );
     public MadConnecter(PlayerControl player)
     : base(
@@ -39,9 +41,9 @@ public sealed class MadConnecter : RoleBase, IKiller, IKillFlashSeeable
         if (count < KnowImpostorRoleTasks) count = KnowImpostorRoleTasks;
         if (count < KnowDeadBodyArrowTasks) count = KnowDeadBodyArrowTasks;
         // タスクの最大数
-        if (count != 0) maxTask = count;
+        // 前の試合の値を持ち越さないよう毎回決める (どれも 0 なら 1)
+        maxTask = count != 0 ? count : 1;
 
-        MadList = new();
         CustomRoleManager.MarkOthers.Add(GetMarkOthers);
         CustomRoleManager.SuffixOthers.Add(GetSuffixOthers);
     }
@@ -55,8 +57,12 @@ public sealed class MadConnecter : RoleBase, IKiller, IKillFlashSeeable
     static int KnowImpostorRoleTasks;
     static int KnowDeadBodyArrowTasks;
 
-    static HashSet<MadConnecter> MadList;
-    static int maxTask = 99;
+    static readonly HashSet<MadConnecter> MadList = new();
+    static int maxTask;
+
+    // 2 人目のマッドコネクターで 1 人目が外れないよう試合の始めにだけ空にする
+    [GameModuleInitializer]
+    public static void Init() => MadList.Clear();
 
     HashSet<byte> ConnectImpostorId;
     bool[] IsSet;
@@ -90,13 +96,13 @@ public sealed class MadConnecter : RoleBase, IKiller, IKillFlashSeeable
     {
         opt.SetVision(Options.AddOnRoleOptions[(CustomRoles.MadConnecter, CustomRoles.AddLight)].GetBool());
     }
+    public override void OnDestroy() => MadList.Remove(this);
     public override void Add()
     {
         MadList.Add(this);
         ConnectImpostorId = new();
         IsSet = new[] { false, false };
 
-        if (maxTask == 99) maxTask = 1;
         VentEnterTask.Add(Player, maxTask, useVent: CanVent);
     }
     public bool CheckKillFlash(MurderInfo info) => IsSet[(int)SetNumber.knowDeadBodyArrow];

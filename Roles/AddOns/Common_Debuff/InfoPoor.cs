@@ -14,7 +14,9 @@ public static class InfoPoor
         "#556b2f",
         "Ip",
         setupOptions: SetupCustomOption,
-        onAdd: Add);
+        onAdd: Add,
+        chatCommand: "インフォプアー",
+        assignAtRandom: true);
 
     private static readonly int Id = (int)offsetId.AddonDebuff + 200;
     private static List<byte> playerIdList = new();

@@ -34,8 +34,6 @@ public sealed class Psychic : RoleBase
     {
         Cooldown = OptionCooldown.GetFloat();
         TaskTrigger = OptionTaskTrigger.GetInt();
-
-        VentSelect.Init();
     }
     private static OptionItem OptionCooldown;
     public static OptionItem MaxCheckRole;
@@ -152,34 +150,21 @@ public sealed class Psychic : RoleBase
     {
         if (!VentSelect.IsShowTargetRole(Player, seen)) return;
         if (KillerOnly.GetBool() &&
-            !(seen.GetCustomRole().IsImpostor() || seen.IsNeutralKiller() || seen.IsCrewKiller()
-            || seen.Is(CustomRoles.MadSheriff) || seen.Is(CustomRoles.GrudgeSheriff))) return;
+            !TownOfHostL.Core.PlayerTraits.IsKillerForDivination(seen)) return;
 
         enabled = true;
 
         if (!ConfirmCamp.GetBool()) return;   //役職表示
 
-        //陣営表示
-        if (seen.GetCustomRole().IsImpostor() || seen.GetCustomRole().IsMadmate())
-        {
-            roleText = GetString("TeamImpostor").Color(Palette.ImpostorRed);
-        }
-        else if (seen.GetCustomRole().IsNeutral())
-        {
-            roleText = GetString("Neutral").Color(Palette.Orange);
-        }
-        else
-        {
-            roleText = GetString("TeamCrewmate").Color(Palette.CrewmateBlue);
-        }
+        roleText = TownOfHostL.Core.NameParts.TeamText(seen);   //陣営表示
     }
-    public bool KnowTargetRoleColor(PlayerControl target)
+    public override bool KnowsRoleColorOf(PlayerControl target, bool isMeeting) => KnowTargetRoleColor(target) && isMeeting;
+    private bool KnowTargetRoleColor(PlayerControl target)
     {
         if (!VentSelect.IsShowTargetRole(Player, target)) return false;
         if (!ConfirmCamp.GetBool()) return false;   //役職表示
         if (KillerOnly.GetBool() &&
-        !(target.GetCustomRole().IsImpostor() || target.IsNeutralKiller() || target.IsCrewKiller()
-        || target.Is(CustomRoles.MadSheriff) || target.Is(CustomRoles.GrudgeSheriff))) return false;
+        !TownOfHostL.Core.PlayerTraits.IsKillerForDivination(target)) return false;
         return true;
     }
 
@@ -203,6 +188,8 @@ public sealed class Psychic : RoleBase
         public static Dictionary<byte, bool> SelectFix = new();
         public static Dictionary<byte, float> TergetFixTimer = new();
         public static Dictionary<byte, List<byte>> CheckRolePlayer = new();
+        // 試合の開始でだけ空にする (Psychic を作るたびに空にすると、試合中に増えた Psychic が他の Psychic の確認済み一覧を消す)
+        [TownOfHostL.Attributes.GameModuleInitializer]
         public static void Init()
         {
             SelectPlayer = new();

@@ -14,7 +14,9 @@ public static class Autopsy
         "#80ffdd",
         "Ａ",
         setupOptions: SetupCustomOption,
-        onAdd: Add);
+        onAdd: Add,
+        chatCommand: "オートプシー",
+        assignAtRandom: true);
 
     private static readonly int Id = (int)offsetId.AddonBuff + 400;
     private static List<byte> playerIdList = new();
