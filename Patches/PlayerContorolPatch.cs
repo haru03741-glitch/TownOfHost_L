@@ -27,6 +27,8 @@ class CheckProtectPatch
     public static bool Prefix(PlayerControl __instance, [HarmonyArgument(0)] PlayerControl target)
     {
         if (!AmongUsClient.Instance.AmHost) return false;
+        // CNO (客の手元の一覧に残る偽のプレイヤー) は Data がホストの物なので、守るとホストを守ったことになる
+        if (Core.CustomNetObject.Is(target) || Core.CustomNetObject.Is(__instance)) return false;
         Logger.Info("CheckProtect発生: " + __instance.GetNameWithRole() + "=>" + target.GetNameWithRole(), "CheckProtect");
         if (__instance.IsCountedCrewKiller()
             || __instance.Is(CustomRoles.MadSheriff))
@@ -58,6 +60,8 @@ class CheckMurderPatch
     public static bool Prefix(PlayerControl __instance, [HarmonyArgument(0)] PlayerControl target)
     {
         if (!AmongUsClient.Instance.AmHost || AmongUsClient.Instance.IsGameOver) return false;
+        // CNO へのキルは Core の前置で捨てている (前置は全部走るので、ここでも見る)
+        if (Core.CustomNetObject.Is(target) || Core.CustomNetObject.Is(__instance)) return false;
         RevealVisualRoleBeforeMurder(__instance, target);
 
         if (!CustomRoleManager.OnCheckMurder(__instance, target))
@@ -264,7 +268,8 @@ public static class PlayerControlCheckShapeshiftPatch
         }
 
         // 無効な変身を弾く．これより前に役職等の処理をしてはいけない
-        if (!CheckInvalidShapeshifting(__instance, target, shouldAnimate))
+        // CNO (客の手元の一覧に残る偽のプレイヤー) は Data がホストの物なので、ここで先に弾く
+        if (Core.CustomNetObject.Is(target) || !CheckInvalidShapeshifting(__instance, target, shouldAnimate))
         {
             __instance.RpcRejectShapeshift();
             return false;
@@ -360,6 +365,8 @@ class ShapeshiftPatch
 {
     public static void Prefix(PlayerControl __instance, [HarmonyArgument(0)] PlayerControl target)
     {
+        // CNO は見た目を入れるためにホストへ変身する。役職の処理も名前の配り直しも要らない
+        if (Core.CustomNetObject.Is(__instance)) return;
         Logger.Info($"{__instance?.GetNameWithRole()} => {target?.GetNameWithRole()}", "Shapeshift");
 
         var shapeshifter = __instance;
@@ -703,7 +710,7 @@ class SetColorPatch
     public static bool Prefix(PlayerControl __instance, int bodyColor)
     {
         //色変更バグ対策
-        if (!AmongUsClient.Instance.AmHost || __instance.CurrentOutfit.ColorId == bodyColor || IsAntiGlitchDisabled) return true;
+        if (!AmongUsClient.Instance.AmHost || Core.CustomNetObject.Is(__instance) || __instance.CurrentOutfit.ColorId == bodyColor || IsAntiGlitchDisabled) return true;
         if (AmongUsClient.Instance.IsGameStarted && ModeCatalog.Current.KillsOnColorChange)
         {
             //ゲーム中に色を変えた場合
