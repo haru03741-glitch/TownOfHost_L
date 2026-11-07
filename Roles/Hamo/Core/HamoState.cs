@@ -1,4 +1,4 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Attributes;
 
@@ -96,6 +96,7 @@ class HamoExileWrapUpStatePatch
         GameStates.CalledMeeting = false;
         _ = new LateTask(() => GameStates.ExiledAnimate = false, 3f + Main.LagTime, "Tuihoufin", true);
         HamoSpawn.SetAll(true);
+        TownOfHostL.Roles.Hamo.HamoHookPatches.OnExileWrapUp(false);
     }
 }
 [HarmonyPatch(typeof(AirshipExileController), nameof(AirshipExileController.WrapUpAndSpawn))]
@@ -106,6 +107,7 @@ class HamoAirshipExileWrapUpStatePatch
         GameStates.CalledMeeting = false;
         _ = new LateTask(() => GameStates.ExiledAnimate = false, 3f + Main.LagTime, "Tuihoufin", true);
         HamoSpawn.SetAll(true);
+        TownOfHostL.Roles.Hamo.HamoHookPatches.OnExileWrapUp(true);
     }
 }
 [HarmonyPatch(typeof(IntroCutscene), nameof(IntroCutscene.CoBegin))]
@@ -120,6 +122,7 @@ class HamoIntroEndStatePatch
     {
         GameStates.Intro = false;
         HamoSpawn.SetAll(true);
+        TownOfHostL.Roles.Hamo.HamoHookPatches.OnIntroEnd();
     }
 }
 

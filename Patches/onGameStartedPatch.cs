@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
@@ -520,6 +520,9 @@ class SelectRolesPatch
         {
             AssignCustomSubRolesDuplicatable(role, allPlayersbySub);
         }
+
+        // hamo: 役職ごとに付ける属性
+        RoleAddAddons.GrantAll();
 
         foreach (var pair in PlayerState.AllPlayerStates)
         {

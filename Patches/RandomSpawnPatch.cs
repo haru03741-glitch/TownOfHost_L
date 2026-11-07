@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
@@ -36,6 +36,7 @@ namespace TownOfHostL
                         Utils.SyncAllSettings();
 
                         if (Main.NormalOptions.MapId != 4) return; //マップがエアシップじゃなかったらreturn
+                        TownOfHostL.Roles.Hamo.HamoHookPatches.OnAirshipSpawn(player);
                         player.RpcResetAbilityCooldown();
                         if (Options.FixFirstKillCooldown.GetBool() && MeetingStates.FirstMeeting)
                             player.SetKillCooldown(Main.AllPlayerKillCooldown[player.PlayerId]);

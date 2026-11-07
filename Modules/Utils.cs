@@ -423,6 +423,8 @@ public static partial class Utils
         string text = GetProgressText(seen.PlayerId, comms);
 
         seer.GetRoleClass()?.OverrideProgressTextAsSeer(seen, ref enabled, ref text);
+        // hamo: 見られる側による変更
+        (seen.GetRoleClass() as TownOfHostL.Roles.Core.HamoRoleBase)?.OverrideProgressTextAsSeen(seer, ref enabled, ref text);
         if (Options.IsCCMode && seer == seen)
         {
             text += CatchCat.Common.GetMark(seer);
@@ -1490,6 +1492,10 @@ public static partial class Utils
 
             //RealNameを取得 なければ現在の名前をRealNamesに書き込む
             string SeerRealName = seer.GetRealName(isForMeeting);
+            // hamo: 名前を一時的に書き換える役職 (波動砲のためなど)
+            string hamoSelfName = ""; bool hamoSelfNoMarker = false;
+            var hamoSelfTemp = (seer.GetRoleClass() as TownOfHostL.Roles.Core.HamoRoleBase)?.GetTemporaryName(ref hamoSelfName, ref hamoSelfNoMarker, isForMeeting, seer) ?? false;
+            if (hamoSelfTemp) SeerRealName = hamoSelfName;
 
             if (!isForMeeting && (Options.IsCCMode || (MeetingStates.FirstMeeting && Options.ChangeNameToRoleInfo.GetBool())))
                 SeerRealName = seer.GetRoleInfo();
@@ -1528,11 +1534,11 @@ public static partial class Utils
                 !seer.Is(CustomRoles.Rainbow) &&
                 !seer.Is(CustomRoles.Workaholic))
             {
-                SelfName.Append($"{ColorString(Color.white, SeerRealName)}{SelfDeathReason}{SelfMark}");
+                SelfName.Append($"{ColorString(Color.white, SeerRealName)}{(hamoSelfTemp && hamoSelfNoMarker ? "" : $"{SelfDeathReason}{SelfMark}")}");
             }
             else if (selfNameOriginal)
             {
-                SelfName.Append($"{ColorString(SelfNameColor, SeerRealName)}{SelfDeathReason}{SelfMark}");
+                SelfName.Append($"{ColorString(SelfNameColor, SeerRealName)}{(hamoSelfTemp && hamoSelfNoMarker ? "" : $"{SelfDeathReason}{SelfMark}")}");
             }
 
             if (SelfSuffix.Length != 0)
@@ -1558,6 +1564,7 @@ public static partial class Utils
 
             //seerが死んでいる場合など、必要なときのみ第二ループを実行する
             if (seer.Data.IsDead //seerが死んでいる
+                || HamoHooks.NeedsOtherNameLoop(seer) // hamo の役職がいる
                 || seer.GetCustomRole().IsImpostor() //seerがインポスター
                 || PlayerState.GetByPlayerId(seer.PlayerId).TargetColorData.Count > 0 //seer視点用の名前色データが一つ以上ある
                 || seer.Is(CustomRoles.Arsonist)
@@ -1643,8 +1650,14 @@ public static partial class Utils
                     if (EvilDyer.IsColorCamouflage && !isForMeeting)
                         TargetPlayerName = $"<size=0%>{TargetPlayerName}</size>";
 
+                    // hamo: 名前を一時的に書き換える役職
+                    string hamoName = ""; bool hamoNoMarker = false;
+                    var hamoTemp = (target.GetRoleClass() as TownOfHostL.Roles.Core.HamoRoleBase)?.GetTemporaryName(ref hamoName, ref hamoNoMarker, isForMeeting, seer, target) ?? false;
+
                     //全てのテキストを合成します。
-                    string TargetName = $"{TargetRoleText}{TargetPlayerName}{TargetDeathReason}{TargetMark}{TargetSuffix}";
+                    string TargetName = hamoTemp
+                        ? $"{TargetRoleText}{hamoName}{(hamoNoMarker ? "" : $"{TargetDeathReason}{TargetMark}{TargetSuffix}")}"
+                        : $"{TargetRoleText}{TargetPlayerName}{TargetDeathReason}{TargetMark}{TargetSuffix}";
 
                     // バニラ視点にMOD名/Versionを記載
                     TargetName = MeetingDisplayText.AddTextForVanilla(target, TargetName, TargetSuffix.ToString(), TargetRoleText, isForMeeting);

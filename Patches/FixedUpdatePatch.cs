@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Text;
 using HarmonyLib;
@@ -45,6 +45,9 @@ namespace TownOfHostL
 
                 TargetArrow.OnFixedUpdate(player);
                 GetArrow.OnFixedUpdate(player);
+                if (AmongUsClient.Instance.AmHost && player.GetRoleClass() is TownOfHostL.Roles.Core.Interfaces.IDoubleTrigger)
+                    TownOfHostL.HamoDoubleTrigger.OnFixedUpdate(player);
+                if (AmongUsClient.Instance.AmHost) (player.GetRoleClass() as TownOfHostL.Roles.Core.Interfaces.IUsePhantomButton)?.FixedUpdate(player);
                 TargetDeadArrow.OnFixedUpdate(player);
                 VentSelect.OnFixedUpdate(player);
                 CustomRoleManager.OnFixedUpdate(player);

@@ -420,6 +420,10 @@ public static class PlayerControlCheckVanishPatch
          * 　　ホストは仕様上キルクールは強制されないが、バニラの仕様に合わせセットする
          * ・canResetAbilityCooldown : アビリティクールダウンをリセットするか設定する
          *****************************/
+        // hamo: ファントムのボタンをワンクリックで使う役職
+        if (role is IUsePhantomButton hamoPb && hamoPb.UseOneclickButton)
+            return TownOfHostL.Roles.Hamo.HamoHookPatches.CheckVanish(phantom, hamoPb);
+
         float killCooldown = 10.0f;
         bool canResetAbilityCooldown = false;
         if (role?.OnCheckVanish(ref killCooldown, ref canResetAbilityCooldown) == false)
@@ -749,6 +753,7 @@ class CoEnterVentPatch
         // hamo: 誰かがベントに入った時の処理・今いるベントの記録
         VentilationSystemUpdateSystemPatch.NowVentId[user.PlayerId] = (byte)id;
         foreach (var vent in CustomRoleManager.OnEnterVentOthers) vent(physics, id);
+        TownOfHostL.Roles.Hamo.HamoHookPatches.OnEnterVent(physics, id);
 
         bool roleAllowsVent = user.GetRoleClass()?.OnEnterVent(physics, id) ?? false;
         bool ventTaskAllows = VentEnterTask.OnEnterVent(physics, id);

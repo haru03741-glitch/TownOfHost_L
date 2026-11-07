@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
@@ -37,6 +37,29 @@ public static class HamoHooks
         else role.OverrideDisplayRoleNameAsSeer(seen, ref enabled, ref color, ref text, ref addon);
         if (color != origColor || text != origText)
             roleText = Utils.ColorString(color, text);
+    }
+
+    /// <summary>hamo の役職がいる時は、他の人の名前も作り直す</summary>
+    public static bool NeedsOtherNameLoop(PlayerControl seer)
+        => CustomRoleManager.AllActiveRoles.Values.Any(r => r is HamoRoleBase);
+
+    /// <summary>
+    /// hamo の CheckVoteAsVoter を全員の役職で呼ぶ。どれかが false なら投票を取り消す。
+    /// 天秤の会議中は、天秤の対象以外への投票を天秤だけが見る。
+    /// </summary>
+    public static bool CheckVoteAsVoter(byte srcPlayerId, byte suspectPlayerId, PlayerControl voter)
+    {
+        var balancer = TownOfHostL.Roles.Hamo.Crewmate.Balancer.Id;
+        foreach (var pc in Main.AllPlayerControls)
+        {
+            if (pc.GetRoleClass() is not HamoRoleBase role) continue;
+            if (balancer != 255
+                && !(suspectPlayerId == srcPlayerId || suspectPlayerId == TownOfHostL.Roles.Hamo.Crewmate.Balancer.target1 || suspectPlayerId == TownOfHostL.Roles.Hamo.Crewmate.Balancer.target2)
+                && !pc.Is(CustomRoles.Balancer)
+                && TownOfHostL.Roles.Hamo.Crewmate.Balancer.OptionCanMeetingAbility.GetBool()) continue;
+            if (!role.CheckVoteAsVoter(suspectPlayerId, voter)) return false;
+        }
+        return true;
     }
 
     /// <summary>投票結果の書き換え。どれかが true を返すと同数時の特殊モードを使わない</summary>

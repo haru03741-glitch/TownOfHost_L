@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
@@ -68,12 +68,11 @@ public abstract class HamoRoleBase : RoleBase
     // ===== 会議 =====
     public virtual string MeetingAddMessage() => "";
     public virtual bool CheckVoteAsVoter(byte votedForId, PlayerControl voter) => true;
-    public sealed override bool CheckVoteAsVoter(PlayerControl votedFor)
-        => CheckVoteAsVoter(votedFor == null ? HamoHooks.SkipVoteId : votedFor.PlayerId, Player);
+    /// <summary>hamo の役職の投票の確認は HamoHooks.CheckVoteAsVoter から全員分呼ぶ</summary>
+    public sealed override bool CheckVoteAsVoter(PlayerControl votedFor) => true;
     public virtual bool VotingResults(ref NetworkedPlayerInfo Exiled, ref bool IsTie, Dictionary<byte, int> vote, byte[] mostVotedPlayers, bool ClearAndExile) => false;
     public virtual bool CancelReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target, ref DontReportreson reason) => false;
     public virtual bool? CheckGuess(PlayerControl killer) => true;
-    public override bool CallJudgeVote(PlayerControl voter, PlayerControl votefor, ref byte ExilePlayerid) => true;
 
     // ===== タスク =====
     public virtual bool OnCompleteTask(uint taskid) => true;

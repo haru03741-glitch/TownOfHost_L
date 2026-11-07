@@ -329,7 +329,12 @@ public static partial class CustomRoleManager
     {
         if (AllRolesInfo.TryGetValue(role, out var roleInfo))
         {
-            roleInfo.CreateInstance(player).Add();
+            var roleClass = roleInfo.CreateInstance(player);
+            roleClass.Add();
+            // hamo: 途中で役職が変わった時・自投票・部屋タスク
+            if (Main.introDestroyed && GameStates.IsInGame && roleClass is HamoRoleBase hamoRole) hamoRole.ChengeRoleAdd();
+            if (roleClass is TownOfHostL.Roles.Core.Interfaces.ISelfVoter selfVoter) selfVoter.AddSelfVoter(player);
+            if (roleClass is TownOfHostL.Roles.Core.Interfaces.IRoomTasker roomTasker) roomTasker.AddRoomTaker(player.PlayerId);
         }
         //AddonAdd
         {
