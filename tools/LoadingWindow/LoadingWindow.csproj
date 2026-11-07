@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<!-- 起動時の読み込み画面 (BepInEx のパッチャー)。
+	     ビルド: dotnet build tools/LoadingWindow/LoadingWindow.csproj -c Release "-p:AmongUs=<Among Us のフォルダ>"
+	     BepInEx/patchers/ へコピーされる。 -->
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<AssemblyName>LoadingWindow</AssemblyName>
+		<RootNamespace>LoadingWindow</RootNamespace>
+		<Nullable>disable</Nullable>
+		<NoWarn>MSB3246</NoWarn>
+		<EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+	</PropertyGroup>
+	<ItemGroup>
+		<Reference Include="$(AmongUs)\BepInEx\core\BepInEx.Core.dll" Private="false" />
+		<Reference Include="$(AmongUs)\BepInEx\core\BepInEx.Preloader.Core.dll" Private="false" />
+		<EmbeddedResource Include="loader.ps1" LogicalName="loader.ps1" />
+	</ItemGroup>
+	<Target Name="CopyPatcher" AfterTargets="Build" Condition="'$(AmongUs)' != ''">
+		<Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(AmongUs)/BepInEx/patchers/" />
+	</Target>
+</Project>
