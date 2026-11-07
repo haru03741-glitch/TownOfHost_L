@@ -56,7 +56,7 @@ public static class VanillaHnsPortalMaker
         if (portals.Count >= 2) return;
         Vector2 pos = pc.GetTruePosition();
         if (portals.Count == 1 && Vector2.Distance(portals[0].Position, pos) < MinPortalDistance) return;
-        portals.Add(CustomNetObject.Create(PortalSprite, pos));
+        portals.Add(CustomNetObject.Create(PortalSprite, pos, CustomNetObject.ColorPurple));
         // 置いた人は印の上に立っているので、つながった瞬間に飛ばないよう降りるのを待つ
         mustStepOff.Add(pc.PlayerId);
         Logger.Info($"{pc.Data.PlayerName} が印 {portals.Count} を置きました: {pos}", "VanillaHnsPortalMaker");

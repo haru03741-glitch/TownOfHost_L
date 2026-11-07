@@ -19,7 +19,7 @@ namespace TownOfHostL.Core;
 /// 出し方 (公式鯖の本編のかくれんぼで客の画面に映る手順):
 /// 1. PlayerPrefab を作って spawn (持ち主 -2)。公式鯖では子の 3 つの netId を空の spawn で埋める。
 /// 2. 0.1 秒後、客ごとに「CNO の PlayerId をその客の ID に差し替え → MurderPlayer(FailedError) → 戻す」を送る (4 人/包み)。
-/// 3. 0.15 秒後、ホストの外見を一瞬だけ「絵の名前・色 0・装飾なし」にして Data を送り、CNO をホストに変身させ、外見を戻す。
+/// 3. 0.15 秒後、ホストの外見を一瞬だけ「絵の名前・体の色・装飾なし」にして Data を送り、CNO をホストに変身させ、外見を戻す。
 /// 4. 0.3 秒後に SnapTo をもう一度送る。客の側は spawn で通し番号が 1 つ進んでいるので、これが無いと映らない。
 ///
 /// 公式鯖のキックを避ける決まり:
@@ -29,7 +29,8 @@ namespace TownOfHostL.Core;
 /// - SnapTo は <see cref="SnapToBudget"/> から払う。見た目の包みは順番に意味があるので、分割されない 1000 バイト以下に収める。
 /// - 客の操作が CNO を指すことがある (客の手元の一覧には残る)。キルや変身の対象が CNO なら受け付けない。
 ///
-/// 体は赤く見える (外見をホストから色 0 で写すため)。体の赤を消す方法はまだ無い。
+/// 客の画面では体も描かれる。本編 (2026 年版) では体だけを消す手段が無い (死んだ扱いにすると、生きている人からは
+/// 名前ごと隠れる)。体は Create で渡す色で描かれるので、絵の色に合わせ、絵を体の大きさまで描いて覆う。
 ///
 /// 謝辞: 名前で絵を描く CNO は MoreGamemodes (Rabek009, GPL-3.0) の AllObjects が元で、
 /// Endless Host Roles (Gurge44, GPL-3.0) の CustomNetObject に倣い、
@@ -43,6 +44,8 @@ public sealed class CustomNetObject
     // 本物のプレイヤーは 0〜14。CNO は 200〜254 を回して使う (本編は同じ ID を消してすぐ出すと 2 回目を無視する)
     public const byte MinPlayerId = 200;
     private const byte MaxPlayerId = 254;
+    /// <summary>本編の色の番号 (Palette.PlayerColors)。</summary>
+    public const byte ColorBlack = 6, ColorPurple = 8;
     // spawn 前の置き場 (誰にも見えない所)
     private static readonly Vector2 Hidden = new(50f, 50f);
 
@@ -84,24 +87,26 @@ public sealed class CustomNetObject
 
     public Vector2 Position { get; private set; }
     public string Sprite { get; private set; }
+    private readonly byte bodyColorId;
     /// <summary>客の画面に出し終えた。</summary>
     public bool IsLive => state == State.Live;
     public bool IsGone => state == State.Gone;
 
-    private CustomNetObject(string sprite, Vector2 position)
+    private CustomNetObject(string sprite, Vector2 position, byte bodyColorId)
     {
         Sprite = ClampSprite(sprite);
         Position = position;
+        this.bodyColorId = bodyColorId;
     }
 
     /// <summary>
     /// CNO を作る。出すのは決まりを満たした時 (イントロ明け 13 秒など) なので、すぐには映らない。
-    /// ホストで試合中でなければ null。
+    /// ホストで試合中でなければ null。客の画面では絵の下に体が <paramref name="bodyColorId"/> の色で見える。
     /// </summary>
-    public static CustomNetObject Create(string sprite, Vector2 position)
+    public static CustomNetObject Create(string sprite, Vector2 position, byte bodyColorId = ColorBlack)
     {
         if (!AmongUsClient.Instance || !AmongUsClient.Instance.AmHost || GameSession.Current == null || !PlayerControl.LocalPlayer) return null;
-        var obj = new CustomNetObject(sprite, position);
+        var obj = new CustomNetObject(sprite, position, bodyColorId);
         all.Add(obj);
         return obj;
     }
@@ -361,7 +366,7 @@ public sealed class CustomNetObject
 
     // ---- 3. 見た目 ----
 
-    // ホストの外見を一瞬だけ絵の名前に書き換えて Data を送り、CNO をホストに変身させてから外見を戻す (1 つの包みで)
+    // ホストの外見を一瞬だけ絵の名前と体の色に書き換えて Data を送り、CNO をホストに変身させてから外見を戻す (1 つの包みで)
     private void SendSprite(float now)
     {
         var client = AmongUsClient.Instance;
@@ -376,7 +381,7 @@ public sealed class CustomNetObject
             w.StartMessage(5);
             w.Write(client.GameId);
             outfit.PlayerName = SpriteNamePrefix + Sprite;
-            outfit.ColorId = 0;
+            outfit.ColorId = bodyColorId;
             outfit.HatId = outfit.SkinId = outfit.PetId = outfit.VisorId = "";
             w.StartMessage(1);
             w.WritePacked(lp.Data.NetId);
