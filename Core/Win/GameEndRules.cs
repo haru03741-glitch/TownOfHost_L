@@ -54,7 +54,7 @@ public static class GameEndRules
     [
         new(CountTypes.Impostor, CustomWinner.Impostor),
         new(CountTypes.Jackal, CustomWinner.Jackal,
-            [CustomRoles.Jackal, CustomRoles.JClient, CustomRoles.JSidekick]),
+            [CustomRoles.JackalHadouHo, CustomRoles.JackalWolf, CustomRoles.Tama, CustomRoles.Jackal, CustomRoles.JClient, CustomRoles.JSidekick]),
         new(CountTypes.Pirate, CustomWinner.Pirate,
             [CustomRoles.Pirate, CustomRoles.Gang], [CustomRoles.Gang]),
     ];
@@ -65,6 +65,9 @@ public static class GameEndRules
     {
         reason = GameOverReason.ImpostorsByKill;
 
+        // hamo: アサシンがマーリンを当てている間は終わらない
+        if (TownOfHostL.Roles.Hamo.Impostor.Assassin.assassin?.NowState is TownOfHostL.Roles.Hamo.Impostor.Assassin.AssassinMeeting.Collected) return false;
+
         var factions = KillingFactions;
         // 毎フレーム呼ばれるので、数を入れる配列は使い回す
         var counts = factionCounts;
@@ -74,9 +77,16 @@ public static class GameEndRules
             counts[i] = Utils.AlivePlayersCount(factions[i].CountType);
             killers += counts[i];
         }
-        var crew = Utils.AlivePlayersCount(CountTypes.Crew);
+        // hamo: 妖狐はクルーとして数える
+        var crew = Utils.AlivePlayersCount(CountTypes.Crew) + Utils.AlivePlayersCount(CountTypes.Fox);
+        // hamo: インポスター・ジャッカル・クルーとして数える役職と、独自に数える陣営 (パブロフ・スタンド・イーター)
+        int imp = counts[0], jackal = counts[1];
+        var hamo = HamoGameEnd.Count(ref imp, ref jackal, ref crew);
+        killers += imp - counts[0] + jackal - counts[1];
+        counts[0] = imp; counts[1] = jackal;
+        int other = hamo.Pavlov + hamo.StandMaster + hamo.Eater;
 
-        if (killers == 0 && crew == 0) //全滅
+        if (killers == 0 && crew == 0 && other == 0) //全滅
         {
             CustomWinnerHolder.ResetAndSetWinner(CustomWinner.None);
             return true;
@@ -89,14 +99,15 @@ public static class GameEndRules
         for (var i = 0; i < factions.Length; i++)
         {
             // 他のキル陣営が全滅していて、クルーの数がこの陣営以下
-            if (killers - counts[i] != 0 || crew > counts[i]) continue;
+            if (killers - counts[i] != 0 || other != 0 || crew > counts[i]) continue;
             var faction = factions[i];
             CustomWinnerHolder.ResetAndSetWinner(faction.Winner);
             foreach (var role in faction.WinnerRoles) CustomWinnerHolder.WinnerRoles.Add(role);
             foreach (var role in faction.AdditionalWinnerRoles) CustomWinnerHolder.AdditionalWinnerRoles.Add(role);
             return true;
         }
-        if (killers == 0) //クルー勝利
+        if (HamoGameEnd.CheckTeamWin(counts[0], counts[1], counts[2], crew, hamo, ref reason)) return true;
+        if (killers == 0 && other == 0) //クルー勝利
         {
             reason = GameOverReason.CrewmatesByVote;
             CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Crewmate);
@@ -129,7 +140,7 @@ public static class GameEndRules
     public static bool ByTask(out GameOverReason reason)
     {
         reason = GameOverReason.ImpostorsByKill;
-        if (Options.DisableTaskWin.GetBool() || TaskState.InitialTotalTasks == 0) return false;
+        if (Options.DisableTaskWin.GetBool() || TaskState.InitialTotalTasks == 0 || TownOfHostL.Roles.Hamo.Neutral.Fox.BlockTaskWin()) return false;
 
         (int vtComp, int vtTotal) = VentEnterTask.TaskWinCountData();
         if (GameData.Instance.TotalTasks + vtTotal <= GameData.Instance.CompletedTasks + vtComp)

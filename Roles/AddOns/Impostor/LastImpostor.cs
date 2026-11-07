@@ -42,7 +42,8 @@ namespace TownOfHostL.Roles.AddOns.Impostor
             && !pc.Is(CustomRoles.LastImpostor)
             && pc.Is(CustomRoleTypes.Impostor)
             && pc.GetCustomRole()
-            is not CustomRoles.CCRedLeader;
+            is not CustomRoles.CCRedLeader
+            && ((pc.GetRoleClass() as TownOfHostL.Roles.Core.Interfaces.IImpostor)?.CanBeLastImpostor ?? true);
             //and not CustomRoles.ONWerewolf
             //and not CustomRoles.ONBigWerewolf;
 

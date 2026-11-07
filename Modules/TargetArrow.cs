@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using TownOfHostL.Attributes;
@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace TownOfHostL
 {
-    static class TargetArrow
+    static partial class TargetArrow
     {
         class ArrowInfo
         {

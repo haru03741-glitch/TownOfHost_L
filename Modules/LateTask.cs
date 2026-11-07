@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using TownOfHostL.Core;
@@ -11,7 +11,7 @@ namespace TownOfHostL
     /// 指定した秒数の後にメインスレッドで 1 回だけ走る処理。
     /// 試合中に作った物はその試合 (GameSession) に属し、試合が閉じたら (ロビーに戻った・切断) 走らせずに捨てる。
     /// </summary>
-    class LateTask
+    partial class LateTask
     {
         public string name;
         public float timer;

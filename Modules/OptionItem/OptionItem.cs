@@ -1,4 +1,5 @@
-using System;
+using TownOfHostL.Roles.Core;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using TownOfHostL.Modules;
@@ -158,6 +159,15 @@ namespace TownOfHostL
             parent.SetChild(i);
         });
         public OptionItem SetChild(OptionItem child) => Do(i => i.Children.Add(child));
+        // hamo の設定の機能
+        public OptionZeroNotation ZeroNotation { get; protected set; } = OptionZeroNotation.None;
+        public Func<string> funcOptionName { get; protected set; }
+        public OptionItem SetZeroNotation(OptionZeroNotation value) => Do(i => i.ZeroNotation = value);
+        public OptionItem SetOptionName(Func<string> value) => Do(i => i.funcOptionName = value);
+        public OptionItem SetTooltip(Func<string> value) => this;
+        public OptionItem SetParentRole(CustomRoles parentrole) => this;
+        public OptionItem SetColorcode(string value) => Do(i => { if (ColorUtility.TryParseHtmlString(value, out var c)) i.NameColor = c; });
+        public OptionItem SetInfo(string value) => this;
         public OptionItem RegisterUpdateValueEvent(EventHandler<UpdateValueEventArgs> handler)
             => Do(i => UpdateValueEvent += handler);
 
@@ -174,6 +184,9 @@ namespace TownOfHostL
         // Getter
         public virtual string GetName(bool disableColor = false, bool colorLighter = false)
         {
+            var funcName = funcOptionName?.Invoke();
+            if (!string.IsNullOrEmpty(funcName))
+                return disableColor ? funcName : Utils.ColorString(colorLighter ? NameColor.ShadeColor(-0.3f) : NameColor, funcName);
             return disableColor ?
                 Translator.GetString(Name, ReplacementDictionary) :
                 Utils.ColorString(colorLighter ? NameColor.ShadeColor(-0.3f) : NameColor, Translator.GetString(Name, ReplacementDictionary));
@@ -189,6 +202,15 @@ namespace TownOfHostL
 
         public string ApplyFormat(string value)
         {
+            if (ZeroNotation != OptionZeroNotation.None && value == "0")
+            {
+                switch (ZeroNotation)
+                {
+                    case OptionZeroNotation.Infinity: return "∞";
+                    case OptionZeroNotation.Hyphen: return "―";
+                    case OptionZeroNotation.Off: return "×";
+                }
+            }
             if (ValueFormat == OptionFormat.None) return value;
             return string.Format(Translator.GetString("Format." + ValueFormat), value);
         }
@@ -392,5 +414,14 @@ namespace TownOfHostL
         Pieces,
         Pair,
         Turns,
+        day,
+    }
+    /// <summary>値が 0 の時の表示 (hamo)</summary>
+    public enum OptionZeroNotation
+    {
+        None,
+        Infinity,
+        Hyphen,
+        Off
     }
 }

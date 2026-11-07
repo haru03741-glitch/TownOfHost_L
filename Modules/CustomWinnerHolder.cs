@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Hazel;
 
 using TownOfHostL.Attributes;
@@ -6,7 +6,7 @@ using TownOfHostL.Roles.Core;
 
 namespace TownOfHostL
 {
-    public static class CustomWinnerHolder
+    public static partial class CustomWinnerHolder
     {
         // 勝者のチームが格納されます。
         // リザルトの背景色の決定などに使用されます。

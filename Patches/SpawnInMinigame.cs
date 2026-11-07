@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using HarmonyLib;
 using TownOfHostL.Roles.Core;
 
@@ -13,6 +13,7 @@ public static class SpawnInMinigameSpawnAtPatch
         if (AmongUsClient.Instance.AmHost)
         {
             PlayerControl.LocalPlayer.RpcResetAbilityCooldown();
+            TownOfHostL.Roles.Hamo.HamoHookPatches.OnAirshipSpawn(PlayerControl.LocalPlayer);
             if (MeetingStates.FirstMeeting && Options.FixFirstKillCooldown.GetBool())
             {
                 Logger.Info($"初手キルクール調整", "spawn");

@@ -1,8 +1,8 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace TownOfHostL;
 
-public static class ColorHelper
+public static partial class ColorHelper
 {
     /// <summary>蛍光マーカーのような色合いの透過色に変換する</summary>
     /// <param name="bright">最大明度にするかどうか．黒っぽい色を黒っぽいままにしたい場合はfalse</param>

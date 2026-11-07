@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -15,7 +15,7 @@ using TownOfHostL.Core.Modes;
 
 namespace TownOfHostL;
 
-public static class AntiBlackout
+public static partial class AntiBlackout
 {
     ///<summary>
     ///追放処理を上書きするかどうか

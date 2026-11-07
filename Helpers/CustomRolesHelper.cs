@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using AmongUs.GameOptions;
 
 using TownOfHostL.Roles.Core;
@@ -6,7 +6,7 @@ using TownOfHostL.Core;
 
 namespace TownOfHostL;
 
-static class CustomRolesHelper
+static partial class CustomRolesHelper
 {
     public static readonly CustomRoles[] AllRoles = EnumHelper.GetAllValues<CustomRoles>().Where(role => !role.IsNotAssignedRoles()).ToArray();
     public static readonly CustomRoleTypes[] AllRoleTypes = EnumHelper.GetAllValues<CustomRoleTypes>();
@@ -68,7 +68,7 @@ static class CustomRolesHelper
     public static bool IsFirstWriteAddOn(this CustomRoles role) => role.Def().Has(RoleFlags.FirstWriteAddOn);
     public static bool IsDirectKillRole(this CustomRoles role) => role.Def().Has(RoleFlags.DirectKill);
     public static bool IsLoneImpostor(this CustomRoles role) => role.Def().Has(RoleFlags.LoneImpostor);
-    public static bool IsNeutralKiller(this CustomRoles role) => role.Def().Has(RoleFlags.NeutralKiller);
+    public static bool IsNeutralKiller(this CustomRoles role) => role.Def().Has(RoleFlags.NeutralKiller) || role.IsHamoNeutralKiller();
     public static bool IsCrewKiller(this CustomRoles role) => role.Def().Has(RoleFlags.CrewKiller);
     /// <summary>他の役職の能力が「キル役」として扱う第三陣営 (RoleFlags.CountedAsKiller)</summary>
     public static bool IsCountedNeutralKiller(this CustomRoles role) => role.IsNeutral() && role.Def().Has(RoleFlags.CountedAsKiller);
@@ -180,4 +180,9 @@ public enum CountTypes
     Impostor,
     Jackal,
     Pirate,
+    // hamo から移植
+    Fox,
+    Pavlov,
+    Eater,
+    StandMaster,
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
@@ -31,7 +31,7 @@ using TownOfHostL.Core.Modes;
 
 namespace TownOfHostL;
 
-public static class Utils
+public static partial class Utils
 {
     public static bool IsActive(SystemTypes type)
     {
@@ -405,6 +405,8 @@ public static class Utils
         string text = GetProgressText(seen.PlayerId, comms);
 
         seer.GetRoleClass()?.OverrideProgressTextAsSeer(seen, ref enabled, ref text);
+        // hamo: 見られる側による変更
+        (seen.GetRoleClass() as TownOfHostL.Roles.Core.HamoRoleBase)?.OverrideProgressTextAsSeen(seer, ref enabled, ref text);
         if (ModeCatalog.IsCatchCat && seer == seen)
         {
             text += CatchCat.Common.GetMark(seer);
@@ -1446,6 +1448,10 @@ public static class Utils
 
             //RealNameを取得 なければ現在の名前をRealNamesに書き込む
             string SeerRealName = seer.GetRealName(isForMeeting);
+            // hamo: 名前を一時的に書き換える役職 (波動砲のためなど)
+            string hamoSelfName = ""; bool hamoSelfNoMarker = false;
+            var hamoSelfTemp = (seer.GetRoleClass() as TownOfHostL.Roles.Core.HamoRoleBase)?.GetTemporaryName(ref hamoSelfName, ref hamoSelfNoMarker, isForMeeting, seer) ?? false;
+            if (hamoSelfTemp) SeerRealName = hamoSelfName;
 
             if (!isForMeeting && (ModeCatalog.IsCatchCat || (MeetingStates.FirstMeeting && Options.ChangeNameToRoleInfo.GetBool())))
                 SeerRealName = seer.GetRoleInfo();
@@ -1483,11 +1489,11 @@ public static class Utils
                 !seer.Is(CustomRoleTypes.Impostor) &&
                 !keepsOwnNameInSyncColor)
             {
-                SelfName.Append($"{ColorString(Color.white, SeerRealName)}{SelfDeathReason}{SelfMark}");
+                SelfName.Append($"{ColorString(Color.white, SeerRealName)}{(hamoSelfTemp && hamoSelfNoMarker ? "" : $"{SelfDeathReason}{SelfMark}")}");
             }
             else if (selfNameOriginal)
             {
-                SelfName.Append($"{ColorString(SelfNameColor, SeerRealName)}{SelfDeathReason}{SelfMark}");
+                SelfName.Append($"{ColorString(SelfNameColor, SeerRealName)}{(hamoSelfTemp && hamoSelfNoMarker ? "" : $"{SelfDeathReason}{SelfMark}")}");
             }
 
             if (SelfSuffix.Length != 0)
@@ -1512,7 +1518,7 @@ public static class Utils
             seer.RpcSetNamePrivate(name, true, force: NoCache);
 
             //seerが死んでいる場合など、必要なときのみ第二ループを実行する
-            if (everyoneNeedsSeenNames || TownOfHostL.Core.NameParts.NeedsSeenNames(seer))
+            if (everyoneNeedsSeenNames || HamoHooks.NeedsOtherNameLoop(seer) || TownOfHostL.Core.NameParts.NeedsSeenNames(seer))
             {
                 foreach (var target in Main.AllPlayerControls)
                 {
@@ -1552,8 +1558,14 @@ public static class Utils
                     if (TownOfHostL.Core.NameParts.HideSeenName(isForMeeting))
                         TargetPlayerName = $"<size=0%>{TargetPlayerName}</size>";
 
+                    // hamo: 名前を一時的に書き換える役職
+                    string hamoName = ""; bool hamoNoMarker = false;
+                    var hamoTemp = (target.GetRoleClass() as TownOfHostL.Roles.Core.HamoRoleBase)?.GetTemporaryName(ref hamoName, ref hamoNoMarker, isForMeeting, seer, target) ?? false;
+
                     //全てのテキストを合成します。
-                    string TargetName = $"{TargetRoleText}{TargetPlayerName}{TargetDeathReason}{TargetMark}{TargetSuffix}";
+                    string TargetName = hamoTemp
+                        ? $"{TargetRoleText}{hamoName}{(hamoNoMarker ? "" : $"{TargetDeathReason}{TargetMark}{TargetSuffix}")}"
+                        : $"{TargetRoleText}{TargetPlayerName}{TargetDeathReason}{TargetMark}{TargetSuffix}";
 
                     // バニラ視点にMOD名/Versionを記載
                     TargetName = MeetingDisplayText.AddTextForVanilla(target, TargetName, TargetSuffix.ToString(), TargetRoleText, isForMeeting);

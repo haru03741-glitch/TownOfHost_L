@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -24,7 +24,7 @@ namespace TownOfHostL;
 [BepInIncompatibility("com.AsumuAkaguma.townofhostfore")]
 [BepInIncompatibility("com.kymario.townofhost-k")]
 [BepInProcess("Among Us.exe")]
-public class Main : BasePlugin
+public partial class Main : BasePlugin
 {
     // == プログラム設定 / Program Config ==
     // modの名前 / Mod Name (Default: Town Of Host)
@@ -263,6 +263,25 @@ public enum CustomDeathReason
     Telekinesis,
     IgnitionBombed,
 
+    // hamo から移植
+    Counter,
+    Infected,
+    Grim,
+    Magic,
+    Guess,
+    TeleportKill,
+    Trap,
+    Hit,
+    Suffocation,
+    Swallowed,
+    Poisoned,
+    Launch,
+    Compression,
+    Evaporation,
+    Retaliation,
+    RuleViolation,
+    MagicC,
+
     Win,
     etc = -1
 }
@@ -298,6 +317,20 @@ public enum CustomWinner
     YellowL = CustomRoles.CCYellowLeader,
 
     HASTroll = CustomRoles.HASTroll,
+
+    // hamo から移植
+    Pavlov = CustomRoles.PavlovDog,
+    StandMaster = CustomRoles.StandMaster,
+    Eater = CustomRoles.Eater,
+    Fox = CustomRoles.Fox,
+    Spelunker = CustomRoles.Spelunker,
+    Tuna = CustomRoles.Tuna,
+    Vulture = CustomRoles.Vulture,
+    Onmyoji = CustomRoles.Onmyoji,
+    AntiHero = CustomRoles.AntiHero,
+    Zombie = CustomRoles.Zombie,
+    PlagueDoctor = CustomRoles.PlagueDoctor,
+    CountKiller = CustomRoles.CountKiller,
 }
 public enum SuffixModes
 {

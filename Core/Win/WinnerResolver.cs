@@ -20,7 +20,8 @@ public static class WinnerResolver
     {
         /// <summary>終了判定で決まった、上書き前の勝者</summary>
         public readonly CustomWinner Original;
-        public readonly GameOverReason Reason;
+        /// <summary>hamo の後から決める勝ち方 (妖狐など) が書き換えることがある</summary>
+        public GameOverReason Reason;
         /// <summary>単独勝利の上書きが 1 つでも起きたか</summary>
         public bool Overridden;
         public Context(CustomWinner original, GameOverReason reason)
@@ -32,18 +33,22 @@ public static class WinnerResolver
 
     private static readonly SoloWinTier[] SoloWinTiers = (SoloWinTier[])Enum.GetValues(typeof(SoloWinTier));
 
-    public static void Resolve(GameOverReason reason)
+    /// <returns>終わり方 (hamo の役職が書き換えた時はその値)</returns>
+    public static GameOverReason Resolve(GameOverReason reason)
     {
         var ctx = new Context(CustomWinnerHolder.WinnerTeam, reason);
 
         AddBaseTeamWinners(ctx.Original);
-        if (ctx.Original is CustomWinner.Draw or CustomWinner.None) return;
+        if (ctx.Original is CustomWinner.Draw or CustomWinner.None) return ctx.Reason;
 
         foreach (var tier in SoloWinTiers) ApplySoloWins(ctx, tier);
 
         // 上書きが無く、勝者のチームはそのままで、誰も入っていない時だけ詰め直す
         if (!ctx.Overridden && CustomWinnerHolder.WinnerTeam == ctx.Original && CustomWinnerHolder.WinnerIds.Count == 0)
             AddBaseTeamWinners(ctx.Original);
+
+        // hamo: 単独勝利・乗っ取り (妖狐・マグロ・スペランカー・ゾンビ)
+        HamoGameEnd.LateWin(ref ctx.Reason, ctx.Original);
 
         foreach (var pc in Main.AllPlayerControls) AddAdditionalWinners(pc);
         // 抜けた人の役職も拾うので、部屋にいる人ではなく役職の一覧から回す
@@ -59,6 +64,11 @@ public static class WinnerResolver
             CustomWinnerHolder.WinnerIds.Remove(pc.PlayerId);
             CustomWinnerHolder.CantWinPlayerIds.Add(pc.PlayerId);
         }
+
+        // hamo: 勝利処理がほぼ終わった後の役職ごとの処理
+        foreach (var pc in Main.AllPlayerControls)
+            (pc.GetRoleClass() as HamoRoleBase)?.CheckWinner(ctx.Reason);
+        return ctx.Reason;
     }
 
     /// <summary>クルー勝利・インポスター勝利の時に、その陣営の人を勝者に入れる。</summary>

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AmongUs.GameOptions;
@@ -433,6 +433,10 @@ public static class PlayerControlCheckVanishPatch
          * 　　ホストは仕様上キルクールは強制されないが、バニラの仕様に合わせセットする
          * ・canResetAbilityCooldown : アビリティクールダウンをリセットするか設定する
          *****************************/
+        // hamo: ファントムのボタンをワンクリックで使う役職
+        if (role is IUsePhantomButton hamoPb && hamoPb.UseOneclickButton)
+            return TownOfHostL.Roles.Hamo.HamoHookPatches.CheckVanish(phantom, hamoPb);
+
         float killCooldown = 10.0f;
         bool canResetAbilityCooldown = false;
         if (role?.OnCheckVanish(ref killCooldown, ref canResetAbilityCooldown) == false)
@@ -538,7 +542,7 @@ public static class PhantomRoleUseAbilityPatch
     }
 }
 [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.ReportDeadBody))]
-class ReportDeadBodyPatch
+partial class ReportDeadBodyPatch
 {
     public static NetworkedPlayerInfo reporter;
     public static NetworkedPlayerInfo ReportTarget;
@@ -555,6 +559,12 @@ class ReportDeadBodyPatch
         SpecialMeeting = reporter?.PlayerId == ReportTarget?.PlayerId;
         if (GameStates.IsMeeting) return false;
         Logger.Info($"{__instance.GetNameWithRole()} => {target?.Object?.GetNameWithRole() ?? "null"}", "ReportDeadBody");
+        // hamo: 役職の能力で確認なしに会議を開く
+        if (HamoForceReport)
+        {
+            HamoForceReport = false;
+            goto confirmed;
+        }
         if (SpecialMeeting) return true;
         if (!ModeCatalog.Current.AllowsReport(__instance, target)) return false;
         if (target == null && Options.DisableButtonInMushroomMixup.GetBool() && MushroomMixupUpdateSystemPatch.InSabotage)
@@ -620,10 +630,19 @@ class ReportDeadBodyPatch
             }
         }
 
-        //=============================================
-        //以下、ボタンが押されることが確定したものとする。
-        //=============================================
+        // hamo: 役職による通報の取り消し
+        if (HamoCancelReport(__instance, target)) return false;
+        // hamo: 残りの緊急ボタンの数
+        if (target == null)
+        {
+            var hamoState = PlayerState.GetByPlayerId(__instance.PlayerId);
+            if (hamoState != null && hamoState.NumberOfRemainingButtons > 0) hamoState.NumberOfRemainingButtons--;
+        }
 
+    //=============================================
+    //以下、ボタンが押されることが確定したものとする。
+    //=============================================
+    confirmed:
         MeetingStates.MeetingCalled = true;
 
         foreach (var pc in Main.AllPlayerControls)
@@ -740,6 +759,10 @@ class CoEnterVentPatch
     {
         var user = physics.myPlayer;
         if (user == null) return;
+        // hamo: 誰かがベントに入った時の処理・今いるベントの記録
+        VentilationSystemUpdateSystemPatch.NowVentId[user.PlayerId] = (byte)id;
+        foreach (var vent in CustomRoleManager.OnEnterVentOthers) vent(physics, id);
+        TownOfHostL.Roles.Hamo.HamoHookPatches.OnEnterVent(physics, id);
 
         bool roleAllowsVent = user.GetRoleClass()?.OnEnterVent(physics, id) ?? false;
         bool ventTaskAllows = VentEnterTask.OnEnterVent(physics, id);

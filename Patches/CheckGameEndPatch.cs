@@ -53,6 +53,7 @@ namespace TownOfHostL
 
             //ゲーム終了判定
             predicate.Check(out var reason);
+            HamoGameEnd.TakeOver(ref reason);
             lastReason = reason;
 
             if (CustomWinnerHolder.WinnerTeam == CustomWinner.Default) return false;
@@ -66,7 +67,7 @@ namespace TownOfHostL
             });
             Modules.Net.OutfitSync.SendAllNow();
 
-            WinnerResolver.Resolve(reason);
+            reason = WinnerResolver.Resolve(reason);
             ShipStatus.Instance.enabled = false;
 
             if (CustomWinnerHolder.WinnerTeam != CustomWinner.Crewmate

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AmongUs.GameOptions;
@@ -16,7 +16,7 @@ using TownOfHostL.Core.Modes;
 namespace TownOfHostL;
 
 [HarmonyPatch]
-public static class MeetingHudPatch
+public static partial class MeetingHudPatch
 {
     [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.CheckForEndVoting))]
     class CheckForEndVotingPatch
@@ -35,11 +35,27 @@ public static class MeetingHudPatch
         {
             var voter = Utils.GetPlayerById(srcPlayerId);
             var voted = Utils.GetPlayerById(suspectPlayerId);
+            if (voter == null) return false;
             if (voter.GetRoleClass()?.CheckVoteAsVoter(voted) == false)
             {
                 __instance.RpcClearVote(voter.PlayerId);
                 Logger.Info($"{voter.GetNameWithRole()} は投票しない", nameof(CastVotePatch));
                 return false;
+            }
+            // hamo: 全員の役職に投票を見せる (天秤などは他の人の投票も止める)
+            if (!HamoHooks.CheckVoteAsVoter(srcPlayerId, suspectPlayerId, voter))
+            {
+                __instance.RpcClearVote(voter.PlayerId);
+                Logger.Info($"{voter.GetNameWithRole()} は投票しない！ => {suspectPlayerId}", nameof(CastVotePatch));
+                return false;
+            }
+            // hamo: 自分に投票して能力を使う役職
+            if (voter.GetRoleClass() is TownOfHostL.Roles.Core.Interfaces.ISelfVoter selfVoter && selfVoter.CanUseVoted())
+            {
+                MeetingVoteManager.Instance?.SetVote(srcPlayerId, suspectPlayerId, isoverride: false);
+                __instance.RpcClearVote(voter.PlayerId);
+                Utils.SendMessage(Translator.GetString("SelfVoterCancelMessage"), voter.PlayerId);
+                return true;
             }
 
             MeetingVoteManager.Instance?.SetVote(srcPlayerId, suspectPlayerId);
