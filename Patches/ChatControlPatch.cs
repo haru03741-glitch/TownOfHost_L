@@ -7,6 +7,8 @@ namespace TownOfHostL
     // チャットの種類は接続の握手 (Hello) でサーバーへ送られるので、部屋を立てるための接続を始める前にフリーチャットへ直す
     // (HostGame の時点では握手が済んでいて遅い)。クイックチャット専用で繋いだホストがフリーチャット (案内やコマンドの返事) を
     // 送ると、公式サーバーはホストを切断する。他人の部屋へ入る接続は触らない。
+    // 本編のかくれんぼで立てる部屋でも TOHL はチャットを送るので、Core の束に置く
+    [TownOfHostL.Core.Modes.PatchBundle(TownOfHostL.Core.Modes.PatchBundles.Core)]
     [HarmonyPatch(typeof(InnerNet.InnerNetClient), nameof(InnerNet.InnerNetClient.Connect))]
     class HostGameChatModePatch
     {

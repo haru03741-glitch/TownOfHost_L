@@ -95,9 +95,29 @@ public static class VanillaHideAndSeekRoles
                 .Select(p => Players.ById(p.Key).Data.PlayerName).ToList();
             if (foxes.Count > 0) sb.Append('\n').Append(string.Format(GetString("VanillaHns.FoxAlsoWin"), string.Join(", ", foxes)));
         }
-        pendingResult = sb.ToString();
+        pendingResult = Truncate(sb.ToString(), MaxResultBytes);
         resultUntil = UnityEngine.Time.realtimeSinceStartup + ResultKeepSeconds;
         Logger.Info($"結果 ({reason}): {pendingResult.Replace("\n", " / ")}", "VanillaHideAndSeekRoles");
+    }
+
+    // 1 通の SendChat に入れる長さ。公式鯖は 1 通 1200 バイト前後で切断するので、ヘッダの分を残して切る
+    private const int MaxResultBytes = 800;
+
+    private static string Truncate(string text, int maxBytes)
+    {
+        if (Encoding.UTF8.GetByteCount(text) <= maxBytes) return text;
+        const string ellipsis = "…";
+        int budget = maxBytes - Encoding.UTF8.GetByteCount(ellipsis);
+        int len = 0, bytes = 0;
+        while (len < text.Length)
+        {
+            int step = char.IsHighSurrogate(text[len]) && len + 1 < text.Length ? 2 : 1;
+            int b = Encoding.UTF8.GetByteCount(text.AsSpan(len, step));
+            if (bytes + b > budget) break;
+            bytes += b;
+            len += step;
+        }
+        return text[..len] + ellipsis;
     }
 
     private static void OnLobby()
@@ -111,6 +131,8 @@ public static class VanillaHideAndSeekRoles
         originalHats.Clear();
         assigned.Clear();
         if (pendingResult == null) return;
+        // 前の試合の結果を、別の部屋や次のロビーで出し直さない
+        if (UnityEngine.Time.realtimeSinceStartup > resultUntil) { pendingResult = null; return; }
         // ホストは自分のチャット欄に出すだけ (送らない)
         if (HudManager.InstanceExists && PlayerControl.LocalPlayer)
             HudManager.Instance.Chat.AddChat(PlayerControl.LocalPlayer, pendingResult);

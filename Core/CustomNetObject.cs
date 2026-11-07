@@ -16,7 +16,7 @@ namespace TownOfHostL.Core;
 /// ホストだけが作り、どのモードでも動く (Core の束)。役職は <see cref="Create"/> で作り、<see cref="MoveTo"/> と
 /// <see cref="ChangeSprite"/> で動かし、<see cref="Despawn"/> で消す。試合が終われば全部消える。
 ///
-/// 出し方 (公式鯖の本編のかくれんぼで客に映ることを実機で確かめた手順):
+/// 出し方 (公式鯖の本編のかくれんぼで客の画面に映る手順):
 /// 1. PlayerPrefab を作って spawn (持ち主 -2)。公式鯖では子の 3 つの netId を空の spawn で埋める。
 /// 2. 0.1 秒後、客ごとに「CNO の PlayerId をその客の ID に差し替え → MurderPlayer(FailedError) → 戻す」を送る (4 人/包み)。
 /// 3. 0.15 秒後、ホストの外見を一瞬だけ「絵の名前・色 0・装飾なし」にして Data を送り、CNO をホストに変身させ、外見を戻す。
@@ -33,7 +33,7 @@ namespace TownOfHostL.Core;
 ///
 /// 謝辞: 名前で絵を描く CNO は MoreGamemodes (Rabek009, GPL-3.0) の AllObjects が元で、
 /// Endless Host Roles (Gurge44, GPL-3.0) の CustomNetObject に倣い、
-/// 公式鯖で通る形 (空の spawn・ID の循環・開始と会議明けの待ち) は End K not で確かめた物を使った。
+/// 公式鯖で通る形 (空の spawn・ID の循環・開始と会議明けの待ち) は End K not に倣った。
 /// </summary>
 [PatchBundle(PatchBundles.Core)]
 public sealed class CustomNetObject
@@ -191,8 +191,11 @@ public sealed class CustomNetObject
         if (MeetingHud.Instance || ExileController.Instance) lastMeetingAt = now;
 
         bool spawning = false;
-        foreach (var obj in all.ToArray())
+        // Tick の中で消えると all から抜けるので、後ろから回す
+        for (int i = all.Count - 1; i >= 0; i--)
         {
+            if (i >= all.Count) continue;
+            var obj = all[i];
             try
             {
                 obj.Tick(now, ref spawning);
