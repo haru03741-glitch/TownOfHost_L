@@ -263,6 +263,8 @@ public abstract class RoleBase : IDisposable
     public virtual bool CanRevengeOn(PlayerControl candidate) => true;
     /// <summary>この役職の人に、target の役職の色が見えるか</summary>
     public virtual bool KnowsRoleColorOf(PlayerControl target, bool isMeeting) => false;
+    /// <summary>この役職の人に、seen の役職名が見えるか (相方・占った相手など)。字を書き換える時は OverrideDisplayRoleNameAsSeer を使う</summary>
+    public virtual bool KnowsRoleOf(PlayerControl seen, bool isMeeting) => false;
     /// <summary>この役職の人には、会議で target の名前を色なしで見せる (他の色の決まりより先に効く)</summary>
     public virtual bool HidesNameColorInMeeting(PlayerControl target) => false;
     /// <summary>この役職の人の役職の色が、全員に見えるか</summary>

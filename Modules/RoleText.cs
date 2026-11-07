@@ -30,7 +30,11 @@ public static class RoleText
         Revealer.OverrideDisplayRoleNameAsSeen(seen, isMeeting, ref enabled, ref roleText);
 
         //seer側による変更
-        seer.GetRoleClass()?.OverrideDisplayRoleNameAsSeer(seen, isMeeting, ref enabled, ref roleText);
+        if (seer.GetRoleClass() is { } seerRole)
+        {
+            enabled |= seerRole.KnowsRoleOf(seen, isMeeting);
+            seerRole.OverrideDisplayRoleNameAsSeer(seen, isMeeting, ref enabled, ref roleText);
+        }
 
         return enabled ? roleText : "";
     }

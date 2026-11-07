@@ -64,10 +64,7 @@ public sealed class God : RoleBase, ISystemTypeUpdateHook, ISoloWinner
             opt.SetBool(BoolOptionNames.AnonymousVotes, false);
         }
     }
-    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref bool enabled, ref string roleText)
-    {
-        enabled = true;
-    }
+    public override bool KnowsRoleOf(PlayerControl seen, bool isMeeting) => true;
     public SoloWinTier SoloWinTier => SoloWinTier.Survival;
     /// <summary>勝てる神が 1 人でも生きていれば、生きている神が全員勝つ</summary>
     public bool CheckSoloWin(WinnerResolver.Context ctx, out CustomWinner winner)
