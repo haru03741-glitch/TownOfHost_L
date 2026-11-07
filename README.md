@@ -96,14 +96,18 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
   - Il2CppInterop.Runtime を write barrier 経由に書き換える手順と、それに合わせた incremental GC の切り替え
   - 他のプレイヤーの外見を PlayerInfo の送信で配る方式
   - 会議の後の暗転を防ぐ頭数合わせで、死者を見た目だけ生き返らせる方法
+  - 偽の PlayerControl (CNO) を公式サーバーで通す形 (空の spawn・ID の循環・開始と会議明けの待ち)
 - [Endless Host Roles](https://github.com/Gurge44/EndlessHostRoles)
   - 配布物に入れる Unity Doorstop と、pietro による修正版 Il2CppInterop
   - 他のプレイヤーの外見を、PlayerInfo の送信と本人への変身解除で着せ替える方式
   - 会議の後の暗転を防ぐため、生存クルーが足りない時に死者を見た目だけ生き返らせる方法
+  - 名前で絵を描く偽の PlayerControl (CustomNetObject)
+  - ポータルメーカーの印の絵
 - [More Roles Plus](https://github.com/haru03741-glitch/More-Roles-Plus)
   - ロビーで本編のモード (通常 / かくれんぼ) を、GameManager を出し直して切り替える手順
 - [MoreGamemodes](https://github.com/Rabek009/MoreGamemodes)
   - 退出ペナルティで部屋を立てられなくなるのを防ぐ処理
+  - 名前で絵を描く偽の PlayerControl (CustomNetObject)
 - [TownOfHost-K](https://github.com/KYMario/TownOfHost-K)
   - プレイヤー情報 (NetworkedPlayerInfo) の同期
 - [template-unity](https://github.com/vpmedia/template-unity) (MIT)

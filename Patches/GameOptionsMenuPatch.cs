@@ -18,6 +18,7 @@ public static class ModGameOptionsMenu
 }
 
 [HarmonyPatch(typeof(GameOptionsMenu))]
+[TownOfHostL.Core.Modes.PatchBundle(TownOfHostL.Core.Modes.PatchBundles.Settings)]
 public static class GameOptionsMenuPatch
 {
     public static GameOptionsMenu Instance;
@@ -516,6 +517,7 @@ public class LabelHoverBehaviour : UnityEngine.MonoBehaviour
 }
 
 [HarmonyPatch(typeof(ToggleOption))]
+[TownOfHostL.Core.Modes.PatchBundle(TownOfHostL.Core.Modes.PatchBundles.Settings)]
 public static class ToggleOptionPatch
 {
     [HarmonyPatch(nameof(ToggleOption.Initialize)), HarmonyPrefix]
@@ -545,6 +547,7 @@ public static class ToggleOptionPatch
     }
 }
 [HarmonyPatch(typeof(NumberOption))]
+[TownOfHostL.Core.Modes.PatchBundle(TownOfHostL.Core.Modes.PatchBundles.Settings)]
 public static class NumberOptionPatch
 {
     [HarmonyPatch(nameof(NumberOption.Initialize)), HarmonyPrefix]
@@ -682,6 +685,7 @@ public static class NumberOptionPatch
     }
 }
 [HarmonyPatch(typeof(StringOption))]
+[TownOfHostL.Core.Modes.PatchBundle(TownOfHostL.Core.Modes.PatchBundles.Settings)]
 public static class StringOptionPatch
 {
     [HarmonyPatch(nameof(StringOption.Initialize)), HarmonyPrefix]

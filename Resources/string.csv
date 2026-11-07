@@ -484,12 +484,15 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "# HideAndSeek"
 "HASFox","Fox","狐","狐狸","狐妖","Лис","Raposa"
 "HASTroll","Troll","トロール","猎人","誘捕者","Тролль","Troll"
+"HASPortalMaker","Portal Maker","ポータルメーカー","","","","",""
 
 "HASFoxInfo","Just stay alive","とにかく生き残りましょう","活下去吧！活到最后你就成为了赢家！","活到最後就是屬於你和贏家的一片天","Останьтесь в живых","Sobreviva a qualquer custo"
 "HASTrollInfo","Get killed","自爆しよう","轰！你为了同伴牺牲了！","讓偽裝者砍你","Будьте убитым","Seja morto"
+"HASPortalMakerInfo","Pet your pet to place portals","ペットをかわいがってポータルを置こう","","","","",""
 
 "HASFoxInfoLong","(HideAndSeek):\nThey win the game with other Roles (except Troll) only if they are alive at the game end.","(かくれんぼ):\nトロールを除くいずれかの陣営が勝利したときに生き残っていれば、勝利した陣営に追加で勝利することができる。","（躲猫猫）:\n狐狸活到最后便与获胜阵营一同获胜。","(躲貓貓):\n除了其他的中立陣營以外,只要狐妖活下來即可獲勝\n他們將跟著遊戲結束的獲勝陣營一起獲勝。","(Прятки):\nЕсли какая-либо роль, кроме Тролля побеждает и выживает, то победившая роль может одержать дополнительную победу.","(Esconde-Esconde): \nEles ganham adicionalmente com qualquer classe (exceto Troll), se estiverem vivos no final."
 "HASTrollInfoLong","(Hide and Seek):\nYou solo victory when you are killed. In this case, even if the Fox is alive, they will lose.","(かくれんぼ):\n鬼にキルされたときに単独勝利となる。この場合、狐が生き残っていても狐は敗北となる。","（躲猫猫）:\n若猎人被抓，则猎人单独获胜。\n在这种情况下，即使狐狸未被抓，狐狸也会输掉游戏。","(躲貓貓):\n當誘捕者被偽裝者殺死，被殺的誘捕者就宣告獲勝\n在這個例子中，狐妖即使活著也宣告失敗。","(Прятки):\nТролль побеждает в одиночку если его убивают.","(Esconde-Esconde): \nVocê ganha sozinho se for morto. Neste caso, mesmo que a Rapoza esteja viva, ela perderá."
+"HASPortalMakerInfoLong","(Vanilla Hide and Seek only):\nPet your pet to place a portal where you stand. After you place two, anyone (seekers too) who steps on one is sent to the other. After a jump, you must step off the portal and wait 5 seconds before using it again. The second portal must be at least a few steps away from the first.","(本編のかくれんぼ専用):\nペットをかわいがると、立っている場所にポータルを置く。2 つ置くとつながり、片方に乗った人 (鬼も) はもう片方へ飛ぶ。飛んだ人は、一度ポータルから降りて 5 秒たつまで次は飛ばない。2 つ目は 1 つ目から少し離れた所にしか置けない。","","","","",""
 
 "# 属性"
 "Lovers","Lovers","ラバーズ","恋人","戀人","Любовники","Amantes"
@@ -5946,3 +5949,11 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "ModeSwitch.Failed","Could not switch the mode. The room stays in the previous mode.","モードを切り替えられませんでした。前のモードのままです。","","","","",""
 "ModeSwitch.DoneHns","Switched to Hide and Seek. TOHL is resting. Type /mode normal to switch back.","かくれんぼに切り替えました。TOHL は休んでいます。/mode normal で通常のモードに戻せます。","","","","",""
 "ModeSwitch.DoneNormal","Switched back to Classic. TOHL is active again.","通常のモードに戻しました。TOHL が再び動いています。","","","","",""
+"VanillaHns.SeekersWin","The seekers win.","鬼の勝利です。","","","","",""
+"VanillaHns.HidersWin","The hiders win.","隠れる側の勝利です。","","","","",""
+"VanillaHns.FoxAlsoWin","The Fox also wins: {0}","生き残った狐 ({0}) も勝利です。","","","","",""
+"VanillaHns.TrollWin","The Troll {0} was caught and wins alone.","トロールの {0} が鬼にキルされたので、単独勝利です。","","","","",""
+"VanillaHns.Help","Commands in vanilla Hide and Seek:\n/h [role] : role description\n/n : current role settings\nRoles: {0}","本編のかくれんぼのコマンド:\n/h [役職名] … 役職の説明\n/n … 今の役職の設定\n役職: {0}","","","","",""
+"VanillaHns.NoRoles","No extra roles are enabled.","有効な追加役職はありません。","","","","",""
+"VanillaHns.YouAre","You are the {0}","あなたは{0}です","","","","",""
+"VanillaHideAndSeekLabel","Vanilla Hide and Seek","本編のかくれんぼ","","","","",""

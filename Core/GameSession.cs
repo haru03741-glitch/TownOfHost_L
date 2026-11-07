@@ -12,6 +12,7 @@ namespace TownOfHostL.Core;
 /// 試合中に予約した遅延処理は、その試合が閉じたら走らせずに捨てる。
 /// 終了から閉じるまでの間 (結果画面) は Current が null になり、その間に予約した処理はどの試合にも属さない。
 /// </summary>
+[Modes.PatchBundle(Modes.PatchBundles.Core)]
 public sealed class GameSession
 {
     private static int nextId = 1;

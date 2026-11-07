@@ -71,7 +71,8 @@ public sealed class HideAndSeekMode : GameMode
     }
 
     private static HashSet<OptionItem> ownRoleOptions;
-    private static bool IsOwnRoleOption(OptionItem option)
+    /// <summary>かくれんぼ専用の役職 (狐・トロールなど) の設定か (子の設定を含む)。</summary>
+    public static bool IsOwnRoleOption(OptionItem option)
     {
         if (ownRoleOptions == null)
         {
@@ -105,10 +106,13 @@ public sealed class CatchCatMode : GameMode
     public override (string Key, Color Color)? Label => ("CatchCat", Color.gray);
 }
 
-/// <summary>本編のかくれんぼ (<see cref="VanillaHideAndSeek"/>)。TOHL は常駐の物だけを残して休む。</summary>
+/// <summary>本編のかくれんぼ (<see cref="VanillaHideAndSeek"/>)。TOHL は常駐の物と、ここで挙げた束だけを残して休む。</summary>
 public sealed class VanillaHideAndSeekMode : GameMode
 {
     public override CustomGameMode Id => CustomGameMode.VanillaHideAndSeek;
-    public override GamePatchScope PatchScope => GamePatchScope.ResidentOnly;
+    public override PatchBundles LiveBundles => PatchBundles.Core | PatchBundles.Settings | PatchBundles.VanillaHideAndSeek;
     public override bool UsesStandardRoles => false;
+    // 本編のかくれんぼで効くのは、TOHL が載せるかくれんぼの役職の設定だけ
+    public override bool ShowsOption(OptionItem option) => HideAndSeekMode.IsOwnRoleOption(option);
+    public override (string Key, Color Color)? Label => ("VanillaHideAndSeekLabel", Color.cyan);
 }

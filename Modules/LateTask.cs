@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using HarmonyLib;
 using TownOfHostL.Core;
+using TownOfHostL.Core.Modes;
+using UnityEngine;
 
 namespace TownOfHostL
 {
@@ -72,6 +75,14 @@ namespace TownOfHostL
                 }
             }
             if (anyDone) Tasks.RemoveAll(isDone);
+        }
+
+        // 本編のかくれんぼで動かす処理も LateTask を使うので、通常モードの毎フレームの処理とは別の束に置く
+        [PatchBundle(PatchBundles.Core)]
+        [HarmonyPatch(typeof(ModManager), nameof(ModManager.LateUpdate))]
+        private static class DrivePatch
+        {
+            public static void Prefix() => Update(Time.deltaTime);
         }
     }
 }

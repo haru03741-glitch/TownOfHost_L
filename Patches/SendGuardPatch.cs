@@ -15,6 +15,8 @@ namespace TownOfHostL.Patches;
 // 分けた断片は connection.Send で直接送るので、このパッチには戻ってこない。
 // 分けた断片同士の到着順は保証されない。Data→RPC→Data のように順序に意味がある束は 800 バイト以下に収めること。
 // 謝辞: 送信の関所で分割する方式は Town Of Host-K (KYMario, GPL-3.0) に倣った。
+// 本編のかくれんぼで休んでいる間も TOHL は電文を送るので、Core の束に置く
+[TownOfHostL.Core.Modes.PatchBundle(TownOfHostL.Core.Modes.PatchBundles.Core)]
 [HarmonyPatch(typeof(InnerNetClient), nameof(InnerNetClient.SendOrDisconnect))]
 static class SendGuardPatch
 {

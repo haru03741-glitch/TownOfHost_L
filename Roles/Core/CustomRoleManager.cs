@@ -712,6 +712,7 @@ public enum CustomRoles
     HASStart = 490,
     HASFox,
     HASTroll,
+    HASPortalMaker,
 
     MaxHAS,
     /************/

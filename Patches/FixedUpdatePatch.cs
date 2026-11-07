@@ -40,6 +40,8 @@ namespace TownOfHostL
             try
             {
                 if (__instance == null) return; // 安全ガード
+                // CNO (偽のプレイヤー) にも本編は FixedUpdate を呼ぶ
+                if (Core.CustomNetObject.Is(__instance)) return;
 
                 var player = __instance;
 

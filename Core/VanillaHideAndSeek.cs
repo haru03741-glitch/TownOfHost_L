@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using AmongUs.Data;
 using AmongUs.GameOptions;
 using HarmonyLib;
@@ -14,7 +13,7 @@ namespace TownOfHostL.Core;
 /// 本編のかくれんぼの間、TOHL を休ませる。
 /// 本編はモード (通常 / かくれんぼ) を部屋の作成時にしか選べず、試合を回す GameManager もモードごとに別の物なので、
 /// ロビーで切り替える時はホストが GameManager を消して新しいモードの物を出し直し、設定を配り直す。
-/// かくれんぼの間は TOHL の Harmony を丸ごと外して本編のまま遊ばせ、通常へ戻ったら当て直す。
+/// かくれんぼの間は TOHL のパッチを本編のかくれんぼのモードが挙げた束 (<see cref="Modes.GameMode.LiveBundles"/>) だけに絞って本編のまま遊ばせ、通常へ戻ったら全部を当て直す。
 /// 切り替えの口 (チャットコマンド・モードの変化の見張り・毎フレームの駆動) は外さない別の Harmony と MonoBehaviour に置く。
 /// GameManager を出し直す手順は More Roles Plus (haru03741-glitch/More-Roles-Plus, GPL-3.0) の GameModeSwitch を参考に書き直した。
 /// </summary>
@@ -32,7 +31,7 @@ public static class VanillaHideAndSeek
     private static bool resumeAfterSpawn;
 
     // 本編は試合の後にロビーへ戻る途中などで、かくれんぼの部屋のままモードを一瞬「通常」にする。
-    // 戻すのは、通常が続いた上で部屋の外にいるか、部屋の GameManager が通常の物の時だけにする
+    // 部屋の中で戻すのは、部屋の GameManager が通常の物である状態が続いた時だけにする
     private static float normalSince = -1f;
     private const float ResumeSettle = 1f;
 
@@ -56,7 +55,7 @@ public static class VanillaHideAndSeek
     public static void UnpatchForUnload()
     {
         state = State.Unloaded;
-        Main.Instance.Harmony.UnpatchSelf();
+        Modes.PatchBundleSet.Apply(Modes.PatchBundles.None);
         resident?.UnpatchSelf();
     }
 
@@ -206,8 +205,6 @@ public static class VanillaHideAndSeek
     private static void Suspend()
     {
         if (state != State.Live) return;
-        // 今は「常駐の物だけを残す」しか無い。本編のかくれんぼで動かすパッチを足す時は、ここで外す範囲を絞る
-        if (Modes.ModeCatalog.Vanilla.PatchScope != Modes.GamePatchScope.ResidentOnly) return;
         // ホストの名前に付けた mod の表示を外す (休んでいる間は付け直す処理が動かない)
         try
         {
@@ -218,22 +215,20 @@ public static class VanillaHideAndSeek
             }
         }
         catch (Exception ex) { Logger.Warn($"名前を戻せませんでした: {ex.Message}", "VanillaHideAndSeek"); }
-        // 駆動するパッチが外れると溜まったまま止まり、戻した時に一斉に走るので捨てる
+        // 溜まっているのは通常モードの処理なので、その束を外した後の本編のかくれんぼでは走らせずに捨てる
         if (LateTask.Tasks.Count > 0) Logger.Info($"休む前に LateTask を {LateTask.Tasks.Count} 件捨てます", "VanillaHideAndSeek");
         LateTask.Tasks.Clear();
-        var sw = Stopwatch.StartNew();
-        Main.Instance.Harmony.UnpatchSelf();
+        Modes.PatchBundleSet.Apply(Modes.ModeCatalog.Vanilla.LiveBundles);
         state = State.Suspended;
-        Logger.Info($"かくれんぼの間 TOHL を休ませます (外すのに {sw.ElapsedMilliseconds}ms)", "VanillaHideAndSeek");
+        Logger.Info("かくれんぼの間 TOHL を休ませます", "VanillaHideAndSeek");
     }
 
     private static void Resume()
     {
         if (state != State.Suspended) return;
-        var sw = Stopwatch.StartNew();
-        Main.Instance.Harmony.PatchAll();
+        Modes.PatchBundleSet.Apply(Modes.ModeCatalog.Standard.LiveBundles);
         state = State.Live;
-        Logger.Info($"TOHL を戻しました (当て直すのに {sw.ElapsedMilliseconds}ms)", "VanillaHideAndSeek");
+        Logger.Info("TOHL を戻しました", "VanillaHideAndSeek");
         if (LobbyBehaviour.Instance) ResumeLobby();
     }
 
@@ -265,25 +260,30 @@ public static class VanillaHideAndSeek
     }
 
     // /mode の流れの外でモードが変わった時 (かくれんぼの部屋を作る・入る、通常の部屋を作る) に、休む・戻るを合わせる。
-    // かくれんぼになったらすぐ休む (TOHL のロビーの処理をかくれんぼの部屋で走らせない)
+    // かくれんぼの部屋に入りかけたらすぐ休む (TOHL のロビーの処理をかくれんぼの部屋で走らせない)。
+    // メニューでは作成モードがかくれんぼでも休まない (休むと TOHL のメニューの部品が出ない)
     private static void FollowMode()
     {
         if (spawnAt >= 0f || resumeAfterSpawn || requested != null) return;
+        var client = AmongUsClient.Instance;
+        // 部屋を立てる・入るための接続を始めた所から部屋の中とみなす。部屋に入った時の TOHL の処理 (OnGameJoined) より前に休むため
+        bool inRoom = client != null && (client.GameState != InnerNetClient.GameStates.NotJoined || client.connection != null);
         var mode = CurrentMode;
-        if (mode == GameModes.HideNSeek)
+        if (mode == GameModes.HideNSeek && inRoom)
         {
             normalSince = -1f;
             if (state == State.Live) Suspend();
             return;
         }
         if (state != State.Suspended) { normalSince = -1f; return; }
+        // 部屋の外 (メニューで作成モードがかくれんぼのままの時も) か、通常の部屋なら戻す
+        bool normalRoom = mode != GameModes.HideNSeek && GameManager.Instance && GameManager.Instance.TryCast<NormalGameManager>() != null;
+        if (inRoom && !normalRoom) { normalSince = -1f; return; }
+        // 部屋の外ではモードの揺れを待たずに戻す (メニューの Start より先に TOHL のパッチを当てておく)
+        if (!inRoom) { normalSince = -1f; Resume(); return; }
         var now = Time.realtimeSinceStartup;
         if (normalSince < 0f) { normalSince = now; return; }
         if (now - normalSince < ResumeSettle) return;
-        var client = AmongUsClient.Instance;
-        bool outsideRoom = client == null || client.GameState == InnerNetClient.GameStates.NotJoined;
-        bool normalRoom = GameManager.Instance && GameManager.Instance.TryCast<NormalGameManager>() != null;
-        if (!outsideRoom && !normalRoom) return;
         normalSince = -1f;
         Resume();
     }
