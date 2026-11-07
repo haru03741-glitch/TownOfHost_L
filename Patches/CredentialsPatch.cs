@@ -20,6 +20,8 @@ namespace TownOfHostL
     {
         public static SpriteRenderer TohLogo { get; private set; }
 
+        // 自分の画面に描くだけなので、本編のかくれんぼで休んでいる間も出す
+        [PatchBundle(PatchBundles.Core)]
         [HarmonyPatch(typeof(PingTracker), nameof(PingTracker.Update))]
         class PingTrackerUpdatePatch
         {
@@ -35,7 +37,8 @@ namespace TownOfHostL
                 if (Options.NoGameEnd.GetBool()) sb.Append($"\r\n").Append(Utils.ColorString(Color.red, GetString("NoGameEnd")));
                 if (ModeCatalog.Current.Label is { } label) sb.Append($"\r\n").Append(Utils.ColorString(label.Color, GetString(label.Key)));
                 //if (Options.IsONMode) sb.Append($"\r\n").Append(Utils.ColorString(Utils.GetRoleColor(CustomRoles.ONVillager), GetString("OneNight")));
-                if (!GameStates.IsModHost) sb.Append($"\r\n").Append(Utils.ColorString(Color.red, GetString("Warning.NoModHost")));
+                // 自分がホストなら MOD は入っている (本編のかくれんぼで立てた部屋では版の登録が走らないので、登録は見ない)
+                if (!GameStates.IsModHost && !(AmongUsClient.Instance && AmongUsClient.Instance.AmHost)) sb.Append($"\r\n").Append(Utils.ColorString(Color.red, GetString("Warning.NoModHost")));
                 if (DebugModeManager.IsDebugMode) sb.Append("\r\n").Append(Utils.ColorString(Color.green, "デバッグモード"));
 
                 // 位置調整
@@ -204,9 +207,6 @@ namespace TownOfHostL
         {
             public static void Prefix(ModManager __instance)
             {
-                __instance.ShowModStamp();
-
-                LateTask.Update(Time.deltaTime);
                 CheckMurderPatch.Update();
                 // 1 つが投げても残りは止めない (切断の直後は送信が投げることがある)
                 try { TownOfHostL.Core.NotifyRolesQueue.Flush(); }
@@ -218,6 +218,13 @@ namespace TownOfHostL
                 try { OptionSaver.Tick(); }
                 catch (System.Exception ex) { Logger.Exception(ex, "ModManagerLateUpdate"); }
             }
+        }
+        // MOD の印も自分の画面に描くだけなので、本編のかくれんぼで休んでいる間も出す
+        [PatchBundle(PatchBundles.Core)]
+        [HarmonyPatch(typeof(ModManager), nameof(ModManager.LateUpdate))]
+        class ModStampPatch
+        {
+            public static void Prefix(ModManager __instance) => __instance.ShowModStamp();
             public static void Postfix(ModManager __instance)
             {
                 __instance.ModStamp.transform.position = AspectPosition.ComputeWorldPosition(

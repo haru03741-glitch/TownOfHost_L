@@ -14,6 +14,7 @@ namespace TownOfHostL.Core;
 /// ここでは写しを 1 フレームに 1 回だけ作り、同じフレームの中では使い回す。
 /// 写しは作り直すたびに新しい配列にするので、走査の途中で作り直されても走査中の配列は変わらない。
 /// </summary>
+[Modes.PatchBundle(Modes.PatchBundles.Core)]
 public static class Players
 {
     private static PlayerControl[] all = Array.Empty<PlayerControl>();

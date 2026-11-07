@@ -2,15 +2,6 @@ using UnityEngine;
 
 namespace TownOfHostL.Core.Modes;
 
-/// <summary>モードの間に TOHL のパッチをどこまで当てておくか。</summary>
-public enum GamePatchScope
-{
-    /// <summary>TOHL のパッチを全部当てる。</summary>
-    All,
-    /// <summary>常駐の物 (名乗り・チャットコマンド・モードの切り替え) だけを残し、本編のまま遊ばせる。</summary>
-    ResidentOnly,
-}
-
 /// <summary>
 /// 1 つのゲームモードの決まり。モードで変わる所は、各所がモードの名前を見て分けるのではなく、ここへ問い合わせる。
 /// 既定の値は通常モードの決まりにしてある。
@@ -19,7 +10,10 @@ public abstract class GameMode
 {
     public abstract CustomGameMode Id { get; }
 
-    public virtual GamePatchScope PatchScope => GamePatchScope.All;
+    /// <summary>
+    /// このモードの間に当てておく TOHL のパッチの束。常駐の物 (名乗り・/mode・モードの切り替え) は束の外にあり、いつも当たっている。
+    /// </summary>
+    public virtual PatchBundles LiveBundles => PatchBundles.Core | PatchBundles.Standard;
 
     /// <summary>通常モードの役職の仕組み (デシンクの割り当て・イントロ・会議中の名前の保留・通常の勝敗) で試合を回すか。</summary>
     public virtual bool UsesStandardRoles => true;

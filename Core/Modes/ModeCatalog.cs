@@ -105,10 +105,11 @@ public sealed class CatchCatMode : GameMode
     public override (string Key, Color Color)? Label => ("CatchCat", Color.gray);
 }
 
-/// <summary>本編のかくれんぼ (<see cref="VanillaHideAndSeek"/>)。TOHL は常駐の物だけを残して休む。</summary>
+/// <summary>本編のかくれんぼ (<see cref="VanillaHideAndSeek"/>)。TOHL は常駐の物と、ここで挙げた束だけを残して休む。</summary>
 public sealed class VanillaHideAndSeekMode : GameMode
 {
     public override CustomGameMode Id => CustomGameMode.VanillaHideAndSeek;
-    public override GamePatchScope PatchScope => GamePatchScope.ResidentOnly;
+    public override PatchBundles LiveBundles => PatchBundles.Core | PatchBundles.VanillaHideAndSeek;
     public override bool UsesStandardRoles => false;
+    public override (string Key, Color Color)? Label => ("VanillaHideAndSeekLabel", Color.cyan);
 }
