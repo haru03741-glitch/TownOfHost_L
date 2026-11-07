@@ -44,6 +44,8 @@ public partial class SimpleRoleInfo
         bool isNewRole = false)
     {
         var flags = RoleFlags.None;
+        // 組み合わせ役職の相方 (ブレイド・マーリン) は単独の出現設定を出さない (親の役職と一緒に出る)
+        if (combination != CombinationRoles.None && assignInfo?.AssignUnitRoles == null) flags |= RoleFlags.DontShowOption;
         // hamo の番号は TOH_L の番号と重なるので、別の所へずらす
         var info = Create(classType, createInstance, roleName, baseRoleType, customRoleType, HamoConfigIdBase + configId, optionCreator, chatCommand,
             colorCode, isDesyncImpostor, tab, introSound, canMakeMadmate, countType, assignInfo, flags);

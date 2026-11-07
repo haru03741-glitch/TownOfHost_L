@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
@@ -59,6 +59,7 @@ namespace TownOfHostL
 
             //ゲーム終了判定
             predicate.CheckForEndGame(out reason);
+            HamoGameEnd.TakeOver(ref reason);
             lastReason = reason;
 
             //ゲーム終了時
@@ -210,6 +211,8 @@ namespace TownOfHostL
                             CustomWinnerHolder.AdditionalWinnerRoles.Add(CustomRoles.Archenemy);
                         }
                     }
+                    // hamo: 単独勝利・乗っ取り
+                    HamoGameEnd.LateWin(ref reason, originalWinnerTeam);
                     //弁護士且つ追跡者
                     Lawyer.EndGameCheck();
 
@@ -455,12 +458,18 @@ namespace TownOfHostL
             {
                 reason = GameOverReason.ImpostorsByKill;
 
+                // hamo: アサシンがマーリンを当てている間は終わらない
+                if (TownOfHostL.Roles.Hamo.Impostor.Assassin.assassin?.NowState is TownOfHostL.Roles.Hamo.Impostor.Assassin.AssassinMeeting.Collected) return false;
+
                 int Imp = Utils.AlivePlayersCount(CountTypes.Impostor);
                 int Jackal = Utils.AlivePlayersCount(CountTypes.Jackal);
                 int Pirate = Utils.AlivePlayersCount(CountTypes.Pirate);
-                int Crew = Utils.AlivePlayersCount(CountTypes.Crew);
+                // hamo: 妖狐はクルーとして数える
+                int Crew = Utils.AlivePlayersCount(CountTypes.Crew) + Utils.AlivePlayersCount(CountTypes.Fox);
+                var hamo = HamoGameEnd.Count(ref Imp, ref Jackal, ref Crew);
+                int Other = hamo.Pavlov + hamo.StandMaster + hamo.Eater;
 
-                if (Imp == 0 && Crew == 0 && Jackal == 0 && Pirate == 0) //全滅
+                if (Imp == 0 && Crew == 0 && Jackal == 0 && Pirate == 0 && Other == 0) //全滅
                 {
                     reason = GameOverReason.ImpostorsByKill;
                     CustomWinnerHolder.ResetAndSetWinner(CustomWinner.None);
@@ -470,20 +479,23 @@ namespace TownOfHostL
                     reason = GameOverReason.ImpostorsByKill;
                     CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Lovers);
                 }
-                else if (Jackal == 0 && Pirate == 0 && Crew <= Imp) //インポスター勝利
+                else if (Jackal == 0 && Pirate == 0 && Other == 0 && Crew <= Imp) //インポスター勝利
                 {
                     reason = GameOverReason.ImpostorsByKill;
                     CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Impostor);
                 }
-                else if (Imp == 0 && Pirate == 0 && Crew <= Jackal) //ジャッカル勝利
+                else if (Imp == 0 && Pirate == 0 && Other == 0 && Crew <= Jackal) //ジャッカル勝利
                 {
                     reason = GameOverReason.ImpostorsByKill;
                     CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Jackal);
+                    CustomWinnerHolder.WinnerRoles.Add(CustomRoles.JackalHadouHo);
+                    CustomWinnerHolder.WinnerRoles.Add(CustomRoles.JackalWolf);
+                    CustomWinnerHolder.WinnerRoles.Add(CustomRoles.Tama);
                     CustomWinnerHolder.WinnerRoles.Add(CustomRoles.Jackal);
                     CustomWinnerHolder.WinnerRoles.Add(CustomRoles.JClient);
                     CustomWinnerHolder.WinnerRoles.Add(CustomRoles.JSidekick);
                 }
-                else if (Imp == 0 && Jackal == 0 && Crew <= Pirate) //海賊勝利
+                else if (Imp == 0 && Jackal == 0 && Other == 0 && Crew <= Pirate) //海賊勝利
                 {
                     reason = GameOverReason.ImpostorsByKill;
                     CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Pirate);
@@ -491,7 +503,8 @@ namespace TownOfHostL
                     CustomWinnerHolder.WinnerRoles.Add(CustomRoles.Gang);
                     CustomWinnerHolder.AdditionalWinnerRoles.Add(CustomRoles.Gang);
                 }
-                else if (Jackal == 0 && Pirate == 0 && Imp == 0) //クルー勝利
+                else if (HamoGameEnd.CheckTeamWin(Imp, Jackal, Pirate, Crew, hamo, ref reason)) { }
+                else if (Jackal == 0 && Pirate == 0 && Imp == 0 && Other == 0) //クルー勝利
                 {
                     reason = GameOverReason.CrewmatesByVote;
                     CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Crewmate);
@@ -577,7 +590,7 @@ namespace TownOfHostL
         public virtual bool CheckGameEndByTask(out GameOverReason reason)
         {
             reason = GameOverReason.ImpostorsByKill;
-            if (Options.DisableTaskWin.GetBool() || TaskState.InitialTotalTasks == 0) return false;
+            if (Options.DisableTaskWin.GetBool() || TaskState.InitialTotalTasks == 0 || TownOfHostL.Roles.Hamo.Neutral.Fox.BlockTaskWin()) return false;
 
             (int vtComp, int vtTotal) = VentEnterTask.TaskWinCountData();
             if (GameData.Instance.TotalTasks + vtTotal <= GameData.Instance.CompletedTasks + vtComp)
