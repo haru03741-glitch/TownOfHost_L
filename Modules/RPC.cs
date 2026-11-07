@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using AmongUs.GameOptions;
 using HarmonyLib;
@@ -47,11 +47,17 @@ namespace TownOfHostL
         EvilHackerWarpSync,
         SyncPsychicResult,
         SetLoyalDoggyMaster,
+        CustomRoleSync,
+        HamoSync,
+        SyncAssassinState,
+        ClientEffect,
+        PublicRoleSync,
     }
     public enum Sounds
     {
         KillSound,
-        TaskComplete
+        TaskComplete,
+        SabotageAlarm
     }
     [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.HandleRpc))]
     class RPCHandlerPatch
@@ -225,13 +231,31 @@ namespace TownOfHostL
                 case CustomRPC.SyncPsychicResult:
                     CustomRoleManager.DispatchRpc(reader, rpcType);
                     break;
+                // hamo から移植
+                case CustomRPC.ClientEffect:
+                    TownOfHostL.Modules.ClientEffects.Receive(reader);
+                    break;
+                case CustomRPC.SyncAssassinState:
+                    {
+                        byte assassinId = reader.ReadByte();
+                        if (CustomRoleManager.GetByPlayerId(assassinId) is TownOfHostL.Roles.Hamo.Impostor.Assassin assassinRole)
+                            assassinRole.ReceiveStateRPC(reader);
+                    }
+                    break;
+                case CustomRPC.PublicRoleSync:
+                    {
+                        byte playerid = reader.ReadByte();
+                        if (playerid == PlayerControl.LocalPlayer.PlayerId && (CustomRoles)reader.ReadPackedInt32() is CustomRoles.EvilBlender)
+                            TownOfHostL.Roles.Hamo.Impostor.EvilBlender.ReceivePublickRpc(reader);
+                    }
+                    break;
                 default:
                     CustomRoleManager.DispatchRpc(reader, rpcType);
                     break;
             }
         }
     }
-    static class RPC
+    static partial class RPC
     {
         //SyncCustomSettingsRPC Sender
         public static void SyncCustomSettingsRPC()
@@ -336,6 +360,10 @@ namespace TownOfHostL
                 {
                     case Sounds.KillSound:
                         SoundManager.Instance.PlaySound(PlayerControl.LocalPlayer.KillSfx, false, 0.8f);
+                        break;
+                    case Sounds.SabotageAlarm:
+                        if (ShipStatus.Instance != null && ShipStatus.Instance.SabotageSound != null)
+                            SoundManager.Instance.PlaySound(ShipStatus.Instance.SabotageSound, false, 0.8f);
                         break;
                     case Sounds.TaskComplete:
                         SoundManager.Instance.PlaySound(DestroyableSingleton<HudManager>.Instance.TaskCompleteSound, false, 0.8f);

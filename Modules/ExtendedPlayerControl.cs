@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
@@ -18,7 +18,7 @@ using AmongUs.Data;
 
 namespace TownOfHostL;
 
-static class ExtendedPlayerControl
+static partial class ExtendedPlayerControl
 {
     public static void RpcSetCustomRole(this PlayerControl player, CustomRoles role)
     {

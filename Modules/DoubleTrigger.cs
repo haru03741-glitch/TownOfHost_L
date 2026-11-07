@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using TownOfHostL.Attributes;
 using UnityEngine;
 
 namespace TownOfHostL
 {
-    static class DoubleTrigger
+    static partial class DoubleTrigger
     {
         public static List<byte> PlayerIdList = new();
 

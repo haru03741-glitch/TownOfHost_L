@@ -1,0 +1,53 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using AmongUs.GameOptions;
+using HarmonyLib;
+using UnityEngine;
+using TownOfHostL.Modules;
+using TownOfHostL.Roles.Core;
+using TownOfHostL.Roles.Core.Interfaces;
+
+namespace TownOfHostL;
+
+/// <summary>
+/// TOH_L のパッチから hamo の役職のフックを呼ぶ所
+/// </summary>
+public static class HamoHooks
+{
+    public const byte SkipVoteId = MeetingVoteManager.Skip;
+    /// <summary>今完了したタスクの番号 (CompleteTask の中だけ有効)</summary>
+    public static uint CurrentTaskId;
+    /// <summary>ClearAndExile 系で会議を終えている途中か</summary>
+    public static bool InClearAndExile;
+
+    public static IEnumerable<HamoRoleBase> AllHamoRoles => CustomRoleManager.AllActiveRoles.Values.OfType<HamoRoleBase>().ToArray();
+
+    /// <summary>hamo 形式の役職名の書き換えを TOH_L 形式へつなぐ</summary>
+    public static void ForwardRoleName(PlayerControl owner, PlayerControl seer, PlayerControl seen, ref bool enabled, ref string roleText, bool asSeen)
+    {
+        if (owner.GetRoleClass() is not HamoRoleBase role) return;
+        var seenRole = seen.GetCustomRole();
+        var color = Utils.GetRoleColor(seenRole);
+        var text = Utils.GetRoleName(seenRole);
+        var origColor = color;
+        var origText = text;
+        bool addon = false;
+        if (asSeen) role.OverrideDisplayRoleNameAsSeen(seer, ref enabled, ref color, ref text, ref addon);
+        else role.OverrideDisplayRoleNameAsSeer(seen, ref enabled, ref color, ref text, ref addon);
+        if (color != origColor || text != origText)
+            roleText = Utils.ColorString(color, text);
+    }
+
+    /// <summary>投票結果の書き換え。どれかが true を返すと同数時の特殊モードを使わない</summary>
+    public static bool VotingResults(ref NetworkedPlayerInfo exiled, ref bool isTie, Dictionary<byte, int> votedCounts, byte[] mostVotedPlayers)
+    {
+        var skip = false;
+        foreach (var role in AllHamoRoles)
+        {
+            if (role.VotingResults(ref exiled, ref isTie, votedCounts, mostVotedPlayers, InClearAndExile))
+                skip = true;
+        }
+        return skip;
+    }
+}

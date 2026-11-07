@@ -9,7 +9,7 @@ using TownOfHostL.Roles.Crewmate;
 
 namespace TownOfHostL.Modules
 {
-    public class MeetingTimeManager
+    public partial class MeetingTimeManager
     {
         private static int DiscussionTime;
         private static int VotingTime;

@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using AmongUs.GameOptions;
 
 using TownOfHostL.Roles.Core;
@@ -6,7 +6,7 @@ using TownOfHostL.Core;
 
 namespace TownOfHostL;
 
-static class CustomRolesHelper
+static partial class CustomRolesHelper
 {
     public static readonly CustomRoles[] AllRoles = EnumHelper.GetAllValues<CustomRoles>().Where(role => !role.IsNotAssignedRoles()).ToArray();
     public static readonly CustomRoleTypes[] AllRoleTypes = EnumHelper.GetAllValues<CustomRoleTypes>();
@@ -169,4 +169,9 @@ public enum CountTypes
     Impostor,
     Jackal,
     Pirate,
+    // hamo から移植
+    Fox,
+    Pavlov,
+    Eater,
+    StandMaster,
 }

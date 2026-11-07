@@ -7,7 +7,7 @@ using static TownOfHostL.Options;
 
 namespace TownOfHostL.Roles.Core;
 
-public class SimpleRoleInfo
+public partial class SimpleRoleInfo
 {
     public Type ClassType;
     public Func<PlayerControl, RoleBase> CreateInstance;

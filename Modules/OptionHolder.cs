@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -28,7 +28,7 @@ public enum CustomGameMode
     All = int.MaxValue
 }
 [HarmonyPatch]
-public static class Options
+public static partial class Options
 {
     //static Task taskOptionsLoad;
     [HarmonyPatch(typeof(TranslationController), nameof(TranslationController.Initialize)), HarmonyPostfix]
@@ -886,6 +886,9 @@ public static class Options
         CheatLobbyKill = StringOptionItem.Create((int)offsetId.Participation + 420, "CheatLobbyKill", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, true).SetParent(AntiCheat)
             .SetGameMode(CustomGameMode.All);
 
+        // hamo から移植した役職の共通設定
+        LoadHamoOptions();
+
         DebugModeManager.SetupCustomOption();
 
         OptionSaver.Load();
@@ -1036,7 +1039,7 @@ public static class Options
         public OptionItem numLongTasks;
         public OptionItem numShortTasks;
 
-        public OverrideTasksData(int idStart, TabGroup tab, CustomRoles role, OptionItem option = null, bool addRoleName = false)
+        public OverrideTasksData(int idStart, TabGroup tab, CustomRoles role, OptionItem option = null, bool addRoleName = false, (bool defo, int common, int Long, int Short)? tasks = null)
         {
             this.IdStart = idStart;
             this.Role = role;
@@ -1044,22 +1047,22 @@ public static class Options
             if (option == null) option = CustomRoleSpawnChances[role];
             if (!addRoleName)
             {
-                doOverride = StringOptionItem.Create(idStart++, "doOverride", new string[] { "ColoredOff", "ColoredOn" }, 0, tab, false).SetParent(option)
+                doOverride = StringOptionItem.Create(idStart++, "doOverride", new string[] { "ColoredOff", "ColoredOn" }, tasks?.defo == true ? 1 : 0, tab, false).SetParent(option)
                     .SetValueFormat(OptionFormat.None);
             }
             else
             {
                 var roleName = Utils.GetRoleName(role);
                 Dictionary<string, string> replacementDic = new() { { "%role%", Utils.ColorString(Utils.GetRoleColor(role), roleName) } };
-                doOverride = StringOptionItem.Create(idStart++, "doOverride%role%", new string[] { "ColoredOff", "ColoredOn" }, 0, tab, false).SetParent(option);
+                doOverride = StringOptionItem.Create(idStart++, "doOverride%role%", new string[] { "ColoredOff", "ColoredOn" }, tasks?.defo == true ? 1 : 0, tab, false).SetParent(option);
                 doOverride.ReplacementDictionary = replacementDic;
             }
 
-            assignCommonTasks = IntegerOptionItem.Create(idStart++, "assignCommonTasks", new(0, 99, 1), 0, tab, false).SetParent(doOverride)
+            assignCommonTasks = IntegerOptionItem.Create(idStart++, "assignCommonTasks", new(0, 99, 1), tasks?.common ?? 0, tab, false).SetParent(doOverride)
                 .SetValueFormat(OptionFormat.Pieces);
-            numLongTasks = IntegerOptionItem.Create(idStart++, "roleLongTasksNum", new(0, 99, 1), 3, tab, false).SetParent(doOverride)
+            numLongTasks = IntegerOptionItem.Create(idStart++, "roleLongTasksNum", new(0, 99, 1), tasks?.Long ?? 3, tab, false).SetParent(doOverride)
                 .SetValueFormat(OptionFormat.Pieces);
-            numShortTasks = IntegerOptionItem.Create(idStart++, "roleShortTasksNum", new(0, 99, 1), 3, tab, false).SetParent(doOverride)
+            numShortTasks = IntegerOptionItem.Create(idStart++, "roleShortTasksNum", new(0, 99, 1), tasks?.Short ?? 3, tab, false).SetParent(doOverride)
                 .SetValueFormat(OptionFormat.Pieces);
 
             if (!AllData.ContainsKey(role)) AllData.Add(role, this);
@@ -1077,6 +1080,13 @@ public static class Options
 
             return new OverrideTasksData(roleInfo.ConfigId + idOffset, roleInfo.Tab, setRole, option, addRoleName);
         }
+        /// <summary>hamo 形式 (rolename: 別名の役職, tasks: 初期値)</summary>
+        public static OverrideTasksData Create(SimpleRoleInfo roleInfo, int idOffset, CustomRoles rolename, (bool defo, int common, int Long, int Short)? tasks = null, OptionItem parent = null)
+        {
+            var setRole = rolename == CustomRoles.NotAssigned ? roleInfo.RoleName : rolename;
+            return new OverrideTasksData(roleInfo.ConfigId + idOffset, roleInfo.Tab, setRole, parent ?? CustomRoleSpawnChances[roleInfo.RoleName], setRole != roleInfo.RoleName, tasks);
+        }
+        public OptionItem numCommonTasks => assignCommonTasks;
     }
 
     public enum offsetId

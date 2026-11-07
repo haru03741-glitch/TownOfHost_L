@@ -44,6 +44,7 @@ namespace TownOfHostL
                 if (!GameStates.IsModHost) return;
 
                 TargetArrow.OnFixedUpdate(player);
+                GetArrow.OnFixedUpdate(player);
                 TargetDeadArrow.OnFixedUpdate(player);
                 VentSelect.OnFixedUpdate(player);
                 CustomRoleManager.OnFixedUpdate(player);

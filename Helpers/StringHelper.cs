@@ -1,9 +1,9 @@
-using System.Text;
+﻿using System.Text;
 using UnityEngine;
 
 namespace TownOfHostL;
 
-public static class StringHelper
+public static partial class StringHelper
 {
     public static readonly Encoding shiftJIS = CodePagesEncodingProvider.Instance.GetEncoding("Shift_JIS");
 

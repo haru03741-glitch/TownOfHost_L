@@ -7,7 +7,7 @@ using TownOfHostL.Roles.Neutral;
 
 namespace TownOfHostL
 {
-    public static class NameColorManager
+    public static partial class NameColorManager
     {
         public static string ApplyNameColorData(this string name, PlayerControl seer, PlayerControl target, bool isMeeting)
         {

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
@@ -29,7 +29,7 @@ using static TownOfHostL.Translator;
 
 namespace TownOfHostL;
 
-public static class Utils
+public static partial class Utils
 {
     public static bool IsActive(SystemTypes type)
     {

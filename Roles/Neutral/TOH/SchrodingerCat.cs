@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using AmongUs.GameOptions;
@@ -241,6 +241,7 @@ public sealed class SchrodingerCat : RoleBase, IAdditionalWinner, IDeathReasonSe
             case TeamType.Egoist: roleText = "(Ego)" + roleText; break;
             case TeamType.DarkHide: roleText = "(Dark)" + roleText; break;
             case TeamType.Ogre: roleText = "(Ogre)" + roleText; break;
+            case TeamType.Pavlov: roleText = "(Pav)" + roleText; break;
         }
 
         // 色を変更
@@ -296,6 +297,7 @@ public sealed class SchrodingerCat : RoleBase, IAdditionalWinner, IDeathReasonSe
             TeamType.Egoist => CustomWinnerHolder.WinnerTeam == CustomWinner.Egoist,
             TeamType.DarkHide => CustomWinnerHolder.WinnerTeam == CustomWinner.DarkHide,
             TeamType.Ogre => CustomWinnerHolder.AdditionalWinnerRoles.Contains(CustomRoles.Ogre),
+            TeamType.Pavlov => CustomWinnerHolder.WinnerTeam == CustomWinner.Pavlov,
             _ => null,
         };
         if (!won.HasValue)
@@ -369,6 +371,10 @@ public sealed class SchrodingerCat : RoleBase, IAdditionalWinner, IDeathReasonSe
         /// 鬼陣営に所属する状態
         /// </summary>
         Ogre,
+        /// <summary>
+        /// パブロフ陣営に所属する状態 (hamo)
+        /// </summary>
+        Pavlov,
     }
     public static Color GetCatColor(TeamType catType)
     {
@@ -381,6 +387,7 @@ public sealed class SchrodingerCat : RoleBase, IAdditionalWinner, IDeathReasonSe
             TeamType.Egoist => Utils.GetRoleColor(CustomRoles.Egoist),
             TeamType.DarkHide => Utils.GetRoleColor(CustomRoles.DarkHide),
             TeamType.Ogre => Utils.GetRoleColor(CustomRoles.Ogre),
+            TeamType.Pavlov => Utils.GetRoleColor(CustomRoles.PavlovOwner),
             _ => null,
         };
         if (!color.HasValue)

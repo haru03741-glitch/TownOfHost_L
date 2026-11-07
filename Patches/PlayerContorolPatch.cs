@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AmongUs.GameOptions;
@@ -525,7 +525,7 @@ public static class PhantomRoleUseAbilityPatch
     }
 }
 [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.ReportDeadBody))]
-class ReportDeadBodyPatch
+partial class ReportDeadBodyPatch
 {
     public static NetworkedPlayerInfo reporter;
     public static NetworkedPlayerInfo ReportTarget;
@@ -542,6 +542,12 @@ class ReportDeadBodyPatch
         SpecialMeeting = reporter?.PlayerId == ReportTarget?.PlayerId;
         if (GameStates.IsMeeting) return false;
         Logger.Info($"{__instance.GetNameWithRole()} => {target?.Object?.GetNameWithRole() ?? "null"}", "ReportDeadBody");
+        // hamo: 役職の能力で確認なしに会議を開く
+        if (HamoForceReport)
+        {
+            HamoForceReport = false;
+            goto confirmed;
+        }
         if (SpecialMeeting) return true;
         if (Options.IsStandardHAS && target != null && __instance == target.Object) return true; //[StandardHAS] ボタンでなく、通報者と死体が同じなら許可
         if (Options.CurrentGameMode == CustomGameMode.HideAndSeek || Options.IsStandardHAS) return false;
@@ -610,10 +616,19 @@ class ReportDeadBodyPatch
             }
         }
 
-        //=============================================
-        //以下、ボタンが押されることが確定したものとする。
-        //=============================================
+        // hamo: 役職による通報の取り消し
+        if (HamoCancelReport(__instance, target)) return false;
+        // hamo: 残りの緊急ボタンの数
+        if (target == null)
+        {
+            var hamoState = PlayerState.GetByPlayerId(__instance.PlayerId);
+            if (hamoState != null && hamoState.NumberOfRemainingButtons > 0) hamoState.NumberOfRemainingButtons--;
+        }
 
+    //=============================================
+    //以下、ボタンが押されることが確定したものとする。
+    //=============================================
+    confirmed:
         MeetingStates.MeetingCalled = true;
 
         foreach (var pc in Main.AllPlayerControls)
@@ -731,6 +746,9 @@ class CoEnterVentPatch
     {
         var user = physics.myPlayer;
         if (user == null) return;
+        // hamo: 誰かがベントに入った時の処理・今いるベントの記録
+        VentilationSystemUpdateSystemPatch.NowVentId[user.PlayerId] = (byte)id;
+        foreach (var vent in CustomRoleManager.OnEnterVentOthers) vent(physics, id);
 
         bool roleAllowsVent = user.GetRoleClass()?.OnEnterVent(physics, id) ?? false;
         bool ventTaskAllows = VentEnterTask.OnEnterVent(physics, id);

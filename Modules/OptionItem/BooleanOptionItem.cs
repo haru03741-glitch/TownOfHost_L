@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using TownOfHostL.Roles.Core;
 using UnityEngine; // ScriptableObject 用
 
@@ -62,6 +62,16 @@ namespace TownOfHostL
         {
             var opt = new BooleanOptionItem(
                 roleInfo.ConfigId + idOffset, name.ToString(), defaultValue, roleInfo.Tab, isSingleValue
+            );
+            opt.SetParent(parent ?? roleInfo.RoleOption);
+            return opt;
+        }
+        public static BooleanOptionItem Create(
+            SimpleRoleInfo roleInfo, int idOffset, string name, bool defaultValue, bool isSingleValue, OptionItem parent = null
+        )
+        {
+            var opt = new BooleanOptionItem(
+                roleInfo.ConfigId + idOffset, name, defaultValue, roleInfo.Tab, isSingleValue
             );
             opt.SetParent(parent ?? roleInfo.RoleOption);
             return opt;

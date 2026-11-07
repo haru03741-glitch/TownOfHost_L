@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
@@ -9,7 +9,7 @@ using TownOfHostL.Roles.Core;
 
 namespace TownOfHostL;
 
-public class PlayerState
+public partial class PlayerState
 {
     byte PlayerId;
     public List<CustomRoles> MainRoleList;
@@ -157,7 +157,7 @@ public class PlayerState
         allPlayerStates[playerId] = new(playerId);
     }
 }
-public class TaskState
+public partial class TaskState
 {
     public static int InitialTotalTasks;
     public int AllTasksCount;
@@ -223,7 +223,7 @@ public class PlayerVersion
         return pv.version == version && pv.tag == tag;
     }
 }
-public static class GameStates
+public static partial class GameStates
 {
     public static bool InGame = false;
     public static bool AlreadyDied = false;
@@ -242,7 +242,7 @@ public static class GameStates
     public static bool IsCanMove => PlayerControl.LocalPlayer?.CanMove is true;
     public static bool IsDead => PlayerControl.LocalPlayer?.Data?.IsDead is true;
 }
-public static class MeetingStates
+public static partial class MeetingStates
 {
     public static DeadBody[] DeadBodies = null;
     public static NetworkedPlayerInfo ReportTarget = null;

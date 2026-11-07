@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Collections.Generic;
 using HarmonyLib;
@@ -17,7 +17,7 @@ using TownOfHostL.Roles.AddOns;
 
 namespace TownOfHostL.Roles.Core;
 
-public static class CustomRoleManager
+public static partial class CustomRoleManager
 {
     public static Type[] AllRolesClassType;
     // CustomRolesHelper の static 初期化は RoleCatalog 経由でここを引くので、この初期化から CustomRolesHelper を読まない
@@ -49,12 +49,21 @@ public static class CustomRoleManager
         PlayerControl attemptKiller, PlayerControl attemptTarget,
         PlayerControl appearanceKiller, PlayerControl appearanceTarget,
         bool killerMyselfInvoke = false)
+        => OnCheckMurder(attemptKiller, attemptTarget, appearanceKiller, appearanceTarget, killerMyselfInvoke, false, 1, CustomDeathReason.Kill);
+    /// <summary>hamo の形のキルチェック。force はキラーのキルチェックを飛ばす、DontRoleAbility は相手の能力を使わせない</summary>
+    public static bool OnCheckMurder(
+        PlayerControl attemptKiller, PlayerControl attemptTarget,
+        PlayerControl appearanceKiller, PlayerControl appearanceTarget,
+        bool? force, bool? DontRoleAbility = false, int Killpower = 1,
+        CustomDeathReason deathReason = CustomDeathReason.Kill)
     {
+        var killerMyselfInvoke = force == true;
         Logger.Info($"Attempt  :{attemptKiller.GetNameWithRole()} => {attemptTarget.GetNameWithRole()}", "CheckMurder");
         if (appearanceKiller != attemptKiller || appearanceTarget != attemptTarget)
             Logger.Info($"Apperance:{appearanceKiller.GetNameWithRole()} => {appearanceTarget.GetNameWithRole()}", "CheckMurder");
 
-        var info = new MurderInfo(attemptKiller, attemptTarget, appearanceKiller, appearanceTarget);
+        var info = new MurderInfo(attemptKiller, attemptTarget, appearanceKiller, appearanceTarget, DontRoleAbility, Killpower, 0, deathReason);
+        var hamoGuardian = false;
 
         appearanceKiller.ResetKillCooldown();
 
@@ -65,8 +74,6 @@ public static class CustomRoleManager
         if (attemptKiller.GetCustomRole().IsImpostor() && attemptTarget.GetCustomRole().IsImpostor() && !attemptKiller.Is(CustomRoles.StrayWolf)) return false;
         // ゴッドファーザーのロックキル
         if (CustomRoles.Godfather.IsPresent() && GodfatherAndJanitor.JanitorTarget.Contains(attemptKiller.PlayerId)) return false;
-        // ペンギンの拉致られ中キル
-        if (!Penguin.CanKilledByTarget(attemptKiller)) return false;
 
         var killerRole = attemptKiller.GetRoleClass();
         var targetRole = attemptTarget.GetRoleClass();
@@ -85,15 +92,41 @@ public static class CustomRoleManager
                 // 背徳者の対象プレイヤー
                 else if (Immoralist.GuardPlayerCheckMurder(info)) { }
                 // ターゲットのキルチェック処理実行
-                else if (targetRole != null)
+                else if (targetRole != null && info.DontRoleAbility is not true)
                 {
-                    if (!targetRole.OnCheckMurderAsTarget(info)) return false;
+                    if (!targetRole.OnCheckMurderAsTarget(info))
+                    {
+                        killer.OnCheckMurderDontKill(info);
+                        return false;
+                    }
+                }
+                // 守護者 (hamo) のガード
+                if (info.KillPower > info.GuardPower && TownOfHostL.Roles.Hamo.Crewmate.Guardian.FindGuardianFor(attemptTarget.PlayerId) != null)
+                {
+                    info.GuardPower = 1;
+                    hamoGuardian = true;
                 }
             }
-            // キラーのキルチェック処理実行
-            if (!killerMyselfInvoke)
+            // キラーのキルチェック処理実行 (hamo のダブルトリガーを先に見る)
+            if (!HamoDoubleTrigger.OnCheckMurderAsKiller(info) && !killerMyselfInvoke)
             {
                 killer.OnCheckMurderAsKiller(info);
+            }
+            // hamo のガードの力によるガード
+            if (info.KillPower <= info.GuardPower && killer.IsKiller)
+            {
+                info.IsGuard = true;
+                info.CanKill = false;
+                if (hamoGuardian)
+                {
+                    var guardian = TownOfHostL.Roles.Hamo.Crewmate.Guardian.FindGuardianFor(attemptTarget.PlayerId);
+                    guardian?.Sacrifice(attemptTarget);
+                    UtilsGameLog.AddGameLog("Guardian", UtilsName.GetPlayerColor(attemptTarget) + ":  " + string.Format(Translator.GetString("GuardMaster.Guard"), UtilsName.GetPlayerColor(attemptKiller, true)));
+                }
+                attemptKiller.RpcProtectedMurderPlayer(attemptTarget);
+                Utils.NotifyRoles();
+                killer.OnCheckMurderDontKill(info);
+                return false;
             }
         }
         // CC
@@ -122,6 +155,10 @@ public static class CustomRoleManager
                 {
                     capKiller.RpcMurderPlayer(capTarget);
                 }, 0.2f, "ViperMurderDelay");
+            }
+            else if (TownOfHostL.Modules.DeadBodyEraser.TakeNoBody(appearanceTarget))
+            {
+                TownOfHostL.Modules.DeadBodyEraser.ExileInsteadOfMurder(appearanceKiller, appearanceTarget);
             }
             else
             {
@@ -279,6 +316,7 @@ public static class CustomRoleManager
         CheckMurderInfos.Clear();
         OnMurderPlayerOthers.Clear();
         OnFixedUpdateOthers.Clear();
+        OnEnterVentOthers.Clear();
     }
     public static void CreateInstance()
     {
@@ -385,6 +423,7 @@ public static class CustomRoleManager
         CheckMurderInfos.Clear();
         OnMurderPlayerOthers.Clear();
         OnFixedUpdateOthers.Clear();
+        OnEnterVentOthers.Clear();
 
         AllActiveRoles.Values.ToArray().Do(roleClass => roleClass.Dispose());
     }
@@ -428,12 +467,27 @@ public class MurderInfo
     ///会議中キルの場合
     /// </summary>
     public bool IsMeeting => GameStates.IsMeeting;
-    public MurderInfo(PlayerControl attemptKiller, PlayerControl attemptTarget, PlayerControl appearanceKiller, PlayerControl appearancetarget)
+    // hamo のキルの力・ガードの力
+    public bool IsGuard = false;
+    public int KillPower = 1;
+    public int GuardPower = 0;
+    /// <summary>true なら相手の役職の能力を使わせない</summary>
+    public bool? DontRoleAbility = false;
+    public UnityEngine.Vector2 killerpos;
+    public CustomDeathReason DeathReason;
+    public bool CheckHasGuard() => KillPower <= GuardPower;
+    public bool IsCanKilling => !CheckHasGuard() && !IsSuicide && !IsFakeSuicide && DoKill && CanKill && !IsAccident;
+    public MurderInfo(PlayerControl attemptKiller, PlayerControl attemptTarget, PlayerControl appearanceKiller, PlayerControl appearancetarget, bool? DontRoleAbility = false, int Killpower = 1, int guardpower = 0, CustomDeathReason deathReason = CustomDeathReason.Kill)
     {
         AttemptKiller = attemptKiller;
         AttemptTarget = attemptTarget;
         AppearanceKiller = appearanceKiller;
         AppearanceTarget = appearancetarget;
+        this.DontRoleAbility = DontRoleAbility;
+        killerpos = appearanceKiller.transform.position;
+        KillPower = Killpower;
+        GuardPower = guardpower;
+        DeathReason = deathReason;
     }
 }
 
@@ -602,6 +656,16 @@ public enum CustomRoles
     ChainShifter,
     Vendetta,
 
+    // hamo から移植
+    Evilgambler, Samurai, HadouHo, Pusher, HateKiller, Framer, Surrogate, Maestro, TimeSleeper, Bomber,
+    EvilLinker, Tairou, EvilBlender, Ballooner, AntiReporter, EvilAddoer, Driver, Assassin, EvilCommander,
+    Magician, Evolver, Destroyer, Nova, Reloader,
+    MadMagic, MadKaiser, MadAvenger, Braid,
+    Sage, MeetingSheriff, Balancer, VillageChief, NiceHacker, Guardian, Walkure, Repeater, NiceWorkaholic,
+    SheriffHadouHo, Analyzer, UltraStar, NiceAddoer, Merlin,
+    Spelunker, Tuna, Vulture, PavlovDog, PavlovOwner, PavlovDogImprint, JackalHadouHo, Tama, Onmyoji, Shikigami,
+    Freeter, AntiHero, StandMaster, Stand, Zombie, JackalWolf, Chameleon, Eater, Fox, Obolus, PlagueDoctor,
+
     GM,
     CounselorAndMadDilemma,
     GodfatherAndJanitor,
@@ -671,6 +735,13 @@ public enum CustomRoles
 
     //dummy
     DummyNext = 10000,
+
+    // hamo の役職から名前だけ参照される、TOH_L に無い役職 (配られない)
+    HamoOnlyStart = 20000,
+    Alien, AlienHijack, Amanojaku, Amnesia, Amnesiac, Autocrat, ConnectSaver, CountKiller, DoppelGanger, Elector,
+    EvilSatellite, GrimReaper, Guesser, JackalAlien, JackalMafia, Jackaldoll, Jumbo, King, LastNeutral, Limiter,
+    MadProxy, MadWorker, MagicHand, Moon, Opener, Powerful, Remotekiller, Serial, Speeding, Stack, Stamina,
+    Strawdoll, SwitchSheriff, Water, WolfBoy,
 }
 public enum CustomRoleTypes
 {

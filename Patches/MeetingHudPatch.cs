@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AmongUs.GameOptions;
@@ -14,7 +14,7 @@ using static TownOfHostL.Translator;
 namespace TownOfHostL;
 
 [HarmonyPatch]
-public static class MeetingHudPatch
+public static partial class MeetingHudPatch
 {
     [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.CheckForEndVoting))]
     class CheckForEndVotingPatch

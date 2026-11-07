@@ -11,6 +11,8 @@ public interface IImpostor : IKiller, ISchrodingerCatOwner
 {
     /// インポスターは基本サボタージュボタンを使える
     bool IKiller.CanUseSabotageButton() => true;
+    /// <summary>ラストインポスターになれるか (hamo)</summary>
+    public bool CanBeLastImpostor => true;
 
     /// <summary>
     /// シュレディンガーの猫を切った際の変化先役職<br/>
