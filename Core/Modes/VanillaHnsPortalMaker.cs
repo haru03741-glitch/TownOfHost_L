@@ -49,9 +49,9 @@ public static class VanillaHnsPortalMaker
         float now = Time.realtimeSinceStartup;
         if (lastPetAt.TryGetValue(pc.PlayerId, out var last) && now - last < PetThrottle) return;
         lastPetAt[pc.PlayerId] = now;
-        // かわいがり中のままだと、次にボタンを押しても電文が来ない。本人の手元でも止めさせる
-        StopPetting(pc);
-        _ = new LateTask(() => StopPetting(pc), 0.4f, "VanillaHnsPortalMaker.StopPetting");
+        // かわいがりはホストから止めない。本人がボタンを離すか歩くと本編が自分で止めて、次の電文が来る。
+        // 押している間にホストが止めると、離した時の本編の解除 (PlayerPhysics.CheckCancelPetting) が走らず、
+        // ペットのボタンが押せないまま残る (2026-11-08 実機で確認)
 
         if (portals.Count >= 2) return;
         Vector2 pos = pc.GetTruePosition();
@@ -60,16 +60,6 @@ public static class VanillaHnsPortalMaker
         // 置いた人は印の上に立っているので、つながった瞬間に飛ばないよう降りるのを待つ
         mustStepOff.Add(pc.PlayerId);
         Logger.Info($"{pc.Data.PlayerName} が印 {portals.Count} を置きました: {pos}", "VanillaHnsPortalMaker");
-    }
-
-    private static void StopPetting(PlayerControl pc)
-    {
-        if (!pc || pc.Data == null || pc.Data.Disconnected) return;
-        var physics = pc.MyPhysics;
-        physics.CancelPet();
-        if (pc == PlayerControl.LocalPlayer) return;
-        var writer = AmongUsClient.Instance.StartRpcImmediately(physics.NetId, (byte)RpcCalls.CancelPet, Hazel.SendOption.Reliable, pc.OwnerId);
-        AmongUsClient.Instance.FinishRpcImmediately(writer);
     }
 
     private static void Check()
