@@ -48,6 +48,7 @@ public static class VanillaHideAndSeekRoles
         originalPets.Clear();
         pendingResult = null;
         VanillaHnsPortalMaker.Reset();
+        VanillaHnsIntroNotice.Reset();
         var hiders = Players.All
             .Where(pc => pc.Data != null && pc.Data.Role != null && !pc.Data.Role.IsImpostor)
             .ToList();
@@ -65,6 +66,7 @@ public static class VanillaHideAndSeekRoles
         }
         if (assigned.Count == 0) return;
         Logger.Info("割り当て: " + string.Join(", ", assigned.Select(p => $"{Players.ById(p.Key)?.Data?.PlayerName}={p.Value}")), "VanillaHideAndSeekRoles");
+        VanillaHnsIntroNotice.Send(assigned);
         _ = new LateTask(Mark, MarkDelay, "VanillaHideAndSeekRoles.Mark");
     }
 
@@ -90,16 +92,32 @@ public static class VanillaHideAndSeekRoles
     // 送る前にホストの手元の番号を先へ進めておく (番号は 1 バイトで、差が 127 までなら新しいと見なされる)
     private const byte CosmeticSequenceSkip = 16;
 
+    // 電文は手元を変える前にすぐ送る。手元を先に変えると PlayerInfo の同期 (同じ番号) が電文より先に届くことがあり、
+    // 客は同期で外見の値だけを受け取って画面を変えず、後から来た電文を古い番号として捨てる (2026-11-08 実機)
     private static void SetHat(PlayerControl pc, string hatId)
     {
-        pc.Data.DefaultOutfit.HatSequenceId += CosmeticSequenceSkip;
-        pc.RpcSetHat(hatId);
+        var outfit = pc.Data.DefaultOutfit;
+        byte seq = (byte)(outfit.HatSequenceId + CosmeticSequenceSkip);
+        SendCosmetic(pc, RpcCalls.SetHatStr, hatId, seq);
+        pc.SetHat(hatId, outfit.ColorId);
+        outfit.HatSequenceId = seq;
     }
 
     private static void SetPet(PlayerControl pc, string petId)
     {
-        pc.Data.DefaultOutfit.PetSequenceId += CosmeticSequenceSkip;
-        pc.RpcSetPet(petId);
+        var outfit = pc.Data.DefaultOutfit;
+        byte seq = (byte)(outfit.PetSequenceId + CosmeticSequenceSkip);
+        SendCosmetic(pc, RpcCalls.SetPetStr, petId, seq);
+        pc.SetPet(petId, outfit.ColorId);
+        outfit.PetSequenceId = seq;
+    }
+
+    private static void SendCosmetic(PlayerControl pc, RpcCalls call, string id, byte seq)
+    {
+        var writer = AmongUsClient.Instance.StartRpcImmediately(pc.NetId, (byte)call, Hazel.SendOption.Reliable);
+        writer.Write(id);
+        writer.Write(seq);
+        AmongUsClient.Instance.FinishRpcImmediately(writer);
     }
 
     /// <summary>今の試合で TOHL が配った役職。配っていなければ NotAssigned。</summary>
@@ -169,6 +187,7 @@ public static class VanillaHideAndSeekRoles
         originalPets.Clear();
         assigned.Clear();
         VanillaHnsPortalMaker.Reset();
+        VanillaHnsCommands.Reset();
         if (pendingResult == null) return;
         // 前の試合の結果を、別の部屋や次のロビーで出し直さない
         if (UnityEngine.Time.realtimeSinceStartup > resultUntil) { pendingResult = null; return; }
@@ -182,14 +201,17 @@ public static class VanillaHideAndSeekRoles
         if (pendingResult == null) return;
         if (UnityEngine.Time.realtimeSinceStartup > resultUntil) { pendingResult = null; return; }
         var text = pendingResult;
-        _ = new LateTask(() =>
-        {
-            var client = AmongUsClient.Instance;
-            if (client == null || !client.AmHost || !PlayerControl.LocalPlayer || client.GetClient(clientId) == null) return;
-            var writer = client.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)RpcCalls.SendChat, Hazel.SendOption.Reliable, clientId);
-            writer.Write(text);
-            client.FinishRpcImmediately(writer);
-        }, AnnounceDelay, "VanillaHideAndSeekRoles.Announce", outlivesSession: true);
+        _ = new LateTask(() => SendChatTo(clientId, text), AnnounceDelay, "VanillaHideAndSeekRoles.Announce", outlivesSession: true);
+    }
+
+    /// <summary>ホストの発言として、1 人の客にだけチャットを送る。長すぎる分は切る。</summary>
+    internal static void SendChatTo(int clientId, string text)
+    {
+        var client = AmongUsClient.Instance;
+        if (client == null || !client.AmHost || !PlayerControl.LocalPlayer || client.GetClient(clientId) == null) return;
+        var writer = client.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)RpcCalls.SendChat, Hazel.SendOption.Reliable, clientId);
+        writer.Write(Truncate(text, MaxResultBytes));
+        client.FinishRpcImmediately(writer);
     }
 
     // 本編の割り当て (鬼と隠れる側) が済んだ後に選ぶ

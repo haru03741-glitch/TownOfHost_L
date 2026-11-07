@@ -13,7 +13,7 @@ public abstract class GameMode
     /// <summary>
     /// このモードの間に当てておく TOHL のパッチの束。常駐の物 (名乗り・/mode・モードの切り替え) は束の外にあり、いつも当たっている。
     /// </summary>
-    public virtual PatchBundles LiveBundles => PatchBundles.Core | PatchBundles.Standard;
+    public virtual PatchBundles LiveBundles => PatchBundles.Core | PatchBundles.Settings | PatchBundles.Standard;
 
     /// <summary>通常モードの役職の仕組み (デシンクの割り当て・イントロ・会議中の名前の保留・通常の勝敗) で試合を回すか。</summary>
     public virtual bool UsesStandardRoles => true;

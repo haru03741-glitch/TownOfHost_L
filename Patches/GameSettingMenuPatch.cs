@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
@@ -8,6 +9,7 @@ using Object = UnityEngine.Object;
 namespace TownOfHostL;
 
 [HarmonyPatch(typeof(GameSettingMenu))]
+[TownOfHostL.Core.Modes.PatchBundle(TownOfHostL.Core.Modes.PatchBundles.Settings)]
 public class GameSettingMenuPatch
 {
     // ゲーム設定メニュータブ
@@ -164,6 +166,9 @@ public class GameSettingMenuPatch
 
             // ボタン登録
             ModSettingsButtons.Add(tab, button);
+            // 本編のかくれんぼでは、出す設定が 1 つも無いタブのボタンを出さない
+            if (TownOfHostL.Core.VanillaHideAndSeek.IsSuspended && !OptionItem.AllOptions.Any(o => o.Tab == tab && TownOfHostL.Core.Modes.ModeCatalog.IsShown(o)))
+                button.gameObject.SetActive(false);
         }/******** ボタン作成 ここまで ********/
 
         /******** タブ作成 ********/

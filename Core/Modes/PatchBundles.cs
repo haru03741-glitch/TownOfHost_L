@@ -21,8 +21,10 @@ public enum PatchBundles
     Core = 1 << 1,
     /// <summary>本編のかくれんぼで TOHL が休んでいる間だけ当てる物 (かくれんぼ用の役職)。</summary>
     VanillaHideAndSeek = 1 << 2,
+    /// <summary>ロビーの設定の画面 (TOHL のタブ)。どの設定を出すかはモードの <see cref="GameMode.ShowsOption"/> で決まる。</summary>
+    Settings = 1 << 3,
 
-    All = Standard | Core | VanillaHideAndSeek,
+    All = Standard | Core | VanillaHideAndSeek | Settings,
 }
 
 /// <summary>パッチのクラス (入れ子なら外側のどれか) に付けて、束を決める。</summary>
@@ -36,7 +38,7 @@ public sealed class PatchBundleAttribute(PatchBundles bundle) : Attribute
 public static class PatchBundleSet
 {
     // 当てる順。同じメソッドに当てる束どうしの順番がいつも同じになるよう、足す時もこの順で全部を当て直す
-    private static readonly PatchBundles[] Order = [PatchBundles.Core, PatchBundles.VanillaHideAndSeek, PatchBundles.Standard];
+    private static readonly PatchBundles[] Order = [PatchBundles.Core, PatchBundles.Settings, PatchBundles.VanillaHideAndSeek, PatchBundles.Standard];
 
     private static readonly Dictionary<PatchBundles, Harmony> harmonies = new();
     private static readonly Dictionary<PatchBundles, List<Type>> types = new();
