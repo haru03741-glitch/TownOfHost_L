@@ -23,7 +23,10 @@ public static class VanillaHideAndSeekRoles
     [
         (CustomRoles.HASFox, "hat_claws_foxOrange"),
         (CustomRoles.HASTroll, "hat_clown_purple"),
+        (CustomRoles.HASPortalMaker, "hat_pk05_Wizardhat"),
     ];
+    // ポータルメーカーはペットのボタンで印を置くので、ペットを持っていなければ持たせる
+    private const string PortalMakerPet = "pet_UFO";
 
     // イントロが明けてから印を付ける
     private const float MarkDelay = 8f;
@@ -34,6 +37,7 @@ public static class VanillaHideAndSeekRoles
 
     private static readonly Dictionary<byte, CustomRoles> assigned = new();
     private static readonly Dictionary<byte, string> originalHats = new();
+    private static readonly Dictionary<byte, string> originalPets = new();
     private static string pendingResult;
     private static float resultUntil;
 
@@ -41,7 +45,9 @@ public static class VanillaHideAndSeekRoles
     {
         assigned.Clear();
         originalHats.Clear();
+        originalPets.Clear();
         pendingResult = null;
+        VanillaHnsPortalMaker.Reset();
         var hiders = Players.All
             .Where(pc => pc.Data != null && pc.Data.Role != null && !pc.Data.Role.IsImpostor)
             .ToList();
@@ -69,9 +75,35 @@ public static class VanillaHideAndSeekRoles
             var pc = Players.ById(id);
             if (pc == null || pc.Data == null || pc.Data.Disconnected) continue;
             originalHats[id] = pc.Data.DefaultOutfit.HatId;
-            pc.RpcSetHat(Roles.First(r => r.Role == role).HatId);
+            SetHat(pc, Roles.First(r => r.Role == role).HatId);
+            var petId = pc.Data.DefaultOutfit.PetId;
+            if (role == CustomRoles.HASPortalMaker && (string.IsNullOrEmpty(petId) || petId == "pet_EmptyPet"))
+            {
+                originalPets[id] = petId;
+                SetPet(pc, PortalMakerPet);
+            }
         }
     }
+
+    // 帽子とペットの電文には通し番号が付き、受け手は手元の番号より新しい物しか受け付けない。
+    // 本人が自分で外見を送った分をホストの手元の番号が数えていないことがあり、そのまま送ると本人の画面で捨てられる。
+    // 送る前にホストの手元の番号を先へ進めておく (番号は 1 バイトで、差が 127 までなら新しいと見なされる)
+    private const byte CosmeticSequenceSkip = 16;
+
+    private static void SetHat(PlayerControl pc, string hatId)
+    {
+        pc.Data.DefaultOutfit.HatSequenceId += CosmeticSequenceSkip;
+        pc.RpcSetHat(hatId);
+    }
+
+    private static void SetPet(PlayerControl pc, string petId)
+    {
+        pc.Data.DefaultOutfit.PetSequenceId += CosmeticSequenceSkip;
+        pc.RpcSetPet(petId);
+    }
+
+    /// <summary>今の試合で TOHL が配った役職。配っていなければ NotAssigned。</summary>
+    public static CustomRoles RoleOf(byte playerId) => assigned.TryGetValue(playerId, out var role) ? role : CustomRoles.NotAssigned;
 
     private static void Judge(GameOverReason reason)
     {
@@ -126,10 +158,17 @@ public static class VanillaHideAndSeekRoles
         foreach (var (id, hat) in originalHats)
         {
             var pc = Players.ById(id);
-            if (pc != null && pc.Data != null && !pc.Data.Disconnected) pc.RpcSetHat(hat);
+            if (pc != null && pc.Data != null && !pc.Data.Disconnected) SetHat(pc, hat);
         }
         originalHats.Clear();
+        foreach (var (id, pet) in originalPets)
+        {
+            var pc = Players.ById(id);
+            if (pc != null && pc.Data != null && !pc.Data.Disconnected) SetPet(pc, pet ?? "");
+        }
+        originalPets.Clear();
         assigned.Clear();
+        VanillaHnsPortalMaker.Reset();
         if (pendingResult == null) return;
         // 前の試合の結果を、別の部屋や次のロビーで出し直さない
         if (UnityEngine.Time.realtimeSinceStartup > resultUntil) { pendingResult = null; return; }

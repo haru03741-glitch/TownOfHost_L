@@ -18,7 +18,7 @@ static class CustomRolesHelper
     /// <summary>スタンダードモードのメイン役職</summary>
     public static readonly CustomRoles[] AllStandardRoles = EnumHelper.GetAllValues<CustomRoles>().Where(role => role < CustomRoles.MaxMain && !role.IsNotAssignedRoles()).ToArray();
     /// <summary>HASモードのメイン役職</summary>
-    public static readonly CustomRoles[] AllHASRoles = { CustomRoles.HASFox, CustomRoles.HASTroll };
+    public static readonly CustomRoles[] AllHASRoles = { CustomRoles.HASFox, CustomRoles.HASTroll, CustomRoles.HASPortalMaker };
     /// <summary>CCモードのメイン役職</summary>
     // static 初期化は RoleCatalog.Build より先に走る。ここで分類を引けるのは、表 (Unclassed) だけで決まる役職に限る
     public static readonly CustomRoles[] AllCCRoles = EnumHelper.GetAllValues<CustomRoles>().Where(role => role.IsCCRole()).ToArray();

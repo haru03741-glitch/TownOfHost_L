@@ -492,6 +492,8 @@ public static class Options
             .SetGameMode(CustomGameMode.HideAndSeek);
         SetupRoleOptions((int)offsetId.GModeHaS + 1000, TabGroup.ModMainSettings, CustomRoles.HASFox, customGameMode: CustomGameMode.HideAndSeek);
         SetupRoleOptions((int)offsetId.GModeHaS + 1100, TabGroup.ModMainSettings, CustomRoles.HASTroll, customGameMode: CustomGameMode.HideAndSeek);
+        // 本編のかくれんぼ (/mode hns) でだけ配る
+        SetupRoleOptions((int)offsetId.GModeHaS + 1200, TabGroup.ModMainSettings, CustomRoles.HASPortalMaker, customGameMode: CustomGameMode.HideAndSeek);
 
         AllowCloseDoors = StringOptionItem.Create((int)offsetId.GModeHaS + 5000, "AllowCloseDoors", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetHeader(true)

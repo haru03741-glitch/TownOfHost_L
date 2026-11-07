@@ -604,6 +604,7 @@ public static class Utils
             SendMessageAutoSplit(GetString("HideAndSeekInfo"), true, sendTo: PlayerId);
             if (CustomRoles.HASFox.IsEnable()) { SendMessageAutoSplit(GetRoleName(CustomRoles.HASFox) + GetString("HASFoxInfoLong"), true, sendTo: PlayerId); }
             if (CustomRoles.HASTroll.IsEnable()) { SendMessageAutoSplit(GetRoleName(CustomRoles.HASTroll) + GetString("HASTrollInfoLong"), true, sendTo: PlayerId); }
+            if (CustomRoles.HASPortalMaker.IsEnable()) { SendMessageAutoSplit(GetRoleName(CustomRoles.HASPortalMaker) + GetString("HASPortalMakerInfoLong"), true, sendTo: PlayerId); }
         }
         else if (ModeCatalog.IsCatchCat)
         {
@@ -740,6 +741,7 @@ public static class Utils
             sb.Append(GetString("Roles")).Append(':');
             if (CustomRoles.HASFox.IsEnable()) sb.AppendFormat("\n{0}:{1}", GetRoleName(CustomRoles.HASFox), CustomRoles.HASFox.GetCount());
             if (CustomRoles.HASTroll.IsEnable()) sb.AppendFormat("\n{0}:{1}", GetRoleName(CustomRoles.HASTroll), CustomRoles.HASTroll.GetCount());
+            if (CustomRoles.HASPortalMaker.IsEnable()) sb.AppendFormat("\n{0}:{1}", GetRoleName(CustomRoles.HASPortalMaker), CustomRoles.HASPortalMaker.GetCount());
             SendMessageAutoSplit(sb.ToString(), true, title, PlayerId);
             sb.Clear().Append(GetString("Settings")).Append(':');
             sb.Append(GetString("HideAndSeek"));
@@ -782,7 +784,7 @@ public static class Utils
 
                 foreach (var role in Options.CustomRoleCounts.Keys)
                 {
-                    if (!role.IsEnable() || role is CustomRoles.HASFox or CustomRoles.HASTroll
+                    if (!role.IsEnable() || role is CustomRoles.HASFox or CustomRoles.HASTroll or CustomRoles.HASPortalMaker
                         || role.IsCCRole() /*|| role.Key.IsONRole()*/)
                     {
                         continue;

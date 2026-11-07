@@ -55,6 +55,7 @@ public static class RoleCatalog
         // HideAndSeek
         (CustomRoles.HASFox, CustomRoleTypes.Neutral, "#e478ff", RoleFlags.NoTasks | RoleFlags.NotCounted),
         (CustomRoles.HASTroll, CustomRoleTypes.Neutral, "#00ff00", RoleFlags.NoTasks | RoleFlags.NotCounted),
+        (CustomRoles.HASPortalMaker, CustomRoleTypes.Crewmate, "#9b5cff", RoleFlags.NoTasks | RoleFlags.NotCounted),
 
         // CatchCat
         (CustomRoles.CCRedLeader, CustomRoleTypes.Impostor, "#ff0000", RoleFlags.CCLeader),
