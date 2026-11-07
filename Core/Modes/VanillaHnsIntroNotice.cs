@@ -111,6 +111,15 @@ public static class VanillaHnsIntroNotice
         hostLine = null;
     }
 
+    // IntroCutscene.Instance は本編のかくれんぼのイントロの間も null のままなので (2026-11-08 実機)、始まった時に実体を覚える
+    private static IntroCutscene intro;
+
+    [HarmonyPatch(typeof(IntroCutscene), nameof(IntroCutscene.CoBegin))]
+    private static class BeginPatch
+    {
+        public static void Prefix(IntroCutscene __instance) => intro = __instance;
+    }
+
     // 鬼の名前はイントロの途中で ImpostorName に入る。ホストの画面では入った後に書き足す
     // (IntroCutscene に Update が無いので HudManager の毎フレームで見る)
     [HarmonyPatch(typeof(HudManager), nameof(HudManager.Update))]
@@ -118,9 +127,8 @@ public static class VanillaHnsIntroNotice
     {
         public static void Postfix()
         {
-            if (hostLine == null) return;
-            var intro = IntroCutscene.Instance;
-            if (!intro || !intro.ImpostorName || !intro.ImpostorName.gameObject.activeInHierarchy) return;
+            if (hostLine == null || !intro) return;
+            if (!intro.ImpostorName || !intro.ImpostorName.gameObject.activeInHierarchy) return;
             var text = intro.ImpostorName.text;
             if (string.IsNullOrEmpty(text) || text.EndsWith(hostLine)) return;
             intro.ImpostorName.text = text + hostLine;
@@ -132,6 +140,7 @@ public static class VanillaHnsIntroNotice
     {
         public static void Postfix()
         {
+            intro = null;
             if (!AmongUsClient.Instance.AmHost) return;
             Restore();
         }
