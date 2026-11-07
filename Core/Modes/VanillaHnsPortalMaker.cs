@@ -16,7 +16,9 @@ namespace TownOfHostL.Core.Modes;
 [PatchBundle(PatchBundles.VanillaHideAndSeek)]
 public static class VanillaHnsPortalMaker
 {
-    private const string PortalSprite = "<size=300%><color=#9b5cff>●</color></size>";
+    // 濃い紫の枠に桃色の扉 (4×6 マス)。透き間の無い形で、客の画面に出る CNO の体を覆う。
+    // 絵は Endless Host Roles (Gurge44, GPL-3.0) の CustomNetObject.Portal から (Gurge44/EndlessHostRoles@97aa6333)
+    private const string PortalSprite = "<size=70%><line-height=97%><cspace=0.16em><mark=#2b006b>WWWW</mark>\n<mark=#2b006b>W</mark><mark=#fa69ff>WW</mark><mark=#2b006b>W</mark>\n<mark=#2b006b>W</mark><mark=#fa69ff>WW</mark><mark=#2b006b>W</mark>\n<mark=#2b006b>W</mark><mark=#fa69ff>WW</mark><mark=#2b006b>W</mark>\n<mark=#2b006b>W</mark><mark=#fa69ff>WW</mark><mark=#2b006b>W</mark>\n<mark=#2b006b>WWWW";
     // 2 つ目の印は 1 つ目からこれより離す (近すぎると飛んだ先で踏み直す)
     private const float MinPortalDistance = 4f;
     private const float EnterRange = 1f;
