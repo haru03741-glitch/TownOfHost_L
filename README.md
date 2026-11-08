@@ -110,6 +110,7 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
   - ロビーで本編のモード (通常 / かくれんぼ) を、GameManager を出し直して切り替える手順
   - 設定画面の検索欄と検索の結果のタブ、左の列の区分の字の作り
   - 設定画面の作り (設定の編集の部品・頁と目次・役職の一覧と役職ごとの頁・本編の設定の頁・スクロールする欄や入力欄などの部品)
+  - 名前を付けた設定の保存と設定のコード (プリセットの頁・プリセットのファイル・受け渡しのフォルダ)
 - [Town of Host: Enhanced](https://github.com/EnhancedNetwork/TownofHost-Enhanced)
   - 設定画面の検索欄 (Drakos のコードを Endless Host Roles と More Roles Plus 経由で参照)
 - [MoreGamemodes](https://github.com/Rabek009/MoreGamemodes)
