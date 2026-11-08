@@ -358,31 +358,11 @@ public sealed class StandMaster : HamoRoleBase, ILNKiller, IUsePhantomButton
 
 
 
-    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen,
-
-        ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
-
-    {
-
-        addon = false;
-
-        if (standPlayerId != byte.MaxValue && seen.PlayerId == standPlayerId) enabled = true;
-
-    }
+    public override bool KnowsRoleOf(PlayerControl seen, bool isMeeting) => standPlayerId != byte.MaxValue && seen.PlayerId == standPlayerId;
 
 
 
-    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer,
-
-        ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
-
-    {
-
-        addon = false;
-
-        if (standPlayerId != byte.MaxValue && seer.PlayerId == standPlayerId) enabled = true;
-
-    }
+    public override bool ShowsRoleTo(PlayerControl seer, bool isMeeting) => standPlayerId != byte.MaxValue && seer.PlayerId == standPlayerId;
 
 
 
@@ -988,31 +968,11 @@ public sealed class Stand : HamoRoleBase, ILNKiller
 
 
 
-    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen,
-
-        ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
-
-    {
-
-        addon = false;
-
-        if (OwnerId != byte.MaxValue && seen.PlayerId == OwnerId) enabled = true;
-
-    }
+    public override bool KnowsRoleOf(PlayerControl seen, bool isMeeting) => OwnerId != byte.MaxValue && seen.PlayerId == OwnerId;
 
 
 
-    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer,
-
-        ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
-
-    {
-
-        addon = false;
-
-        if (OwnerId != byte.MaxValue && seer.PlayerId == OwnerId) enabled = true;
-
-    }
+    public override bool ShowsRoleTo(PlayerControl seer, bool isMeeting) => OwnerId != byte.MaxValue && seer.PlayerId == OwnerId;
 
 
 

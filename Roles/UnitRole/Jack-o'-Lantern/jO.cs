@@ -159,20 +159,20 @@ public sealed class JO : RoleBase, IKiller
         return false;
     }
 
-    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref bool enabled, ref string roleText)
+    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref TownOfHostL.Core.RoleNameView view)
     {
         // 検知無効マーク
         if (DidntDetectPlayer(seen.PlayerId))
         {
-            enabled = true;
-            roleText = Utils.ColorString(Utils.GetRoleColor(CustomRoles.JackOLantern), "×");
+            view.Enabled = true;
+            view.Replace(Utils.ColorString(Utils.GetRoleColor(CustomRoles.JackOLantern), "×"));
         }
         // 検知済み役職表示
-        if (DetectedPlayer(seen.PlayerId)) enabled = true;
+        if (DetectedPlayer(seen.PlayerId)) view.Enabled = true;
         // 検知済みかつ送信済み
         if (SentPlayer.Contains(seen.PlayerId))
         {
-            roleText = Utils.ColorString(Utils.GetRoleColor(CustomRoles.JackOLantern), "◆") + roleText;
+            view.Prefix = Utils.ColorString(Utils.GetRoleColor(CustomRoles.JackOLantern), "◆") + view.Prefix;
         }
     }
     public static string GetMarkOthers(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)

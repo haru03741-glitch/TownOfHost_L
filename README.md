@@ -106,6 +106,7 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
   - 名前で絵を描く偽の PlayerControl (CustomNetObject)
   - ポータルメーカーの印の絵
   - 設定画面の検索欄 (本編のチャット入力欄を複製して使う作り)
+  - タスクの種類ごとの無効化の分類 (ショート・コモン・ロング・その他)
 - [More Roles Plus](https://github.com/haru03741-glitch/More-Roles-Plus)
   - ロビーで本編のモード (通常 / かくれんぼ) を、GameManager を出し直して切り替える手順
   - 設定画面の検索欄と検索の結果のタブ、左の列の区分の字の作り

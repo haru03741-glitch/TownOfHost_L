@@ -52,7 +52,7 @@ public abstract class VoteGuesser : RoleBase
     private PlayerControl targetForRole = null;
 
     public override string GetProgressText(bool comms = false) => Utils.ColorString(NumOfGuess > 0 ? Color.yellow : Color.gray, $"({NumOfGuess})");
-    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref bool enabled, ref string roleText)
+    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref TownOfHostL.Core.RoleNameView view)
     {
         if (!isMeeting) return;
         if (Player == null || !Player.IsAlive()) return;
@@ -63,12 +63,12 @@ public abstract class VoteGuesser : RoleBase
 
         if (!guesserInfo.PlayerNumbers.TryGetValue(seen.PlayerId, out int number)) return;
 
-        if (!enabled)
+        if (!view.Enabled)
         {
-            roleText = "";
-            enabled = true;
+            view.Replace("");
+            view.Enabled = true;
         }
-        roleText = $"<color=#ffff00><size=110%>{number}</size></color>{roleText}";
+        view.Prefix = $"<color=#ffff00><size=110%>{number}</size></color>{view.Prefix}";
     }
     public override bool CheckVoteAsVoter(PlayerControl votedFor)
     {

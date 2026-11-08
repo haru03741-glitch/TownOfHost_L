@@ -108,21 +108,6 @@ public static partial class Options
 
     // タスク無効化
     public static OptionItem DisableTasks;
-    public static OptionItem DisableSwipeCard;
-    public static OptionItem DisableSubmitScan;
-    public static OptionItem DisableUnlockSafe;
-    public static OptionItem DisableUploadData;
-    public static OptionItem DisableStartReactor;
-    public static OptionItem DisableResetBreaker;
-    public static OptionItem DisableRewindTapes;
-    public static OptionItem DisableVentCleaning;
-    public static OptionItem DisableBuildSandcastle;
-    public static OptionItem DisableTestFrisbee;
-    public static OptionItem DisableWaterPlants;
-    public static OptionItem DisableCatchFish;
-    public static OptionItem DisableHelpCritter;
-    public static OptionItem DisableTuneRadio;
-    public static OptionItem DisableAssembleArtifact;
 
     // マップ設定
     public static OptionItem MapOption_Skeld;
@@ -741,21 +726,7 @@ public static partial class Options
         DisableTasks = StringOptionItem.Create((int)offsetId.FeatTask + 100, "DisableTasks", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetColor(Color.green)
             .SetGameMode(CustomGameMode.All);
-        DisableSwipeCard = StringOptionItem.Create((int)offsetId.FeatTask + 101, "DisableSwipeCardTask", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableTasks).SetGameMode(CustomGameMode.All);
-        DisableSubmitScan = StringOptionItem.Create((int)offsetId.FeatTask + 102, "DisableSubmitScanTask", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableTasks).SetGameMode(CustomGameMode.All);
-        DisableUnlockSafe = StringOptionItem.Create((int)offsetId.FeatTask + 103, "DisableUnlockSafeTask", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableTasks).SetGameMode(CustomGameMode.All);
-        DisableUploadData = StringOptionItem.Create((int)offsetId.FeatTask + 104, "DisableUploadDataTask", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableTasks).SetGameMode(CustomGameMode.All);
-        DisableStartReactor = StringOptionItem.Create((int)offsetId.FeatTask + 105, "DisableStartReactorTask", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableTasks).SetGameMode(CustomGameMode.All);
-        DisableResetBreaker = StringOptionItem.Create((int)offsetId.FeatTask + 106, "DisableResetBreakerTask", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableTasks).SetGameMode(CustomGameMode.All);
-        DisableRewindTapes = StringOptionItem.Create((int)offsetId.FeatTask + 107, "DisableRewindTapes", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableTasks).SetGameMode(CustomGameMode.All);
-        DisableVentCleaning = StringOptionItem.Create((int)offsetId.FeatTask + 108, "DisableVentCleaning", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableTasks).SetGameMode(CustomGameMode.All);
-        DisableBuildSandcastle = StringOptionItem.Create((int)offsetId.FeatTask + 109, "DisableBuildSandcastle", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableTasks).SetGameMode(CustomGameMode.All);
-        DisableTestFrisbee = StringOptionItem.Create((int)offsetId.FeatTask + 110, "DisableTestFrisbee", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableTasks).SetGameMode(CustomGameMode.All);
-        DisableWaterPlants = StringOptionItem.Create((int)offsetId.FeatTask + 111, "DisableWaterPlants", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableTasks).SetGameMode(CustomGameMode.All);
-        DisableCatchFish = StringOptionItem.Create((int)offsetId.FeatTask + 112, "DisableCatchFish", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableTasks).SetGameMode(CustomGameMode.All);
-        DisableHelpCritter = StringOptionItem.Create((int)offsetId.FeatTask + 113, "DisableHelpCritter", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableTasks).SetGameMode(CustomGameMode.All);
-        DisableTuneRadio = StringOptionItem.Create((int)offsetId.FeatTask + 114, "DisableTuneRadio", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableTasks).SetGameMode(CustomGameMode.All);
-        DisableAssembleArtifact = StringOptionItem.Create((int)offsetId.FeatTask + 115, "DisableAssembleArtifact", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableTasks).SetGameMode(CustomGameMode.All);
+        TaskDisableOptions.Create((int)offsetId.FeatTask + 400, DisableTasks);
 
         // タスク勝利無効化
         DisableTaskWin = StringOptionItem.Create((int)offsetId.FeatTask + 200, "DisableTaskWin", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)

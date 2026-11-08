@@ -161,11 +161,7 @@ public sealed class Godfather : RoleBase, IImpostor
         text = Translator.GetString("GodfatherLock");
         return canLockKill;
     }
-    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref bool enabled, ref string roleText)
-    {
-        // 相方の役職名を表示させる
-        if (seen.Is(CustomRoles.Janitor)) enabled = true;
-    }
+    public override bool KnowsRoleOf(PlayerControl seen, bool isMeeting) => seen.Is(CustomRoles.Janitor);
     public override string GetMark(PlayerControl seer, PlayerControl seen, bool isForMeeting = false)
     {
         //seenが省略の場合seer

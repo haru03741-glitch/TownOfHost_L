@@ -73,9 +73,9 @@ public sealed class Rainbow : RoleBase
     public override bool ShowsRoleColorToAll(bool isMeeting) => true;
     public override bool KeepsOwnNameInSyncColorMeeting => true;
 
-    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, bool isMeeting, ref bool enabled, ref string roleText)
+    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, bool isMeeting, ref TownOfHostL.Core.RoleNameView view)
     {
-        if (!(!isMeeting && DontSeeTaskTurn)) enabled = true;
-        if (!isMeeting) roleText = Translator.GetString("RainbowResize");
+        if (!(!isMeeting && DontSeeTaskTurn)) view.Enabled = true;
+        if (!isMeeting) view.Replace(Translator.GetString("RainbowResize"));
     }
 }

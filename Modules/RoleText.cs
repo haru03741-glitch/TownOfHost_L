@@ -5,6 +5,7 @@ using UnityEngine;
 using TownOfHostL.Roles.AddOns.Common;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.AddOns;
+using TownOfHostL.Core;
 
 namespace TownOfHostL;
 public static class RoleText
@@ -23,16 +24,42 @@ public static class RoleText
             || seen.GetCustomRole().IsSpectator()
             || (Main.VisibleTasksCount && !seer.IsAlive() && !Options.GhostCantSeeOtherRoles.GetBool());
         //オーバーライドによる表示ではサブロールは見えないようにする/上記場合のみ表示
-        var roleText = GetRoleNameText(seen.PlayerId, showSubRole: enabled);
+        var view = new RoleNameView(enabled);
 
         //seen側による変更
-        seen.GetRoleClass()?.OverrideDisplayRoleNameAsSeen(seer, isMeeting, ref enabled, ref roleText);
-        Revealer.OverrideDisplayRoleNameAsSeen(seen, isMeeting, ref enabled, ref roleText);
+        if (seen.GetRoleClass() is { } seenRole)
+        {
+            view.Enabled |= seenRole.ShowsRoleTo(seer, isMeeting);
+            seenRole.OverrideDisplayRoleNameAsSeen(seer, isMeeting, ref view);
+        }
+        view.Enabled |= Revealer.ShowsRoleTo(seen);
 
         //seer側による変更
-        seer.GetRoleClass()?.OverrideDisplayRoleNameAsSeer(seen, isMeeting, ref enabled, ref roleText);
+        if (seer.GetRoleClass() is { } seerRole)
+        {
+            view.Enabled |= seerRole.KnowsRoleOf(seen, isMeeting);
+            seerRole.OverrideDisplayRoleNameAsSeer(seen, isMeeting, ref view);
+        }
 
-        return enabled ? roleText : "";
+        return Render(seen.PlayerId, view);
+    }
+    private static bool IsNowMainRole(byte playerId, Color color, string text)
+    {
+        var role = PlayerState.GetByPlayerId(playerId)?.GetNowMainRole() ?? CustomRoles.Crewmate;
+        return color == Utils.GetRoleColor(role) && text == Utils.GetRoleName(role);
+    }
+    /// <summary>役職名の欄を字にする。見えない時は字を組まない</summary>
+    private static string Render(byte seenId, in RoleNameView view)
+    {
+        if (!view.Enabled) return "";
+        if (view.Replaced != null) return view.Prefix + view.Replaced;
+        if (view.MainChanged && !IsNowMainRole(seenId, view.MainColor, view.MainText))
+        {
+            var main = Utils.ColorString(view.MainColor, view.MainText);
+            // 差し替えた名前には、属性を書く指定がある時だけ属性を付ける (先頭の属性や前の役職から正体が分からないように)
+            return view.Prefix + (view.MainShowAddons ? GetRoleNameText(seenId, showSubRole: true, mainRoleText: main) : main);
+        }
+        return view.Prefix + GetRoleNameText(seenId, showSubRole: view.ShowAddons);
     }
     /// <summary>
     /// GetTeamMarkから取得
@@ -63,7 +90,8 @@ public static class RoleText
     /// 引数の指定通りのRoleNameを表示
     /// </summary>
     /// <returns>RoleNameを構築する色とテキスト(Color, string)</returns>
-    public static string GetRoleNameText(byte playerId, bool allWrite = false, bool showSubRole = true)
+    /// <param name="mainRoleText">役職名の代わりに書く字 (null なら今の役職名)</param>
+    public static string GetRoleNameText(byte playerId, bool allWrite = false, bool showSubRole = true, string mainRoleText = null)
     {
         StringBuilder roleText = new();
 
@@ -120,7 +148,7 @@ public static class RoleText
         }
 
         // ●役職表示
-        roleText.Append(allWrite ? GetAllMainRoleText(playerId) : GetDisplayMainRole(playerId));
+        roleText.Append(allWrite ? GetAllMainRoleText(playerId) : mainRoleText ?? GetDisplayMainRole(playerId));
 
         // 属性表示(リザルト等、全テキスト表示)
         if (allWrite)

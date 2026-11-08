@@ -146,17 +146,17 @@ public sealed class Psychic : RoleBase
         VentSelect.ReceiveSyncResult(Player.PlayerId, targetId);
     }
 
-    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref bool enabled, ref string roleText)
+    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref TownOfHostL.Core.RoleNameView view)
     {
         if (!VentSelect.IsShowTargetRole(Player, seen)) return;
         if (KillerOnly.GetBool() &&
             !TownOfHostL.Core.PlayerTraits.IsKillerForDivination(seen)) return;
 
-        enabled = true;
+        view.Enabled = true;
 
         if (!ConfirmCamp.GetBool()) return;   //役職表示
 
-        roleText = TownOfHostL.Core.NameParts.TeamText(seen);   //陣営表示
+        view.Replace(TownOfHostL.Core.NameParts.TeamText(seen));   //陣営表示
     }
     public override bool KnowsRoleColorOf(PlayerControl target, bool isMeeting) => KnowTargetRoleColor(target) && isMeeting;
     private bool KnowTargetRoleColor(PlayerControl target)

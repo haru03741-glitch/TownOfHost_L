@@ -97,13 +97,6 @@ public abstract class HamoRoleBase : RoleBase
     public virtual bool AllEnabledColor => false;
     public virtual bool GetTemporaryName(ref string name, ref bool NoMarker, bool isForMeeting, PlayerControl seer, PlayerControl seen = null) => false;
 
-    public virtual void OverrideDisplayRoleNameAsSeen(PlayerControl seer, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon) { }
-    public virtual void OverrideDisplayRoleNameAsSeer(PlayerControl seen, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon) { }
-    public sealed override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, bool isMeeting, ref bool enabled, ref string roleText)
-        => HamoHooks.ForwardRoleName(Player, seer, Player, ref enabled, ref roleText, true);
-    public sealed override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref bool enabled, ref string roleText)
-        => HamoHooks.ForwardRoleName(Player, Player, seen, ref enabled, ref roleText, false);
-
     public virtual void OverrideTrueRoleName(ref Color roleColor, ref string roleText) { }
     public sealed override void OverrideShowMainRoleText(ref Color roleColor, ref string roleText) => OverrideTrueRoleName(ref roleColor, ref roleText);
 

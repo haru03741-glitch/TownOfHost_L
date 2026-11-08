@@ -71,12 +71,9 @@ public static class Revealer
         }, 8f, "SetName");
     }
 
-    public static void OverrideDisplayRoleNameAsSeen(PlayerControl seen, bool isMeeting, ref bool enabled, ref string roleText)
-    {
-        if (!seen.Is(CustomRoles.Revealer) || !SeenIdList.Contains(seen.PlayerId)) return;
-
-        enabled = true;
-    }
+    /// <summary>seen の役職名を、全員に見せるか</summary>
+    public static bool ShowsRoleTo(PlayerControl seen)
+        => seen.Is(CustomRoles.Revealer) && SeenIdList.Contains(seen.PlayerId);
 
 
     public static bool IsEnable => playerIdList.Count > 0;

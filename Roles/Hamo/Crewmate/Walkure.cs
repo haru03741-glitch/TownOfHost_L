@@ -407,17 +407,15 @@ public sealed class Walkure : HamoRoleBase, ISelfVoter, IKiller
         Logger.Info($"{target.GetNameWithRole().RemoveHtmlTags()} follows Walkure.", "Walkure");
     }
 
-    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
+    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, bool isMeeting, ref TownOfHostL.Core.RoleNameView view)
     {
         seer ??= Player;
         if (!OptionShowRoleToRevealed.GetBool()) return;
         if (seer.PlayerId == Player.PlayerId) return;
         if (!revealedPlayerIds.Contains(seer.PlayerId)) return;
 
-        enabled = true;
-        roleColor = RoleInfo.RoleColor;
-        roleText = GetString("Walkure");
-        addon = false;
+        view.Enabled = true;
+        view.SetMainRole(RoleInfo.RoleColor, GetString("Walkure"));
     }
 
     public override string GetProgressText(bool comms = false, bool GameLog = false)

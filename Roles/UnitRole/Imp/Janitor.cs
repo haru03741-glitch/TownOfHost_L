@@ -188,11 +188,7 @@ public sealed class Janitor : RoleBase, IImpostor
         return true;
     }
 
-    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref bool enabled, ref string roleText)
-    {
-        // 相方の役職名を表示させる
-        if (seen.Is(CustomRoles.Godfather)) enabled = true;
-    }
+    public override bool KnowsRoleOf(PlayerControl seen, bool isMeeting) => seen.Is(CustomRoles.Godfather);
     public override string GetSuffix(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)
     {
         seen ??= seer;

@@ -634,22 +634,11 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "LadderDeathInfoLong",,"ハシゴを下る時に転落死するかを設定する機能。",
 "LadderDeathChance","Fall To Death Chance","転落する確率","从梯子上摔死的概率","從梯子上下滑摔死機率","Шанс разбиться насмерть","Chance de Queda"
 "DisableTasks","Disable Tasks","タスクを無効化する","禁用某些任务","禁用某些特定的任務","Отключить Задания","Desativar Tarefas"
+"DisableShortTasks","Short Tasks","ショートタスク","短任务","短任務","Короткие задания","Tarefas Curtas","Tarefas Curtas"
+"DisableCommonTasks","Common Tasks","コモンタスク","普通任务","普通任務","Общие задания","Tarefas Comuns","Tarefas Comuns"
+"DisableLongTasks","Long Tasks","ロングタスク","长任务","長任務","Длинные задания","Tarefas Longas","Tarefas Longas"
+"DisableOtherTasks","Other Tasks","その他のタスク","其他任务","其他任務","Прочие задания","Outras Tarefas","Outras Tarefas"
 "DisableTasksInfoLong",,"特定の選択したタスクを割り当てられないようにする機能。",
-"DisableSwipeCardTask","Disable SwipeCard Tasks","カードタスク","禁用刷卡任务","禁用刷卡任務","Отключить Задание ''Провести Карту''","Desativar Tarefas de Passar Cartão"
-"DisableSubmitScanTask","Disable SubmitScan Tasks","医務室のスキャンタスク","禁用扫描任务","禁用掃描任務","Отключить Задание ''Сканирование''","Desativar Tarefas de Raio-X"
-"DisableUnlockSafeTask","Disable UnlockSafe Tasks","金庫タスク","禁用解除歧管任务","禁用保險櫃任務","Отключить Задание ''Открытие Сейфа''","Desativar Tarefas de Abrir Cofre"
-"DisableUploadDataTask","Disable UploadData Tasks","ダウンロードタスク","禁用上传数据任务","禁用上傳任務","Отключить Задание ''Загрузка Данных''","Desativar Tarefas de Baixar Dados"
-"DisableStartReactorTask","Disable StartReactor Tasks","原子炉起動タスク","禁用启动反应堆任务","禁用啟動反應堆任務","Отключить Задание ''Запустить Реактор''","Desativar Tarefas de Acionar Reator"
-"DisableResetBreakerTask","Disable ResetBreaker Tasks","ブレーカーリセットタスク","禁用重置反应堆任务","禁用重置斷路器任務","Отключить Задание ''Рычаги(Airship)''","Desativar Reiniciar Disjuntores"
-"DisableRewindTapes","Disable RewindTapes Tasks","テープ回しタスク",
-"DisableVentCleaning","Disable VentCleaning Tasks","ベント掃除タスク",
-"DisableBuildSandcastle","Disable BuildSandcastle Tasks","砂の城タスク",
-"DisableTestFrisbee","Disable TestFrisbee Tasks","フリスビー投げタスク",
-"DisableWaterPlants","Disable WaterPlants Tasks","植物の水やりタスク",
-"DisableCatchFish","Disable CatchFish Tasks","魚釣りタスク",
-"DisableHelpCritter","Disable HelpCritter Tasks","卵の孵化タスク",
-"DisableTuneRadio","Disable FindSignal Tasks","電波探しタスク",
-"DisableAssembleArtifact","Disable AssembleArtifact Tasks","宝石組み立てタスク",
 
 "MapOption_Skeld","The Skeld Map option","The Skeldのマップ設定"
 "MapOption_MiraHQ","MIRA HQ Map option","MIRA HQのマップ設定"

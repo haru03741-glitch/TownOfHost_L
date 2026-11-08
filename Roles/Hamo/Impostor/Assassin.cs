@@ -448,12 +448,14 @@ public sealed class Assassin : HamoRoleBase, IImpostor, IUsePhantomButton, IDoub
     public override bool OnSabotage(PlayerControl player, SystemTypes systemType) => AddRole?.OnSabotage(player, systemType) ?? true;
     public override void AfterSabotage(SystemTypes systemType) => (AddRole as HamoRoleBase)?.AfterSabotage(systemType);
     public override bool NotifyRolesCheckOtherName => (AddRole as HamoRoleBase)?.NotifyRolesCheckOtherName ?? false;
-    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
-    => (AddRole as HamoRoleBase)?.OverrideDisplayRoleNameAsSeen(seer, ref enabled, ref roleColor, ref roleText, ref addon);
-    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
+    public override bool ShowsRoleTo(PlayerControl seer, bool isMeeting)
+        => (AddRole as HamoRoleBase)?.ShowsRoleTo(seer, isMeeting) ?? false;
+    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, bool isMeeting, ref TownOfHostL.Core.RoleNameView view)
+        => (AddRole as HamoRoleBase)?.OverrideDisplayRoleNameAsSeen(seer, isMeeting, ref view);
+    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref TownOfHostL.Core.RoleNameView view)
     {
         if (NowState is AssassinMeeting.WaitMeeting or AssassinMeeting.CallMetting or AssassinMeeting.Guessing && !Is(seen))
-            enabled &= seen.GetCustomRole().IsWhiteCrew();
+            view.Enabled &= seen.GetCustomRole().IsWhiteCrew();
 
     }
     public override void OverrideProgressTextAsSeer(PlayerControl seen, ref bool enabled, ref string text)

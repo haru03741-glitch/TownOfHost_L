@@ -226,17 +226,7 @@ public sealed class Freeter : HamoRoleBase, IKiller, IAdditionalWinner
 
 
 
-    public override void OverrideDisplayRoleNameAsSeer(
-
-        PlayerControl seen,
-
-        ref bool enabled,
-
-        ref Color roleColor,
-
-        ref string roleText,
-
-        ref bool addon)
+    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref TownOfHostL.Core.RoleNameView view)
 
     {
 
@@ -250,31 +240,16 @@ public sealed class Freeter : HamoRoleBase, IKiller, IAdditionalWinner
 
         var role = seen.GetCustomRole();
 
-        enabled = true;
+        view.Enabled = true;
 
-        roleText = UtilsRoleText.GetRoleName(role);
+        view.SetMainRole(ColorUtility.TryParseHtmlString(UtilsRoleText.GetRoleColorCode(role), out var color) ? color : Utils.GetRoleColor(role), UtilsRoleText.GetRoleName(role), showAddons: true);
 
-        if (ColorUtility.TryParseHtmlString(UtilsRoleText.GetRoleColorCode(role), out var color))
-
-            roleColor = color;
-
-        addon = true;
 
     }
 
 
 
-    public override void OverrideDisplayRoleNameAsSeen(
-
-        PlayerControl seer,
-
-        ref bool enabled,
-
-        ref Color roleColor,
-
-        ref string roleText,
-
-        ref bool addon)
+    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, bool isMeeting, ref TownOfHostL.Core.RoleNameView view)
 
     {
 
@@ -284,15 +259,10 @@ public sealed class Freeter : HamoRoleBase, IKiller, IAdditionalWinner
 
 
 
-        enabled = true;
+        view.Enabled = true;
 
-        roleText = UtilsRoleText.GetRoleName(CustomRoles.Freeter);
+        view.SetMainRole(ColorUtility.TryParseHtmlString(RoleInfo.RoleColorCode, out var c) ? c : Utils.GetRoleColor(CustomRoles.Freeter), UtilsRoleText.GetRoleName(CustomRoles.Freeter));
 
-        if (ColorUtility.TryParseHtmlString(RoleInfo.RoleColorCode, out var c))
-
-            roleColor = c;
-
-        addon = false;
 
     }
 

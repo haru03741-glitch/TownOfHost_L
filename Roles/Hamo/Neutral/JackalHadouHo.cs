@@ -2220,27 +2220,11 @@ public sealed class Tama : HamoRoleBase, IKiller
 
 
 
-    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
-
-    {
-
-        addon = false;
-
-        if (seen.Is(CountTypes.Jackal)) enabled = true;
-
-    }
+    public override bool KnowsRoleOf(PlayerControl seen, bool isMeeting) => seen.Is(CountTypes.Jackal);
 
 
 
-    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seen, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
-
-    {
-
-        addon = false;
-
-        if (seen.Is(CountTypes.Jackal)) enabled = true;
-
-    }
+    public override bool ShowsRoleTo(PlayerControl seer, bool isMeeting) => seer.Is(CountTypes.Jackal);
 
 
 
