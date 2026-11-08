@@ -103,6 +103,7 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
   - 会議の後の暗転を防ぐため、生存クルーが足りない時に死者を見た目だけ生き返らせる方法
   - 名前で絵を描く偽の PlayerControl (CustomNetObject)
   - ポータルメーカーの印の絵
+  - タスクの種類ごとの無効化の分類 (ショート・コモン・ロング・その他)
 - [More Roles Plus](https://github.com/haru03741-glitch/More-Roles-Plus)
   - ロビーで本編のモード (通常 / かくれんぼ) を、GameManager を出し直して切り替える手順
 - [MoreGamemodes](https://github.com/Rabek009/MoreGamemodes)
