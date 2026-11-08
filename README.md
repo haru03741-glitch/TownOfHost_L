@@ -99,6 +99,8 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
   - 会議の後の暗転を防ぐ頭数合わせで、死者を見た目だけ生き返らせる方法
   - 偽の PlayerControl (CNO) を公式サーバーで通す形 (空の spawn・ID の循環・開始と会議明けの待ち)
   - 設定画面にタブを足す作りと、設定の検索の一致判定 (More Roles Plus 経由で参照)
+  - 見せたくない書き込みを大きな空白で押し出し、会話を送り直す方法
+  - チャットのコマンドの補完と貼り付け
 - [Endless Host Roles](https://github.com/Gurge44/EndlessHostRoles)
   - 配布物に入れる Unity Doorstop と、pietro による修正版 Il2CppInterop
   - 他のプレイヤーの外見を、PlayerInfo の送信と本人への変身解除で着せ替える方式
@@ -107,16 +109,23 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
   - ポータルメーカーの印の絵
   - 設定画面の検索欄 (本編のチャット入力欄を複製して使う作り)
   - タスクの種類ごとの無効化の分類 (ショート・コモン・ロング・その他)
+  - チャットの荒らし対策 (禁止語・開始の催促)・耳打ち
+  - チャットのコマンドの補完と貼り付け
+  - 見せたくない書き込みを大きな空白で押し出し、会話を送り直す方法
 - [More Roles Plus](https://github.com/haru03741-glitch/More-Roles-Plus)
   - ロビーで本編のモード (通常 / かくれんぼ) を、GameManager を出し直して切り替える手順
   - 設定画面の検索欄と検索の結果のタブ、左の列の区分の字の作り
   - 設定画面の作り (設定の編集の部品・頁と目次・役職の一覧と役職ごとの頁・本編の設定の頁・スクロールする欄や入力欄などの部品)
   - 名前を付けた設定の保存と設定のコード (プリセットの頁・プリセットのファイル・受け渡しのフォルダ)
+  - チャットの入力欄の拡張 (全部の文字・補完・貼り付け・前の文の呼び戻し)・耳打ち・チャットの荒らし対策
 - [Town of Host: Enhanced](https://github.com/EnhancedNetwork/TownofHost-Enhanced)
   - 設定画面の検索欄 (Drakos のコードを Endless Host Roles と More Roles Plus 経由で参照)
 - [MoreGamemodes](https://github.com/Rabek009/MoreGamemodes)
   - 退出ペナルティで部屋を立てられなくなるのを防ぐ処理
   - 名前で絵を描く偽の PlayerControl (CustomNetObject)
+  - チャットを大きな空白で押し出す処理
+- TownOfNext (KARPED1EM)
+  - チャットの入力欄の文字数の上限を広げる方法
 - [TownOfHost-K](https://github.com/KYMario/TownOfHost-K)
   - プレイヤー情報 (NetworkedPlayerInfo) の同期
 - [template-unity](https://github.com/vpmedia/template-unity) (MIT)

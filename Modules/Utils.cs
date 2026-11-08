@@ -1101,6 +1101,14 @@ public static partial class Utils
         }
         Main.MessagesToSend.Add(message);
     }
+    /// <summary>
+    /// 本文をそのまま 1 通送る (送り主の名前はお知らせの見出し)。装飾や分割を足さないので、短い決まった文だけに使う
+    /// </summary>
+    public static void SendRawChat(string text, byte sendTo = byte.MaxValue)
+    {
+        if (!AmongUsClient.Instance.AmHost) return;
+        EnqueueMessage((text, sendTo, $"<color=#aaaaff>{GetString("DefaultSystemMessageTitle")}</color>", false));
+    }
     public static void SendMessageAutoSplit(string text, bool showTitle, string title = "", byte sendTo = byte.MaxValue, string formatTag = "<size=70%><line-height=1.6pic>")
     {
         if (!AmongUsClient.Instance.AmHost) return;

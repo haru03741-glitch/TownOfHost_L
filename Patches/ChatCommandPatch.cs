@@ -7,6 +7,7 @@ using Assets.CoreScripts;
 using HarmonyLib;
 using Hazel;
 
+using TownOfHostL.Modules;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Crewmate;
 using TownOfHostL.Roles.Madmate;
@@ -17,60 +18,61 @@ namespace TownOfHostL
     [HarmonyPatch(typeof(ChatController), nameof(ChatController.SendChat))]
     class ChatCommands
     {
-        public static List<string> ChatHistory = new();
         private static Dictionary<CustomRoles, string> roleCommands;
+
+        /// <summary>
+        /// 先頭の /cmd を外す。/cmd は本編のサーバーが送った人とホストにしか届けない書き方で、付けると他の人に見えない。
+        /// 「/cmd n」「/cmd /n」のどちらも「/n」にする。外したら true
+        /// </summary>
+        public static bool StripCmd(ref string[] args)
+        {
+            if (args.Length < 2 || !args[0].Equals("/cmd", StringComparison.OrdinalIgnoreCase)) return false;
+            args = args.Skip(1).ToArray();
+            if (!args[0].StartsWith('/')) args[0] = "/" + args[0];
+            return true;
+        }
 
         public static bool Prefix(ChatController __instance)
         {
             if (__instance.freeChatField.textArea.text == "") return __instance.quickChatField.Visible;
             __instance.timeSinceLastMessage = 3f;
             var text = __instance.freeChatField.textArea.text;
-            if (ChatHistory.Count == 0 || ChatHistory[^1] != text) ChatHistory.Add(text);
-            ChatControllerUpdatePatch.CurrentHistorySelection = ChatHistory.Count;
+            ChatInput.Remember(text);
             string[] args = text.Split(' ');
             var canceled = false;
             var cancelVal = "";
             Main.isChatCommand = true;
             Logger.Info(text, "SendChat");
 
-            var hasCmdPrefix = args[0] == "/cmd" && args.Length >= 2;
-            if (hasCmdPrefix)
-            {
-                string cmdArg = args[1].StartsWith("/") ? args[1] : "/" + args[1];
-                string[] newArgs = new string[args.Length - 1];
-                newArgs[0] = cmdArg;
-                for (int i = 2; i < args.Length; i++) newArgs[i - 1] = args[i];
-                args = newArgs;
-                text = string.Join(" ", args);
-            }
+            if (StripCmd(ref args)) text = string.Join(" ", args);
 
             var tag = !PlayerControl.LocalPlayer.Data.IsDead ? "SendChatHost" : "SendChatDeadHost";
             if (text.StartsWith("試合結果:") || text.StartsWith("キル履歴:")) tag = "SendSystemChat";
             VoiceReader.ReadHost(text, tag);
 
-            // ホストは /cmd なしでもコマンドを使えるように、それ以外は /cmd 必須
-            if (!hasCmdPrefix && !AmongUsClient.Instance.AmHost)
+            var command = ChatCommandTable.Find(args[0]);
+            // ホストでない時、ホストで動くコマンドは /cmd を付けて送る (付けると他の人に見えない)
+            if (!AmongUsClient.Instance.AmHost && command?.Local == null)
             {
                 Main.isChatCommand = false;
-                // 送信せず/cmdつきに自動で書き換えて送る
-                if (args[0].StartsWith("/") && args[0] != "/cmd")
+                if (command?.Remote != null && !__instance.freeChatField.textArea.text.StartsWith("/cmd", StringComparison.OrdinalIgnoreCase))
                 {
-                    __instance.freeChatField.textArea.SetText($"/cmd {text.TrimStart('/')}");
-                    SendCommandFailedMessage(PlayerControl.LocalPlayer);
-                    return false;
+                    var cmdText = $"/cmd {text}";
+                    ChatInput.SetText(__instance.freeChatField.textArea, cmdText, cmdText.Length);
                 }
                 return true;
             }
+            if (AmongUsClient.Instance.AmHost && command == null) ChatPushOut.Record(PlayerControl.LocalPlayer, text);
 
             // 自分の画面だけで動くコマンド (ホストでなくても使える)
             var ctx = new ChatCommandContext(args, PlayerControl.LocalPlayer, __instance);
-            var local = ChatCommandTable.Find(args[0])?.Local;
+            var local = command?.Local;
             local?.Invoke(ctx);
             canceled = local != null;
             Main.isChatCommand = local != null;
             if (AmongUsClient.Instance.AmHost)
             {
-                var host = ChatCommandTable.Find(args[0])?.Host;
+                var host = command?.Host;
                 host?.Invoke(ctx);
                 canceled |= host != null;
                 Main.isChatCommand = host != null;
@@ -430,21 +432,6 @@ namespace TownOfHostL
                 roleCommands[role.RoleName] = role.ChatCommand;
             }
         }
-        /// <summary>コマンドに /cmd が付いていないとき、送った本人にだけ使い方を教える</summary>
-        private static void SendCommandFailedMessage(PlayerControl player)
-        {
-            if (player == null) return;
-            var message = GetString("Error.CommandFailed");
-
-
-            if (player.AmOwner)
-            {
-                if (HudManager.InstanceExists) HudManager.Instance.Chat?.AddChat(player, message);
-                return;
-            }
-            if (!AmongUsClient.Instance.AmHost) return;
-            Utils.SendMessageAutoSplit(message, true, sendTo: player.PlayerId);
-        }
         // 客 1 人あたり、返事は ReplyInterval 秒に 1 回まで。連打の返事が溜まると、同じ宛先への送信が続いて公式サーバーに切られる恐れがある
         private const float ReplyInterval = 2f;
         private static readonly Dictionary<byte, float> lastReplyAt = new();
@@ -465,6 +452,19 @@ namespace TownOfHostL
             }
 
             if (!AmongUsClient.Instance.AmHost) return;
+            var guard = ChatGuard.OnChat(player, text);
+            if (guard == ChatGuard.Result.Kicked) return;
+
+            string[] args = text.Trim().Split(' ');
+            bool viaCmd = StripCmd(ref args);
+            var command = ChatCommandTable.Find(args[0]);
+            // 注意を受けた書き込み (禁止語など) は送り直さない
+            if (command == null && guard == ChatGuard.Result.None) ChatPushOut.Record(player, text);
+
+            // 見せたくないコマンドを /cmd 無しで送られた時は、本編がもう全員に配っているので、返事より先に空白で押し出す
+            // (後に押し出すと、返事まで画面の上へ消える)。返事の間隔で止めた時も押し出す
+            bool pushedOut = command?.Remote != null && command.Hidden && !viaCmd;
+            if (pushedOut) ChatPushOut.PushOut();
 
             bool isNimrodMeeting = Nimrod.IsExecutionMeeting() || MadNimrod.IsExecutionMeeting();
             // 返事をしない発言はここで終わる
@@ -485,17 +485,9 @@ namespace TownOfHostL
                 }
             }
 
-            string[] args = text.Split(' ');
-
-            if (args[0] != "/cmd" || args.Length <= 1)
-            {
-                if (args[0].StartsWith("/") && args[0] != "/cmd") SendCommandFailedMessage(player);
-                return;
-            }
-            args = args.Skip(1).ToArray();
-            if (args[0].StartsWith("/") is false) args[0] = $"/{args[0]}";
-
-            ChatCommandTable.Find(args[0])?.Remote?.Invoke(new ChatCommandContext(args, player, null));
+            if (command?.Remote == null) return;
+            if (pushedOut) Utils.SendMessageAutoSplit(GetString("Message.UseCmdToHide"), true, sendTo: player.PlayerId);
+            command.Remote(new ChatCommandContext(args, player, null));
         }
     }
     [HarmonyPatch(typeof(ChatController), nameof(ChatController.Update))]
@@ -521,8 +513,19 @@ namespace TownOfHostL
                 return;
             }
 
-            int clientId = sendTo == byte.MaxValue ? -1 : Utils.GetPlayerById(sendTo).GetClientId();
+            var target = sendTo == byte.MaxValue ? null : Utils.GetPlayerById(sendTo);
+            if (sendTo != byte.MaxValue && target == null) { __instance.timeSinceLastMessage = 0f; return; }
+            int clientId = target == null ? -1 : target.GetClientId();
             var name = player.Data.PlayerName;
+            // ホスト宛ては自分の画面に足すだけ (送信待ちの順番どおりに出す)
+            if (target != null && target.AmOwner)
+            {
+                player.SetName(title);
+                AddChatAsAlive(player, msg);
+                player.SetName(name);
+                __instance.timeSinceLastMessage = 0f;
+                return;
+            }
             if (clientId == -1)
             {
                 player.SetName(title);
@@ -562,12 +565,16 @@ namespace TownOfHostL
             string command = "\n\n";
             sender = PlayerControl.LocalPlayer;
             string name = sender.Data?.PlayerName;
-            int clientId = sendTo == byte.MaxValue ? -1 : Utils.GetPlayerById(sendTo).GetClientId();
-            if (clientId == -1)
+            var target = sendTo == byte.MaxValue ? null : Utils.GetPlayerById(sendTo);
+            if (sendTo != byte.MaxValue && target == null) return;
+            int clientId = target == null ? -1 : target.GetClientId();
+            // ホスト宛ては自分の画面に足すだけ (送信待ちの順番どおりに出す)
+            if (clientId == -1 || target.AmOwner)
             {
                 sender.SetName(SendName);
                 AddChatAsAlive(sender, command);
                 sender.SetName(name);
+                if (target != null) return;
             }
 
             if (sender.Data.IsDead && GameStates.IsInGame)

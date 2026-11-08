@@ -837,6 +837,9 @@ public static partial class Options
         VoiceReader.SetupCustomOption();
         // 生存者の切断で自動廃村
         Modules.AutoAbort.SetupCustomOption();
+        // 耳打ち・荒らしの書き込みのキック
+        Modules.Whisper.SetupCustomOption();
+        Modules.ChatGuard.SetupCustomOption();
 
         TextOptionItem.Create("Head.GameMode", TabGroup.ModMainSettings).SetColor(Color.yellow).SetGameMode(CustomGameMode.Standard);
         // シンクロカラーモード
