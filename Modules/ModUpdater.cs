@@ -30,12 +30,29 @@ namespace TownOfHostL
             InfoPopup = UnityEngine.Object.Instantiate(Twitch.TwitchManager.Instance.TwitchPopup);
             InfoPopup.name = "InfoPopup";
             InfoPopup.TextAreaTMP.GetComponent<RectTransform>().sizeDelta = new(2.5f, 2f);
-            if (!isChecked)
+            // 問い合わせはメインスレッドで待たず、終わったらメニューの LateUpdate でボタンへ反映する
+            if (!isChecked && checkTask == null)
             {
-                CheckRelease(Main.BetaBuildURL.Value != "").GetAwaiter().GetResult();
+                bool beta = Main.BetaBuildURL.Value != "";
+                checkTask = Task.Run(() => CheckRelease(beta));
             }
-            MainMenuManagerPatch.UpdateButton.Button.gameObject.SetActive(hasUpdate);
-            MainMenuManagerPatch.UpdateButton.Button.transform.Find("FontPlacer/Text_TMP").GetComponent<TMPro.TMP_Text>().SetText($"<size=7><color=#00bfff>TownOfHost</color>_<color=#ffff00>L\n★ UPDATE ★</color>\n[ <color=#73e673>{latestTitle}</color> ]</size>");
+            if (checkTask == null) ShowUpdateButton();
+        }
+        private static Task<bool> checkTask;
+
+        [HarmonyPatch(typeof(MainMenuManager), nameof(MainMenuManager.LateUpdate)), HarmonyPostfix]
+        public static void LateUpdatePostfix()
+        {
+            if (checkTask is not { IsCompleted: true }) return;
+            checkTask = null;
+            ShowUpdateButton();
+        }
+        private static void ShowUpdateButton()
+        {
+            var button = MainMenuManagerPatch.UpdateButton;
+            if (Templates.SimpleButton.IsNullOrDestroyed(button)) return;
+            button.Button.gameObject.SetActive(hasUpdate);
+            button.Button.transform.Find("FontPlacer/Text_TMP").GetComponent<TMPro.TMP_Text>().SetText($"<size=7><color=#00bfff>TownOfHost</color>_<color=#ffff00>L\n★ UPDATE ★</color>\n[ <color=#73e673>{latestTitle}</color> ]</size>");
         }
         public static async Task<bool> CheckRelease(bool beta = false)
         {
@@ -43,7 +60,7 @@ namespace TownOfHostL
             try
             {
                 string result;
-                // メインメニューの表示中に同期で待つので、GitHub に届かない時に長く止まらないよう短く切る
+                // GitHub に届かない時に、更新の有無が決まらないまま長く待たないよう短く切る
                 using (HttpClient client = new() { Timeout = TimeSpan.FromSeconds(5) })
                 {
                     client.DefaultRequestHeaders.Add("User-Agent", "TownOfHost Updater");
