@@ -61,9 +61,16 @@ public static class GameEndRules
 
     private static readonly int[] factionCounts = new int[KillingFactions.Length];
 
+    /// <summary>この試合でキルする側 (キル陣営・hamo の独自陣営) が 1 人でも生きていたことがあるか</summary>
+    private static bool sawKillers;
+
+    /// <summary>試合の始めに呼ぶ (終了判定を入れ替える時)。</summary>
+    public static void ResetForNewGame() => sawKillers = false;
+
     public static bool ByLivingPlayers(out GameOverReason reason)
     {
         reason = GameOverReason.ImpostorsByKill;
+        if (Options.NoGameEndByCount.GetBool()) return false;
 
         // hamo: アサシンがマーリンを当てている間は終わらない
         if (TownOfHostL.Roles.Hamo.Impostor.Assassin.assassin?.NowState is TownOfHostL.Roles.Hamo.Impostor.Assassin.AssassinMeeting.Collected) return false;
@@ -107,7 +114,9 @@ public static class GameEndRules
             return true;
         }
         if (HamoGameEnd.CheckTeamWin(counts[0], counts[1], counts[2], crew, hamo, ref reason)) return true;
-        if (killers == 0 && other == 0) //クルー勝利
+        if (killers > 0 || other > 0) sawKillers = true;
+        // キルする側が最初からいない試合 (1 人で試す時など) は、クルーの勝ちで即座に終わらせない
+        else if (sawKillers) //クルー勝利
         {
             reason = GameOverReason.CrewmatesByVote;
             CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Crewmate);
@@ -119,6 +128,7 @@ public static class GameEndRules
     public static bool ByLivingPlayersHideAndSeek(out GameOverReason reason)
     {
         reason = GameOverReason.ImpostorsByKill;
+        if (Options.NoGameEndByCount.GetBool()) return false;
 
         int imp = Utils.AlivePlayersCount(CountTypes.Impostor);
         int crew = Utils.AlivePlayersCount(CountTypes.Crew);
@@ -140,7 +150,13 @@ public static class GameEndRules
     public static bool ByTask(out GameOverReason reason)
     {
         reason = GameOverReason.ImpostorsByKill;
-        if (Options.DisableTaskWin.GetBool() || TaskState.InitialTotalTasks == 0 || TownOfHostL.Roles.Hamo.Neutral.Fox.BlockTaskWin()) return false;
+        if (Options.NoGameEndByTask.GetBool() || TaskState.InitialTotalTasks == 0 || TownOfHostL.Roles.Hamo.Neutral.Fox.BlockTaskWin()) return false;
+        // タスク勝利の無効化: 1 = 常に、2 = 生きているクルーがいない時だけ (幽霊のタスクだけで勝たせない)
+        switch (Options.DisableTaskWin.GetValue())
+        {
+            case 1: return false;
+            case 2 when Utils.AlivePlayersCount(CountTypes.Crew) == 0: return false;
+        }
 
         (int vtComp, int vtTotal) = VentEnterTask.TaskWinCountData();
         if (GameData.Instance.TotalTasks + vtTotal <= GameData.Instance.CompletedTasks + vtComp)
@@ -153,11 +169,23 @@ public static class GameEndRules
         return false;
     }
 
+    /// <summary>
+    /// 片付けた妨害を客へ送る印を立てる。ClearSabotage は印を立てないので、試合を続ける時はこれが無いと
+    /// 客の画面で警報とカウントダウンが残る (2026-11-08 実機: Skeld の原子炉で客が「あと -24」のまま)。
+    /// </summary>
+    private static void MarkDirty(ISystemType sys)
+    {
+        if (sys.TryCast<ReactorSystemType>() is { } reactor) reactor.IsDirty = true;
+        else if (sys.TryCast<HeliSabotageSystem>() is { } heli) heli.IsDirty = true;
+    }
+
     /// <summary>ShipStatus.Systems から、致命的な妨害の時間切れを調べる。</summary>
     public static bool BySabotage(out GameOverReason reason)
     {
         reason = GameOverReason.ImpostorsByKill;
         if (ShipStatus.Instance.Systems == null) return false;
+        // 終わらせない時も、時間切れになった妨害は片付ける (警報が鳴り続けないように)
+        var blocked = Options.NoGameEndBySabotage.GetBool();
 
         // TryGetValueは使用不可
         var systems = ShipStatus.Instance.Systems;
@@ -167,6 +195,13 @@ public static class GameEndRules
             lifeSupp.Countdown < 0f)
         {
             // 酸素
+            if (blocked)
+            {
+                if (lifeSupp.TryCast<ICriticalSabotage>() is { } o2) o2.ClearSabotage();
+                else lifeSupp.Countdown = 10000f;
+                lifeSupp.IsDirty = true;
+                return false;
+            }
             CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Impostor);
             reason = GameOverReason.ImpostorsBySabotage;
             lifeSupp.Countdown = 10000f;
@@ -184,6 +219,12 @@ public static class GameEndRules
             critical.Countdown < 0f)
         {
             // リアクター
+            if (blocked)
+            {
+                critical.ClearSabotage();
+                MarkDirty(sys);
+                return false;
+            }
             CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Impostor);
             reason = GameOverReason.ImpostorsBySabotage;
             critical.ClearSabotage();

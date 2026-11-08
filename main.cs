@@ -158,12 +158,9 @@ public partial class Main : BasePlugin
         Logger = BepInEx.Logging.Logger.CreateLogSource("TOH_L");
         TownOfHostL.Logger.Enable();
         TownOfHostL.Modules.ConsoleQuickEdit.Disable();
-        TownOfHostL.Logger.Disable("NotifyRoles");
-        TownOfHostL.Logger.Disable("SendRPC");
-        TownOfHostL.Logger.Disable("ReceiveRPC");
-        TownOfHostL.Logger.Disable("SwitchSystem");
-        TownOfHostL.Logger.Disable("CustomRpcSender");
-        //TownOfHost.Logger.isDetail = true;
+        // 止めるタグは設定ファイルに持たせ、/log で切り替えた分も次の起動に残す
+        TownOfHostL.Logger.LoadDisabledTags(Config.Bind("Logging", "Disabled Tags", TownOfHostL.Logger.DefaultDisabledTags,
+            "Log tags that are not written. Comma separated. Developers can change this in game with /log."));
 
         // 認証関連-初期化
         DebugKeyAuth = new HashAuth(DebugKeyHash, DebugKeySalt);

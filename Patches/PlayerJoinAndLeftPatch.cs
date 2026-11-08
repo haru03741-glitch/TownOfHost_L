@@ -32,6 +32,8 @@ namespace TownOfHostL
 
                 ChatUpdatePatch.DoBlockChat = false;
                 GameStates.InGame = false;
+                Modules.ChatGuard.Reset();
+                Modules.ChatPushOut.Reset();
                 try { ErrorText.Instance.Clear(); } catch { }
                 if (AmongUsClient.Instance.AmHost) //以下、ホストのみ実行
                 {
@@ -161,6 +163,7 @@ namespace TownOfHostL
                                 PlayerState.GetByPlayerId(lovers.PlayerId).RemoveSubRole(CustomRoles.Lovers);
                             }
                         }
+                        var wasAlive = !state.IsDead;
                         if (state.DeathReason == CustomDeathReason.etc) //死因が設定されていなかったら
                         {
                             state.DeathReason = CustomDeathReason.Disconnected;
@@ -168,6 +171,7 @@ namespace TownOfHostL
                         }
                         AntiBlackout.OnDisconnect(data.Character.Data);
                         PlayerGameOptionsSender.RemoveSender(data.Character);
+                        if (wasAlive) Modules.AutoAbort.OnAliveDisconnected();
                     }
                     Main.playerVersion.Remove(data.Character.PlayerId);
                     Logger.Info($"{data.PlayerName}(ClientID:{data.Id})が切断(理由:{reason}, ping:{AmongUsClient.Instance.Ping})", "Session");

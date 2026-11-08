@@ -1058,7 +1058,7 @@ public static partial class Utils
         sb.Append($"\n/h roles {GetString("Command.h_roles")}");
         sb.Append($"\n/h addons {GetString("Command.h_addons")}");
         sb.Append($"\n/h modes {GetString("Command.h_modes")}");
-        sb.Append($"\n/dump - {GetString("Command.dump")}");
+        sb.Append($"\n/dump [game] - {GetString("Command.dump")}");
         sb.Append($"\n/brackout - {GetString("Command.killflashall")}");
         sb.Append($"\n\n視界が暗転した参加者が発生した場合は、\nチャットコマンド[/brackout・/bo]か、左Control,K,Lを同時に押下してください");
 
@@ -1100,6 +1100,14 @@ public static partial class Utils
             return;
         }
         Main.MessagesToSend.Add(message);
+    }
+    /// <summary>
+    /// 本文をそのまま 1 通送る (送り主の名前はお知らせの見出し)。装飾や分割を足さないので、短い決まった文だけに使う
+    /// </summary>
+    public static void SendRawChat(string text, byte sendTo = byte.MaxValue)
+    {
+        if (!AmongUsClient.Instance.AmHost) return;
+        EnqueueMessage((text, sendTo, $"<color=#aaaaff>{GetString("DefaultSystemMessageTitle")}</color>", false));
     }
     public static void SendMessageAutoSplit(string text, bool showTitle, string title = "", byte sendTo = byte.MaxValue, string formatTag = "<size=70%><line-height=1.6pic>")
     {
@@ -1698,7 +1706,8 @@ public static partial class Utils
     {
         string t = DateTime.Now.ToString("yyyy-MM-dd_HH.mm.ss");
         string fileName = $"{path}/TownOfHost-v{Main.PluginVersion}-{t}.log";
-        FileInfo file = new(@$"{System.Environment.CurrentDirectory}/BepInEx/LogOutput.log");
+        LogFile.Flush();
+        FileInfo file = new(LogFile.CurrentPath);
         var logFile = file.CopyTo(fileName);
 
         /*try

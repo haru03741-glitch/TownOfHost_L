@@ -393,7 +393,8 @@ namespace TownOfHostL
         }
         public static void SendRpcLogger(uint targetNetId, byte callId, int targetClientId = -1)
         {
-            if (!DebugModeManager.AmDebugger) return;
+            // RPC を送るたびに通るので、タグが止まっている時は名前を引く前に抜ける
+            if (!DebugModeManager.AmDebugger || !Log.IsEnabled("SendRPC")) return;
             string rpcName = GetRpcName(callId);
             string from = targetNetId.ToString();
             string target = targetClientId.ToString();

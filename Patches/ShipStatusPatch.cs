@@ -90,7 +90,7 @@ namespace TownOfHostL
     {
         public static bool Prefix(ShipStatus __instance)
         {
-            return ModeCatalog.Current.AllowsDoorSabotage;
+            return ModeCatalog.Current.AllowsDoorSabotage && !Options.DisableSabotageDoors.GetBool();
         }
     }
     [HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.Start))]

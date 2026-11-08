@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using AmongUs.GameOptions;
 using HarmonyLib;
@@ -15,6 +16,7 @@ namespace TownOfHostL
     class AddTasksFromListPatch
     {
         public static void Prefix(ShipStatus __instance,
+            [HarmonyArgument(1)] int count,
             [HarmonyArgument(4)] Il2CppSystem.Collections.Generic.List<NormalPlayerTask> unusedTasks)
         {
             if (!AmongUsClient.Instance.AmHost) return;
@@ -26,10 +28,14 @@ namespace TownOfHostL
                 var task = unusedTasks[i];
                 if (TaskDisableOptions.IsDisabled(task.TaskType)) disabledTasks.Add(task);
             }
-            foreach (var task in disabledTasks)
-            {               
-                unusedTasks.Remove(task);
-            }
+            if (disabledTasks.Count == 0) return;
+            // 残りが配る数より少ないと本編の ShipStatus.Begin が RemoveRange で例外を出し、タスクが 1 つも配られない
+            // (2026-11-08 実機: Skeld の共通タスクを 2 つとも外して共通 2 個で再現)。配る数の分だけは外さずに残す
+            var removable = Math.Min(disabledTasks.Count, unusedTasks.Count - count);
+            if (removable < disabledTasks.Count)
+                Logger.Warn($"外したタスクが多く、配る数 ({count}) に足りないので {disabledTasks.Count - Math.Max(removable, 0)} 個を残す", "AddTasksFromList");
+            for (var i = 0; i < removable; i++)
+                unusedTasks.Remove(disabledTasks[i]);
         }
     }
 

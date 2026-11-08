@@ -15,20 +15,20 @@ internal static class Log
 {
     public static bool IsEnabled(string tag) => TownOfHostL.Logger.IsTagEnabled(tag);
 
-    public static void Info(string tag, [InterpolatedStringHandlerArgument("tag")] ref LogText text)
+    public static void Info(string tag, [InterpolatedStringHandlerArgument("tag")] ref LogText text, [CallerLineNumber] int line = 0, [CallerFilePath] string file = "", [CallerMemberName] string member = "")
     {
-        if (text.Enabled) TownOfHostL.Logger.Info(text.ToStringAndClear(), tag);
+        if (text.Enabled) TownOfHostL.Logger.Info(text.ToStringAndClear(), tag, true, line, file, member);
     }
-    public static void Info(string tag, string text) => TownOfHostL.Logger.Info(text, tag);
+    public static void Info(string tag, string text, [CallerLineNumber] int line = 0, [CallerFilePath] string file = "", [CallerMemberName] string member = "") => TownOfHostL.Logger.Info(text, tag, true, line, file, member);
 
-    public static void Warn(string tag, [InterpolatedStringHandlerArgument("tag")] ref LogText text)
+    public static void Warn(string tag, [InterpolatedStringHandlerArgument("tag")] ref LogText text, [CallerLineNumber] int line = 0, [CallerFilePath] string file = "", [CallerMemberName] string member = "")
     {
-        if (text.Enabled) TownOfHostL.Logger.Warn(text.ToStringAndClear(), tag);
+        if (text.Enabled) TownOfHostL.Logger.Warn(text.ToStringAndClear(), tag, true, line, file, member);
     }
-    public static void Warn(string tag, string text) => TownOfHostL.Logger.Warn(text, tag);
+    public static void Warn(string tag, string text, [CallerLineNumber] int line = 0, [CallerFilePath] string file = "", [CallerMemberName] string member = "") => TownOfHostL.Logger.Warn(text, tag, true, line, file, member);
 
-    public static void Error(string tag, string text) => TownOfHostL.Logger.Error(text, tag);
-    public static void Exception(string tag, Exception ex) => TownOfHostL.Logger.Exception(ex, tag);
+    public static void Error(string tag, string text, [CallerLineNumber] int line = 0, [CallerFilePath] string file = "", [CallerMemberName] string member = "") => TownOfHostL.Logger.Error(text, tag, true, line, file, member);
+    public static void Exception(string tag, Exception ex, [CallerLineNumber] int line = 0, [CallerFilePath] string file = "", [CallerMemberName] string member = "") => TownOfHostL.Logger.Exception(ex, tag, line, file, member);
 }
 
 /// <summary>タグが無効なら何も組み立てない補間文字列。</summary>

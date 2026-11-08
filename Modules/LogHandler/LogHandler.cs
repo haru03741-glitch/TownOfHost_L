@@ -12,26 +12,26 @@ namespace TownOfHostL.Modules
             Tag = tag;
         }
 
-        public void Info(string text)
-            => Logger.Info(text, Tag, true);
+        public void Info(string text, [CallerLineNumber] int line = 0, [CallerFilePath] string file = "", [CallerMemberName] string member = "")
+            => Logger.Info(text, Tag, true, line, file, member);
         // 補間文字列で呼んだ時は、タグが無効なら文字列を組み立てない
-        public void Info([InterpolatedStringHandlerArgument("")] ref LogText text)
+        public void Info([InterpolatedStringHandlerArgument("")] ref LogText text, [CallerLineNumber] int line = 0, [CallerFilePath] string file = "", [CallerMemberName] string member = "")
         {
-            if (text.Enabled) Logger.Info(text.ToStringAndClear(), Tag, true);
+            if (text.Enabled) Logger.Info(text.ToStringAndClear(), Tag, true, line, file, member);
         }
-        public void Warn(string text)
-            => Logger.Warn(text, Tag, true);
-        public void Warn([InterpolatedStringHandlerArgument("")] ref LogText text)
+        public void Warn(string text, [CallerLineNumber] int line = 0, [CallerFilePath] string file = "", [CallerMemberName] string member = "")
+            => Logger.Warn(text, Tag, true, line, file, member);
+        public void Warn([InterpolatedStringHandlerArgument("")] ref LogText text, [CallerLineNumber] int line = 0, [CallerFilePath] string file = "", [CallerMemberName] string member = "")
         {
-            if (text.Enabled) Logger.Warn(text.ToStringAndClear(), Tag, true);
+            if (text.Enabled) Logger.Warn(text.ToStringAndClear(), Tag, true, line, file, member);
         }
-        public void Error(string text)
-            => Logger.Error(text, Tag, true);
-        public void Fatal(string text)
-            => Logger.Fatal(text, Tag, true);
-        public void Msg(string text)
-            => Logger.Msg(text, Tag, true);
-        public void Exception(Exception ex)
-            => Logger.Exception(ex, Tag);
+        public void Error(string text, [CallerLineNumber] int line = 0, [CallerFilePath] string file = "", [CallerMemberName] string member = "")
+            => Logger.Error(text, Tag, true, line, file, member);
+        public void Fatal(string text, [CallerLineNumber] int line = 0, [CallerFilePath] string file = "", [CallerMemberName] string member = "")
+            => Logger.Fatal(text, Tag, true, line, file, member);
+        public void Msg(string text, [CallerLineNumber] int line = 0, [CallerFilePath] string file = "", [CallerMemberName] string member = "")
+            => Logger.Msg(text, Tag, true, line, file, member);
+        public void Exception(Exception ex, [CallerLineNumber] int line = 0, [CallerFilePath] string file = "", [CallerMemberName] string member = "")
+            => Logger.Exception(ex, Tag, line, file, member);
     }
 }

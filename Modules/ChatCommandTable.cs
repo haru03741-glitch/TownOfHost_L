@@ -30,7 +30,8 @@ public sealed class ChatCommandContext
 
 /// <summary>
 /// 1 つのコマンド。動く場面ごとに処理を持つ。
-/// Local は打った本人の画面だけで動く (ホストでなくても使える)。Host はホストが打った時、Remote は他の人が /cmd を付けて送った時にホストの側で動く。
+/// Local は打った本人の画面だけで動く (ホストでなくても使える)。Host はホストが打った時、Remote は他の人が送った時にホストの側で動く
+/// (先頭の /cmd は有っても無くてもよい)。
 /// </summary>
 public sealed class ChatCommand
 {
@@ -38,7 +39,15 @@ public sealed class ChatCommand
     public Action<ChatCommandContext> Local;
     public Action<ChatCommandContext> Host;
     public Action<ChatCommandContext> Remote;
+    /// <summary>
+    /// 打った文を他の人に見せたくないコマンド (耳打ちなど)。/cmd を付けずに送られた時は、本編がもう全員に配っているので、
+    /// 大きな空白でチャット欄から押し出す。/cmd 付きは本編のサーバーがホストにしか届けないので押し出さない
+    /// </summary>
+    public bool Hidden;
+    /// <summary>引数の書き方 (翻訳のキー)。チャット欄で名前の後ろに薄く出す</summary>
+    public string Usage;
     public ChatCommand(params string[] names) => Names = names;
+    public string UsageText => Usage == null ? "" : GetString(Usage);
 }
 
 /// <summary>チャットコマンドの登録表。名前は大文字小文字を区別しない。</summary>
@@ -48,6 +57,31 @@ public static class ChatCommandTable
     private static readonly Dictionary<string, ChatCommand> byName = BuildMap();
 
     public static ChatCommand Find(string name) => name != null && byName.TryGetValue(name, out var cmd) ? cmd : null;
+
+    /// <summary>
+    /// 打ちかけの名前 (/ から空白の前まで) に合う、今の自分が使えるコマンド。同じ名前があればそれ、無ければ表の順で前方が一致する最初の名前。
+    /// ホストは Host と Local、それ以外は Remote と Local を持つコマンドだけを候補にする
+    /// </summary>
+    public static bool Suggest(string typed, out string name, out string usage)
+    {
+        name = null; usage = "";
+        if (string.IsNullOrEmpty(typed) || typed.Length < 2) return false;
+        bool host = AmongUsClient.Instance != null && AmongUsClient.Instance.AmHost;
+        bool Usable(ChatCommand c) => c.Local != null || (host ? c.Host != null : c.Remote != null);
+        var exact = Find(typed);
+        if (exact != null && Usable(exact))
+        {
+            name = typed; usage = exact.UsageText;
+            return true;
+        }
+        foreach (var c in All)
+        {
+            if (!Usable(c)) continue;
+            foreach (var n in c.Names)
+                if (n.StartsWith(typed, StringComparison.OrdinalIgnoreCase)) { name = n; usage = c.UsageText; return true; }
+        }
+        return false;
+    }
 
     private static Dictionary<string, ChatCommand> BuildMap()
     {
@@ -60,11 +94,13 @@ public static class ChatCommandTable
 
     private static ChatCommand[] Build() => new ChatCommand[]
     {
-        new("/dump") { Local = _ => Utils.DumpLog() },
+        new("/dump") { Local = Modules.DevCommands.Dump },
+        new("/log") { Local = Modules.DevCommands.LogCommand },
+        new("/dev") { Local = Modules.DevCommands.DevCommand },
         new("/v", "/version") { Local = _ => ShowVersions() },
-#if DEBUG
-        new("/sr", "/selectroles") { Host = c => ChatCommands.SelectRolesCommand(c.Args) },
-#endif
+        new("/sr", "/selectroles") { Usage = "CommandUsage.SelectRoles", Host = c => ChatCommands.SelectRolesCommand(c.Args) },
+        new("/kick") { Usage = "CommandUsage.Kick", Host = c => ChatCommands.KickCommand(c.Args, ban: false) },
+        new("/ban") { Usage = "CommandUsage.Ban", Host = c => ChatCommands.KickCommand(c.Args, ban: true) },
         new("/win", "/winner")
         {
             Host = _ => Utils.SendMessageAutoSplit("Winner: " + string.Join(",", Main.winnerList.Select(b => Main.AllPlayerNames[b])), true),
@@ -79,7 +115,14 @@ public static class ChatCommandTable
             Host = _ => Utils.ShowKillLog(),
             Remote = c => Utils.ShowKillLog(c.Player.PlayerId),
         },
-        new("/r", "/rename") { Host = c => Main.nickName = c.Arg(1) },
+        // 名前の変更は EHR 系に合わせて /rn。/r は EHR 系と同じく役職の説明に使う
+        new("/rn", "/rename", "/name") { Usage = "CommandUsage.Rename", Host = c => Main.nickName = c.Arg(1) },
+        new("/r", "/hr")
+        {
+            Usage = "CommandUsage.Role",
+            Host = c => ShowRoleInfo(Words(c), 1, byte.MaxValue, ShowActiveRoles),
+            Remote = c => ShowRoleInfo(Words(c), 1, c.Player.PlayerId, ShowActiveRoles),
+        },
         new("/hn", "/hidename")
         {
             Host = c =>
@@ -90,20 +133,23 @@ public static class ChatCommandTable
         },
         new("/n", "/now")
         {
-            Host = c => ShowNow(c.Arg(1), byte.MaxValue),
-            Remote = c => ShowNow(c.Arg(1), c.Player.PlayerId),
+            Usage = "CommandUsage.Now",
+            Host = c => ShowNow(c, byte.MaxValue),
+            Remote = c => ShowNow(c, c.Player.PlayerId),
         },
-        new("/mode") { Host = c => Core.VanillaHideAndSeek.Command(c.Args) },
-        new("/w") { Host = ForceWin },
+        new("/mode") { Usage = "CommandUsage.Mode", Host = c => Core.VanillaHideAndSeek.Command(c.Args) },
+        new("/w") { Usage = "CommandUsage.ForceWin", Host = ForceWin },
         new("/dis") { Host = ForceDisconnectEnd },
         new("/h", "/help")
         {
+            Usage = "CommandUsage.Help",
             Host = c => ShowHelp(c, byte.MaxValue, showGeneralHelp: true),
             Remote = c => ShowHelp(c, c.Player.PlayerId, showGeneralHelp: false),
         },
         new("/m", "/myrole") { Host = ShowMyRole, Remote = ShowMyRole },
         new("/t", "/template")
         {
+            Usage = "CommandUsage.Template",
             Host = c =>
             {
                 if (c.Args.Length > 1) TemplateManager.SendTemplate(c.Args[1]);
@@ -117,6 +163,7 @@ public static class ChatCommandTable
         },
         new("/mw", "/messagewait")
         {
+            Usage = "CommandUsage.MessageWait",
             Host = c =>
             {
                 if (c.Args.Length > 1 && float.TryParse(c.Args[1], out float sec))
@@ -129,6 +176,7 @@ public static class ChatCommandTable
         },
         new("/say")
         {
+            Usage = "CommandUsage.Say",
             Host = c =>
             {
                 if (c.Args.Length > 1)
@@ -137,10 +185,12 @@ public static class ChatCommandTable
         },
         new("/exile")
         {
+            Usage = "CommandUsage.PlayerId",
             Host = c => { if (c.Args.Length > 1 && int.TryParse(c.Args[1], out int id)) Utils.GetPlayerById(id)?.RpcExileV3(); },
         },
         new("/kill")
         {
+            Usage = "CommandUsage.PlayerId",
             Host = c => { if (c.Args.Length > 1 && int.TryParse(c.Args[1], out int id)) Utils.GetPlayerById(id)?.RpcMurderPlayer(Utils.GetPlayerById(id)); },
         },
         new("/vo", "/voice") { Host = HostVoice, Remote = RemoteVoice },
@@ -148,6 +198,13 @@ public static class ChatCommandTable
         {
             Host = c => Utils.SetKillFlashAfterDead(c.Player, true),
             Remote = c => Utils.SetKillFlashAfterDead(c.Player),
+        },
+        new("/ws", "/whisper")
+        {
+            Usage = "CommandUsage.Whisper",
+            Hidden = true,
+            Host = Modules.Whisper.Command,
+            Remote = Modules.Whisper.Command,
         },
         new("/brackout", "/bo")
         {
@@ -168,13 +225,31 @@ public static class ChatCommandTable
         if (AmongUsClient.Instance.IsGameStarted) Utils.ShowMyRoleInfo(c.Player, c.Player.PlayerId);
     }
 
-    private static void ShowNow(string sub, byte sendTo)
+    // 空白が続いて空の引数が挟まっても (「/n  r 役職」) 読めるように、空でない語だけを見る
+    private static string[] Words(ChatCommandContext c) => c.Args.Where(a => a.Length > 0).ToArray();
+
+    /// <summary>
+    /// words[from] 以降を役職名として説明を返す (/r 役職名・/n r 役職名・/h r 役職名)。役職名が無い時は emptyAction
+    /// </summary>
+    private static void ShowRoleInfo(string[] words, int from, byte sendTo, Action<byte> emptyAction)
     {
-        switch (sub)
+        var role = string.Join(" ", words.Skip(from)).Trim();
+        if (role.Length == 0) emptyAction(sendTo);
+        else ChatCommands.GetRolesInfo(role, sendTo);
+    }
+
+    // 役職名が無い /r と /n r は有効な役職の一覧、/h r は使い方
+    private static void ShowActiveRoles(byte sendTo) => Utils.ShowActiveRoles(sendTo);
+    private static void ShowRoleHelp(byte sendTo) => ChatCommands.GetRolesInfo("", sendTo);
+
+    private static void ShowNow(ChatCommandContext c, byte sendTo)
+    {
+        var words = Words(c);
+        switch (words.ElementAtOrDefault(1)?.ToLowerInvariant())
         {
             case "r":
             case "roles":
-                Utils.ShowActiveRoles(sendTo);
+                ShowRoleInfo(words, 2, sendTo, ShowActiveRoles);
                 break;
             case "v":
             case "vanilla":
@@ -188,11 +263,12 @@ public static class ChatCommandTable
 
     private static void ShowHelp(ChatCommandContext c, byte sendTo, bool showGeneralHelp)
     {
-        switch (c.Arg(1))
+        var words = Words(c);
+        switch (words.ElementAtOrDefault(1)?.ToLowerInvariant())
         {
             case "r":
             case "roles":
-                ChatCommands.GetRolesInfo(c.Arg(2), sendTo);
+                ShowRoleInfo(words, 2, sendTo, ShowRoleHelp);
                 break;
             case "n":
             case "now":

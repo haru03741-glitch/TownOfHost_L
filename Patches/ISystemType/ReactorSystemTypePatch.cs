@@ -8,7 +8,7 @@ namespace TownOfHostL.Patches.ISystemType;
 [HarmonyPatch(typeof(ReactorSystemType), nameof(ReactorSystemType.UpdateSystem))]
 public static class ReactorSystemTypeUpdateSystemPatch
 {
-    public static bool Prefix(ReactorSystemType __instance, [HarmonyArgument(0)] PlayerControl player, [HarmonyArgument(1)] MessageReader msgReader, ref byte __state /* amount */)
+    public static bool Prefix(ReactorSystemType __instance, [HarmonyArgument(0)] PlayerControl player, [HarmonyArgument(1)] MessageReader msgReader, ref bool __state /* 止まっている所からサボを始める電文か */)
     {
         byte amount;
         {
@@ -16,7 +16,8 @@ public static class ReactorSystemTypeUpdateSystemPatch
             amount = newReader.ReadByte();
             newReader.Recycle();
         }
-        __state = amount;
+        // 弾いた時や進行中のサボに、時間の書き換えを当てない
+        __state = amount == ReactorSystemType.StartCountdown && !__instance.IsActive;
 
         if (player.GetRoleClass() is ISystemTypeUpdateHook systemTypeUpdateHook && !systemTypeUpdateHook.UpdateReactorSystem(__instance, amount))
         {
@@ -24,20 +25,17 @@ public static class ReactorSystemTypeUpdateSystemPatch
         }
         return true;
     }
-    public static void Postfix(ReactorSystemType __instance, byte __state /* amount */ )
+    public static void Postfix(ReactorSystemType __instance, bool __state, bool __runOriginal)
     {
         // サボタージュ発動時
-        if (__state == ReactorSystemType.StartCountdown)
+        if (__state && __runOriginal && __instance.IsActive)
         {
-            if (((MapNames)Main.NormalOptions.MapId == MapNames.Polus && !Options.SabotageTimeControl_Polus.GetBool())
-                || ((MapNames)Main.NormalOptions.MapId == MapNames.Fungle && !Options.SabotageTimeControl_Fungle.GetBool()))
-            {
-                return;
-            }
             var duration = (MapNames)Main.NormalOptions.MapId switch
             {
-                MapNames.Polus => Options.PolusReactorTimeLimit.GetFloat(),
-                MapNames.Fungle => Options.FungleReactorTimeLimit.GetFloat(),
+                MapNames.Skeld when Options.SabotageTimeControl_Skeld.GetBool() => Options.SkeldReactorTimeLimit.GetFloat(),
+                MapNames.MiraHQ when Options.SabotageTimeControl_MiraHQ.GetBool() => Options.MiraHQReactorTimeLimit.GetFloat(),
+                MapNames.Polus when Options.SabotageTimeControl_Polus.GetBool() => Options.PolusReactorTimeLimit.GetFloat(),
+                MapNames.Fungle when Options.SabotageTimeControl_Fungle.GetBool() => Options.FungleReactorTimeLimit.GetFloat(),
                 _ => float.NaN,
             };
             if (!float.IsNaN(duration))

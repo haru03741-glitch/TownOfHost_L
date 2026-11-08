@@ -42,10 +42,16 @@ public static class VanillaHnsCommands
             case "/help":
                 // /h r <役職> (通常モードの書き方) も受ける
                 var rest = args.Skip(1).ToList();
-                if (rest.Count > 0 && rest[0] is "r" or "roles") rest.RemoveAt(0);
+                if (rest.Count > 0 && rest[0].ToLowerInvariant() is "r" or "roles") rest.RemoveAt(0);
                 return rest.Count == 0 ? Help() : Describe(string.Join(" ", rest));
+            case "/r":
+            case "/hr":
+                // EHR 系の書き方。役職名が無ければ一覧
+                return args.Length < 2 ? Help() : Describe(string.Join(" ", args.Skip(1)));
             case "/n":
             case "/now":
+                // /n r <役職> (EHR 系の書き方) は役職の説明
+                if (args.Length > 2 && args[1].ToLowerInvariant() is "r" or "roles") return Describe(string.Join(" ", args.Skip(2)));
                 return Settings();
             default:
                 return null;
