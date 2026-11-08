@@ -30,6 +30,7 @@ public sealed class Mare : RoleBase, IImpostor
         player
     )
     {
+        CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(() => Utils.IsActive(SystemTypes.Electrical));
         KillCooldownInLightsOut = OptionKillCooldownInLightsOut.GetFloat();
         SpeedInLightsOut = OptionSpeedInLightsOut.GetFloat();
 

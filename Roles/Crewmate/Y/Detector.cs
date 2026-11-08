@@ -4,7 +4,7 @@ using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
 
 namespace TownOfHostL.Roles.Crewmate;
-public sealed class Detector : RoleBase, IKillFlashSeeable
+public sealed class Detector : RoleBase, IKillFlashSeeable, IDeadBodyArrowSeer
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(

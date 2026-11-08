@@ -9,7 +9,7 @@ using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
 
 namespace TownOfHostL.Roles.Madmate;
-public sealed class MadConnecter : RoleBase, IKiller, IKillFlashSeeable
+public sealed class MadConnecter : RoleBase, IKiller, IKillFlashSeeable, IDeadBodyArrowSeer
 {
     public static readonly SimpleRoleInfo RoleInfo =
          SimpleRoleInfo.Create(
@@ -107,11 +107,8 @@ public sealed class MadConnecter : RoleBase, IKiller, IKillFlashSeeable
     }
     public bool CheckKillFlash(MurderInfo info) => IsSet[(int)SetNumber.knowDeadBodyArrow];
 
-    // TargetDeadArrowで更新を行うか
-    public static bool IsEnableDeadArrow()
-    {
-        return CustomRoles.MadConnecter.IsEnable() && KnowDeadBodyArrowTasks > 0;
-    }
+    // 死体の矢印を出すタスク数が設定されている時だけ使う
+    public bool UsesDeadBodyArrows => KnowDeadBodyArrowTasks > 0;
 
     // インポスターが誰か分かるタスク数に達しているか
     private bool KnowsImpostor()

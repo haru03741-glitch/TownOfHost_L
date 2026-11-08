@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEngine;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Attributes;
-using TownOfHostL.Roles.Madmate;
+using TownOfHostL.Roles.Core.Interfaces;
 
 namespace TownOfHostL;
 
@@ -21,22 +21,14 @@ public static class TargetDeadArrow
         TargetArrows.Clear();
     }
 
-    private static bool IsEnable()
-    {
-        return CustomRoles.Detector.IsEnable()
-            || MadConnecter.IsEnableDeadArrow();
-    }
-    private static bool IsEnableRole(CustomRoles role)
-    {
-        return role is CustomRoles.Detector
-            or CustomRoles.MadConnecter;
-    }
+    private static bool UsesArrows(RoleBase role) => role is IDeadBodyArrowSeer seer && seer.UsesDeadBodyArrows;
 
     //死体が生まれた時、発見される側の死体リストに追加
+    /// <summary>
+    /// 死体を数える。役職が変わって後から矢印を見る人が出ても、それまでの死体を指せるよう、役職の有無に関わらず毎回数える (キルの時だけなので軽い)
+    /// </summary>
     public static void UpdateDeadBody()
     {
-        if (!IsEnable()) return;
-
         DeadBody[] AllBody = UnityEngine.Object.FindObjectsOfType<DeadBody>();
         DeadBody targetBody = null;
 
@@ -80,7 +72,7 @@ public static class TargetDeadArrow
     /// </summary>
     public static string GetDeadBodiesArrow(PlayerControl seer, PlayerControl target)
     {
-        if (!IsEnableRole(seer.GetCustomRole()) || seer != target) return string.Empty;
+        if (seer != target || !UsesArrows(seer.GetRoleClass())) return string.Empty;
         var arrows = string.Empty;
         foreach (var targetBody in DeadBodyList)
         {

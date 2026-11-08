@@ -29,6 +29,7 @@ namespace TownOfHostL.Roles.Impostor
             player
         )
         {
+            CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(() => IsSpelled());
             CustomRoleManager.MarkOthers.Add(GetMarkOthers);
         }
         // 同じ役職が複数いる時に、1 人の作成や破棄で他の持ち主の分まで消さないよう、共有の一覧は試合の開始で空にし、破棄では自分の分だけ外す
