@@ -76,7 +76,7 @@ function Split-Args([string]$s, [int]$start) {
 }
 
 $found = 0; $calls = 0
-$files = Get-ChildItem -Path $root -Recurse -Filter *.cs | Where-Object { $_.FullName -notmatch '\\(build|bin|obj|.git|.vs)\\' }
+$files = Get-ChildItem -Path $root -Recurse -Filter *.cs | Where-Object { $_.FullName -notmatch '\\(build|bin|obj|\.git|\.vs)\\' }
 foreach ($file in $files) {
     $src = Remove-Comments ([System.IO.File]::ReadAllText($file.FullName))
     $methodStarts = @($methodRx.Matches($src) | ForEach-Object { $_.Index })
