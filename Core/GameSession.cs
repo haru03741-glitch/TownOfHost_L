@@ -41,6 +41,7 @@ public sealed class GameSession
         TownOfHostL.Modules.OptionSaver.Flush();
         CloseLatest("次の試合の開始");
         latest = Current = new GameSession(nextId++);
+        TownOfHostL.Modules.GameLogMark.Mark(Current.Id);
         Log.Info("GameSession", $"#{Current.Id} 開始");
     }
 
@@ -60,6 +61,7 @@ public sealed class GameSession
         session.IsClosed = true;
         if (Current == session) Current = null;
         Log.Info("GameSession", $"#{session.Id} を閉じる ({reason})");
+        TownOfHostL.Logger.FlushSuppressedExceptions();
         NotifyRolesQueue.Clear();
         NameRpcBatcher.Discard();
         try

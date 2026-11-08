@@ -1058,7 +1058,7 @@ public static partial class Utils
         sb.Append($"\n/h roles {GetString("Command.h_roles")}");
         sb.Append($"\n/h addons {GetString("Command.h_addons")}");
         sb.Append($"\n/h modes {GetString("Command.h_modes")}");
-        sb.Append($"\n/dump - {GetString("Command.dump")}");
+        sb.Append($"\n/dump [game] - {GetString("Command.dump")}");
         sb.Append($"\n/brackout - {GetString("Command.killflashall")}");
         sb.Append($"\n\n視界が暗転した参加者が発生した場合は、\nチャットコマンド[/brackout・/bo]か、左Control,K,Lを同時に押下してください");
 
@@ -1698,7 +1698,8 @@ public static partial class Utils
     {
         string t = DateTime.Now.ToString("yyyy-MM-dd_HH.mm.ss");
         string fileName = $"{path}/TownOfHost-v{Main.PluginVersion}-{t}.log";
-        FileInfo file = new(@$"{System.Environment.CurrentDirectory}/BepInEx/LogOutput.log");
+        LogFile.Flush();
+        FileInfo file = new(LogFile.CurrentPath);
         var logFile = file.CopyTo(fileName);
 
         /*try

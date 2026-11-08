@@ -60,7 +60,9 @@ public static class ChatCommandTable
 
     private static ChatCommand[] Build() => new ChatCommand[]
     {
-        new("/dump") { Local = _ => Utils.DumpLog() },
+        new("/dump") { Local = Modules.DevCommands.Dump },
+        new("/log") { Local = Modules.DevCommands.LogCommand },
+        new("/dev") { Local = Modules.DevCommands.DevCommand },
         new("/v", "/version") { Local = _ => ShowVersions() },
 #if DEBUG
         new("/sr", "/selectroles") { Host = c => ChatCommands.SelectRolesCommand(c.Args) },

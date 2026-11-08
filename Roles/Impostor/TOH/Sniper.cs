@@ -80,8 +80,6 @@ public sealed class Sniper : RoleBase, IImpostor
     }
     public override void Add()
     {
-        Logger.Disable("Sniper");
-
         SnipeBasePosition = new();
         LastPosition = new();
         BulletCount = MaxBulletCount;
