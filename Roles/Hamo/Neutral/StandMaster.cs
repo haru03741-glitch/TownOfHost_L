@@ -248,25 +248,25 @@ public sealed class StandMaster : HamoRoleBase, ILNKiller, IUsePhantomButton
 
     {
 
-        SoloWinOption.Create(RoleInfo, 9, defo: 1);
+        SoloWinOption.Create(RoleInfo, defo: 1);
 
-        OptionSummonCooldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.StandMasterSummonCooldown,
+        OptionSummonCooldown = FloatOptionItem.Create(RoleInfo, OptionName.StandMasterSummonCooldown,
 
             new(2.5f, 60f, 2.5f), 30f, false).SetValueFormat(OptionFormat.Seconds);
 
-        OptionStandStayTime = FloatOptionItem.Create(RoleInfo, 11, OptionName.StandMasterStayTime,
+        OptionStandStayTime = FloatOptionItem.Create(RoleInfo, OptionName.StandMasterStayTime,
 
             new(2.5f, 60f, 2.5f), 20f, false).SetValueFormat(OptionFormat.Seconds);
 
         OptionEnableKillAbility = BooleanOptionItem.Create(
 
-            RoleInfo, 12, OptionName.StandMasterEnableKillAbility, false, false);
+            RoleInfo, OptionName.StandMasterEnableKillAbility, false, false);
 
         OptionStandDeathGrantsKill = BooleanOptionItem.Create(
 
-            RoleInfo, 13, OptionName.StandMasterStandDeathGrantsKill, false, false);
+            RoleInfo, OptionName.StandMasterStandDeathGrantsKill, false, false);
 
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 18, OptionName.StandMasterKillCooldown,
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.StandMasterKillCooldown,
 
             new(0f, 60f, 2.5f), 30f, false).SetValueFormat(OptionFormat.Seconds);
 
@@ -274,19 +274,19 @@ public sealed class StandMaster : HamoRoleBase, ILNKiller, IUsePhantomButton
 
         OptionStandImpostorVision = BooleanOptionItem.Create(
 
-            RoleInfo, 14, OptionName.StandImpostorVision, false, false);
+            RoleInfo, OptionName.StandImpostorVision, false, false);
 
         OptionEnableTaskAddon = BooleanOptionItem.Create(
 
-            RoleInfo, 15, OptionName.StandEnableTaskAddon, false, false);
+            RoleInfo, OptionName.StandEnableTaskAddon, false, false);
 
         OptionAddonGiveToMaster = BooleanOptionItem.Create(
 
-            RoleInfo, 16, OptionName.StandAddonGiveToMaster, false, false, OptionEnableTaskAddon);
+            RoleInfo, OptionName.StandAddonGiveToMaster, false, false, OptionEnableTaskAddon);
 
         OptionAddonAllowDebuff = BooleanOptionItem.Create(
 
-            RoleInfo, 17, OptionName.StandAddonAllowDebuff, false, false, OptionEnableTaskAddon);
+            RoleInfo, OptionName.StandAddonAllowDebuff, false, false, OptionEnableTaskAddon);
 
         HideRoleOptions(CustomRoles.Stand);
 

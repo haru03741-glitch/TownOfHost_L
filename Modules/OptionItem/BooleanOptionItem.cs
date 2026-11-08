@@ -32,8 +32,8 @@ namespace TownOfHostL
         public BooleanGameSetting Setting { get; private set; }
 
         // コンストラクタ
-        public BooleanOptionItem(int id, string name, bool defaultValue, TabGroup tab, bool isSingleValue)
-            : base(id, name, defaultValue ? 1 : 0, tab, isSingleValue)
+        public BooleanOptionItem(string name, bool defaultValue, TabGroup tab, bool isSingleValue)
+            : base(name, defaultValue ? 1 : 0, tab, isSingleValue)
         {
             Setting = ScriptableObject.CreateInstance<BooleanGameSetting>();
             Setting.Value = defaultValue;
@@ -43,35 +43,35 @@ namespace TownOfHostL
         }
 
         public static BooleanOptionItem Create(
-            int id, string name, bool defaultValue, TabGroup tab, bool isSingleValue
+            string name, bool defaultValue, TabGroup tab, bool isSingleValue
         )
         {
-            return new BooleanOptionItem(id, name, defaultValue, tab, isSingleValue);
+            return new BooleanOptionItem(name, defaultValue, tab, isSingleValue);
         }
 
         public static BooleanOptionItem Create(
-            int id, Enum name, bool defaultValue, TabGroup tab, bool isSingleValue
+            Enum name, bool defaultValue, TabGroup tab, bool isSingleValue
         )
         {
-            return new BooleanOptionItem(id, name.ToString(), defaultValue, tab, isSingleValue);
+            return new BooleanOptionItem(name.ToString(), defaultValue, tab, isSingleValue);
         }
 
         public static BooleanOptionItem Create(
-            SimpleRoleInfo roleInfo, int idOffset, Enum name, bool defaultValue, bool isSingleValue, OptionItem parent = null
+            SimpleRoleInfo roleInfo, Enum name, bool defaultValue, bool isSingleValue, OptionItem parent = null
         )
         {
             var opt = new BooleanOptionItem(
-                roleInfo.ConfigId + idOffset, name.ToString(), defaultValue, roleInfo.Tab, isSingleValue
+                name.ToString(), defaultValue, roleInfo.Tab, isSingleValue
             );
             opt.SetParent(parent ?? roleInfo.RoleOption);
             return opt;
         }
         public static BooleanOptionItem Create(
-            SimpleRoleInfo roleInfo, int idOffset, string name, bool defaultValue, bool isSingleValue, OptionItem parent = null
+            SimpleRoleInfo roleInfo, string name, bool defaultValue, bool isSingleValue, OptionItem parent = null
         )
         {
             var opt = new BooleanOptionItem(
-                roleInfo.ConfigId + idOffset, name, defaultValue, roleInfo.Tab, isSingleValue
+                name, defaultValue, roleInfo.Tab, isSingleValue
             );
             opt.SetParent(parent ?? roleInfo.RoleOption);
             return opt;

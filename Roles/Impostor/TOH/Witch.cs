@@ -62,7 +62,7 @@ namespace TownOfHostL.Roles.Impostor
         public static List<Witch> Witches = new();
         public static void SetupOptionItem()
         {
-            OptionModeSwitchAction = StringOptionItem.Create(RoleInfo, 10, OptionName.WitchModeSwitchAction, EnumHelper.GetAllNames<SwitchTrigger>(), 0, false);
+            OptionModeSwitchAction = StringOptionItem.Create(RoleInfo, OptionName.WitchModeSwitchAction, EnumHelper.GetAllNames<SwitchTrigger>(), 0, false);
         }
         public override void Add()
         {

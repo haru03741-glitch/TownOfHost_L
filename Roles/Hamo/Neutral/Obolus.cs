@@ -70,31 +70,30 @@ public sealed class Obolus : HamoRoleBase, ILNKiller, IAdditionalWinner
 
     private static void SetupOptionItem()
     {
-        SoloWinOption.Create(RoleInfo, 9, defo: 1);
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 20f, false)
+        SoloWinOption.Create(RoleInfo, defo: 1);
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 20f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionKillLockTurn = IntegerOptionItem.Create(RoleInfo, 11, OptionName.ObolusKillLockTurn, new(0, 99, 1), 2, false)
+        OptionKillLockTurn = IntegerOptionItem.Create(RoleInfo, OptionName.ObolusKillLockTurn, new(0, 99, 1), 2, false)
             .SetValueFormat(OptionFormat.day);
-        OptionCanKillCount = IntegerOptionItem.Create(RoleInfo, 12, OptionName.WolfBoyShotLimit, new(1, 14, 1), 3, false)
+        OptionCanKillCount = IntegerOptionItem.Create(RoleInfo, OptionName.WolfBoyShotLimit, new(1, 14, 1), 3, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionNeedKillCount = IntegerOptionItem.Create(RoleInfo, 70, OptionName.ObolusNeedKillCont, new(1, 14, 1), 1, false)
+        OptionNeedKillCount = IntegerOptionItem.Create(RoleInfo, OptionName.ObolusNeedKillCont, new(1, 14, 1), 1, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, 13, GeneralOption.ImpostorVision, true, false);
-        OptionCanVent = BooleanOptionItem.Create(RoleInfo, 14, GeneralOption.CanVent, true, false);
-        OptionAddWin = BooleanOptionItem.Create(RoleInfo, 15, OptionName.CountKillerAddWin, false, false);
-        OptionCanWinOtherKiller = BooleanOptionItem.Create(RoleInfo, 16, OptionName.ObolusCanWinOtherKiller, false, false);
-        SetUpExtraWinKillTargetOptions(17);
-        RoleAddAddons.Create(RoleInfo, 71);
+        OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, GeneralOption.ImpostorVision, true, false);
+        OptionCanVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, true, false);
+        OptionAddWin = BooleanOptionItem.Create(RoleInfo, OptionName.CountKillerAddWin, false, false);
+        OptionCanWinOtherKiller = BooleanOptionItem.Create(RoleInfo, OptionName.ObolusCanWinOtherKiller, false, false);
+        SetUpExtraWinKillTargetOptions();
+        RoleAddAddons.Create(RoleInfo);
     }
 
     // 追加: 役職ごとの勝利対象トグルをまとめて生成
-    private static void SetUpExtraWinKillTargetOptions(int idOffset)
+    private static void SetUpExtraWinKillTargetOptions()
     {
         foreach (var role in CustomRolesHelper.AllStandardRoles.Where(x => x.IsNeutralKiller() && x != CustomRoles.Obolus))
         {
             
 
-            var id = RoleInfo.ConfigId + idOffset;
             var roleName = UtilsRoleText.GetRoleName(role);
             var replacementDic = new Dictionary<string, string>
         {
@@ -102,13 +101,13 @@ public sealed class Obolus : HamoRoleBase, ILNKiller, IAdditionalWinner
         };
 
             var item = BooleanOptionItem
-                .Create(id, OptionName.ObolusCanKill + "%role%", false, RoleInfo.Tab, false)
+                .Create(OptionName.ObolusCanKill + "%role%", false, RoleInfo.Tab, false)
                 .SetParent(OptionCanWinOtherKiller)
-                .SetParentRole(CustomRoles.Obolus);
+                .SetParentRole(CustomRoles.Obolus)
+                .SetKeyName($"{OptionName.ObolusCanKill}{role}");
             item.ReplacementDictionary = replacementDic;
 
             ExtraWinKillTargetOptions[role] = item;
-            idOffset++;
         }
     }
     public override void ApplyGameOptions(IGameOptions opt)

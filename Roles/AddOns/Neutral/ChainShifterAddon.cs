@@ -14,7 +14,6 @@ public static class ChainShifterAddon
         onAdd: Add,
         flags: RoleFlags.FirstWriteAddOn | RoleFlags.TasksNotCountedForWin | RoleFlags.NeverWins);
 
-    //private static readonly int Id = (int)offsetId.AddonNeu + 100;
     //public static Color RoleColor = Utils.GetRoleColor(CustomRoles.ChainShifter);
 
     private static Dictionary<byte, float> ShiftInfo = new();

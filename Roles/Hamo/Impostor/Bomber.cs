@@ -65,11 +65,11 @@ namespace TownOfHostL.Roles.Hamo.Impostor
 
         private static void SetupOptionItem()
         {
-            OptionKillDelay = FloatOptionItem.Create(RoleInfo, 10, OptionName.BomberKillDelay, new(1f, 1000f, 1f), 10f, false)
+            OptionKillDelay = FloatOptionItem.Create(RoleInfo, OptionName.BomberKillDelay, new(1f, 1000f, 1f), 10f, false)
                 .SetValueFormat(OptionFormat.Seconds);
-            OptionBlastrange = FloatOptionItem.Create(RoleInfo, 11, OptionName.blastrange, new(0.5f, 30f, 0.5f), 1f, false).SetValueFormat(OptionFormat.Multiplier);
-            OptionBomberExplosion = IntegerOptionItem.Create(RoleInfo, 12, OptionName.BomberExplosion, new(1, 99, 1), 2, false);
-            OptionCooldown = FloatOptionItem.Create(RoleInfo, 13, GeneralOption.Cooldown, new(0f, 999f, 0.5f), 15f, false).SetValueFormat(OptionFormat.Seconds);
+            OptionBlastrange = FloatOptionItem.Create(RoleInfo, OptionName.blastrange, new(0.5f, 30f, 0.5f), 1f, false).SetValueFormat(OptionFormat.Multiplier);
+            OptionBomberExplosion = IntegerOptionItem.Create(RoleInfo, OptionName.BomberExplosion, new(1, 99, 1), 2, false);
+            OptionCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.Cooldown, new(0f, 999f, 0.5f), 15f, false).SetValueFormat(OptionFormat.Seconds);
         }
 
         private void SendRPC()

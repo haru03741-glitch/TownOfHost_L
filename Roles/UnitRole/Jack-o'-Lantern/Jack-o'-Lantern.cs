@@ -59,13 +59,13 @@ public sealed class JackOLantern : RoleBase
     // 直接設置
     public static void SetupRoleOptions()
     {
-        TextOptionItem.Create(41, "Head.LimitedTimeRoleH", TabGroup.UnitRoles)
+        TextOptionItem.Create("Head.LimitedTimeRoleH", TabGroup.UnitRoles)
             .SetColor(RoleInfo.RoleColor);
-        var spawnOption = IntegerOptionItem.Create(RoleInfo.ConfigId, CustomRoles.JackOLantern.ToString(), new(0, 100, 10), 0, TabGroup.UnitRoles, false)
+        var spawnOption = IntegerOptionItem.Create(CustomRoles.JackOLantern.ToString(), new(0, 100, 10), 0, TabGroup.UnitRoles, false)
             .SetColor(RoleInfo.RoleColor)
             .SetValueFormat(OptionFormat.Percent)
             .SetGameMode(CustomGameMode.Standard) as IntegerOptionItem;
-        var countOption = IntegerOptionItem.Create(RoleInfo.ConfigId + 1, "Maximum", new(1, 1, 1), 1, TabGroup.UnitRoles, false)
+        var countOption = IntegerOptionItem.Create("Maximum", new(1, 1, 1), 1, TabGroup.UnitRoles, false)
             .SetParent(spawnOption)
             .SetValueFormat(OptionFormat.Pair)
             .SetFixValue(true)
@@ -79,23 +79,23 @@ public sealed class JackOLantern : RoleBase
         Dictionary<string, string> lanternDic = new() { { "%lantern%", Utils.ColorString(RoleInfo.RoleColor, Utils.GetRoleName(CustomRoles.Lantern)) } };
 
         // ジャック
-        OptionJackKillCooldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.JackKillCooldown, new(5.0f, 180f, 2.5f), 30f, false).SetReplacementDictionary(jackDic)
+        OptionJackKillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.JackKillCooldown, new(5.0f, 180f, 2.5f), 30f, false).SetReplacementDictionary(jackDic)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionJackRoleRemoveKillCount = IntegerOptionItem.Create(RoleInfo, 11, OptionName.JackRoleRemoveKillCount, new(0, 15, 1), 2, false).SetReplacementDictionary(jackDic)
+        OptionJackRoleRemoveKillCount = IntegerOptionItem.Create(RoleInfo, OptionName.JackRoleRemoveKillCount, new(0, 15, 1), 2, false).SetReplacementDictionary(jackDic)
             .SetValueFormat(OptionFormat.Pieces);
 
         // オー
-        OptionjORoleDetectCooldown = FloatOptionItem.Create(RoleInfo, 12, OptionName.jORoleDetectCooldown, new(5.0f, 180f, 2.5f), 45f, false).SetReplacementDictionary(joDic)
+        OptionjORoleDetectCooldown = FloatOptionItem.Create(RoleInfo, OptionName.jORoleDetectCooldown, new(5.0f, 180f, 2.5f), 45f, false).SetReplacementDictionary(joDic)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionjOCanDetectNeutral = BooleanOptionItem.Create(RoleInfo, 13, OptionName.jOCanDetectNeutral, false, false).SetReplacementDictionary(joDic);
-        OptionjOSendRoleCount = IntegerOptionItem.Create(RoleInfo, 14, OptionName.jOSendRoleCount, new(0, 15, 1), 2, false).SetReplacementDictionary(joDic)
+        OptionjOCanDetectNeutral = BooleanOptionItem.Create(RoleInfo, OptionName.jOCanDetectNeutral, false, false).SetReplacementDictionary(joDic);
+        OptionjOSendRoleCount = IntegerOptionItem.Create(RoleInfo, OptionName.jOSendRoleCount, new(0, 15, 1), 2, false).SetReplacementDictionary(joDic)
             .SetValueFormat(OptionFormat.Pieces);
-        OptionjOCanVent = BooleanOptionItem.Create(RoleInfo, 15, OptionName.jOCanVent, true, false).SetReplacementDictionary(joDic);
-        Options.SetUpAddOnOptions(RoleInfo.ConfigId + 20, CustomRoles.jO, RoleInfo.Tab, RoleInfo.RoleName, true);
+        OptionjOCanVent = BooleanOptionItem.Create(RoleInfo, OptionName.jOCanVent, true, false).SetReplacementDictionary(joDic);
+        Options.SetUpAddOnOptions(CustomRoles.jO, RoleInfo.Tab, RoleInfo.RoleName, true);
 
         // ランタン
-        OptionLanternVisionDuringFixLight = IntegerOptionItem.Create(RoleInfo, 17, OptionName.LanternVisionDuringFixLight, new(20, 80, 10), 50, false).SetReplacementDictionary(lanternDic)
+        OptionLanternVisionDuringFixLight = IntegerOptionItem.Create(RoleInfo, OptionName.LanternVisionDuringFixLight, new(20, 80, 10), 50, false).SetReplacementDictionary(lanternDic)
             .SetValueFormat(OptionFormat.Percent);
-        OptionLanternRoleReceivedExcludeNormalCrewmate = BooleanOptionItem.Create(RoleInfo, 18, OptionName.LanternRoleReceivedExcludeNormalCrewmate, false, false).SetReplacementDictionary(lanternDic);
+        OptionLanternRoleReceivedExcludeNormalCrewmate = BooleanOptionItem.Create(RoleInfo, OptionName.LanternRoleReceivedExcludeNormalCrewmate, false, false).SetReplacementDictionary(lanternDic);
     }
 }

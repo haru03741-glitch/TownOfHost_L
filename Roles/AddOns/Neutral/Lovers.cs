@@ -22,15 +22,14 @@ public static class Lovers
         chatCommand: "ラバーズ");
 
     private static Color RoleColor => Utils.GetRoleColor(CustomRoles.Lovers);
-    private static readonly int Id = (int)offsetId.AddonNeu + 0;
     public static List<PlayerControl> playersList = new(2);
     private static bool isLoversDead = false;
     public static OptionItem LoversAddWin;
 
     public static void SetupCustomOption()
     {
-        SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.Lovers, (1, 1, 1));
-        LoversAddWin = BooleanOptionItem.Create(Id + 10, "LoversAddWin", false, TabGroup.Addons, false).SetParent(CustomRoleSpawnChances[CustomRoles.Lovers]);
+        SetupRoleOptions(TabGroup.Addons, CustomRoles.Lovers, (1, 1, 1));
+        LoversAddWin = BooleanOptionItem.Create("LoversAddWin", false, TabGroup.Addons, false).SetParent(CustomRoleSpawnChances[CustomRoles.Lovers]);
     }
     [GameModuleInitializer]
     public static void Init()

@@ -39,9 +39,9 @@ public sealed class Terrorist : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionCanSuicideWin = BooleanOptionItem.Create(RoleInfo, 10, OptionName.CanTerroristSuicideWin, false, false);
+        OptionCanSuicideWin = BooleanOptionItem.Create(RoleInfo, OptionName.CanTerroristSuicideWin, false, false);
         // 20-23を使用
-        Tasks = Options.OverrideTasksData.Create(RoleInfo, 20);
+        Tasks = Options.OverrideTasksData.Create(RoleInfo);
     }
 
     public override void ApplyGameOptions(IGameOptions opt)

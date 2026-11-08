@@ -58,13 +58,13 @@ namespace TownOfHostL.Roles.Neutral
 
         private static void SetupOptionItem()
         {
-            OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(2.5f, 180f, 2.5f), 30f, false)
+            OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(2.5f, 180f, 2.5f), 30f, false)
                 .SetValueFormat(OptionFormat.Seconds);
-            OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, 11, GeneralOption.ImpostorVision, false, false);
-            OptionCanVent = BooleanOptionItem.Create(RoleInfo, 12, GeneralOption.CanVent, false, false);
-            OptionKillSuccessRate = IntegerOptionItem.Create(RoleInfo, 13, OptionName.OgreKillSuccessRate, new(5, 100, 5), 20, false)
+            OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, GeneralOption.ImpostorVision, false, false);
+            OptionCanVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, false, false);
+            OptionKillSuccessRate = IntegerOptionItem.Create(RoleInfo, OptionName.OgreKillSuccessRate, new(5, 100, 5), 20, false)
                 .SetValueFormat(OptionFormat.Percent);
-            OptionKilledGuardRate = IntegerOptionItem.Create(RoleInfo, 14, OptionName.OgreKilledGuardRate, new(5, 100, 5), 30, false)
+            OptionKilledGuardRate = IntegerOptionItem.Create(RoleInfo, OptionName.OgreKilledGuardRate, new(5, 100, 5), 30, false)
                 .SetValueFormat(OptionFormat.Percent);
         }
         public override void Add()

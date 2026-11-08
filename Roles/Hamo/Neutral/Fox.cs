@@ -71,25 +71,25 @@ public sealed class Fox : HamoRoleBase, ISystemTypeUpdateHook, IRoomTasker
     static void SetupOptionItem()
     {
         string[] values = EnumHelper.GetAllNames<FoxCrewTaskFin>();
-        SoloWinOption.Create(RoleInfo, 10, defo: 15);
-        OptionCrewTaskFinish = StringOptionItem.Create(RoleInfo, 11, OptionName.FoxCrewTaskFin, values, 0, false);
-        OptionDieAliveCount = IntegerOptionItem.Create(RoleInfo, 12, OptionName.FoxDieAliveCount, new(0, 15, 1), 3, false);
-        ObjectOptionitem.Create(RoleInfo, 13, "FoxAbilitySetting", true, null).SetOptionName(() => "Ability Setting");
-        OptionEngVentCoolDown = FloatOptionItem.Create(RoleInfo, 14, StringNames.EngineerCooldown, OptionBaseCoolTime, 10, false).SetValueFormat(OptionFormat.Seconds);
-        OptionEngVentInmaxtime = FloatOptionItem.Create(RoleInfo, 15, StringNames.EngineerInVentCooldown, new(0.5f, 30, 0.5f), 3, false).SetValueFormat(OptionFormat.Seconds);
-        OptionTellDie = BooleanOptionItem.Create(RoleInfo, 16, OptionName.FoxTellDie, false, false);
-        OptionNoticeRoomTask = BooleanOptionItem.Create(RoleInfo, 24, OptionName.FoxNoticeRoomTask, true, false);
-        ObjectOptionitem.Create(RoleInfo, 17, "FoxMeterSetting", true, null).SetOptionName(() => "Meter Setting");
-        OptionMeterCount = FloatOptionItem.Create(RoleInfo, 18, OptionName.FoxMeterCount, new(5, 1200, 5), 60, false).SetValueFormat(OptionFormat.Seconds);
-        OptionDistance = FloatOptionItem.Create(RoleInfo, 19, OptionName.FoxMeterDistance, new(0.5f, 5f, 0.25f), 1.25f, false).SetValueFormat(OptionFormat.Multiplier);
-        OptionOnlySeeKiller = BooleanOptionItem.Create(RoleInfo, 20, OptionName.FoxShowRoleOnlyKiller, false, false);
-        OptionCanSeeImpostor = BooleanOptionItem.Create(RoleInfo, 25, OptionName.FoxCanSeeImposotr, true, false, OptionOnlySeeKiller);
-        OptionCanSeeNeutralKiller = BooleanOptionItem.Create(RoleInfo, 26, OptionName.FoxCanSeeNeutralKiller, true, false, OptionOnlySeeKiller);
-        OptionCanSeeOther = BooleanOptionItem.Create(RoleInfo, 27, OptionName.FoxCanSeeOtherKiller, true, false, OptionOnlySeeKiller);
-        ObjectOptionitem.Create(RoleInfo, 21, "FoxGuardSetting", true, null).SetOptionName(() => "Guard Setting");
-        OptionGiveGuardTaskCount = IntegerOptionItem.Create(RoleInfo, 22, OptionName.FoxGiveGuardTaskcount, new(1, 99, 1), 3, false);
-        OptionGiveGuardMax = IntegerOptionItem.Create(RoleInfo, 23, OptionName.FoxGiveGuardMax, new(0, 99, 1), 2, false);
-        Options.OverrideTasksData.Create(RoleInfo, 30);
+        SoloWinOption.Create(RoleInfo, defo: 15);
+        OptionCrewTaskFinish = StringOptionItem.Create(RoleInfo, OptionName.FoxCrewTaskFin, values, 0, false);
+        OptionDieAliveCount = IntegerOptionItem.Create(RoleInfo, OptionName.FoxDieAliveCount, new(0, 15, 1), 3, false);
+        ObjectOptionitem.Create(RoleInfo, "FoxAbilitySetting", true, null).SetOptionName(() => "Ability Setting");
+        OptionEngVentCoolDown = FloatOptionItem.Create(RoleInfo, StringNames.EngineerCooldown, OptionBaseCoolTime, 10, false).SetValueFormat(OptionFormat.Seconds);
+        OptionEngVentInmaxtime = FloatOptionItem.Create(RoleInfo, StringNames.EngineerInVentCooldown, new(0.5f, 30, 0.5f), 3, false).SetValueFormat(OptionFormat.Seconds);
+        OptionTellDie = BooleanOptionItem.Create(RoleInfo, OptionName.FoxTellDie, false, false);
+        OptionNoticeRoomTask = BooleanOptionItem.Create(RoleInfo, OptionName.FoxNoticeRoomTask, true, false);
+        ObjectOptionitem.Create(RoleInfo, "FoxMeterSetting", true, null).SetOptionName(() => "Meter Setting");
+        OptionMeterCount = FloatOptionItem.Create(RoleInfo, OptionName.FoxMeterCount, new(5, 1200, 5), 60, false).SetValueFormat(OptionFormat.Seconds);
+        OptionDistance = FloatOptionItem.Create(RoleInfo, OptionName.FoxMeterDistance, new(0.5f, 5f, 0.25f), 1.25f, false).SetValueFormat(OptionFormat.Multiplier);
+        OptionOnlySeeKiller = BooleanOptionItem.Create(RoleInfo, OptionName.FoxShowRoleOnlyKiller, false, false);
+        OptionCanSeeImpostor = BooleanOptionItem.Create(RoleInfo, OptionName.FoxCanSeeImposotr, true, false, OptionOnlySeeKiller);
+        OptionCanSeeNeutralKiller = BooleanOptionItem.Create(RoleInfo, OptionName.FoxCanSeeNeutralKiller, true, false, OptionOnlySeeKiller);
+        OptionCanSeeOther = BooleanOptionItem.Create(RoleInfo, OptionName.FoxCanSeeOtherKiller, true, false, OptionOnlySeeKiller);
+        ObjectOptionitem.Create(RoleInfo, "FoxGuardSetting", true, null).SetOptionName(() => "Guard Setting");
+        OptionGiveGuardTaskCount = IntegerOptionItem.Create(RoleInfo, OptionName.FoxGiveGuardTaskcount, new(1, 99, 1), 3, false);
+        OptionGiveGuardMax = IntegerOptionItem.Create(RoleInfo, OptionName.FoxGiveGuardMax, new(0, 99, 1), 2, false);
+        Options.OverrideTasksData.Create(RoleInfo);
     }
     public override void ApplyGameOptions(IGameOptions opt)
     {

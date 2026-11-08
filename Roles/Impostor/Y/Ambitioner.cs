@@ -38,9 +38,9 @@ public sealed class Ambitioner : RoleBase, IImpostor
 
     public static void SetupOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(0f, 180f, 2.5f), 30f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 2.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionKillCoolDecreaseRate = FloatOptionItem.Create(RoleInfo, 11, OptionName.AmbitionerKillCoolDecreaseRate, new(0.1f, 1f, 0.1f), 0.5f, false)
+        OptionKillCoolDecreaseRate = FloatOptionItem.Create(RoleInfo, OptionName.AmbitionerKillCoolDecreaseRate, new(0.1f, 1f, 0.1f), 0.5f, false)
             .SetValueFormat(OptionFormat.Multiplier);
     }
     public override void Add()

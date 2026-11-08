@@ -49,10 +49,10 @@ namespace TownOfHostL.Roles.Impostor
 
         private static void SetupOptionItem()
         {
-            optionCanSeeAllGhostsRoles = BooleanOptionItem.Create(RoleInfo, 10, OptionName.InsiderCanSeeAllGhostsRoles, false, false);
-            optionCanSeeImpostorAbilities = BooleanOptionItem.Create(RoleInfo, 11, OptionName.InsiderCanSeeImpostorAbilities, true, false);
-            optionCanSeeMadmates = BooleanOptionItem.Create(RoleInfo, 12, OptionName.InsiderCanSeeMadmates, false, false);
-            optionKillCountToSeeMadmates = IntegerOptionItem.Create(RoleInfo, 13, OptionName.InsiderKillCountToSeeMadmates, new(0, 15, 1), 2, false)
+            optionCanSeeAllGhostsRoles = BooleanOptionItem.Create(RoleInfo, OptionName.InsiderCanSeeAllGhostsRoles, false, false);
+            optionCanSeeImpostorAbilities = BooleanOptionItem.Create(RoleInfo, OptionName.InsiderCanSeeImpostorAbilities, true, false);
+            optionCanSeeMadmates = BooleanOptionItem.Create(RoleInfo, OptionName.InsiderCanSeeMadmates, false, false);
+            optionKillCountToSeeMadmates = IntegerOptionItem.Create(RoleInfo, OptionName.InsiderKillCountToSeeMadmates, new(0, 15, 1), 2, false)
                 .SetParent(optionCanSeeMadmates)
                 .SetValueFormat(OptionFormat.Times);
         }

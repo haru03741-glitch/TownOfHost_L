@@ -46,13 +46,13 @@ public sealed class Escalationer : RoleBase, IImpostor
 
     public static void SetupOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(0f, 180f, 2.5f), 30f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 2.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionKillCoolDecrease = FloatOptionItem.Create(RoleInfo, 11, OptionName.EscalationerKillCoolDecrease, new(0f, 60f, 0.5f), 1.0f, false)
+        OptionKillCoolDecrease = FloatOptionItem.Create(RoleInfo, OptionName.EscalationerKillCoolDecrease, new(0f, 60f, 0.5f), 1.0f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionSpeedUpRate = FloatOptionItem.Create(RoleInfo, 12, OptionName.EscalationerSpeedUpRate, new(0.1f, 2f, 0.05f), 0.15f, false)
+        OptionSpeedUpRate = FloatOptionItem.Create(RoleInfo, OptionName.EscalationerSpeedUpRate, new(0.1f, 2f, 0.05f), 0.15f, false)
             .SetValueFormat(OptionFormat.Multiplier);
-        OptionSpeedAndCoolReset = BooleanOptionItem.Create(RoleInfo, 13, OptionName.EscalationerSpeedAndCoolReset, false, false);
+        OptionSpeedAndCoolReset = BooleanOptionItem.Create(RoleInfo, OptionName.EscalationerSpeedAndCoolReset, false, false);
     }
     public override void Add()
     {

@@ -11,7 +11,8 @@ namespace TownOfHostL.Modules;
 public static class OptionSerializer
 {
     private static LogHandler logger = Logger.Handler(nameof(OptionSerializer));
-    private const string Header = "%TOHOptions%", Footer = "%End%";
+    // 中身の形が数値 ID の差の並びだった頃の文字列 (%TOHOptions%) とは別の見出しにして、取り違えて読まないようにする
+    private const string Header = "%TOHLOptions%", Footer = "%End%";
     private static readonly DirectoryInfo exportDir = new("./TOHL_DATA/OptionOutputs");
     public static void SaveToClipboard()
     {
@@ -49,32 +50,31 @@ public static class OptionSerializer
         return builder.ToString();
     }
     /// <summary>
-    /// <see cref="LoadModOptionsString"/>で読み込める現在のプリセットのMod設定の文字列データを生成します<br/>
-    /// '!'が各オプションを区切り，','が前のオプションIDとの差とオプションの値を区切ります<br/>
-    /// 前のオプションIDとの差が1の場合，空文字列で表現します<br/>
-    /// 文字数削減のため，オプション値 = 0はオプションデータ全体を記述しないこと，オプション値 = 1はオプション値のみを省略することで表現します<br/>
-    /// [オプション1のID - 0],[オプションの1の値]![オプション2のID - オプション1のID],[オプション2の値]!...<br/>
-    /// 整数型は文字数削減のため62進数に変換します
+    /// <see cref="LoadModOptionsString"/>で読み込める、現在のプリセットの Mod 設定の文字列を作ります<br/>
+    /// 初期値と違う設定だけを「キー=値」で並べ、';' で区切ります (キーは <see cref="OptionItem.Key"/>)<br/>
+    /// キーで指すので、設定が足されたり並びが変わったりした版の間でも、同じキーの設定はそのまま読めます
     /// </summary>
     /// <returns>生成された文字列</returns>
     public static string GenerateModOptionsString()
     {
-        var builder = new StringBuilder(1024);
-        var options = OptionItem.AllOptions.Where(option => option is not PresetOptionItem).OrderBy(option => option.Id);
-        var lastId = 0;
-        foreach (var option in options)
+        var builder = new StringBuilder(4096);
+        foreach (var option in OptionItem.AllOptions)
         {
+            if (option is PresetOptionItem) continue;
             var value = option.GetValue();
-            if (value == 0)
+            if (value == option.DefaultValue) continue;
+            var key = option.Key;
+            if (key.IndexOfAny(Reserved) >= 0 || key.Contains(Footer))
             {
+                logger.Warn($"区切りの文字を含むキーなので書き出しません: {key}");
                 continue;
             }
-            var idDelta = option.Id - lastId;
-            builder.Append(idDelta == 1 ? "" : Base62.ToBase62(idDelta)).Append(',').Append(value == 1 ? "" : Base62.ToBase62(value)).Append('!');
-            lastId = option.Id;
+            builder.Append(key).Append(KeyValueSeparator).Append(value).Append(EntrySeparator);
         }
         return builder.ToString();
     }
+    private const char EntrySeparator = ';', KeyValueSeparator = '=';
+    private static readonly char[] Reserved = { EntrySeparator, KeyValueSeparator, '&' };
     /// <summary>
     /// <see cref="LoadVanillaOptionsString"/>で読み込める現在のバニラ設定の文字列データを生成します<br/>
     /// <see cref="GameOptionsFactory.ToBytes"/>で生成されたバイト列を<see cref="Convert.ToBase64String"/>でBase64文字列に変換します
@@ -137,31 +137,33 @@ public static class OptionSerializer
         Logger.SendInGame(Translator.GetString("Message.FailedToLoadOptions"));
     }
     /// <summary>
-    /// <see cref="GenerateModOptionsString"/>で生成された形式の文字列を読み込んで現在のプリセットを上書きします
+    /// <see cref="GenerateModOptionsString"/>で生成された形式の文字列を読み込んで現在のプリセットを上書きします<br/>
+    /// 書かれていない設定は初期値に戻します。今の版に無いキーは読み飛ばします
     /// </summary>
     /// <param name="source">オプション情報の文字列</param>
     public static void LoadModOptionsString(string source)
     {
-        var modOptions = source.Split('!', StringSplitOptions.RemoveEmptyEntries);
-        var parsedModOptions = new Dictionary<int, int>(modOptions.Length);
-        var lastId = 0;
-        foreach (var modOption in modOptions)
+        var entries = source.Split(EntrySeparator, StringSplitOptions.RemoveEmptyEntries);
+        var parsed = new Dictionary<OptionItem, int>(entries.Length);
+        var unknown = 0;
+        foreach (var entry in entries)
         {
-            var split = modOption.Split(',');
-            var idDelta = split[0] == "" ? 1 : Base62.ToInt(split[0]);
-            lastId += idDelta;
-            var value = split[1] == "" ? 1 : Base62.ToInt(split[1]);
-            parsedModOptions[lastId] = value;
+            var at = entry.LastIndexOf(KeyValueSeparator);
+            if (at <= 0 || !int.TryParse(entry[(at + 1)..], out var value))
+            {
+                logger.Info($"読めない項目を飛ばします: {entry}");
+                continue;
+            }
+            if (OptionItem.TryGetByKey(entry[..at], out var option)) parsed[option] = value;
+            else unknown++;
         }
+        if (unknown > 0) logger.Info($"今の版に無い設定 {unknown} 個を読み飛ばしました");
         SettingsUI.SettingsPages.Batch(() =>
         {
             foreach (var option in OptionItem.AllOptions)
             {
-                if (option is PresetOptionItem)
-                {
-                    continue;
-                }
-                option.SetValue(parsedModOptions.TryGetValue(option.Id, out var value) ? value : 0, false);
+                if (option is PresetOptionItem) continue;
+                option.SetValue(parsed.TryGetValue(option, out var value) ? value : option.DefaultValue, false);
             }
         });
         OptionItem.SyncAllOptions();

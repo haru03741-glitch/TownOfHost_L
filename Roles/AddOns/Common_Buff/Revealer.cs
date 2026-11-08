@@ -18,14 +18,13 @@ public static class Revealer
         chatCommand: "リヴェラー",
         assignAtRandom: true);
 
-    private static readonly int Id = (int)offsetId.AddonBuff + 1300;
     private static List<byte> playerIdList = new();
     private static HashSet<byte> SeenIdList = new();
     private static HashSet<byte> pendingRevealList = new();
 
     public static void SetupCustomOption()
     {
-        SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.Revealer);
+        SetupRoleOptions(TabGroup.Addons, CustomRoles.Revealer);
     }
     [GameModuleInitializer]
     public static void Init()

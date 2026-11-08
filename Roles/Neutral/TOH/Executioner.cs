@@ -64,9 +64,9 @@ public sealed class Executioner : RoleBase, IAdditionalWinner
     private static void SetupOptionItem()
     {
         var cRolesString = ChangeRoles.Select(x => x.ToString()).ToArray();
-        OptionCanTargetImpostor = BooleanOptionItem.Create(RoleInfo, 10, OptionName.ExecutionerCanTargetImpostor, false, false);
-        OptionCanTargetNeutralKiller = BooleanOptionItem.Create(RoleInfo, 12, OptionName.ExecutionerCanTargetNeutralKiller, false, false);
-        OptionChangeRolesAfterTargetKilled = StringOptionItem.Create(RoleInfo, 11, OptionName.ExecutionerChangeRolesAfterTargetKilled, cRolesString, 1, false);
+        OptionCanTargetImpostor = BooleanOptionItem.Create(RoleInfo, OptionName.ExecutionerCanTargetImpostor, false, false);
+        OptionCanTargetNeutralKiller = BooleanOptionItem.Create(RoleInfo, OptionName.ExecutionerCanTargetNeutralKiller, false, false);
+        OptionChangeRolesAfterTargetKilled = StringOptionItem.Create(RoleInfo, OptionName.ExecutionerChangeRolesAfterTargetKilled, cRolesString, 1, false);
     }
     public override bool NeedsSeenNames => true;
 

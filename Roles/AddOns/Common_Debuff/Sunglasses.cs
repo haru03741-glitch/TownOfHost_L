@@ -20,7 +20,6 @@ public static class Sunglasses
         chatCommand: "サングラス",
         assignAtRandom: true);
 
-    private static readonly int Id = (int)offsetId.AddonDebuff + 0;
     private static List<byte> playerIdList = new();
 
     private static OptionItem OptionSubCrewmateVision;
@@ -31,10 +30,10 @@ public static class Sunglasses
 
     public static void SetupCustomOption()
     {
-        SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.Sunglasses);
-        OptionSubCrewmateVision = FloatOptionItem.Create(Id + 10, "SunglassesSubCrewmateVision", new(0f, 5f, 0.05f), 0.2f, TabGroup.Addons, false)
+        SetupRoleOptions(TabGroup.Addons, CustomRoles.Sunglasses);
+        OptionSubCrewmateVision = FloatOptionItem.Create("SunglassesSubCrewmateVision", new(0f, 5f, 0.05f), 0.2f, TabGroup.Addons, false)
             .SetValueFormat(OptionFormat.Multiplier);
-        OptionSubImpostorVision = FloatOptionItem.Create(Id + 11, "SunglassesSubImpostorVision", new(0f, 5f, 0.1f), 0.5f, TabGroup.Addons, false)
+        OptionSubImpostorVision = FloatOptionItem.Create("SunglassesSubImpostorVision", new(0f, 5f, 0.1f), 0.5f, TabGroup.Addons, false)
             .SetValueFormat(OptionFormat.Multiplier);
     }
     [GameModuleInitializer]

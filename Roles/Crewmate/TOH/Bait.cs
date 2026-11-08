@@ -36,7 +36,7 @@ public sealed class Bait : RoleBase
     private static float WaitTime;
     private static void SetUpOptionItem()
     {
-        OptionWaitTime = FloatOptionItem.Create(RoleInfo, 10, OptionName.BaitWaitTime, new(0f, 15f, 1f), 0f, false)
+        OptionWaitTime = FloatOptionItem.Create(RoleInfo, OptionName.BaitWaitTime, new(0f, 15f, 1f), 0f, false)
             .SetValueFormat(OptionFormat.Seconds);
     }
 

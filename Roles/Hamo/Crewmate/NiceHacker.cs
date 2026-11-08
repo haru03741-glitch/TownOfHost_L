@@ -64,10 +64,10 @@ public sealed class NiceHacker : HamoRoleBase
 
     private static void SetupOptionItem()
     {
-        OptionCanSeeDeadBody = BooleanOptionItem.Create(RoleInfo, 10, OptionName.NiceHackerCanSeeDeadBody, false, false);
-        OptionMaxCount = IntegerOptionItem.Create(RoleInfo, 11, OptionName.NiceHackerMaxCount, new(1, 99, 1), 3, false)
+        OptionCanSeeDeadBody = BooleanOptionItem.Create(RoleInfo, OptionName.NiceHackerCanSeeDeadBody, false, false);
+        OptionMaxCount = IntegerOptionItem.Create(RoleInfo, OptionName.NiceHackerMaxCount, new(1, 99, 1), 3, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionSecondsBefore = FloatOptionItem.Create(RoleInfo, 12, OptionName.NiceHackerSecondsBefore, new(0f, 30f, 0.5f), 10f, false)
+        OptionSecondsBefore = FloatOptionItem.Create(RoleInfo, OptionName.NiceHackerSecondsBefore, new(0f, 30f, 0.5f), 10f, false)
             .SetValueFormat(OptionFormat.Seconds);
     }
 

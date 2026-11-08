@@ -39,10 +39,10 @@ public sealed class MadGuardian : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionCanSeeWhoTriedToKill = BooleanOptionItem.Create(RoleInfo, 10, OptionName.MadGuardianCanSeeWhoTriedToKill, false, false);
+        OptionCanSeeWhoTriedToKill = BooleanOptionItem.Create(RoleInfo, OptionName.MadGuardianCanSeeWhoTriedToKill, false, false);
         //ID10120~10123を使用
-        Tasks = OverrideTasksData.Create(RoleInfo, 20);
-        SetUpAddOnOptions(RoleInfo.ConfigId + 30, RoleInfo.RoleName, RoleInfo.Tab);
+        Tasks = OverrideTasksData.Create(RoleInfo);
+        SetUpAddOnOptions(RoleInfo.RoleName, RoleInfo.Tab);
     }
     public override bool OnCheckMurderAsTarget(MurderInfo info)
     {

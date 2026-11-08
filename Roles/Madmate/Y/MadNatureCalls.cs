@@ -27,7 +27,7 @@ public sealed class MadNatureCalls : RoleBase
 
     public static void SetupOptionItem()
     {
-        Options.SetUpAddOnOptions(RoleInfo.ConfigId + 10, RoleInfo.RoleName, RoleInfo.Tab);
+        Options.SetUpAddOnOptions(RoleInfo.RoleName, RoleInfo.Tab);
     }
     public override bool OnEnterVent(PlayerPhysics physics, int ventId)
     {

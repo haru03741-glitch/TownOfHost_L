@@ -19,12 +19,11 @@ public static class NonReport
         chatCommand: "ノンレポート",
         assignAtRandom: true);
 
-    private static readonly int Id = (int)offsetId.AddonDebuff + 300;
     private static List<byte> playerIdList = new();
 
     public static void SetupCustomOption()
     {
-        SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.NonReport);
+        SetupRoleOptions(TabGroup.Addons, CustomRoles.NonReport);
     }
     [GameModuleInitializer]
     public static void Init()

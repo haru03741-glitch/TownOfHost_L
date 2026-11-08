@@ -67,17 +67,17 @@ public sealed class MadGuesser : VoteGuesser
 
     public static void SetupOptionItem()
     {
-        OptionCanVent = BooleanOptionItem.Create(RoleInfo, 10, OptionName.CanVent, false, false);
-        OptionAlwaysSuicide = BooleanOptionItem.Create(RoleInfo, 16, OptionName.MadGuesserAlwaysSuicide, false, false);
-        //OptionCanAlsoBeExposedToImpostor = BooleanOptionItem.Create(RoleInfo, 11, OptionName.MadSnitchCanAlsoBeExposedToImpostor, false, false);
-        OptionNumOfGuess = IntegerOptionItem.Create(RoleInfo, 13, OptionName.GuesserNumOfGuess, new(1, 15, 1), 1, false)
+        OptionCanVent = BooleanOptionItem.Create(RoleInfo, OptionName.CanVent, false, false);
+        OptionAlwaysSuicide = BooleanOptionItem.Create(RoleInfo, OptionName.MadGuesserAlwaysSuicide, false, false);
+        //OptionCanAlsoBeExposedToImpostor = BooleanOptionItem.Create(RoleInfo, OptionName.MadSnitchCanAlsoBeExposedToImpostor, false, false);
+        OptionNumOfGuess = IntegerOptionItem.Create(RoleInfo, OptionName.GuesserNumOfGuess, new(1, 15, 1), 1, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionMultipleInMeeting = BooleanOptionItem.Create(RoleInfo, 14, OptionName.GuesserMultipleInMeeting, false, false);
-        OptionHideMisfire = BooleanOptionItem.Create(RoleInfo, 15, OptionName.GuesserHideMisfire, false, false);
-        OptionGuessAfterVote = BooleanOptionItem.Create(RoleInfo, 17, OptionName.GuesserGuessAfterVote, false, false);
-        //OptionTaskTrigger = IntegerOptionItem.Create(RoleInfo, 12, OptionName.MadSnitchTaskTrigger, new(0, 99, 1), 1, false).SetValueFormat(OptionFormat.Pieces);
-        //Tasks = Options.OverrideTasksData.Create(RoleInfo, 20);
-        Options.SetUpAddOnOptions(RoleInfo.ConfigId + 30, RoleInfo.RoleName, RoleInfo.Tab);
+        OptionMultipleInMeeting = BooleanOptionItem.Create(RoleInfo, OptionName.GuesserMultipleInMeeting, false, false);
+        OptionHideMisfire = BooleanOptionItem.Create(RoleInfo, OptionName.GuesserHideMisfire, false, false);
+        OptionGuessAfterVote = BooleanOptionItem.Create(RoleInfo, OptionName.GuesserGuessAfterVote, false, false);
+        //OptionTaskTrigger = IntegerOptionItem.Create(RoleInfo, OptionName.MadSnitchTaskTrigger, new(0, 99, 1), 1, false).SetValueFormat(OptionFormat.Pieces);
+        //Tasks = Options.OverrideTasksData.Create(RoleInfo);
+        Options.SetUpAddOnOptions(RoleInfo.RoleName, RoleInfo.Tab);
     }
 
     //private bool KnowsImpostor()

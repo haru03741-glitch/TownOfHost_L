@@ -326,65 +326,66 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
     {
 
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 30f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 30f, false)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionCoolDown = FloatOptionItem.Create(RoleInfo, 11, GeneralOption.Cooldown, OptionBaseCoolTime, 30f, false)
+        OptionCoolDown = FloatOptionItem.Create(RoleInfo, GeneralOption.Cooldown, OptionBaseCoolTime, 30f, false)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionChargeTime = FloatOptionItem.Create(RoleInfo, 12, OptionName.JackalHadouHoChargeTime, new(0.5f, 10f, 0.5f), 3f, false)
+        OptionChargeTime = FloatOptionItem.Create(RoleInfo, OptionName.JackalHadouHoChargeTime, new(0.5f, 10f, 0.5f), 3f, false)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionSuperChargeTime = FloatOptionItem.Create(RoleInfo, 13, OptionName.JackalHadouHoSuperChargeTime, new(0.5f, 15f, 0.5f), 5f, false)
+        OptionSuperChargeTime = FloatOptionItem.Create(RoleInfo, OptionName.JackalHadouHoSuperChargeTime, new(0.5f, 15f, 0.5f), 5f, false)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionSelfDestructOnMiss = BooleanOptionItem.Create(RoleInfo, 15, OptionName.JackalHadouHoSelfDestruct, false, false);
+        OptionSelfDestructOnMiss = BooleanOptionItem.Create(RoleInfo, OptionName.JackalHadouHoSelfDestruct, false, false);
 
-        OptionKillJackal = BooleanOptionItem.Create(RoleInfo, 16, OptionName.JackalHadouHoKillJackal, false, false);
+        OptionKillJackal = BooleanOptionItem.Create(RoleInfo, OptionName.JackalHadouHoKillJackal, false, false);
 
-        OptionCanVent = BooleanOptionItem.Create(RoleInfo, 17, GeneralOption.CanVent, true, false);
+        OptionCanVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, true, false);
 
-        OptionCanSabotage = BooleanOptionItem.Create(RoleInfo, 18, GeneralOption.CanUseSabotage, false, false);
+        OptionCanSabotage = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanUseSabotage, false, false);
 
-        OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, 19, GeneralOption.ImpostorVision, true, false);
+        OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, GeneralOption.ImpostorVision, true, false);
 
-        OptionCanMakeSidekick = BooleanOptionItem.Create(RoleInfo, 20, GeneralOption.CanCreateSideKick, true, false);
+        OptionCanMakeSidekick = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanCreateSideKick, true, false);
 
-        OptionSidekickCooldown = FloatOptionItem.Create(RoleInfo, 21, OptionName.JackalHadouHoSidekickCooldown, new(0f, 180f, 0.5f), 30f, false, OptionCanMakeSidekick)
+        OptionSidekickCooldown = FloatOptionItem.Create(RoleInfo, OptionName.JackalHadouHoSidekickCooldown, new(0f, 180f, 0.5f), 30f, false, OptionCanMakeSidekick)
 
             .SetValueFormat(OptionFormat.Seconds);
 
 
 
-        ObjectOptionitem.Create(RoleInfo, 24, OptionName.TamaOption, true, "")
+        ObjectOptionitem.Create(RoleInfo, OptionName.TamaOption, true, "")
 
             .SetOptionName(() => "TAMA OPTION");
 
-        OptionTamaLoadCooldown = FloatOptionItem.Create(RoleInfo, 25, "TamaLoadCooldown", new(0f, 60f, 0.5f), 10f, false)
+        OptionTamaLoadCooldown = FloatOptionItem.Create(RoleInfo, "TamaLoadCooldown", new(0f, 60f, 0.5f), 10f, false)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionTamaCanLoad = BooleanOptionItem.Create(RoleInfo, 26, "TamaCanLoad", true, false);
+        OptionTamaCanLoad = BooleanOptionItem.Create(RoleInfo, "TamaCanLoad", true, false);
 
-        OptionTamaVentCooldown = FloatOptionItem.Create(RoleInfo, 27, GeneralOption.Cooldown, new(0f, 180f, 0.5f), 0f, false)
+        OptionTamaVentCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.Cooldown, new(0f, 180f, 0.5f), 0f, false)
+            .SetKeyName("TamaVentCooldown")
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionTamaVentMaxTime = FloatOptionItem.Create(RoleInfo, 28, GeneralOption.EngineerInVentCooldown, new(0f, 180f, 0.5f), 0f, false)
+        OptionTamaVentMaxTime = FloatOptionItem.Create(RoleInfo, GeneralOption.EngineerInVentCooldown, new(0f, 180f, 0.5f), 0f, false)
 
             .SetZeroNotation(OptionZeroNotation.Infinity)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionTamaCanVentMove = BooleanOptionItem.Create(RoleInfo, 29, "MadmateCanMovedByVent", false, false);
+        OptionTamaCanVentMove = BooleanOptionItem.Create(RoleInfo, "MadmateCanMovedByVent", false, false);
 
 
 
-        RoleAddAddons.Create(RoleInfo, 30, NeutralKiller: true);
+        RoleAddAddons.Create(RoleInfo, NeutralKiller: true);
 
 
 

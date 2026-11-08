@@ -29,7 +29,7 @@ namespace TownOfHostL.Roles.Hamo.Crewmate
         }
         private static void SetupOptionItem()
         {
-            RoleAddAddons.Create(RoleInfo, 5, DefaaultOn: true);
+            RoleAddAddons.Create(RoleInfo, DefaaultOn: true);
         }
     }
 }

@@ -73,15 +73,15 @@ public sealed class Hunter : RoleBase, IKiller, ISchrodingerCatOwner
 
     private static void SetupOptionItem()
     {
-        KillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(0f, 180f, 2.5f), 30f, false)
+        KillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 2.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        ShotLimitOpt = IntegerOptionItem.Create(RoleInfo, 11, OptionName.SheriffShotLimit, new(1, 15, 1), 15, false)
+        ShotLimitOpt = IntegerOptionItem.Create(RoleInfo, OptionName.SheriffShotLimit, new(1, 15, 1), 15, false)
             .SetValueFormat(OptionFormat.Times);
-        CanKillAllAlive = BooleanOptionItem.Create(RoleInfo, 12, OptionName.SheriffCanKillAllAlive, true, false);
-        OptionIsInfoPoor = BooleanOptionItem.Create(RoleInfo, 15, OptionName.SheriffIsInfoPoor, false, false);
-        OptionIsClumsy = BooleanOptionItem.Create(RoleInfo, 16, OptionName.SheriffIsClumsy, false, false);
-        KnowTargetIsImpostor = BooleanOptionItem.Create(RoleInfo, 13, OptionName.HunterKnowTargetIsImpostor, true, false);
-        OpKnowTargetMadIsImpostor = BooleanOptionItem.Create(RoleInfo, 14, OptionName.HunterKnowTargetMadIsImpostor, true, false, KnowTargetIsImpostor);
+        CanKillAllAlive = BooleanOptionItem.Create(RoleInfo, OptionName.SheriffCanKillAllAlive, true, false);
+        OptionIsInfoPoor = BooleanOptionItem.Create(RoleInfo, OptionName.SheriffIsInfoPoor, false, false);
+        OptionIsClumsy = BooleanOptionItem.Create(RoleInfo, OptionName.SheriffIsClumsy, false, false);
+        KnowTargetIsImpostor = BooleanOptionItem.Create(RoleInfo, OptionName.HunterKnowTargetIsImpostor, true, false);
+        OpKnowTargetMadIsImpostor = BooleanOptionItem.Create(RoleInfo, OptionName.HunterKnowTargetMadIsImpostor, true, false, KnowTargetIsImpostor);
     }
     public override void Add()
     {

@@ -90,11 +90,11 @@ public sealed class BestieWolf : RoleBase, IImpostor
     static string[] selectStringArray = randArrays.Concat(buffRoleArrays).ToArray();
     public static void SetupOptionItem()
     {
-        OptionKillCooldownSeveral = FloatOptionItem.Create(RoleInfo, 10, OptionName.BestieWolfKillCooldownSeveral, new(2.5f, 180f, 2.5f), 30f, false)
+        OptionKillCooldownSeveral = FloatOptionItem.Create(RoleInfo, OptionName.BestieWolfKillCooldownSeveral, new(2.5f, 180f, 2.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionKillCooldownSingle = FloatOptionItem.Create(RoleInfo, 11, OptionName.BestieWolfKillCooldownSingle, new(2.5f, 180f, 2.5f), 30f, false)
+        OptionKillCooldownSingle = FloatOptionItem.Create(RoleInfo, OptionName.BestieWolfKillCooldownSingle, new(2.5f, 180f, 2.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionGrantMethod = StringOptionItem.Create(RoleInfo, 12, OptionName.BestieWolfGrantMethod, EnumHelper.GetAllNames<grantMethodOption>(), 0, false);
+        OptionGrantMethod = StringOptionItem.Create(RoleInfo, OptionName.BestieWolfGrantMethod, EnumHelper.GetAllNames<grantMethodOption>(), 0, false);
 
         for (int i = 0; i < 5; i++)
         {
@@ -107,7 +107,7 @@ public sealed class BestieWolf : RoleBase, IImpostor
                 case 3: name = OptionName.BestieWolfBuffAddonAssignTarget4; break;
                 case 4: name = OptionName.BestieWolfBuffAddonAssignTarget5; break;
             }
-            BuffAddonAssignTarget[i] = StringOptionItem.Create(RoleInfo, 13 + i, name, selectStringArray, 0, false);
+            BuffAddonAssignTarget[i] = StringOptionItem.Create(RoleInfo, name, selectStringArray, 0, false);
         }
     }
     // 試合を跨いで前の試合のインスタンスが残らないようにする

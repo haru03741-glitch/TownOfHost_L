@@ -46,13 +46,13 @@ public sealed class Reloader : HamoRoleBase, IImpostor, IUsePhantomButton
     private int Count;
     private static void SetupOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 9, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 30f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 30f, false)
                 .SetValueFormat(OptionFormat.Seconds);
-        OptionReloadKillCooldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.ReloaderKillCooldown, new(0f, 180f, 0.5f), 10f, false)
+        OptionReloadKillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.ReloaderKillCooldown, new(0f, 180f, 0.5f), 10f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionCooldown = FloatOptionItem.Create(RoleInfo, 11, GeneralOption.Cooldown, new(0f, 180f, 0.5f), 30f, false)
+        OptionCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.Cooldown, new(0f, 180f, 0.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionCount = IntegerOptionItem.Create(RoleInfo, 12, OptionName.ReloaderCount, new(1, 15, 1), 2, false);
+        OptionCount = IntegerOptionItem.Create(RoleInfo, OptionName.ReloaderCount, new(1, 15, 1), 2, false);
     }
     public bool UseOneclickButton => true;
     public override void ApplyGameOptions(IGameOptions opt) => AURoleOptions.PhantomCooldown = Count > 0 ? Cooldown : 200f;

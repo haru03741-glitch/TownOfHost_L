@@ -46,10 +46,10 @@ public sealed class Elder : RoleBase
     }
     private static void SetupOptionItem()
     {
-        OptionDiaInLife = BooleanOptionItem.Create(RoleInfo, 10, OptionName.ElderDiaInLife, false, false);
-        OptionLifetime = FloatOptionItem.Create(RoleInfo, 11, OptionName.ElderLifetime, new(5f, 1800f, 5f), 900f, false, OptionDiaInLife)
+        OptionDiaInLife = BooleanOptionItem.Create(RoleInfo, OptionName.ElderDiaInLife, false, false);
+        OptionLifetime = FloatOptionItem.Create(RoleInfo, OptionName.ElderLifetime, new(5f, 1800f, 5f), 900f, false, OptionDiaInLife)
                 .SetValueFormat(OptionFormat.Seconds);
-        OptionTimeMoveMeeting = BooleanOptionItem.Create(RoleInfo, 12, OptionName.ElderTimeMoveMeeting, false, false, OptionDiaInLife);
+        OptionTimeMoveMeeting = BooleanOptionItem.Create(RoleInfo, OptionName.ElderTimeMoveMeeting, false, false, OptionDiaInLife);
     }
 
     public override void Add()

@@ -38,9 +38,9 @@ public sealed class NormalPhantom : RoleBase, IImpostor
 
     public static void SetupOptionItem()
     {
-        OptionPhantomDuration = FloatOptionItem.Create(RoleInfo, 3, OptionName.PhantomDuration, new(5f, 90f, 5f), 30f, false)
+        OptionPhantomDuration = FloatOptionItem.Create(RoleInfo, OptionName.PhantomDuration, new(5f, 90f, 5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionPhantomCooldown = FloatOptionItem.Create(RoleInfo, 4, OptionName.PhantomCooldown, new(2.5f, 60, 2.5f), 15f, false)
+        OptionPhantomCooldown = FloatOptionItem.Create(RoleInfo, OptionName.PhantomCooldown, new(2.5f, 60, 2.5f), 15f, false)
             .SetValueFormat(OptionFormat.Seconds);
     }
 

@@ -67,15 +67,15 @@ public sealed class Ballooner : HamoRoleBase, IImpostor, IUsePhantomButton
 
     private static void SetupOptionItem()
     {
-        OptionKillCoolDown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, OptionBaseCoolTime, 30f, false).SetValueFormat(OptionFormat.Seconds);
-        OptionAbilityCoolDown = FloatOptionItem.Create(RoleInfo, 11, GeneralOption.Cooldown, OptionBaseCoolTime, 30f, false).SetValueFormat(OptionFormat.Seconds);
-        OptionMinBoomDis = FloatOptionItem.Create(RoleInfo, 12, OptionName.BalloonerMinBoomDis, new(-5, 10, 0.25f), 0, false).SetValueFormat(OptionFormat.Multiplier);
-        OptionMaxBoomDis = FloatOptionItem.Create(RoleInfo, 13, OptionName.BalloonerMaxBoomDis, new(0.25f, 15, 0.25f), 3, false).SetValueFormat(OptionFormat.Multiplier);
-        OptionChargeWalk = FloatOptionItem.Create(RoleInfo, 14, OptionName.BalloonerChargeWalk, new(1, 300, 1), 60, false);
-        OptionChargeStep = FloatOptionItem.Create(RoleInfo, 15, OptionName.BalloonerChargeStep, new(0.1f, 5, 0.05f), 0.5f, false).SetValueFormat(OptionFormat.Multiplier);
-        OptionAfterMeetingRemoveCharge = FloatOptionItem.Create(RoleInfo, 16, OptionName.BalloonerAfterMeetingRemoveCharge, new(0, 30, 0.5f), 0.5f, false).SetValueFormat(OptionFormat.Multiplier);
-        OptionSuicide = BooleanOptionItem.Create(RoleInfo, 17, OptionName.BalloonerSuicide, false, false);
-        OptionTargetImpostor = BooleanOptionItem.Create(RoleInfo, 18, OptionName.BalloonerTargetImpostor, true, false);
+        OptionKillCoolDown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, OptionBaseCoolTime, 30f, false).SetValueFormat(OptionFormat.Seconds);
+        OptionAbilityCoolDown = FloatOptionItem.Create(RoleInfo, GeneralOption.Cooldown, OptionBaseCoolTime, 30f, false).SetValueFormat(OptionFormat.Seconds);
+        OptionMinBoomDis = FloatOptionItem.Create(RoleInfo, OptionName.BalloonerMinBoomDis, new(-5, 10, 0.25f), 0, false).SetValueFormat(OptionFormat.Multiplier);
+        OptionMaxBoomDis = FloatOptionItem.Create(RoleInfo, OptionName.BalloonerMaxBoomDis, new(0.25f, 15, 0.25f), 3, false).SetValueFormat(OptionFormat.Multiplier);
+        OptionChargeWalk = FloatOptionItem.Create(RoleInfo, OptionName.BalloonerChargeWalk, new(1, 300, 1), 60, false);
+        OptionChargeStep = FloatOptionItem.Create(RoleInfo, OptionName.BalloonerChargeStep, new(0.1f, 5, 0.05f), 0.5f, false).SetValueFormat(OptionFormat.Multiplier);
+        OptionAfterMeetingRemoveCharge = FloatOptionItem.Create(RoleInfo, OptionName.BalloonerAfterMeetingRemoveCharge, new(0, 30, 0.5f), 0.5f, false).SetValueFormat(OptionFormat.Multiplier);
+        OptionSuicide = BooleanOptionItem.Create(RoleInfo, OptionName.BalloonerSuicide, false, false);
+        OptionTargetImpostor = BooleanOptionItem.Create(RoleInfo, OptionName.BalloonerTargetImpostor, true, false);
     }
     public override void OnFixedUpdate(PlayerControl player)
     {

@@ -170,29 +170,29 @@ public sealed class Magician : HamoRoleBase, IImpostor, IUsePhantomButton
 
     {
 
-        OptionMagicCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.Cooldown, new FloatValueRule(0, 120, 1), 15, false)
+        OptionMagicCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.Cooldown, new FloatValueRule(0, 120, 1), 15, false)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionMaximum = IntegerOptionItem.Create(RoleInfo, 11, Option.MagicianMaximum, new(0, 99, 1), 3, false)
+        OptionMaximum = IntegerOptionItem.Create(RoleInfo, Option.MagicianMaximum, new(0, 99, 1), 3, false)
 
             .SetValueFormat(OptionFormat.Times).SetZeroNotation(OptionZeroNotation.Infinity);
 
-        OptionRadius = FloatOptionItem.Create(RoleInfo, 12, Option.MagicianRadius, new(0.5f, 3f, 0.5f), 1.5f, false)
+        OptionRadius = FloatOptionItem.Create(RoleInfo, Option.MagicianRadius, new(0.5f, 3f, 0.5f), 1.5f, false)
 
             .SetValueFormat(OptionFormat.Multiplier);
 
-        OptionMagicUseKillCount = IntegerOptionItem.Create(RoleInfo, 13, Option.MagicianMagicUseKillCount, new(0, 99, 1), 1, false)
+        OptionMagicUseKillCount = IntegerOptionItem.Create(RoleInfo, Option.MagicianMagicUseKillCount, new(0, 99, 1), 1, false)
 
         .SetValueFormat(OptionFormat.Players);
 
-        OptionShowDeadbody = BooleanOptionItem.Create(RoleInfo, 14, Option.MagicianShowDeadbody, false, false);
+        OptionShowDeadbody = BooleanOptionItem.Create(RoleInfo, Option.MagicianShowDeadbody, false, false);
 
-        OptionResetKillCount = BooleanOptionItem.Create(RoleInfo, 15, Option.MagicianResetKillCount, true, false);
+        OptionResetKillCount = BooleanOptionItem.Create(RoleInfo, Option.MagicianResetKillCount, true, false);
 
-        OptionResetMagicTarget = BooleanOptionItem.Create(RoleInfo, 16, Option.MagicianResetMagicTarget, false, false);
+        OptionResetMagicTarget = BooleanOptionItem.Create(RoleInfo, Option.MagicianResetMagicTarget, false, false);
 
-        OptionMettingMark = BooleanOptionItem.Create(RoleInfo, 17, Option.MagicianMeetingMark, false, false);
+        OptionMettingMark = BooleanOptionItem.Create(RoleInfo, Option.MagicianMeetingMark, false, false);
 
     }
 

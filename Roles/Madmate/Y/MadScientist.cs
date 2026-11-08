@@ -37,11 +37,11 @@ public sealed class MadScientist : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionVitalCooldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.VitalCooldown, new(0f, 180f, 5f), 15f, false)
+        OptionVitalCooldown = FloatOptionItem.Create(RoleInfo, OptionName.VitalCooldown, new(0f, 180f, 5f), 15f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionVitalBatteryDuration = FloatOptionItem.Create(RoleInfo, 11, OptionName.VitalBatteryDuration, new(5f, 180f, 5f), 5f, false)
+        OptionVitalBatteryDuration = FloatOptionItem.Create(RoleInfo, OptionName.VitalBatteryDuration, new(5f, 180f, 5f), 5f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        Options.SetUpAddOnOptions(RoleInfo.ConfigId + 20, RoleInfo.RoleName, RoleInfo.Tab);
+        Options.SetUpAddOnOptions(RoleInfo.RoleName, RoleInfo.Tab);
     }
     public override void ApplyGameOptions(IGameOptions opt)
     {

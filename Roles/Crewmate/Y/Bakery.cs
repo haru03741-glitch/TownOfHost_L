@@ -59,7 +59,7 @@ public sealed class Bakery : RoleBase, ISoloWinner
 
     private static void SetupOptionItem()
     {
-        OptionChangeChances = IntegerOptionItem.Create(RoleInfo, 10, OptionName.BakeryChangeChances, new(0, 20, 2), 10, false)
+        OptionChangeChances = IntegerOptionItem.Create(RoleInfo, OptionName.BakeryChangeChances, new(0, 20, 2), 10, false)
             .SetValueFormat(OptionFormat.Percent);
     }
     public override void Add()

@@ -46,9 +46,9 @@ public sealed class SpeedBooster : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionUpSpeed = FloatOptionItem.Create(RoleInfo, 10, OptionName.SpeedBoosterUpSpeed, new(1.2f, 10.0f, 0.2f), 2.0f, false)
+        OptionUpSpeed = FloatOptionItem.Create(RoleInfo, OptionName.SpeedBoosterUpSpeed, new(1.2f, 10.0f, 0.2f), 2.0f, false)
                 .SetValueFormat(OptionFormat.Multiplier);
-        OptionTaskTrigger = IntegerOptionItem.Create(RoleInfo, 11, OptionName.SpeedBoosterTaskTrigger, new(1, 99, 1), 5, false)
+        OptionTaskTrigger = IntegerOptionItem.Create(RoleInfo, OptionName.SpeedBoosterTaskTrigger, new(1, 99, 1), 5, false)
             .SetValueFormat(OptionFormat.Pieces);
     }
     public override bool OnCompleteTask()

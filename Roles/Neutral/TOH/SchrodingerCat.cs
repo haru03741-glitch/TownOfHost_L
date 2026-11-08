@@ -95,15 +95,15 @@ public sealed class SchrodingerCat : RoleBase, IAdditionalWinner, IDeathReasonSe
 
     public static void SetupOptionItem()
     {
-        OptionCanWinTheCrewmateBeforeChange = BooleanOptionItem.Create(RoleInfo, 10, OptionName.CanBeforeSchrodingerCatWinTheCrewmate, false, false);
-        OptionChangeTeamWhenExile = BooleanOptionItem.Create(RoleInfo, 11, OptionName.SchrodingerCatExiledTeamChanges, false, false);
-        OptionCanSeeKillableTeammate = BooleanOptionItem.Create(RoleInfo, 12, OptionName.SchrodingerCatCanSeeKillableTeammate, false, false);
-        OptionConsumeBullet = BooleanOptionItem.Create(RoleInfo, 13, OptionName.SchrodingerCatConsumeBullet, false, false);
-        OptionChangeKiller = BooleanOptionItem.Create(RoleInfo, 14, OptionName.SchrodingerCatChangeKiller, false, false);
-        OptionDeadDelay = FloatOptionItem.Create(RoleInfo, 15, OptionName.SchrodingerCatDeadDelay, new(2.5f, 180f, 2.5f), 15f, false, OptionChangeKiller)
+        OptionCanWinTheCrewmateBeforeChange = BooleanOptionItem.Create(RoleInfo, OptionName.CanBeforeSchrodingerCatWinTheCrewmate, false, false);
+        OptionChangeTeamWhenExile = BooleanOptionItem.Create(RoleInfo, OptionName.SchrodingerCatExiledTeamChanges, false, false);
+        OptionCanSeeKillableTeammate = BooleanOptionItem.Create(RoleInfo, OptionName.SchrodingerCatCanSeeKillableTeammate, false, false);
+        OptionConsumeBullet = BooleanOptionItem.Create(RoleInfo, OptionName.SchrodingerCatConsumeBullet, false, false);
+        OptionChangeKiller = BooleanOptionItem.Create(RoleInfo, OptionName.SchrodingerCatChangeKiller, false, false);
+        OptionDeadDelay = FloatOptionItem.Create(RoleInfo, OptionName.SchrodingerCatDeadDelay, new(2.5f, 180f, 2.5f), 15f, false, OptionChangeKiller)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionRevengeOnExile = BooleanOptionItem.Create(RoleInfo, 16, OptionName.SchrodingerCatRevengeOnExile, false, false);
-        OptionTaskTrigger = IntegerOptionItem.Create(RoleInfo, 17, OptionName.SchrodingerCatTaskTrigger, new(0, 99, 1), 10, false).SetValueFormat(OptionFormat.Pieces);
+        OptionRevengeOnExile = BooleanOptionItem.Create(RoleInfo, OptionName.SchrodingerCatRevengeOnExile, false, false);
+        OptionTaskTrigger = IntegerOptionItem.Create(RoleInfo, OptionName.SchrodingerCatTaskTrigger, new(0, 99, 1), 10, false).SetValueFormat(OptionFormat.Pieces);
     }
     private bool KnownImpostor()
     {

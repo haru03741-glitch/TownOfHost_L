@@ -44,9 +44,9 @@ public sealed class EvilDiviner : RoleBase, IImpostor
 
     public static void SetupOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(0f, 180f, 2.5f), 30f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 2.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionDivinationMaxCount = IntegerOptionItem.Create(RoleInfo, 11, OptionName.EvilDivinerDivinationMaxCount, new(1, 15, 1), 5, false)
+        OptionDivinationMaxCount = IntegerOptionItem.Create(RoleInfo, OptionName.EvilDivinerDivinationMaxCount, new(1, 15, 1), 5, false)
             .SetValueFormat(OptionFormat.Times);
     }
     public override void Add()

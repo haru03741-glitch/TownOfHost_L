@@ -102,15 +102,15 @@ public sealed class Evilgambler : HamoRoleBase, IImpostor
 
     {
 
-        OptionGamblecollect = FloatOptionItem.Create(RoleInfo, 10, OptionName.Evillgamblergamblecollect, new(0, 100, 5), 50, false)
+        OptionGamblecollect = FloatOptionItem.Create(RoleInfo, OptionName.Evillgamblergamblecollect, new(0, 100, 5), 50, false)
 
             .SetValueFormat(OptionFormat.Percent);
 
-        OptionCollectkillCooldown = FloatOptionItem.Create(RoleInfo, 11, OptionName.EvillgamblercollectkillCooldown, new(0f, 180f, 0.5f), 2.5f, false)
+        OptionCollectkillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.EvillgamblercollectkillCooldown, new(0f, 180f, 0.5f), 2.5f, false)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionNotcollectkillCooldown = FloatOptionItem.Create(RoleInfo, 12, OptionName.EvillgamblernotcollectkillCooldown, new(0f, 180f, 0.5f), 50.0f, false)
+        OptionNotcollectkillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.EvillgamblernotcollectkillCooldown, new(0f, 180f, 0.5f), 50.0f, false)
 
             .SetValueFormat(OptionFormat.Seconds);
 

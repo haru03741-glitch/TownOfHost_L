@@ -44,7 +44,7 @@ public sealed class Sympathizer : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionSympaCheckedTasks = IntegerOptionItem.Create(RoleInfo, 10, OptionName.SympaCheckedTasks, new(1, 20, 1), 5, false)
+        OptionSympaCheckedTasks = IntegerOptionItem.Create(RoleInfo, OptionName.SympaCheckedTasks, new(1, 20, 1), 5, false)
             .SetValueFormat(OptionFormat.Pieces);
     }
     public override bool NeedsSeenNames => true;

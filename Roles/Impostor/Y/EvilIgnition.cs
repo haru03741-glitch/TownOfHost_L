@@ -58,12 +58,12 @@ public sealed class EvilIgnition : RoleBase, IImpostor
 
     public static void SetupOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(0f, 180f, 2.5f), 30f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 2.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionIgnitionMaxCount = IntegerOptionItem.Create(RoleInfo, 11, OptionName.EvilFireIgnitionMaxCount, new(1, 15, 1), 3, false)
+        OptionIgnitionMaxCount = IntegerOptionItem.Create(RoleInfo, OptionName.EvilFireIgnitionMaxCount, new(1, 15, 1), 3, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionFalseIgnition = BooleanOptionItem.Create(RoleInfo, 12, OptionName.EvilFireFalseIgnition, false, false);
-        OptionIsCanBombTarget = BooleanOptionItem.Create(RoleInfo, 13, OptionName.EvilFireIsCanBombTarget, false, false);
+        OptionFalseIgnition = BooleanOptionItem.Create(RoleInfo, OptionName.EvilFireFalseIgnition, false, false);
+        OptionIsCanBombTarget = BooleanOptionItem.Create(RoleInfo, OptionName.EvilFireIsCanBombTarget, false, false);
     }
     public override void Add()
     {

@@ -65,11 +65,11 @@ public sealed class Rabbit : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionTaskTrigger = IntegerOptionItem.Create(RoleInfo, 10, GeneralOption.TaskTrigger, new(0, 20, 1), 10, false)
+        OptionTaskTrigger = IntegerOptionItem.Create(RoleInfo, GeneralOption.TaskTrigger, new(0, 20, 1), 10, false)
             .SetValueFormat(OptionFormat.Pieces);
-        OptionNumLongTasks = IntegerOptionItem.Create(RoleInfo, 11, OptionName.RabbitRedistributionLongTasks, new(0, 15, 1), 1, false)
+        OptionNumLongTasks = IntegerOptionItem.Create(RoleInfo, OptionName.RabbitRedistributionLongTasks, new(0, 15, 1), 1, false)
             .SetValueFormat(OptionFormat.Pieces);
-        OptionNumShortTasks = IntegerOptionItem.Create(RoleInfo, 12, OptionName.RabbitRedistributionShortTasks, new(0, 15, 1), 1, false)
+        OptionNumShortTasks = IntegerOptionItem.Create(RoleInfo, OptionName.RabbitRedistributionShortTasks, new(0, 15, 1), 1, false)
             .SetValueFormat(OptionFormat.Pieces);
     }
 

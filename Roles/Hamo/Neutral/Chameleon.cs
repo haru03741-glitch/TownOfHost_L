@@ -70,7 +70,7 @@ public sealed class Chameleon : HamoRoleBase, IAdditionalWinner
     }
     CustomRoles NowTeam;
     List<CustomRoles> TeamList = new();
-    static void SetUpOptionItem() => RoleAddAddons.Create(RoleInfo, 20);
+    static void SetUpOptionItem() => RoleAddAddons.Create(RoleInfo);
     public override void StartGameTasks() => ChengeTeam();
     void ChengeTeam()
     {

@@ -43,11 +43,11 @@ public sealed class NormalTracker : RoleBase
     public static float trackerDuration;
     private static void SetupOptionItem()
     {
-        OptionTrackerCooldown = FloatOptionItem.Create(RoleInfo, 3, OptionName.TrackerCooldown, new(10f, 120f, 5f), 15f, false)
+        OptionTrackerCooldown = FloatOptionItem.Create(RoleInfo, OptionName.TrackerCooldown, new(10f, 120f, 5f), 15f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionTrackerDelay = FloatOptionItem.Create(RoleInfo, 4, OptionName.TrackerDelay, new(0f, 3f, 1f), 1f, false)
+        OptionTrackerDelay = FloatOptionItem.Create(RoleInfo, OptionName.TrackerDelay, new(0f, 3f, 1f), 1f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionTrackerDuration = FloatOptionItem.Create(RoleInfo, 5, OptionName.TrackerDuration, new(10f, 120f, 5f), 30f, false)
+        OptionTrackerDuration = FloatOptionItem.Create(RoleInfo, OptionName.TrackerDuration, new(10f, 120f, 5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
     }
     public override void ApplyGameOptions(IGameOptions opt)

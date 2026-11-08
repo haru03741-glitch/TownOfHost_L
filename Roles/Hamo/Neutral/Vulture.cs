@@ -185,27 +185,27 @@ public sealed class Vulture : HamoRoleBase, IKillFlashSeeable, IAdditionalWinner
 
     {
 
-        SoloWinOption.Create(RoleInfo, 8, defo: 1);
+        SoloWinOption.Create(RoleInfo, defo: 1);
 
-        OptionAddWinEatCount = IntegerOptionItem.Create(RoleInfo, 9, OptionName.VultrueAddWinEatcount, new(0, 14, 1), 2, false).SetZeroNotation(OptionZeroNotation.Off);
+        OptionAddWinEatCount = IntegerOptionItem.Create(RoleInfo, OptionName.VultrueAddWinEatcount, new(0, 14, 1), 2, false).SetZeroNotation(OptionZeroNotation.Off);
 
-        OptionWinEatCount = IntegerOptionItem.Create(RoleInfo, 10, OptionName.VultrueWinEatcount, new(1, 14, 1), 3, false);
+        OptionWinEatCount = IntegerOptionItem.Create(RoleInfo, OptionName.VultrueWinEatcount, new(1, 14, 1), 3, false);
 
-        OptionEatShape = BooleanOptionItem.Create(RoleInfo, 11, OptionName.VultrueEatShape, true, false);
+        OptionEatShape = BooleanOptionItem.Create(RoleInfo, OptionName.VultrueEatShape, true, false);
 
-        OptionCanUseVent = BooleanOptionItem.Create(RoleInfo, 14, GeneralOption.CanVent, true, false);
+        OptionCanUseVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, true, false);
 
-        OptionVentCooldown = FloatOptionItem.Create(RoleInfo, 15, StringNames.EngineerCooldown, OptionBaseCoolTime, 15, false, OptionCanUseVent).SetValueFormat(OptionFormat.Seconds);
+        OptionVentCooldown = FloatOptionItem.Create(RoleInfo, StringNames.EngineerCooldown, OptionBaseCoolTime, 15, false, OptionCanUseVent).SetValueFormat(OptionFormat.Seconds);
 
-        OptionVentIntime = FloatOptionItem.Create(RoleInfo, 16, StringNames.EngineerInVentCooldown, OptionBaseCoolTime, 5, false, OptionCanUseVent).SetZeroNotation(OptionZeroNotation.Infinity).SetValueFormat(OptionFormat.Seconds);
+        OptionVentIntime = FloatOptionItem.Create(RoleInfo, StringNames.EngineerInVentCooldown, OptionBaseCoolTime, 5, false, OptionCanUseVent).SetZeroNotation(OptionZeroNotation.Infinity).SetValueFormat(OptionFormat.Seconds);
 
-        OptionKillflashtaskcount = IntegerOptionItem.Create(RoleInfo, 12, OptionName.VultrueCanSeeKillFlushTaskCount, new(0, 255, 1), 3, false);
+        OptionKillflashtaskcount = IntegerOptionItem.Create(RoleInfo, OptionName.VultrueCanSeeKillFlushTaskCount, new(0, 255, 1), 3, false);
 
-        OptionOnikuArrowtskcount = IntegerOptionItem.Create(RoleInfo, 13, OptionName.VultrueCanSeeOnikuArrowTaskCount, new(0, 255, 1), 5, false);
+        OptionOnikuArrowtskcount = IntegerOptionItem.Create(RoleInfo, OptionName.VultrueCanSeeOnikuArrowTaskCount, new(0, 255, 1), 5, false);
 
 
 
-        Options.OverrideTasksData.Create(RoleInfo, 20);
+        Options.OverrideTasksData.Create(RoleInfo);
 
     }
 

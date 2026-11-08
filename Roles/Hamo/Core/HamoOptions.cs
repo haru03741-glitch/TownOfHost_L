@@ -15,19 +15,19 @@ public class ObjectOptionitem : TextOptionItem
     public Func<string> ValueOverride;
     public ObjectOptionitem SetValueOverride(Func<string> value) { ValueOverride = value; return this; }
 
-    public ObjectOptionitem(int id, string name, bool isHeader, string clickAction, TabGroup tab)
-        : base(id, name, 0, tab, false)
+    public ObjectOptionitem(string name, bool isHeader, string clickAction, TabGroup tab)
+        : base(name, 0, tab, false)
     {
         IsHedderObject = isHeader;
         ClickActionkey = clickAction;
     }
-    public static ObjectOptionitem Create(int id, string name, bool isHeader, string clickAction, TabGroup tab)
-        => new(id, name, isHeader, clickAction, tab);
-    public static ObjectOptionitem Create(SimpleRoleInfo roleInfo, int idOffset, Enum name, bool isHeader, string clickAction, OptionItem parent = null)
-        => Create(roleInfo, idOffset, name.ToString(), isHeader, clickAction, parent);
-    public static ObjectOptionitem Create(SimpleRoleInfo roleInfo, int idOffset, string name, bool isHeader, string clickAction, OptionItem parent = null)
+    public static ObjectOptionitem Create(string name, bool isHeader, string clickAction, TabGroup tab)
+        => new(name, isHeader, clickAction, tab);
+    public static ObjectOptionitem Create(SimpleRoleInfo roleInfo, Enum name, bool isHeader, string clickAction, OptionItem parent = null)
+        => Create(roleInfo, name.ToString(), isHeader, clickAction, parent);
+    public static ObjectOptionitem Create(SimpleRoleInfo roleInfo, string name, bool isHeader, string clickAction, OptionItem parent = null)
     {
-        var opt = new ObjectOptionitem(roleInfo.ConfigId + idOffset, name, isHeader, clickAction, roleInfo.Tab);
+        var opt = new ObjectOptionitem(name, isHeader, clickAction, roleInfo.Tab);
         opt.SetParent(parent ?? roleInfo.RoleOption);
         return opt;
     }
@@ -42,8 +42,8 @@ public class FilterOptionItem : StringOptionItem
     public Func<CustomRoles[]> NotAssin;
     public (bool impostor, bool madmate, bool crewmate, bool neutral, bool addon) roles;
 
-    public FilterOptionItem(int id, string name, int defaultValue, TabGroup tab, bool isSingleValue, bool imp = false, bool mad = false, bool crew = false, bool neu = false, bool addon = false, Func<CustomRoles[]> notassing = null)
-        : base(id, name, defaultValue, tab, isSingleValue, BuildSelections(out var list))
+    public FilterOptionItem(string name, int defaultValue, TabGroup tab, bool isSingleValue, bool imp = false, bool mad = false, bool crew = false, bool neu = false, bool addon = false, Func<CustomRoles[]> notassing = null)
+        : base(name, defaultValue, tab, isSingleValue, BuildSelections(out var list))
     {
         Sele = list;
         NotAssin = notassing;
@@ -56,11 +56,11 @@ public class FilterOptionItem : StringOptionItem
         list.AddRange(EnumHelper.GetAllValues<CustomRoles>().Where(r => r > CustomRoles.StartAddon && r < CustomRoles.MaxAddon));
         return list.Select(r => r.ToString()).ToArray();
     }
-    public static FilterOptionItem Create(SimpleRoleInfo roleInfo, int idOffset, Enum name, int defaultIndex, bool isSingleValue, OptionItem parent = null, bool imp = false, bool mad = false, bool crew = false, bool neu = false, bool addon = false, Func<CustomRoles[]> notassing = null)
-        => Create(roleInfo, idOffset, name.ToString(), defaultIndex, isSingleValue, parent, imp, mad, crew, neu, addon, notassing);
-    public static FilterOptionItem Create(SimpleRoleInfo roleInfo, int idOffset, string name, int defaultIndex, bool isSingleValue, OptionItem parent = null, bool imp = false, bool mad = false, bool crew = false, bool neu = false, bool addon = false, Func<CustomRoles[]> notassing = null)
+    public static FilterOptionItem Create(SimpleRoleInfo roleInfo, Enum name, int defaultIndex, bool isSingleValue, OptionItem parent = null, bool imp = false, bool mad = false, bool crew = false, bool neu = false, bool addon = false, Func<CustomRoles[]> notassing = null)
+        => Create(roleInfo, name.ToString(), defaultIndex, isSingleValue, parent, imp, mad, crew, neu, addon, notassing);
+    public static FilterOptionItem Create(SimpleRoleInfo roleInfo, string name, int defaultIndex, bool isSingleValue, OptionItem parent = null, bool imp = false, bool mad = false, bool crew = false, bool neu = false, bool addon = false, Func<CustomRoles[]> notassing = null)
     {
-        var opt = new FilterOptionItem(roleInfo.ConfigId + idOffset, name, defaultIndex, roleInfo.Tab, isSingleValue, imp, mad, crew, neu, addon, notassing);
+        var opt = new FilterOptionItem(name, defaultIndex, roleInfo.Tab, isSingleValue, imp, mad, crew, neu, addon, notassing);
         opt.SetParent(parent ?? roleInfo.RoleOption);
         return opt;
     }
@@ -113,17 +113,17 @@ public class SoloWinOption
     public static Dictionary<CustomRoles, SoloWinOption> AllData = new();
     public CustomRoles Role { get; private set; }
     public OptionItem OptionWin;
-    public SoloWinOption(int idStart, TabGroup tab, CustomRoles role, CustomRoles roleName = CustomRoles.NotAssigned, int defo = 0, OptionItem parent = null)
+    public SoloWinOption(TabGroup tab, CustomRoles role, CustomRoles roleName = CustomRoles.NotAssigned, int defo = 0, OptionItem parent = null)
     {
         Role = role;
         var rolename = roleName == CustomRoles.NotAssigned ? role : roleName;
-        OptionWin = IntegerOptionItem.Create(idStart, "SoloWinOption", new(0, 50, 1), defo, tab, false)
+        OptionWin = IntegerOptionItem.Create("SoloWinOption", new(0, 50, 1), defo, tab, false)
             .SetParent(parent ?? CustomRoleSpawnChances[role]);
         OptionWin.ReplacementDictionary = new() { { "%role%", Utils.ColorString(Utils.GetRoleColor(rolename), Utils.GetRoleName(rolename)) } };
         AllData.TryAdd(rolename, this);
     }
-    public static SoloWinOption Create(SimpleRoleInfo roleInfo, int idOffset, CustomRoles rolename = CustomRoles.NotAssigned, Func<bool> show = null, int defo = 0)
-        => new(roleInfo.ConfigId + idOffset, roleInfo.Tab, roleInfo.RoleName, rolename, defo);
+    public static SoloWinOption Create(SimpleRoleInfo roleInfo, CustomRoles rolename = CustomRoles.NotAssigned, Func<bool> show = null, int defo = 0)
+        => new(roleInfo.Tab, roleInfo.RoleName, rolename, defo);
     /// <summary>役職の単独勝利の優先度 (大きいほど優先)</summary>
     public static int GetPriority(CustomRoles role) => AllData.TryGetValue(role, out var d) ? d.OptionWin.GetInt() : 0;
 }
@@ -134,14 +134,14 @@ public class OverrideKilldistance
     public static Dictionary<CustomRoles, OverrideKilldistance> AllData = new();
     public OptionItem Killdistance;
     public enum KillDistance { KDShort, KDMidium, KDLong }
-    public OverrideKilldistance(int idStart, TabGroup tab, CustomRoles role)
+    public OverrideKilldistance(TabGroup tab, CustomRoles role)
     {
-        Killdistance = StringOptionItem.Create(idStart, "Killdistance", EnumHelper.GetAllNames<KillDistance>(), 0, tab, false)
+        Killdistance = StringOptionItem.Create("Killdistance", EnumHelper.GetAllNames<KillDistance>(), 0, tab, false)
             .SetParent(CustomRoleSpawnChances[role]);
         AllData.TryAdd(role, this);
     }
-    public static OverrideKilldistance Create(SimpleRoleInfo roleInfo, int idOffset, CustomRoles rolename = CustomRoles.NotAssigned)
-        => new(roleInfo.ConfigId + idOffset, roleInfo.Tab, roleInfo.RoleName);
+    public static OverrideKilldistance Create(SimpleRoleInfo roleInfo, CustomRoles rolename = CustomRoles.NotAssigned)
+        => new(roleInfo.Tab, roleInfo.RoleName);
     /// <summary>役職のキル距離の上書きがあれば返す</summary>
     public static bool TryGet(CustomRoles role, out int distance)
     {
@@ -155,11 +155,10 @@ public class OverrideKilldistance
 /// <summary>「根拠の薄いキルは禁止」の注意を出すかの設定</summary>
 public static class SaruWarningOption
 {
-    private static int _nextId = 4_900_000;
     private static readonly Dictionary<CustomRoles, OptionItem> PerRoleOption = new();
     public static OptionItem AddTo(SimpleRoleInfo roleInfo)
     {
-        var opt = BooleanOptionItem.Create(_nextId++, "WarnNoSaru", false, roleInfo.Tab, false);
+        var opt = BooleanOptionItem.Create("WarnNoSaru", false, roleInfo.Tab, false);
         opt.SetParent(roleInfo.RoleOption);
         PerRoleOption[roleInfo.RoleName] = opt;
         return opt;
@@ -195,27 +194,27 @@ public class RoleAddAddons
         (CustomRoles.Sunglasses, "GiveSunglasses", true),
     };
 
-    public RoleAddAddons(int idStart, TabGroup tab, CustomRoles role, bool NeutralKiller = false, bool MadMate = false, bool DefaaultOn = false)
+    public RoleAddAddons(TabGroup tab, CustomRoles role, bool NeutralKiller = false, bool MadMate = false, bool DefaaultOn = false)
     {
         Role = role;
         var isImpostor = role.IsImpostor();
-        GiveAddons = BooleanOptionItem.Create(idStart++, "addaddons", DefaaultOn || NeutralKiller, tab, false)
+        GiveAddons = BooleanOptionItem.Create("addaddons", DefaaultOn || NeutralKiller, tab, false)
             .SetParent(CustomRoleSpawnChances[role]).SetValueFormat(OptionFormat.None);
         foreach (var (addon, name, impostorOk) in Addons)
         {
-            if (!impostorOk && isImpostor) { idStart++; continue; }
+            if (!impostorOk && isImpostor) continue;
             var defo = addon switch
             {
                 CustomRoles.AddLight => NeutralKiller,
                 CustomRoles.Clumsy => MadMate,
                 _ => false,
             };
-            grants.Add((addon, BooleanOptionItem.Create(idStart++, name, defo, tab, false).SetParent(GiveAddons)));
+            grants.Add((addon, BooleanOptionItem.Create(name, defo, tab, false).SetParent(GiveAddons)));
         }
         AllData.TryAdd(role, this);
     }
-    public static RoleAddAddons Create(SimpleRoleInfo roleInfo, int idOffset, CustomRoles rolename = CustomRoles.NotAssigned, bool NeutralKiller = false, bool MadMate = false, bool DefaaultOn = false)
-        => new(roleInfo.ConfigId + idOffset, roleInfo.Tab, roleInfo.RoleName, NeutralKiller, MadMate, DefaaultOn);
+    public static RoleAddAddons Create(SimpleRoleInfo roleInfo, CustomRoles rolename = CustomRoles.NotAssigned, bool NeutralKiller = false, bool MadMate = false, bool DefaaultOn = false)
+        => new(roleInfo.Tab, roleInfo.RoleName, NeutralKiller, MadMate, DefaaultOn);
 
     /// <summary>役職に付ける属性</summary>
     public IEnumerable<CustomRoles> GetGrantAddons()

@@ -40,7 +40,7 @@ public sealed class Detector : RoleBase, IKillFlashSeeable
 
     private static void SetupOptionItem()
     {
-        OptionTaskTrigger = IntegerOptionItem.Create(RoleInfo, 12, OptionName.TaskTrigger, new(1, 20, 1), 5, false)
+        OptionTaskTrigger = IntegerOptionItem.Create(RoleInfo, OptionName.TaskTrigger, new(1, 20, 1), 5, false)
             .SetValueFormat(OptionFormat.Pieces);
     }
 

@@ -133,20 +133,20 @@ public sealed class Nova : HamoRoleBase, IImpostor, IUsePhantomButton
 
     private static void SetupOptionItem()
     {
-        OptionFireMode = StringOptionItem.Create(RoleInfo, 10, OptionName.NovaFireMode, FireModeKeys, 0, false);
-        OptionFireCooldown = FloatOptionItem.Create(RoleInfo, 11, OptionName.NovaFireCooldown, new(2.5f, 180f, 2.5f), 30f, false)
+        OptionFireMode = StringOptionItem.Create(RoleInfo, OptionName.NovaFireMode, FireModeKeys, 0, false);
+        OptionFireCooldown = FloatOptionItem.Create(RoleInfo, OptionName.NovaFireCooldown, new(2.5f, 180f, 2.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionBeamSize = FloatOptionItem.Create(RoleInfo, 12, OptionName.NovaBeamSize, new(0.25f, 5f, 0.25f), 1.25f, false)
+        OptionBeamSize = FloatOptionItem.Create(RoleInfo, OptionName.NovaBeamSize, new(0.25f, 5f, 0.25f), 1.25f, false)
             .SetValueFormat(OptionFormat.Multiplier);
-        OptionChargeTime = FloatOptionItem.Create(RoleInfo, 13, OptionName.NovaChargeTime, new(0.5f, 10f, 0.5f), 3f, false)
+        OptionChargeTime = FloatOptionItem.Create(RoleInfo, OptionName.NovaChargeTime, new(0.5f, 10f, 0.5f), 3f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionFireDelay = FloatOptionItem.Create(RoleInfo, 15, OptionName.NovaFireDelay, new(0f, 5f, 0.25f), 1f, false)
+        OptionFireDelay = FloatOptionItem.Create(RoleInfo, OptionName.NovaFireDelay, new(0f, 5f, 0.25f), 1f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 14, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 30f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionBeamLength = FloatOptionItem.Create(RoleInfo, 16, OptionName.NovaBeamLength, new(5f, 40f, 2.5f), 20f, false)
+        OptionBeamLength = FloatOptionItem.Create(RoleInfo, OptionName.NovaBeamLength, new(5f, 40f, 2.5f), 20f, false)
             .SetValueFormat(OptionFormat.Multiplier);
-        OptionPierceWalls = BooleanOptionItem.Create(RoleInfo, 17, OptionName.NovaPierceWalls, true, false);
+        OptionPierceWalls = BooleanOptionItem.Create(RoleInfo, OptionName.NovaPierceWalls, true, false);
     }
 
     public float CalculateKillCooldown() => killCooldown;

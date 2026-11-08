@@ -56,12 +56,12 @@ public sealed class AntiReporter : HamoRoleBase, IImpostor, IUsePhantomButton
     static float AntiReporterResetse;
     private static void SetupOptionItem()
     {
-        OptionColldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.Cooldown, new(1f, 1000f, 1f), 20f, false)
+        OptionColldown = FloatOptionItem.Create(RoleInfo, OptionName.Cooldown, new(1f, 1000f, 1f), 20f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionMax = IntegerOptionItem.Create(RoleInfo, 11, OptionName.AntiReporterMaximum, new(1, 1000, 1), 3, false)
+        OptionMax = IntegerOptionItem.Create(RoleInfo, OptionName.AntiReporterMaximum, new(1, 1000, 1), 3, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionAntiReporterResetMeeting = BooleanOptionItem.Create(RoleInfo, 12, OptionName.AntiReporterResetMeeting, true, false);
-        OptionAntiReporterResetse = IntegerOptionItem.Create(RoleInfo, 13, OptionName.AntiReporterResetse, new(0, 999, 1), 20, false)
+        OptionAntiReporterResetMeeting = BooleanOptionItem.Create(RoleInfo, OptionName.AntiReporterResetMeeting, true, false);
+        OptionAntiReporterResetse = IntegerOptionItem.Create(RoleInfo, OptionName.AntiReporterResetse, new(0, 999, 1), 20, false)
             .SetValueFormat(OptionFormat.Seconds).SetZeroNotation(OptionZeroNotation.Infinity);
     }
     private void SendRPC()

@@ -58,9 +58,9 @@ public sealed class StrayWolf : RoleBase, IImpostor
 
     public static void SetupOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(2.5f, 180f, 2.5f), 20f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(2.5f, 180f, 2.5f), 20f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionKillByImpostor = StringOptionItem.Create(RoleInfo, 11, OptionName.StrayWolfKillByImpostor, KillModes, 0, false);
+        OptionKillByImpostor = StringOptionItem.Create(RoleInfo, OptionName.StrayWolfKillByImpostor, KillModes, 0, false);
     }
     public float CalculateKillCooldown() => KillCooldown;
     public override void ApplyGameOptions(IGameOptions opt)

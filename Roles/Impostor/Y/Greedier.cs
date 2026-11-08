@@ -43,11 +43,11 @@ public sealed class Greedier : RoleBase, IImpostor
 
     public static void SetupOptionItem()
     {
-        OptionDefaultKillCooldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.GreedierDefaultKillCooldown, new(0f, 180f, 2.5f), 30f, false)
+        OptionDefaultKillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.GreedierDefaultKillCooldown, new(0f, 180f, 2.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionOddKillCooldown = FloatOptionItem.Create(RoleInfo, 11, OptionName.GreedierOddKillCooldown, new(0f, 180f, 2.5f), 5f, false)
+        OptionOddKillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.GreedierOddKillCooldown, new(0f, 180f, 2.5f), 5f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionEvenKillCooldown = FloatOptionItem.Create(RoleInfo, 12, OptionName.GreedierEvenKillCooldown, new(0f, 180f, 2.5f), 30f, false)
+        OptionEvenKillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.GreedierEvenKillCooldown, new(0f, 180f, 2.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
     }
     public override void Add()

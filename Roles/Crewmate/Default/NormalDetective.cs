@@ -35,7 +35,7 @@ public sealed class NormalDetective : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionDetectiveSuspectLimit = FloatOptionItem.Create(RoleInfo, 3, OptionName.DetectiveSuspectLimit, new(0f, 180f, 5f), 15f, false)
+        OptionDetectiveSuspectLimit = FloatOptionItem.Create(RoleInfo, OptionName.DetectiveSuspectLimit, new(0f, 180f, 5f), 15f, false)
             .SetValueFormat(OptionFormat.Seconds);
        
     }

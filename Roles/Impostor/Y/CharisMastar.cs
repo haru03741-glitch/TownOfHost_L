@@ -61,14 +61,14 @@ public sealed class CharismaStar : RoleBase, IImpostor
 
     private static void SetUpOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(2.5f, 180f, 2.5f), 30f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(2.5f, 180f, 2.5f), 30f, false)
                 .SetValueFormat(OptionFormat.Seconds);
-        OptionGatherCooldown = FloatOptionItem.Create(RoleInfo, 11, OptionName.CharismaStarGatherCooldown, new(2.5f, 180f, 2.5f), 30f, false)
+        OptionGatherCooldown = FloatOptionItem.Create(RoleInfo, OptionName.CharismaStarGatherCooldown, new(2.5f, 180f, 2.5f), 30f, false)
         .SetValueFormat(OptionFormat.Seconds);
-        OptionGatherMaxCount = IntegerOptionItem.Create(RoleInfo, 12, OptionName.CharismaStarGatherMaxCount, new(1, 10, 1), 3, false)
+        OptionGatherMaxCount = IntegerOptionItem.Create(RoleInfo, OptionName.CharismaStarGatherMaxCount, new(1, 10, 1), 3, false)
             .SetValueFormat(OptionFormat.Pieces);
-        OptionNotGatherPlayerKill = BooleanOptionItem.Create(RoleInfo, 13, OptionName.CharismaStarNotGatherPlayerKill, true, false);
-        OptionCanAllPlayerGather = BooleanOptionItem.Create(RoleInfo, 14, OptionName.CharismaStarCanAllPlayerGather, true, false);
+        OptionNotGatherPlayerKill = BooleanOptionItem.Create(RoleInfo, OptionName.CharismaStarNotGatherPlayerKill, true, false);
+        OptionCanAllPlayerGather = BooleanOptionItem.Create(RoleInfo, OptionName.CharismaStarCanAllPlayerGather, true, false);
     }
     public float CalculateKillCooldown() => KillCooldown;
     public override void ApplyGameOptions(IGameOptions opt) => AURoleOptions.PhantomCooldown = GatherCooldown;

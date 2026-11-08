@@ -146,7 +146,7 @@ public sealed class VillageChief : HamoRoleBase, IKiller, ISelfVoter
 
         NotifyTarget = StringOptionItem.Create(
 
-            RoleInfo, 12, "VillageChiefNotifyTarget",
+            RoleInfo, "VillageChiefNotifyTarget",
 
             NotifyTargetOptions, 0, false
 
@@ -154,7 +154,7 @@ public sealed class VillageChief : HamoRoleBase, IKiller, ISelfVoter
 
         AppointCooldown = FloatOptionItem.Create(
 
-            RoleInfo, 13, "AppointCooldown",
+            RoleInfo, "AppointCooldown",
 
             new(0f, 120f, 2.5f), 30f, false
 
@@ -162,19 +162,19 @@ public sealed class VillageChief : HamoRoleBase, IKiller, ISelfVoter
 
         CanSeeCreatedSheriff = BooleanOptionItem.Create(
 
-            RoleInfo, 14, "VillageChiefCanSeeCreatedSheriff", false, false
+            RoleInfo, "VillageChiefCanSeeCreatedSheriff", false, false
 
         );
 
         SheriffMisfireKillsTarget = BooleanOptionItem.Create(
 
-            RoleInfo, 16, "VillageChiefSheriffMisfireKillsTarget", false, false
+            RoleInfo, "VillageChiefSheriffMisfireKillsTarget", false, false
 
         );
 
         SheriffKillCooldown = FloatOptionItem.Create(
 
-            RoleInfo, 17, "VillageChiefSheriffKillCooldown",
+            RoleInfo, "VillageChiefSheriffKillCooldown",
 
             new(0f, 990f, 0.5f), 30f, false
 
@@ -182,7 +182,7 @@ public sealed class VillageChief : HamoRoleBase, IKiller, ISelfVoter
 
         SheriffShotLimit = IntegerOptionItem.Create(
 
-            RoleInfo, 18, OptionName.VillageChiefSheriffShotLimit,
+            RoleInfo, OptionName.VillageChiefSheriffShotLimit,
 
             new(1, 15, 1), 15, false
 
@@ -190,7 +190,7 @@ public sealed class VillageChief : HamoRoleBase, IKiller, ISelfVoter
 
         SheriffCanKillAllAlive = BooleanOptionItem.Create(
 
-            RoleInfo, 19, "VillageChiefSheriffCanKillAllAlive", true, false
+            RoleInfo, "VillageChiefSheriffCanKillAllAlive", true, false
 
         );
 

@@ -103,19 +103,19 @@ public sealed class Eater : HamoRoleBase, IKiller, IUsePhantomButton, IKillFlash
     [Attributes.GameModuleInitializer]
     private static void SetupOptionItem()
     {
-        SoloWinOption.Create(RoleInfo, 10, defo: 1);
+        SoloWinOption.Create(RoleInfo, defo: 1);
 
-        OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, 11, GeneralOption.ImpostorVision, true, false);
-        OptionCanUseVent = BooleanOptionItem.Create(RoleInfo, 12, GeneralOption.CanVent, false, false);
-        OptionSwallowCooldown = FloatOptionItem.Create(RoleInfo, 15, OptionName.EaterSwallowCooldown, new(0f, 60f, 1f), 20f, false)
+        OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, GeneralOption.ImpostorVision, true, false);
+        OptionCanUseVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, false, false);
+        OptionSwallowCooldown = FloatOptionItem.Create(RoleInfo, OptionName.EaterSwallowCooldown, new(0f, 60f, 1f), 20f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionEatCooldown = FloatOptionItem.Create(RoleInfo, 16, OptionName.EaterEatCooldown, new(0f, 60f, 1f), 10f, false)
+        OptionEatCooldown = FloatOptionItem.Create(RoleInfo, OptionName.EaterEatCooldown, new(0f, 60f, 1f), 10f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionWinCount = IntegerOptionItem.Create(RoleInfo, 17, OptionName.EaterWinCount, new(1, 10, 1), 3, false);
-        OptionSwallowTime = FloatOptionItem.Create(RoleInfo, 18, OptionName.EaterSwallowTime, new(0.5f, 60f, 0.5f), 5f, false).SetValueFormat(OptionFormat.Seconds);
-        OptionSwallowRange = FloatOptionItem.Create(RoleInfo, 19, OptionName.EaterSwallowRange, new(1.25f, 5f, 0.25f), 1.75f, false)
+        OptionWinCount = IntegerOptionItem.Create(RoleInfo, OptionName.EaterWinCount, new(1, 10, 1), 3, false);
+        OptionSwallowTime = FloatOptionItem.Create(RoleInfo, OptionName.EaterSwallowTime, new(0.5f, 60f, 0.5f), 5f, false).SetValueFormat(OptionFormat.Seconds);
+        OptionSwallowRange = FloatOptionItem.Create(RoleInfo, OptionName.EaterSwallowRange, new(1.25f, 5f, 0.25f), 1.75f, false)
         .SetValueFormat(OptionFormat.Multiplier);
-        OptionShowArrow = BooleanOptionItem.Create(RoleInfo, 24, "EaterShowArrow", true, false);
+        OptionShowArrow = BooleanOptionItem.Create(RoleInfo, "EaterShowArrow", true, false);
     }
 
     public override void ApplyGameOptions(IGameOptions opt)

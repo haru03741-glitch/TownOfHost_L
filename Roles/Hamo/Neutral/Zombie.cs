@@ -42,8 +42,8 @@ public sealed class Zombie : HamoRoleBase
 
     static void SetupOptionItem()
     {
-        SoloWinOption.Create(RoleInfo, 8, defo: 15);
-        OptionCanVent = BooleanOptionItem.Create(RoleInfo, 9, GeneralOption.CanVent, true, false);
+        SoloWinOption.Create(RoleInfo, defo: 15);
+        OptionCanVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, true, false);
     }
 
     public override bool CanClickUseVentButton => OptionCanVent?.GetBool() ?? true;

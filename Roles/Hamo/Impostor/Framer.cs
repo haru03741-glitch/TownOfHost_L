@@ -67,16 +67,16 @@ public sealed class Framer : HamoRoleBase, IImpostor, IUsePhantomButton, IDouble
 
     private static void SetupOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(0f, 180f, 1f), 35f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 1f), 35f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionAbilityCooldown = FloatOptionItem.Create(RoleInfo, 11, GeneralOption.Cooldown, new(0f, 255f, 1f), 40f, false)
+        OptionAbilityCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.Cooldown, new(0f, 255f, 1f), 40f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionDuration = FloatOptionItem.Create(RoleInfo, 12, OptionName.FramerDuration, new(0f, 999f, 1f), 15f, false)
+        OptionDuration = FloatOptionItem.Create(RoleInfo, OptionName.FramerDuration, new(0f, 999f, 1f), 15f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionMaxCount = IntegerOptionItem.Create(RoleInfo, 13, GeneralOption.OptionCount, new(0, 999, 1), 3, false)
+        OptionMaxCount = IntegerOptionItem.Create(RoleInfo, GeneralOption.OptionCount, new(0, 999, 1), 3, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionMeetingNotice = BooleanOptionItem.Create(RoleInfo, 14, OptionName.FramerMeetingNotice, true, false);
-        OptionImpostorAware = BooleanOptionItem.Create(RoleInfo, 15, OptionName.FramerImpostorAware, true, false);
+        OptionMeetingNotice = BooleanOptionItem.Create(RoleInfo, OptionName.FramerMeetingNotice, true, false);
+        OptionImpostorAware = BooleanOptionItem.Create(RoleInfo, OptionName.FramerImpostorAware, true, false);
     }
 
     public float CalculateKillCooldown() => killCooldown;

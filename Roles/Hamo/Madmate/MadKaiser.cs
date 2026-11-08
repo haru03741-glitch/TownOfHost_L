@@ -108,11 +108,11 @@ public sealed class MadKaiser : HamoRoleBase
 
     {
 
-        OptionRequiredTaskPercent = IntegerOptionItem.Create(RoleInfo, 10, OptionName.MadKaiserRequiredTaskPercent, new(5, 95, 5), 80, false)
+        OptionRequiredTaskPercent = IntegerOptionItem.Create(RoleInfo, OptionName.MadKaiserRequiredTaskPercent, new(5, 95, 5), 80, false)
 
             .SetValueFormat(OptionFormat.Percent);
 
-        RoleAddAddons.Create(RoleInfo, 30, MadMate: true, DefaaultOn: true);
+        RoleAddAddons.Create(RoleInfo, MadMate: true, DefaaultOn: true);
 
     }
 

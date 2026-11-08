@@ -38,7 +38,7 @@ public sealed class TaskManager : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionSeeNowtask = BooleanOptionItem.Create(RoleInfo, 10, OptionName.TaskmanagerSeeNowtask, true, false);
+        OptionSeeNowtask = BooleanOptionItem.Create(RoleInfo, OptionName.TaskmanagerSeeNowtask, true, false);
     }
 
     public override string GetSuffix(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)

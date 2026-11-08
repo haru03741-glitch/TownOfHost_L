@@ -39,7 +39,7 @@ public sealed class VentManager : RoleBase
     public static OptionItem TaskCount;
     private static void SetupOptionItem()
     {
-        TaskCount = IntegerOptionItem.Create(RoleInfo, 10, OptionName.FoxSpiritTaskCount, new(1, 30, 1), 15, false).SetValueFormat(OptionFormat.Pieces);
+        TaskCount = IntegerOptionItem.Create(RoleInfo, OptionName.FoxSpiritTaskCount, new(1, 30, 1), 15, false).SetValueFormat(OptionFormat.Pieces);
     }
     public static (bool, int, int) TaskData => (false, 0, TaskCount.GetInt());
 }

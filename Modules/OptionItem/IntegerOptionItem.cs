@@ -9,43 +9,43 @@ namespace TownOfHostL
         public IntegerValueRule Rule;
 
         // コンストラクタ
-        public IntegerOptionItem(int id, string name, int defaultValue, TabGroup tab, bool isSingleValue, IntegerValueRule rule)
-        : base(id, name, rule.GetNearestIndex(defaultValue), tab, isSingleValue)
+        public IntegerOptionItem(string name, int defaultValue, TabGroup tab, bool isSingleValue, IntegerValueRule rule)
+        : base(name, rule.GetNearestIndex(defaultValue), tab, isSingleValue)
         {
             Rule = rule;
         }
         public static IntegerOptionItem Create(
-            int id, string name, IntegerValueRule rule, int defaultValue, TabGroup tab, bool isSingleValue
+            string name, IntegerValueRule rule, int defaultValue, TabGroup tab, bool isSingleValue
         )
         {
             return new IntegerOptionItem(
-                id, name, defaultValue, tab, isSingleValue, rule
+                name, defaultValue, tab, isSingleValue, rule
             );
         }
         public static IntegerOptionItem Create(
-            int id, Enum name, IntegerValueRule rule, int defaultValue, TabGroup tab, bool isSingleValue
+            Enum name, IntegerValueRule rule, int defaultValue, TabGroup tab, bool isSingleValue
         )
         {
             return new IntegerOptionItem(
-                id, name.ToString(), defaultValue, tab, isSingleValue, rule
+                name.ToString(), defaultValue, tab, isSingleValue, rule
             );
         }
         public static IntegerOptionItem Create(
-            SimpleRoleInfo roleInfo, int idOffset, Enum name, IntegerValueRule rule, int defaultValue, bool isSingleValue, OptionItem parent = null
+            SimpleRoleInfo roleInfo, Enum name, IntegerValueRule rule, int defaultValue, bool isSingleValue, OptionItem parent = null
         )
         {
             var opt = new IntegerOptionItem(
-                roleInfo.ConfigId + idOffset, name.ToString(), defaultValue, roleInfo.Tab, isSingleValue, rule
+                name.ToString(), defaultValue, roleInfo.Tab, isSingleValue, rule
             );
             opt.SetParent(parent ?? roleInfo.RoleOption);
             return opt;
         }
         public static IntegerOptionItem Create(
-            SimpleRoleInfo roleInfo, int idOffset, string name, IntegerValueRule rule, int defaultValue, bool isSingleValue, OptionItem parent = null
+            SimpleRoleInfo roleInfo, string name, IntegerValueRule rule, int defaultValue, bool isSingleValue, OptionItem parent = null
         )
         {
             var opt = new IntegerOptionItem(
-                roleInfo.ConfigId + idOffset, name, defaultValue, roleInfo.Tab, isSingleValue, rule
+                name, defaultValue, roleInfo.Tab, isSingleValue, rule
             );
             opt.SetParent(parent ?? roleInfo.RoleOption);
             return opt;

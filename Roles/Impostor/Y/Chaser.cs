@@ -53,14 +53,14 @@ public sealed class Chaser : RoleBase, IImpostor, ISidekickable
     }
     private static void SetUpOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(2.5f, 180f, 2.5f), 30f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(2.5f, 180f, 2.5f), 30f, false)
                 .SetValueFormat(OptionFormat.Seconds);
-        OptionChaseCooldown = FloatOptionItem.Create(RoleInfo, 11, OptionName.ChaserChaseCooldown, new(1f, 180f, 1f), 30f, false)
+        OptionChaseCooldown = FloatOptionItem.Create(RoleInfo, OptionName.ChaserChaseCooldown, new(1f, 180f, 1f), 30f, false)
                 .SetValueFormat(OptionFormat.Seconds);
-        OptionChaseMaxCount = IntegerOptionItem.Create(RoleInfo, 12, OptionName.ChaserChaseMaxCount, new(1, 50, 1), 3, false)
+        OptionChaseMaxCount = IntegerOptionItem.Create(RoleInfo, OptionName.ChaserChaseMaxCount, new(1, 50, 1), 3, false)
                 .SetValueFormat(OptionFormat.Pieces);
-        OptionReturnPosition = BooleanOptionItem.Create(RoleInfo, 13, OptionName.ChaserReturnPosition, false, false);
-        OptionPositionTime = FloatOptionItem.Create(RoleInfo, 14, OptionName.ChaserPositionTime, new(1f, 99f, 1f), 10f, false, OptionReturnPosition)
+        OptionReturnPosition = BooleanOptionItem.Create(RoleInfo, OptionName.ChaserReturnPosition, false, false);
+        OptionPositionTime = FloatOptionItem.Create(RoleInfo, OptionName.ChaserPositionTime, new(1f, 99f, 1f), 10f, false, OptionReturnPosition)
             .SetValueFormat(OptionFormat.Seconds);
     }
     public override void Add()

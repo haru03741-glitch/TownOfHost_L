@@ -40,11 +40,11 @@ public sealed class MadJester : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionCanVent = BooleanOptionItem.Create(RoleInfo, 10, GeneralOption.CanVent, false, false);
-        OptionTaskCompWin = BooleanOptionItem.Create(RoleInfo, 11, OptionName.MadJesterTaskCompWin, true, false);
-        Tasks = Options.OverrideTasksData.Create(RoleInfo, 20, OptionTaskCompWin);
+        OptionCanVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, false, false);
+        OptionTaskCompWin = BooleanOptionItem.Create(RoleInfo, OptionName.MadJesterTaskCompWin, true, false);
+        Tasks = Options.OverrideTasksData.Create(RoleInfo, OptionTaskCompWin);
 
-        Options.SetUpAddOnOptions(RoleInfo.ConfigId + 30, RoleInfo.RoleName, RoleInfo.Tab);
+        Options.SetUpAddOnOptions(RoleInfo.RoleName, RoleInfo.Tab);
     }
 
     public override void OnExileWrapUp(NetworkedPlayerInfo exiled, ref bool DecidedWinner)

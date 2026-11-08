@@ -126,15 +126,15 @@ public sealed class EvilBlender : HamoRoleBase, IImpostor, IUsePhantomButton
 
     {
 
-        OptionKillCoolDown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, OptionBaseCoolTime, 20f, false)
+        OptionKillCoolDown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, OptionBaseCoolTime, 20f, false)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionSabotageCoolDown = FloatOptionItem.Create(RoleInfo, 11, GeneralOption.Cooldown, OptionBaseCoolTime, 30, false)
+        OptionSabotageCoolDown = FloatOptionItem.Create(RoleInfo, GeneralOption.Cooldown, OptionBaseCoolTime, 30, false)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionSabotageLimittime = FloatOptionItem.Create(RoleInfo, 12, OptionName.EvilBlenderSabotageLimittime, new(10, 90, 1), 45, false)
+        OptionSabotageLimittime = FloatOptionItem.Create(RoleInfo, OptionName.EvilBlenderSabotageLimittime, new(10, 90, 1), 45, false)
 
             .SetValueFormat(OptionFormat.Seconds);
 

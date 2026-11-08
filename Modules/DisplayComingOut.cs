@@ -26,40 +26,36 @@ class DisplayComingOut
     public static EnableComingOut GetEnableComingOut(CustomRoles role)
         => EachRoles.TryGetValue(role, out var option) ? (EnableComingOut)option.GetValue() : EnableComingOut.None;
 
-    public static void SetupCustomOption(int id)
+    public static void SetupCustomOption()
     {
-        Enable = BooleanOptionItem.Create(id + 0, "DisplayComingOutEnable", false, TabGroup.ModMainSettings, true).SetColor(Palette.CrewmateBlue);
+        Enable = BooleanOptionItem.Create("DisplayComingOutEnable", false, TabGroup.ModMainSettings, true).SetColor(Palette.CrewmateBlue);
 
-        SetupTypeComingOut(id);
+        SetupTypeComingOut();
     }
-    private static void SetupTypeComingOut(int baseId)
+    private static void SetupTypeComingOut()
     {
-        int idOffset = baseId + 1;
         foreach (var type in CustomRolesHelper.AllRoleTypes)
         {
             if (type is CustomRoleTypes.Unit) continue;
 
             Dictionary<string, string> replacementDic = new() { { "%type%", Translator.GetString($"CustomRoleTypes.{type}") } };
-            EachTypes[type] = BooleanOptionItem.Create(idOffset, "displayComingOut%type%", false, TabGroup.ModMainSettings, true).SetParent(Enable).SetKeyName($"displayComingOut.{type}");
+            EachTypes[type] = BooleanOptionItem.Create("displayComingOut%type%", false, TabGroup.ModMainSettings, true).SetParent(Enable).SetKeyName($"displayComingOut.{type}");
             EachTypes[type].ReplacementDictionary = replacementDic;
 
-            SetupRoleComingOut(type, baseId);
+            SetupRoleComingOut(type);
 
-            idOffset++;
         }
     }
-    private static void SetupRoleComingOut(CustomRoleTypes type, int baseId)
+    private static void SetupRoleComingOut(CustomRoleTypes type)
     {
-        int idOffset = baseId + ((int)type + 1) * 100;
         foreach (var role in CustomRolesHelper.AllStandardRoles.Where(x => x.GetCustomRoleTypes() == type).ToArray())
         {
             if (role.HasRoleFlag(RoleFlags.NoComingOutOption)) continue;
 
             var roleName = Utils.GetRoleName(role);
             Dictionary<string, string> replacementDic = new() { { "%role%", Utils.ColorString(Utils.GetRoleColor(role), roleName) } };
-            EachRoles[role] = StringOptionItem.Create(idOffset, "displayComingOut%role%", displayComingOut, 0, TabGroup.ModMainSettings, true).SetParent(EachTypes[type]).SetKeyName($"displayComingOut.{role}");
+            EachRoles[role] = StringOptionItem.Create("displayComingOut%role%", displayComingOut, 0, TabGroup.ModMainSettings, true).SetParent(EachTypes[type]).SetKeyName($"displayComingOut.{role}");
             EachRoles[role].ReplacementDictionary = replacementDic;
-            idOffset++;
         }
     }
 

@@ -35,8 +35,8 @@ public sealed class Stealth : RoleBase, IImpostor
     private enum OptionName { StealthExcludeImpostors, StealthDarkenDuration, }
     private static void SetupOptionItems()
     {
-        optionExcludeImpostors = BooleanOptionItem.Create(RoleInfo, 10, OptionName.StealthExcludeImpostors, true, false);
-        optionDarkenDuration = FloatOptionItem.Create(RoleInfo, 20, OptionName.StealthDarkenDuration, new(0.5f, 5f, 0.5f), 1f, false);
+        optionExcludeImpostors = BooleanOptionItem.Create(RoleInfo, OptionName.StealthExcludeImpostors, true, false);
+        optionDarkenDuration = FloatOptionItem.Create(RoleInfo, OptionName.StealthDarkenDuration, new(0.5f, 5f, 0.5f), 1f, false);
         optionDarkenDuration.SetValueFormat(OptionFormat.Seconds);
     }
     #endregion

@@ -26,7 +26,7 @@ public sealed class CustomCrewmate : RoleBase
 
     public static void SetupOptionItem()
     {
-        Options.SetUpAddOnOptions(RoleInfo.ConfigId + 10, RoleInfo.RoleName, RoleInfo.Tab);
-        Options.OverrideTasksData.Create(RoleInfo, 50);
+        Options.SetUpAddOnOptions(RoleInfo.RoleName, RoleInfo.Tab);
+        Options.OverrideTasksData.Create(RoleInfo);
     }
 }

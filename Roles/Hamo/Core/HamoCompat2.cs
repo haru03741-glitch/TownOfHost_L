@@ -57,40 +57,38 @@ namespace TownOfHostL
             return CustomRoles.NotAssigned;
         }
 
-        public const int HamoGeneralOptionId = 4_800_000;
         /// <summary>hamo の共通設定を作る (Options.Load から呼ぶ)</summary>
         public static void LoadHamoOptions()
         {
-            var id = HamoGeneralOptionId;
-            DoubleTriggerThreshold = FloatOptionItem.Create(id++, "DoubleTriggerThreashould", new(0.3f, 1f, 0.1f), 0.5f, TabGroup.ImpostorRoles, false)
+            DoubleTriggerThreshold = FloatOptionItem.Create("DoubleTriggerThreashould", new(0.3f, 1f, 0.1f), 0.5f, TabGroup.ImpostorRoles, false)
                 .SetHeader(true)
                 .SetValueFormat(OptionFormat.Seconds);
-            MadmateTell = StringOptionItem.Create(id++, "MadmateTellOption", Tellopt, 0, TabGroup.MadmateRoles, false)
+            MadmateTell = StringOptionItem.Create("MadmateTellOption", Tellopt, 0, TabGroup.MadmateRoles, false)
                 .SetHeader(true);
 
-            AutoGrantPet = BooleanOptionItem.Create(id++, "AutoGrantPet", true, TabGroup.ModMainSettings, false)
+            AutoGrantPet = BooleanOptionItem.Create("AutoGrantPet", true, TabGroup.ModMainSettings, false)
                 .SetHeader(true)
                 .SetColorcode("#f0d36a");
-            ErasedBodyRemovePet = BooleanOptionItem.Create(id++, "ErasedBodyRemovePet", true, TabGroup.ModMainSettings, false)
+            ErasedBodyRemovePet = BooleanOptionItem.Create("ErasedBodyRemovePet", true, TabGroup.ModMainSettings, false)
                 .SetColorcode("#f0d36a");
-            ErasedBodyCover = BooleanOptionItem.Create(id++, "ErasedBodyCover", true, TabGroup.ModMainSettings, false)
+            ErasedBodyCover = BooleanOptionItem.Create("ErasedBodyCover", true, TabGroup.ModMainSettings, false)
                 .SetColorcode("#f0d36a");
 
-            ClientEffects = BooleanOptionItem.Create(id++, "ClientEffects", true, TabGroup.ModMainSettings, false)
+            ClientEffects = BooleanOptionItem.Create("ClientEffects", true, TabGroup.ModMainSettings, false)
                 .SetColorcode("#7fefff")
                 .SetHeader(true);
-            ClientEffectsNova = BooleanOptionItem.Create(id++, "ClientEffectsNova", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
-            ClientEffectsSlugger = BooleanOptionItem.Create(id++, "ClientEffectsSlugger", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
-            ClientEffectsSound = BooleanOptionItem.Create(id++, "ClientEffectsSound", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
-            ClientEffectsVolume = IntegerOptionItem.Create(id++, "ClientEffectsVolume", new(10, 100, 10), 80, TabGroup.ModMainSettings, false)
+            ClientEffectsNova = BooleanOptionItem.Create("ClientEffectsNova", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
+            ClientEffectsSlugger = BooleanOptionItem.Create("ClientEffectsSlugger", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
+            ClientEffectsSound = BooleanOptionItem.Create("ClientEffectsSound", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
+            ClientEffectsVolume = IntegerOptionItem.Create("ClientEffectsVolume", new(10, 100, 10), 80, TabGroup.ModMainSettings, false)
                 .SetValueFormat(OptionFormat.Percent).SetParent(ClientEffectsSound);
-            ClientEffectsMeeting = BooleanOptionItem.Create(id++, "ClientEffectsMeeting", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
-            ClientEffectsDeath = BooleanOptionItem.Create(id++, "ClientEffectsDeath", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
-            ClientEffectsShake = BooleanOptionItem.Create(id++, "ClientEffectsShake", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
-            ClientEffectsSkipDummy = BooleanOptionItem.Create(id++, "ClientEffectsSkipDummy", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
-            ClientEffectsTeleport = BooleanOptionItem.Create(id++, "ClientEffectsTeleport", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
-            ClientEffectsGuessUi = BooleanOptionItem.Create(id++, "ClientEffectsGuessUi", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
-            ClientEffectsGuessUiDelay = FloatOptionItem.Create(id++, "ClientEffectsGuessUiDelay", new(0f, 10f, 0.5f), 3f, TabGroup.ModMainSettings, false)
+            ClientEffectsMeeting = BooleanOptionItem.Create("ClientEffectsMeeting", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
+            ClientEffectsDeath = BooleanOptionItem.Create("ClientEffectsDeath", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
+            ClientEffectsShake = BooleanOptionItem.Create("ClientEffectsShake", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
+            ClientEffectsSkipDummy = BooleanOptionItem.Create("ClientEffectsSkipDummy", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
+            ClientEffectsTeleport = BooleanOptionItem.Create("ClientEffectsTeleport", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
+            ClientEffectsGuessUi = BooleanOptionItem.Create("ClientEffectsGuessUi", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
+            ClientEffectsGuessUiDelay = FloatOptionItem.Create("ClientEffectsGuessUiDelay", new(0f, 10f, 0.5f), 3f, TabGroup.ModMainSettings, false)
                 .SetParent(ClientEffectsGuessUi).SetValueFormat(OptionFormat.Seconds);
         }
     }

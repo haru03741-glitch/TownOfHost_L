@@ -7,7 +7,6 @@ namespace TownOfHostL.CatchCat;
 
 static class Option
 {
-    public static readonly int Id = (int)Options.offsetId.GModeCC;
     public static OptionItem IgnoreReport;
 
     public static OptionItem LeaderIgnoreVent;
@@ -41,111 +40,118 @@ static class Option
 
     public static void SetupCustomOption()
     {
+        // CC の設定は機能の設定として作る (CC の設定一覧は自分の分を別に出し、機能の欄からは外す)
+        OptionItem.CreatingFeatures = true;
+        try { CreateOptions(); }
+        finally { OptionItem.CreatingFeatures = false; }
+    }
+    private static void CreateOptions()
+    {
         // 共通設定
-        TextOptionItem.Create(Id + 1000, "CCCommonSetting", TabGroup.ModMainSettings)
+        TextOptionItem.Create("CCCommonSetting", TabGroup.ModMainSettings)
             .SetColor(Palette.LightBlue)
             .SetGameMode(CustomGameMode.CatchCat);
-        IgnoreReport = StringOptionItem.Create(Id + 1010, "IgnoreReport", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
+        IgnoreReport = StringOptionItem.Create("IgnoreReport", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetColor(Palette.LightBlue)
             .SetGameMode(CustomGameMode.CatchCat);
 
         // リーダー設定
-        TextOptionItem.Create(Id + 2000, "CCLeaderSetting", TabGroup.ModMainSettings)
+        TextOptionItem.Create("CCLeaderSetting", TabGroup.ModMainSettings)
             .SetColor(Palette.Orange)
             .SetGameMode(CustomGameMode.CatchCat);
-        SetupLeaderRoleOptions(Id + 2100, CustomRoles.CCRedLeader);
-        SetupLeaderRoleOptions(Id + 2200, CustomRoles.CCBlueLeader);
-        SetupAddLeaderRoleOptions(Id + 2300, CustomRoles.CCYellowLeader);
+        SetupLeaderRoleOptions(CustomRoles.CCRedLeader);
+        SetupLeaderRoleOptions(CustomRoles.CCBlueLeader);
+        SetupAddLeaderRoleOptions(CustomRoles.CCYellowLeader);
 
-        LeaderIgnoreVent = StringOptionItem.Create(Id + 2400, "IgnoreLeaderVent", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
+        LeaderIgnoreVent = StringOptionItem.Create("IgnoreLeaderVent", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetHeader(true)
             .SetColor(Palette.Orange)
             .SetGameMode(CustomGameMode.CatchCat);
-        LeaderKilled = StringOptionItem.Create(Id + 2500, "CCLeaderKilled", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
+        LeaderKilled = StringOptionItem.Create("CCLeaderKilled", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetColor(Palette.Orange)
             .SetGameMode(CustomGameMode.CatchCat);
 
-        LK_CatCount = IntegerOptionItem.Create(Id + 2510, "CCLK_CatCount", new(0, 7, 1), 0, TabGroup.ModMainSettings, false)
+        LK_CatCount = IntegerOptionItem.Create("CCLK_CatCount", new(0, 7, 1), 0, TabGroup.ModMainSettings, false)
             .SetParent(LeaderKilled)
             .SetValueFormat(OptionFormat.Players)
             .SetGameMode(CustomGameMode.CatchCat);
-        LK_OneGuard = StringOptionItem.Create(Id + 2520, "CCLK_OneGuard", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
+        LK_OneGuard = StringOptionItem.Create("CCLK_OneGuard", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetParent(LeaderKilled)
             .SetGameMode(CustomGameMode.CatchCat);
 
         // 猫設定
-        TextOptionItem.Create(Id + 3000, "CCCatSetting", TabGroup.ModMainSettings)
+        TextOptionItem.Create("CCCatSetting", TabGroup.ModMainSettings)
             .SetColor(Color.gray)
             .SetGameMode(CustomGameMode.CatchCat);
-        WhenColorCatKilled = StringOptionItem.Create(Id + 3100, "CCWhenColorCatKilled", EnumHelper.GetAllNames<ColorCatKill>(), 0, TabGroup.ModMainSettings, false)
+        WhenColorCatKilled = StringOptionItem.Create("CCWhenColorCatKilled", EnumHelper.GetAllNames<ColorCatKill>(), 0, TabGroup.ModMainSettings, false)
             .SetColor(Color.gray)
             .SetGameMode(CustomGameMode.CatchCat);
-        ColorCatShowSameCamp = StringOptionItem.Create(Id + 3200, "CCColorCatShowSameCamp", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
-            .SetColor(Color.gray)
-            .SetGameMode(CustomGameMode.CatchCat);
-
-        TaskCompleteAbility = StringOptionItem.Create(Id + 3300, "CCTaskCompleteAbility", new string[] { "ColoredOff", "ColoredOn" }, 1, TabGroup.ModMainSettings, false)
+        ColorCatShowSameCamp = StringOptionItem.Create("CCColorCatShowSameCamp", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetColor(Color.gray)
             .SetGameMode(CustomGameMode.CatchCat);
 
-        T_KnowAllLeader = IntegerOptionItem.Create(Id + 3310, "CCT_KnowAllLeader", new(0, 100, 10), 0, TabGroup.ModMainSettings, false)
+        TaskCompleteAbility = StringOptionItem.Create("CCTaskCompleteAbility", new string[] { "ColoredOff", "ColoredOn" }, 1, TabGroup.ModMainSettings, false)
+            .SetColor(Color.gray)
+            .SetGameMode(CustomGameMode.CatchCat);
+
+        T_KnowAllLeader = IntegerOptionItem.Create("CCT_KnowAllLeader", new(0, 100, 10), 0, TabGroup.ModMainSettings, false)
             .SetParent(TaskCompleteAbility)
             .SetValueFormat(OptionFormat.Percent)
             .SetGameMode(CustomGameMode.CatchCat);
-        T_OwnLeaderKillcoolDecrease = IntegerOptionItem.Create(Id + 3320, "CCT_OwnLeaderKillcoolDecrease", new(0, 100, 10), 0, TabGroup.ModMainSettings, false)
+        T_OwnLeaderKillcoolDecrease = IntegerOptionItem.Create("CCT_OwnLeaderKillcoolDecrease", new(0, 100, 10), 0, TabGroup.ModMainSettings, false)
             .SetParent(TaskCompleteAbility)
             .SetValueFormat(OptionFormat.Percent)
             .SetGameMode(CustomGameMode.CatchCat);
-        T_OneGuardOwn = IntegerOptionItem.Create(Id + 3330, "CCT_OneGuardOwn", new(0, 100, 10), 0, TabGroup.ModMainSettings, false)
+        T_OneGuardOwn = IntegerOptionItem.Create("CCT_OneGuardOwn", new(0, 100, 10), 0, TabGroup.ModMainSettings, false)
             .SetParent(TaskCompleteAbility)
             .SetValueFormat(OptionFormat.Percent)
             .SetGameMode(CustomGameMode.CatchCat);
-        T_CanUseVent = IntegerOptionItem.Create(Id + 3340, "CCT_CanUseVent", new(0, 100, 10), 0, TabGroup.ModMainSettings, false)
+        T_CanUseVent = IntegerOptionItem.Create("CCT_CanUseVent", new(0, 100, 10), 0, TabGroup.ModMainSettings, false)
             .SetParent(TaskCompleteAbility)
             .SetValueFormat(OptionFormat.Percent)
             .SetGameMode(CustomGameMode.CatchCat);
 
-        T_VentCooldown = FloatOptionItem.Create(Id + 3341, "VentCooldown", new(5f, 60f, 2.5f), 20f, TabGroup.ModMainSettings, false)
+        T_VentCooldown = FloatOptionItem.Create("VentCooldown", new(5f, 60f, 2.5f), 20f, TabGroup.ModMainSettings, false)
             .SetParent(T_CanUseVent)
             .SetValueFormat(OptionFormat.Seconds)
             .SetGameMode(CustomGameMode.CatchCat);
-        T_VentMaxTime = FloatOptionItem.Create(Id + 3342, "VentMaxTime", new(1f, 10f, 1f), 3f, TabGroup.ModMainSettings, false)
+        T_VentMaxTime = FloatOptionItem.Create("VentMaxTime", new(1f, 10f, 1f), 3f, TabGroup.ModMainSettings, false)
             .SetParent(T_CanUseVent)
             .SetValueFormat(OptionFormat.Seconds)
             .SetGameMode(CustomGameMode.CatchCat);
 
         // 会議表示
-        TextOptionItem.Create(Id + 5000, "CCMeetingDisplay", TabGroup.ModMainSettings)
+        TextOptionItem.Create("CCMeetingDisplay", TabGroup.ModMainSettings)
             .SetColor(Color.cyan)
             .SetGameMode(CustomGameMode.CatchCat);
-        M_LeaderRemain = StringOptionItem.Create(Id + 5010, "CCM_LeaderRemain", new string[] { "ColoredOff", "ColoredOn" }, 1, TabGroup.ModMainSettings, false)
+        M_LeaderRemain = StringOptionItem.Create("CCM_LeaderRemain", new string[] { "ColoredOff", "ColoredOn" }, 1, TabGroup.ModMainSettings, false)
             .SetColor(Color.cyan)
             .SetGameMode(CustomGameMode.CatchCat);
-        M_NeutralCatRemain = StringOptionItem.Create(Id + 5020, "CCM_NeutralCatRemain", new string[] { "ColoredOff", "ColoredOn" }, 1, TabGroup.ModMainSettings, false)
+        M_NeutralCatRemain = StringOptionItem.Create("CCM_NeutralCatRemain", new string[] { "ColoredOff", "ColoredOn" }, 1, TabGroup.ModMainSettings, false)
             .SetColor(Color.cyan)
             .SetGameMode(CustomGameMode.CatchCat);
-        M_RemainCatShowName = StringOptionItem.Create(Id + 5030, "CCM_RemainCatShowName", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
+        M_RemainCatShowName = StringOptionItem.Create("CCM_RemainCatShowName", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetColor(Color.cyan)
             .SetGameMode(CustomGameMode.CatchCat);
-        M_RemainCatShowNameNum = IntegerOptionItem.Create(Id + 5031, "CCM_RemainCatShowNameNum", new(1, 13, 1), 2, TabGroup.ModMainSettings, false)
+        M_RemainCatShowNameNum = IntegerOptionItem.Create("CCM_RemainCatShowNameNum", new(1, 13, 1), 2, TabGroup.ModMainSettings, false)
             .SetParent(M_RemainCatShowName)
             .SetValueFormat(OptionFormat.Players)
             .SetGameMode(CustomGameMode.CatchCat);
-        M_ColorCatCount = StringOptionItem.Create(Id + 5040, "CCM_ColorCatCount", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
+        M_ColorCatCount = StringOptionItem.Create("CCM_ColorCatCount", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetColor(Color.cyan)
             .SetGameMode(CustomGameMode.CatchCat);
     }
 
-    private static void SetupLeaderRoleOptions(int id, CustomRoles role)
+    private static void SetupLeaderRoleOptions(CustomRoles role)
     {
         // spawnOption は IntegerOptionItem 型で確実に扱う
-        IntegerOptionItem spawnOption = IntegerOptionItem.Create(id, role.ToString() + "Fixed", new(100, 100, 1), 100, TabGroup.ModMainSettings, false);
+        IntegerOptionItem spawnOption = IntegerOptionItem.Create(role.ToString() + "Fixed", new(100, 100, 1), 100, TabGroup.ModMainSettings, false);
         spawnOption.SetColor(Utils.GetRoleColor(role))
                    .SetValueFormat(OptionFormat.Percent)
                    .SetFixValue(true)
                    .SetGameMode(CustomGameMode.CatchCat);
 
-        IntegerOptionItem countOption = IntegerOptionItem.Create(id + 1, "Maximum", new(1, 1, 1), 1, TabGroup.ModMainSettings, false);
+        IntegerOptionItem countOption = IntegerOptionItem.Create("Maximum", new(1, 1, 1), 1, TabGroup.ModMainSettings, false);
         countOption.SetParent(spawnOption)
                    .SetValueFormat(OptionFormat.Players)
                    .SetGameMode(CustomGameMode.CatchCat);
@@ -154,14 +160,14 @@ static class Option
         Options.CustomRoleCounts.Add(role, countOption);
     }
 
-    private static void SetupAddLeaderRoleOptions(int id, CustomRoles role)
+    private static void SetupAddLeaderRoleOptions(CustomRoles role)
     {
-        IntegerOptionItem spawnOption = IntegerOptionItem.Create(id, role.ToString(), new(0, 100, 100), 0, TabGroup.ModMainSettings, false);
+        IntegerOptionItem spawnOption = IntegerOptionItem.Create(role.ToString(), new(0, 100, 100), 0, TabGroup.ModMainSettings, false);
         spawnOption.SetColor(Utils.GetRoleColor(role))
                    .SetValueFormat(OptionFormat.Percent)
                    .SetGameMode(CustomGameMode.CatchCat);
 
-        IntegerOptionItem countOption = IntegerOptionItem.Create(id + 1, "Maximum", new(1, 1, 1), 1, TabGroup.ModMainSettings, false);
+        IntegerOptionItem countOption = IntegerOptionItem.Create("Maximum", new(1, 1, 1), 1, TabGroup.ModMainSettings, false);
         countOption.SetParent(spawnOption)
                    .SetHidden(true)
                    .SetGameMode(CustomGameMode.CatchCat);

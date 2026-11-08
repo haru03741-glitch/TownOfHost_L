@@ -74,10 +74,10 @@ public sealed class Immoralist : RoleBase, IAdditionalWinner, ISystemTypeUpdateH
 
     public static void SetupOptionItem()
     {
-        OptionAddGuard = BooleanOptionItem.Create(RoleInfo, 10, OptionName.ImmoralistOptionAddGuard, true, false);
-        OptionAddGuardTiming = StringOptionItem.Create(RoleInfo, 11, OptionName.ImmoralistOptionAddGuardTiming, EnumHelper.GetAllNames<AddGuardTimingOption>(), 1, false).SetParent(OptionAddGuard);
-        OptionCanAlsoBeExposedToJackal = BooleanOptionItem.Create(RoleInfo, 12, OptionName.ImmoralistCanAlsoBeExposedToFox, false, false);
-        Tasks = Options.OverrideTasksData.Create(RoleInfo, 20);
+        OptionAddGuard = BooleanOptionItem.Create(RoleInfo, OptionName.ImmoralistOptionAddGuard, true, false);
+        OptionAddGuardTiming = StringOptionItem.Create(RoleInfo, OptionName.ImmoralistOptionAddGuardTiming, EnumHelper.GetAllNames<AddGuardTimingOption>(), 1, false).SetParent(OptionAddGuard);
+        OptionCanAlsoBeExposedToJackal = BooleanOptionItem.Create(RoleInfo, OptionName.ImmoralistCanAlsoBeExposedToFox, false, false);
+        Tasks = Options.OverrideTasksData.Create(RoleInfo);
     }
     // 試合を跨いで前の試合のインスタンスが残らないようにする
     public override bool NeedsSeenNames => true;

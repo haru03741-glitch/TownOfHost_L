@@ -51,9 +51,9 @@ public sealed class PlatonicLover : RoleBase, IKiller
 
     private static void SetupOptionItem()
     {
-        OptionLimitTurn = IntegerOptionItem.Create(RoleInfo, 11, OptionName.PlatonicLoverLimitTurn, new(1, 30, 1), 3, false)
+        OptionLimitTurn = IntegerOptionItem.Create(RoleInfo, OptionName.PlatonicLoverLimitTurn, new(1, 30, 1), 3, false)
             .SetValueFormat(OptionFormat.Turns);
-        OptionAddWin = BooleanOptionItem.Create(RoleInfo, 10, OptionName.LoversAddWin, false, false);
+        OptionAddWin = BooleanOptionItem.Create(RoleInfo, OptionName.LoversAddWin, false, false);
     }
 
     public override void Add()

@@ -57,15 +57,15 @@ public sealed class CandleLighter : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionTaskStartVision = FloatOptionItem.Create(RoleInfo, 10, OptionName.CandleLighterStartVision, new(0.5f, 5f, 0.1f), 2.0f, false)
+        OptionTaskStartVision = FloatOptionItem.Create(RoleInfo, OptionName.CandleLighterStartVision, new(0.5f, 5f, 0.1f), 2.0f, false)
             .SetValueFormat(OptionFormat.Multiplier);
-        OptionCountStartTime = IntegerOptionItem.Create(RoleInfo, 11, OptionName.CandleLighterCountStartTime, new(0, 300, 10), 0, false)
+        OptionCountStartTime = IntegerOptionItem.Create(RoleInfo, OptionName.CandleLighterCountStartTime, new(0, 300, 10), 0, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionTaskEndVisionTime = IntegerOptionItem.Create(RoleInfo, 12, OptionName.CandleLighterEndVisionTime, new(60, 1200, 60), 480, false)
+        OptionTaskEndVisionTime = IntegerOptionItem.Create(RoleInfo, OptionName.CandleLighterEndVisionTime, new(60, 1200, 60), 480, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionTaskEndVision = FloatOptionItem.Create(RoleInfo, 13, OptionName.CandleLighterEndVision, new(0f, 0.5f, 0.05f), 0.1f, false)
+        OptionTaskEndVision = FloatOptionItem.Create(RoleInfo, OptionName.CandleLighterEndVision, new(0f, 0.5f, 0.05f), 0.1f, false)
             .SetValueFormat(OptionFormat.Multiplier);
-        OptionTaskTimeMoveMeeting = BooleanOptionItem.Create(RoleInfo, 14, OptionName.CandleLighterTimeMoveMeeting, false, false);
+        OptionTaskTimeMoveMeeting = BooleanOptionItem.Create(RoleInfo, OptionName.CandleLighterTimeMoveMeeting, false, false);
     }
     public override void Add()
     {

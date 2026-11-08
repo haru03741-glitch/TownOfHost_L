@@ -88,19 +88,19 @@ public sealed class Pirate : RoleBase, IKiller
     static string[] selectStringArray = randArrays.Concat(buffRoleArrays).ToArray();
     private static void SetupOptionItem()
     {
-        OptionKillCoolDown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(0f, 180f, 2.5f), 30f, false)
+        OptionKillCoolDown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 2.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, 11, GeneralOption.ImpostorVision, true, false);
-        OptionLimitTurn = IntegerOptionItem.Create(RoleInfo, 12, OptionName.PirateLimitTurn, new(1, 30, 1), 3, false)
+        OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, GeneralOption.ImpostorVision, true, false);
+        OptionLimitTurn = IntegerOptionItem.Create(RoleInfo, OptionName.PirateLimitTurn, new(1, 30, 1), 3, false)
             .SetValueFormat(OptionFormat.Turns);
-        OptionCanImpostorBeGang = BooleanOptionItem.Create(RoleInfo, 13, OptionName.PirateImpostorCanBeGang, false, false);
-        OptionCanMadmateBeGang = BooleanOptionItem.Create(RoleInfo, 14, OptionName.PirateMadmateCanBeGang, true, false);
-        OptionCanNeutralBeGang = BooleanOptionItem.Create(RoleInfo, 15, OptionName.PirateNeutralCanBeGang, true, false);
+        OptionCanImpostorBeGang = BooleanOptionItem.Create(RoleInfo, OptionName.PirateImpostorCanBeGang, false, false);
+        OptionCanMadmateBeGang = BooleanOptionItem.Create(RoleInfo, OptionName.PirateMadmateCanBeGang, true, false);
+        OptionCanNeutralBeGang = BooleanOptionItem.Create(RoleInfo, OptionName.PirateNeutralCanBeGang, true, false);
 
-        BuffAddonAssignTarget = StringOptionItem.Create(RoleInfo, 16, OptionName.PirateBuffAddonAssignTarget, selectStringArray, 0, false);
+        BuffAddonAssignTarget = StringOptionItem.Create(RoleInfo, OptionName.PirateBuffAddonAssignTarget, selectStringArray, 0, false);
 
         // 20-23を使用
-        Tasks = Options.OverrideTasksData.Create(RoleInfo, 20, Options.CustomRoleSpawnChances[RoleInfo.RoleName], CustomRoles.Gang);
+        Tasks = Options.OverrideTasksData.Create(RoleInfo, Options.CustomRoleSpawnChances[RoleInfo.RoleName], CustomRoles.Gang);
     }
 
     public PlayerControl Gang;

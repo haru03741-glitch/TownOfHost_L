@@ -58,9 +58,9 @@ class Penguin : HamoRoleBase, IImpostor
     public bool IsKiller => AbductVictim == null;
     public static void SetupOptionItem()
     {
-        OptionAbductTimerLimit = FloatOptionItem.Create(RoleInfo, 11, OptionName.PenguinAbductTimerLimit, new(5f, 100f, 1f), 10f, false)
+        OptionAbductTimerLimit = FloatOptionItem.Create(RoleInfo, OptionName.PenguinAbductTimerLimit, new(5f, 100f, 1f), 10f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionMeetingKill = BooleanOptionItem.Create(RoleInfo, 12, OptionName.PenguinMeetingKill, false, false);
+        OptionMeetingKill = BooleanOptionItem.Create(RoleInfo, OptionName.PenguinMeetingKill, false, false);
     }
     public override void Add()
     {

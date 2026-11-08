@@ -41,10 +41,10 @@ public sealed class EvilGuesser : VoteGuesser, IImpostor
     }
     public static void SetupOptionItem()
     {
-        OptionNumOfGuess = IntegerOptionItem.Create(RoleInfo, 10, OptionName.GuesserNumOfGuess, new(1, 15, 1), 1, false)
+        OptionNumOfGuess = IntegerOptionItem.Create(RoleInfo, OptionName.GuesserNumOfGuess, new(1, 15, 1), 1, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionMultipleInMeeting = BooleanOptionItem.Create(RoleInfo, 11, OptionName.GuesserMultipleInMeeting, false, false);
-        OptionHideMisfire = BooleanOptionItem.Create(RoleInfo, 12, OptionName.GuesserHideMisfire, false, false);
-        OptionGuessAfterVote = BooleanOptionItem.Create(RoleInfo, 13, OptionName.GuesserGuessAfterVote, false, false);
+        OptionMultipleInMeeting = BooleanOptionItem.Create(RoleInfo, OptionName.GuesserMultipleInMeeting, false, false);
+        OptionHideMisfire = BooleanOptionItem.Create(RoleInfo, OptionName.GuesserHideMisfire, false, false);
+        OptionGuessAfterVote = BooleanOptionItem.Create(RoleInfo, OptionName.GuesserGuessAfterVote, false, false);
     }
 }

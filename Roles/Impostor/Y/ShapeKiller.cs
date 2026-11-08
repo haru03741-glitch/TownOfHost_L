@@ -38,7 +38,7 @@ public sealed class ShapeKiller : RoleBase, IImpostor, ISidekickable
 
     private static void SetUpOptionItem()
     {
-        OptionCanDeadReport = BooleanOptionItem.Create(RoleInfo, 10, OptionName.ShapeKillerCanDeadReport, true, false);
+        OptionCanDeadReport = BooleanOptionItem.Create(RoleInfo, OptionName.ShapeKillerCanDeadReport, true, false);
     }
     public override void OnShapeshift(PlayerControl target)
     {

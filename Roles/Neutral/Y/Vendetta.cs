@@ -56,10 +56,10 @@ public sealed class Vendetta : RoleBase, IKiller, IAdditionalWinner
 
     private static void SetupOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(0f, 180f, 2.5f), 30f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 2.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, 11, GeneralOption.ImpostorVision, false, false);
-        OptionSelfKillRequired = BooleanOptionItem.Create(RoleInfo, 12, OptionName.VendettaSelfKillRequired, false, false);
+        OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, GeneralOption.ImpostorVision, false, false);
+        OptionSelfKillRequired = BooleanOptionItem.Create(RoleInfo, OptionName.VendettaSelfKillRequired, false, false);
     }
 
     public override bool NeedsSeenNames => true;

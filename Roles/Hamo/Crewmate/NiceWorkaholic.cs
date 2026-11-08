@@ -42,12 +42,12 @@ public sealed class NiceWorkaholic : HamoRoleBase
 
     private static void SetupOptionItem()
     {
-        OptionCanVent = BooleanOptionItem.Create(RoleInfo, 11, GeneralOption.CanVent, false, false);
-        OptionVentCooldown = FloatOptionItem.Create(RoleInfo, 12, GeneralOption.Cooldown,
+        OptionCanVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, false, false);
+        OptionVentCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.Cooldown,
             new(0f, 180f, 2.5f), 0f, false, OptionCanVent)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionWinAtDeath = BooleanOptionItem.Create(RoleInfo, 13, OptionName.NiceWorkaholicCanWinAtDeath, false, false);
-        Options.OverrideTasksData.Create(RoleInfo, 20);
+        OptionWinAtDeath = BooleanOptionItem.Create(RoleInfo, OptionName.NiceWorkaholicCanWinAtDeath, false, false);
+        Options.OverrideTasksData.Create(RoleInfo);
     }
 
     public override void ApplyGameOptions(IGameOptions opt)

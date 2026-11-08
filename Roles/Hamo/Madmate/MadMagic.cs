@@ -35,15 +35,15 @@ public sealed class MadMagic : HamoRoleBase, IKillFlashSeeable, IDeathReasonSeea
 
     static void SetupOptionItem()
     {
-        OptionTurns = IntegerOptionItem.Create(RoleInfo, 10, OptionName.MadMagicTurns, new(1, 99, 1), 2, false).SetValueFormat(OptionFormat.Turns);
+        OptionTurns = IntegerOptionItem.Create(RoleInfo, OptionName.MadMagicTurns, new(1, 99, 1), 2, false).SetValueFormat(OptionFormat.Turns);
         var names = new[] { "Random" }.Concat(Candidates.Select(r => r.ToString())).ToArray();
         OptionChoices = new[]
         {
-            StringOptionItem.Create(RoleInfo, 11, OptionName.MadMagicChoice1, names, 0, false),
-            StringOptionItem.Create(RoleInfo, 12, OptionName.MadMagicChoice2, names, 0, false),
-            StringOptionItem.Create(RoleInfo, 13, OptionName.MadMagicChoice3, names, 0, false),
+            StringOptionItem.Create(RoleInfo, OptionName.MadMagicChoice1, names, 0, false),
+            StringOptionItem.Create(RoleInfo, OptionName.MadMagicChoice2, names, 0, false),
+            StringOptionItem.Create(RoleInfo, OptionName.MadMagicChoice3, names, 0, false),
         };
-        Options.OverrideTasksData.Create(RoleInfo, 20);
+        Options.OverrideTasksData.Create(RoleInfo);
     }
 
     public MadMagic(PlayerControl player) : base(RoleInfo, player, () => HasTask.ForRecompute)

@@ -45,12 +45,12 @@ public sealed class CounselorAndMadDilemma : RoleBase
     {
         Dictionary<string, string> counselorDic = new() { { "%counselor%", Utils.ColorString(Utils.GetRoleColor(CustomRoles.Counselor), Utils.GetRoleName(CustomRoles.Counselor)) } };
 
-        OptionTaskTrigger = IntegerOptionItem.Create(RoleInfo, 10, OptionName.CounselorTaskTrigger, new(0, 20, 1), 5, false).SetReplacementDictionary(counselorDic)
+        OptionTaskTrigger = IntegerOptionItem.Create(RoleInfo, OptionName.CounselorTaskTrigger, new(0, 20, 1), 5, false).SetReplacementDictionary(counselorDic)
             .SetValueFormat(OptionFormat.Pieces);
-        OptionChallengeMaxCount = IntegerOptionItem.Create(RoleInfo, 11, OptionName.CounselorChallengeMaxCount, new(1, 15, 1), 3, false).SetReplacementDictionary(counselorDic)
+        OptionChallengeMaxCount = IntegerOptionItem.Create(RoleInfo, OptionName.CounselorChallengeMaxCount, new(1, 15, 1), 3, false).SetReplacementDictionary(counselorDic)
             .SetValueFormat(OptionFormat.Times);
-        //OptionResetAddonChangeCrew = BooleanOptionItem.Create(RoleInfo, 12, OptionName.MadDilemmaResetAddonChangeCrew, false, false);
+        //OptionResetAddonChangeCrew = BooleanOptionItem.Create(RoleInfo, OptionName.MadDilemmaResetAddonChangeCrew, false, false);
 
-        Options.SetUpAddOnOptions(RoleInfo.ConfigId + 20, CustomRoles.MadDilemma, RoleInfo.Tab, RoleInfo.RoleName, true);
+        Options.SetUpAddOnOptions(CustomRoles.MadDilemma, RoleInfo.Tab, RoleInfo.RoleName, true);
     }
 }

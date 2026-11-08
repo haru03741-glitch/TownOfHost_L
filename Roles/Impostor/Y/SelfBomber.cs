@@ -44,9 +44,9 @@ public sealed class SelfBomber : RoleBase, IImpostor
 
     public static void SetupCustomOption()
     {
-        OptionBombRadius = FloatOptionItem.Create(RoleInfo, 10, OptionName.SelfBomberBombRadius, new(0.5f, 3f, 0.5f), 1f, false)
+        OptionBombRadius = FloatOptionItem.Create(RoleInfo, OptionName.SelfBomberBombRadius, new(0.5f, 3f, 0.5f), 1f, false)
             .SetValueFormat(OptionFormat.Multiplier);
-        OptionBombCooldown = FloatOptionItem.Create(RoleInfo, 11, OptionName.SelfBomberBombCooldown, new(5f, 180f, 2.5f), 15.0f, false)
+        OptionBombCooldown = FloatOptionItem.Create(RoleInfo, OptionName.SelfBomberBombCooldown, new(5f, 180f, 2.5f), 15.0f, false)
             .SetValueFormat(OptionFormat.Seconds);
     }
     public override void ApplyGameOptions(IGameOptions opt) => AURoleOptions.PhantomCooldown = BombCooldown;

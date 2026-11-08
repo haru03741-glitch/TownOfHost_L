@@ -19,7 +19,6 @@ namespace TownOfHostL.Roles.AddOns.Crewmate
             chatCommand: "ワークホース");
 
         public static Color RoleColor => Utils.GetRoleColor(CustomRoles.Workhorse);
-        private static readonly int Id = (int)offsetId.AddonCrew + 0;
         public static List<byte> playerIdList = new();
         private static OptionItem OptionAssignOnlyToCrewmate;
         private static OptionItem OptionNumLongTasks;
@@ -29,12 +28,12 @@ namespace TownOfHostL.Roles.AddOns.Crewmate
         public static int NumShortTasks;
         public static void SetupCustomOption()
         {
-            SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.Workhorse);
-            OptionAssignOnlyToCrewmate = BooleanOptionItem.Create(Id + 10, "AssignOnlyTo%role%", true, TabGroup.Addons, false).SetParent(CustomRoleSpawnChances[CustomRoles.Workhorse]);
+            SetupRoleOptions(TabGroup.Addons, CustomRoles.Workhorse);
+            OptionAssignOnlyToCrewmate = BooleanOptionItem.Create("AssignOnlyTo%role%", true, TabGroup.Addons, false).SetParent(CustomRoleSpawnChances[CustomRoles.Workhorse]);
             OptionAssignOnlyToCrewmate.ReplacementDictionary = new Dictionary<string, string> { { "%role%", Utils.ColorString(Palette.CrewmateBlue, Utils.GetRoleName(CustomRoles.Crewmate)) } };
-            OptionNumLongTasks = IntegerOptionItem.Create(Id + 11, "WorkhorseNumLongTasks", new(0, 5, 1), 1, TabGroup.Addons, false).SetParent(CustomRoleSpawnChances[CustomRoles.Workhorse])
+            OptionNumLongTasks = IntegerOptionItem.Create("WorkhorseNumLongTasks", new(0, 5, 1), 1, TabGroup.Addons, false).SetParent(CustomRoleSpawnChances[CustomRoles.Workhorse])
                 .SetValueFormat(OptionFormat.Pieces);
-            OptionNumShortTasks = IntegerOptionItem.Create(Id + 12, "WorkhorseNumShortTasks", new(0, 5, 1), 1, TabGroup.Addons, false).SetParent(CustomRoleSpawnChances[CustomRoles.Workhorse])
+            OptionNumShortTasks = IntegerOptionItem.Create("WorkhorseNumShortTasks", new(0, 5, 1), 1, TabGroup.Addons, false).SetParent(CustomRoleSpawnChances[CustomRoles.Workhorse])
                 .SetValueFormat(OptionFormat.Pieces);
         }
         [GameModuleInitializer]

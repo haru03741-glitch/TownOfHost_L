@@ -18,13 +18,12 @@ public static class Refusing
         chatCommand: "リフュージング",
         assignAtRandom: true);
 
-    private static readonly int Id = (int)offsetId.AddonBuff + 1200;
     private static List<byte> playerIdList = new();
     private static List<byte> IgnoreExiled = new();
 
     public static void SetupCustomOption()
     {
-        SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.Refusing);
+        SetupRoleOptions(TabGroup.Addons, CustomRoles.Refusing);
     }
     [GameModuleInitializer]
     public static void Init()

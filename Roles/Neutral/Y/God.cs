@@ -51,9 +51,9 @@ public sealed class God : RoleBase, ISystemTypeUpdateHook, ISoloWinner
     private static bool viewVoteFor;
     public static void SetupOptionItem()
     {
-        OptionTaskCompleteToWin = BooleanOptionItem.Create(RoleInfo, 10, OptionName.GodTaskCompleteToWin, true, false);
-        OptionViewVoteFor = BooleanOptionItem.Create(RoleInfo, 11, OptionName.GodViewVoteFor, false, false);
-        Tasks = Options.OverrideTasksData.Create(RoleInfo, 20);
+        OptionTaskCompleteToWin = BooleanOptionItem.Create(RoleInfo, OptionName.GodTaskCompleteToWin, true, false);
+        OptionViewVoteFor = BooleanOptionItem.Create(RoleInfo, OptionName.GodViewVoteFor, false, false);
+        Tasks = Options.OverrideTasksData.Create(RoleInfo);
     }
     public override bool NeedsSeenNames => true;
 
