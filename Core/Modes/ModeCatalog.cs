@@ -112,7 +112,7 @@ public sealed class VanillaHideAndSeekMode : GameMode
     public override CustomGameMode Id => CustomGameMode.VanillaHideAndSeek;
     public override PatchBundles LiveBundles => PatchBundles.Core | PatchBundles.Settings | PatchBundles.VanillaHideAndSeek;
     public override bool UsesStandardRoles => false;
-    // 本編のかくれんぼで効くのは、TOHL が載せるかくれんぼの役職の設定だけ
-    public override bool ShowsOption(OptionItem option) => HideAndSeekMode.IsOwnRoleOption(option);
+    // 本編のかくれんぼで効くのは、TOHL が載せるかくれんぼの役職の設定と「ゲームを終了しない」(親だけ。終わり方ごとの子は通常モード用)
+    public override bool ShowsOption(OptionItem option) => HideAndSeekMode.IsOwnRoleOption(option) || option == Options.NoGameEnd;
     public override (string Key, Color Color)? Label => ("VanillaHideAndSeekLabel", Color.cyan);
 }

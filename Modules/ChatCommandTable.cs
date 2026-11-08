@@ -64,9 +64,9 @@ public static class ChatCommandTable
         new("/log") { Local = Modules.DevCommands.LogCommand },
         new("/dev") { Local = Modules.DevCommands.DevCommand },
         new("/v", "/version") { Local = _ => ShowVersions() },
-#if DEBUG
         new("/sr", "/selectroles") { Host = c => ChatCommands.SelectRolesCommand(c.Args) },
-#endif
+        new("/kick") { Host = c => ChatCommands.KickCommand(c.Args, ban: false) },
+        new("/ban") { Host = c => ChatCommands.KickCommand(c.Args, ban: true) },
         new("/win", "/winner")
         {
             Host = _ => Utils.SendMessageAutoSplit("Winner: " + string.Join(",", Main.winnerList.Select(b => Main.AllPlayerNames[b])), true),

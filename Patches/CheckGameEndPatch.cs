@@ -48,8 +48,9 @@ namespace TownOfHostL
             //ゲーム終了判定済みなら中断
             if (predicate == null) return false;
 
-            //ゲーム終了しないモードで廃村以外の場合は中断
-            if (Options.NoGameEnd.GetBool() && CustomWinnerHolder.WinnerTeam != CustomWinner.Draw) return false;
+            // 役職などが決めた勝ち (廃村以外) を止める。人数・タスク・妨害は各ルールの中で止める
+            if (Options.NoGameEndByRole.GetBool()
+                && CustomWinnerHolder.WinnerTeam is not (CustomWinner.Default or CustomWinner.Draw)) return false;
 
             //ゲーム終了判定
             predicate.Check(out var reason);
@@ -275,6 +276,6 @@ namespace TownOfHostL
         public static void SetPredicateToNormal() => SetPredicate(GameEndRuleSet.Normal);
         public static void SetPredicateToHideAndSeek() => SetPredicate(GameEndRuleSet.HideAndSeek);
         public static void SetPredicateToCatchCat() => SetPredicate(CatchCat.GameEnd.Rules);
-        private static void SetPredicate(GameEndRuleSet rules) { predicate = rules; errorLogCount = 0; }
+        private static void SetPredicate(GameEndRuleSet rules) { predicate = rules; errorLogCount = 0; GameEndRules.ResetForNewGame(); }
     }
 }

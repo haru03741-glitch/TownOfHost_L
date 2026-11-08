@@ -133,7 +133,11 @@ public static class VanillaHideAndSeekRoles
         var sb = new StringBuilder();
         foreach (var (id, role) in assigned)
             sb.Append(GetString(role.ToString())).Append(": ").Append(Players.ById(id)?.Data?.PlayerName ?? "?").Append('\n');
-        if (troll.Value == CustomRoles.HASTroll)
+        if (VanillaHnsGameEnd.Aborted)
+        {
+            sb.Append(GetString("VanillaHns.Aborted"));
+        }
+        else if (troll.Value == CustomRoles.HASTroll)
         {
             // 鬼にキルされたトロールの単独勝ち
             sb.Append(string.Format(GetString("VanillaHns.TrollWin"), Players.ById(troll.Key)?.Data?.PlayerName));
@@ -188,6 +192,7 @@ public static class VanillaHideAndSeekRoles
         assigned.Clear();
         VanillaHnsPortalMaker.Reset();
         VanillaHnsCommands.Reset();
+        VanillaHnsGameEnd.Reset();
         if (pendingResult == null) return;
         // 前の試合の結果を、別の部屋や次のロビーで出し直さない
         if (UnityEngine.Time.realtimeSinceStartup > resultUntil) { pendingResult = null; return; }

@@ -240,61 +240,109 @@ namespace TownOfHostL
             if (GameStates.IsInGame) Utils.NotifyRoles();
         }
 
-#if DEBUG
+        /// <summary>
+        /// /sr プレイヤー名 役職: 次の試合の役職を予約する (ホスト専用・ロビーだけ)。/sr list で一覧、/sr clear で解除。
+        /// 返事はホストの画面にだけ出す (予約した役職を他の人に見せない)。
+        /// </summary>
         internal static void SelectRolesCommand(string[] args)
         {
-            if (!DebugModeManager.IsDebugMode)
-            {
-                // Debugモードでない時はコマンドを無視する
-                return;
-            }
+            static void Reply(string text) => HudManager.Instance.Chat.AddChat(PlayerControl.LocalPlayer, text);
+
             if (!GameStates.IsLobby)
             {
-                Utils.SendMessageAutoSplit(GetString("Message.SelectRolesLobbyOnly"), true);
+                Reply(GetString("Message.SelectRolesLobbyOnly"));
                 return;
             }
 
             if (args.Length >= 2 && String.Compare(args[1], "clear", true) == 0)
             {
                 Modules.SelectRoles.Clear();
-                Utils.SendMessageAutoSplit(GetString("Message.SelectRolesCleared"), true);
+                Reply(GetString("Message.SelectRolesCleared"));
+                return;
+            }
+            if (args.Length == 2 && String.Compare(args[1], "list", true) == 0)
+            {
+                var lines = Modules.SelectRoles.Reserved
+                    .Select(p => (pc: Utils.GetPlayerById(p.Key), role: p.Value))
+                    .Where(p => p.pc != null)
+                    .Select(p => $"{p.pc.Data.PlayerName}: {Utils.ColorString(Utils.GetRoleColor(p.role), Utils.GetRoleName(p.role))}");
+                var text = string.Join('\n', lines);
+                Reply(text == "" ? GetString("Message.SelectRolesNone") : text);
                 return;
             }
             if (args.Length < 3)
             {
-                Utils.SendMessageAutoSplit(GetString("Message.SelectRolesUsage"), true);
+                Reply(GetString("Message.SelectRolesUsage"));
                 return;
             }
 
             var roleArg = args[^1];
             var nameArg = string.Join(" ", args[1..^1]);
 
-            var target = Main.AllPlayerControls.FirstOrDefault(pc =>
-                String.Compare(pc?.Data?.PlayerName, nameArg, true) == 0);
-            target ??= Main.AllPlayerControls.FirstOrDefault(pc =>
-                pc?.Data?.PlayerName?.Contains(nameArg, StringComparison.OrdinalIgnoreCase) == true);
+            var target = FindPlayer(nameArg);
             if (target == null)
             {
-                Utils.SendMessageAutoSplit(string.Format(GetString("Message.SelectRolesNoPlayer"), nameArg), true);
+                Reply(string.Format(GetString("Message.SelectRolesNoPlayer"), nameArg));
                 return;
             }
 
             if (!TryGetRoleByName(roleArg, out var role))
             {
-                Utils.SendMessageAutoSplit(string.Format(GetString("Message.SelectRolesNoRole"), roleArg), true);
+                Reply(string.Format(GetString("Message.SelectRolesNoRole"), roleArg));
                 return;
             }
             if (role.IsAddOn() || role.IsSpectator())
             {
-                Utils.SendMessageAutoSplit(string.Format(GetString("Message.SelectRolesNotMainRole"), Utils.GetRoleName(role)), true);
+                Reply(string.Format(GetString("Message.SelectRolesNotMainRole"), Utils.GetRoleName(role)));
                 return;
             }
 
             Modules.SelectRoles.Set(target.PlayerId, role);
-            Utils.SendMessageAutoSplit(string.Format(GetString("Message.SelectRolesSet"),
-                target.Data.PlayerName, Utils.ColorString(Utils.GetRoleColor(role), Utils.GetRoleName(role))), true);
+            Reply(string.Format(GetString("Message.SelectRolesSet"),
+                target.Data.PlayerName, Utils.ColorString(Utils.GetRoleColor(role), Utils.GetRoleName(role))));
         }
-#endif
+        /// <summary>
+        /// 名前でプレイヤーを探す。完全に一致する人を先に見て、無ければ名前の一部が 1 人だけに当たる時にその人を返す。
+        /// <paramref name="exactOnly"/> なら部分一致は使わない。
+        /// </summary>
+        internal static PlayerControl FindPlayer(string name, bool exactOnly = false)
+        {
+            var exact = Main.AllPlayerControls.FirstOrDefault(pc => String.Compare(pc?.Data?.PlayerName, name, true) == 0);
+            if (exact != null || exactOnly) return exact;
+            var partial = Main.AllPlayerControls.Where(pc => pc?.Data?.PlayerName?.Contains(name, StringComparison.OrdinalIgnoreCase) == true).Take(2).ToList();
+            return partial.Count == 1 ? partial[0] : null;
+        }
+
+        /// <summary>
+        /// /kick 相手・/ban 相手: 相手は ID の数字か名前 (/ban は名前の完全一致だけ)。BAN は本編の BAN と同じく BanList に残る (ClientPatch の KickPlayer の前置き)。
+        /// 返事はホストの画面にだけ出す。
+        /// </summary>
+        internal static void KickCommand(string[] args, bool ban)
+        {
+            static void Reply(string text) => HudManager.Instance.Chat.AddChat(PlayerControl.LocalPlayer, text);
+            if (args.Length < 2)
+            {
+                Reply(GetString(ban ? "Message.BanUsage" : "Message.KickUsage"));
+                return;
+            }
+            var arg = string.Join(" ", args[1..]);
+            var target = byte.TryParse(arg, out var id) ? Utils.GetPlayerById(id) : null;
+            target ??= FindPlayer(arg, exactOnly: ban);
+            if (target == null || target.AmOwner)
+            {
+                Reply(string.Format(GetString("Message.SelectRolesNoPlayer"), arg));
+                return;
+            }
+            var client = target.GetClient();
+            if (client == null)
+            {
+                Reply(string.Format(GetString("Message.SelectRolesNoPlayer"), arg));
+                return;
+            }
+            Logger.Info($"{(ban ? "BAN" : "キック")}: {target.Data?.PlayerName}", "KickCommand");
+            AmongUsClient.Instance.KickPlayer(client.Id, ban);
+        }
+
         public static bool TryGetRoleByName(string input, out CustomRoles role)
         {
             InitRoleCommands();

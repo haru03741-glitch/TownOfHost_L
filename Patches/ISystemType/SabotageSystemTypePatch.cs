@@ -36,6 +36,8 @@ public static class SabotageSystemTypeUpdateSystemPatch
         logger.Info($"PlayerName: {player.GetNameWithRole()}, SabotageType: {nextSabotage}");
 
         if (!ModeCatalog.Current.AllowsSabotage) return false;
+        if (IsDisabledType(nextSabotage)) return false;
+        if (Options.DeadImpostorCannotSabotage.GetBool() && !player.IsAlive()) return false;
         if (!CustomRoleManager.OnSabotage(player, nextSabotage))
         {
             return false;
@@ -53,6 +55,16 @@ public static class SabotageSystemTypeUpdateSystemPatch
             return CanSabotage(player);
         }
     }
+    /// <summary>設定で無効にした種類のサボタージュか</summary>
+    private static bool IsDisabledType(SystemTypes type) => type switch
+    {
+        SystemTypes.Reactor or SystemTypes.Laboratory or SystemTypes.HeliSabotage => Options.DisableSabotageReactor.GetBool(),
+        SystemTypes.LifeSupp => Options.DisableSabotageO2.GetBool(),
+        SystemTypes.Electrical => Options.DisableSabotageLights.GetBool(),
+        SystemTypes.Comms => Options.DisableSabotageComms.GetBool(),
+        SystemTypes.MushroomMixupSabotage => Options.DisableSabotageMushroom.GetBool(),
+        _ => false,
+    };
     private static bool CanSabotage(PlayerControl player)
     {
         //サボタージュ出来ないキラー役職はサボタージュ自体をキャンセル
