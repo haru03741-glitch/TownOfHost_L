@@ -146,7 +146,7 @@ public sealed class MadKaiser : HamoRoleBase
 
     //   君臨者特有の「投票で追放されるとクルーを巻き込む」等の能力は一切持たない。表示だけの模倣。
 
-    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, ref bool enabled, ref UnityEngine.Color roleColor, ref string roleText, ref bool addon)
+    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, bool isMeeting, ref TownOfHostL.Core.RoleNameView view)
 
     {
 
@@ -158,17 +158,15 @@ public sealed class MadKaiser : HamoRoleBase
 
 
 
-        enabled = true;
+        view.Enabled = true;
 
-        addon = false;
+        
 
         if (GetTaskCompletePercent() >= RequiredTaskPercent)
 
         {
 
-            roleColor = RoleInfo.RoleColor;
-
-            roleText = GetString("MadKaiserRevealedTitle");
+            view.SetMainRole(RoleInfo.RoleColor, GetString("MadKaiserRevealedTitle"));
 
         }
 
@@ -176,9 +174,7 @@ public sealed class MadKaiser : HamoRoleBase
 
         {
 
-            roleColor = StringHelper.CodeColor("#FFD700");
-
-            roleText = GetString("MadKaiserDisguiseTitle");
+            view.SetMainRole(StringHelper.CodeColor("#FFD700"), GetString("MadKaiserDisguiseTitle"));
 
         }
 

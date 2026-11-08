@@ -287,19 +287,7 @@ public sealed class UltraStar : HamoRoleBase, IKiller, ISchrodingerCatOwner
 
     public override void OnReportDeadBody(PlayerControl _, NetworkedPlayerInfo __) => Player.RpcSetColor((byte)PlayerColor);
 
-    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
-
-    {
-
-        seer ??= Player;
-
-        enabled |= CanseeAllplayer;
-
-        roleText = $"{roleText}";
-
-        addon |= false;
-
-    }
+    public override bool ShowsRoleTo(PlayerControl seer, bool isMeeting) => CanseeAllplayer;
 
     public override void StartGameTasks() => HamoSpeedTable.Instance[Player.PlayerId] += Speed;
 

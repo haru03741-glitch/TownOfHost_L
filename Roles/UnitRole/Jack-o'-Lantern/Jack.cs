@@ -79,12 +79,12 @@ public sealed class Jack : RoleBase, IImpostor
         });
     }
 
-    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref bool enabled, ref string roleText)
+    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref TownOfHostL.Core.RoleNameView view)
     {
         if (SentPlayer.Contains(seen.PlayerId))
         {
-            enabled = true;
-            roleText = Utils.ColorString(Utils.GetRoleColor(CustomRoles.JackOLantern),"◆") + roleText;
+            view.Enabled = true;
+            view.Prefix = Utils.ColorString(Utils.GetRoleColor(CustomRoles.JackOLantern),"◆") + view.Prefix;
         }
     }
     public override string GetProgressText(bool comms = false)

@@ -94,11 +94,11 @@ public sealed class Workaholic : RoleBase
         return true;
     }
 
-    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, bool isMeeting, ref bool enabled, ref string roleText)
+    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, bool isMeeting, ref TownOfHostL.Core.RoleNameView view)
     {
         if (!Seen) return;        
-        enabled = true;
-        roleText = Utils.ColorString(Utils.GetRoleColor(CustomRoles.Workaholic), Utils.GetRoleName(CustomRoles.Workaholic));
+        view.Enabled = true;
+        view.Replace(Utils.ColorString(Utils.GetRoleColor(CustomRoles.Workaholic), Utils.GetRoleName(CustomRoles.Workaholic)));
     }
 
 }

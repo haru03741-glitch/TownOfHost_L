@@ -265,6 +265,8 @@ public abstract class RoleBase : IDisposable
     public virtual bool KnowsRoleColorOf(PlayerControl target, bool isMeeting) => false;
     /// <summary>この役職の人に、seen の役職名が見えるか (相方・占った相手など)。字を書き換える時は OverrideDisplayRoleNameAsSeer を使う</summary>
     public virtual bool KnowsRoleOf(PlayerControl seen, bool isMeeting) => false;
+    /// <summary>この役職の人の役職名が、seer に見えるか (相方・正体を明かした相手など)。字を書き換える時は OverrideDisplayRoleNameAsSeen を使う</summary>
+    public virtual bool ShowsRoleTo(PlayerControl seer, bool isMeeting) => false;
     /// <summary>この役職の人には、会議で target の名前を色なしで見せる (他の色の決まりより先に効く)</summary>
     public virtual bool HidesNameColorInMeeting(PlayerControl target) => false;
     /// <summary>この役職の人の役職の色が、全員に見えるか</summary>
@@ -313,22 +315,16 @@ public abstract class RoleBase : IDisposable
     // Suffix:ターゲット矢印などの追加情報。
 
     /// <summary>
-    /// seenによる表示上のRoleNameの書き換え
+    /// この役職の人 (seen) の役職名の欄を、seer から見た形に書き換える。見えるかどうかだけなら ShowsRoleTo を使う。
+    /// seer が自分自身の時も呼ばれる。
     /// </summary>
-    /// <param name="seer">見る側</param>
-    /// <param name="enabled">RoleNameを表示するかどうか</param>
-    /// <param name="roleColor">RoleNameの色</param>
-    /// <param name="roleText">RoleNameのテキスト</param>
-    public virtual void OverrideDisplayRoleNameAsSeen(PlayerControl seer, bool isMeeting, ref bool enabled, ref string roleText)
+    public virtual void OverrideDisplayRoleNameAsSeen(PlayerControl seer, bool isMeeting, ref TownOfHostL.Core.RoleNameView view)
     { }
     /// <summary>
-    /// seerによる表示上のRoleNameの書き換え
+    /// この役職の人 (seer) から見た seen の役職名の欄を書き換える。見えるかどうかだけなら KnowsRoleOf を使う。
+    /// seen が自分自身の時も呼ばれる。
     /// </summary>
-    /// <param name="seen">見られる側</param>
-    /// <param name="enabled">RoleNameを表示するかどうか</param>
-    /// <param name="roleColor">RoleNameの色</param>
-    /// <param name="roleText">RoleNameのテキスト</param>
-    public virtual void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref bool enabled, ref string roleText)
+    public virtual void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref TownOfHostL.Core.RoleNameView view)
     { }
     /// <summary>
     /// 本来の役職名の書き換え

@@ -354,41 +354,19 @@ public sealed class JackalWolf : HamoRoleBase, ILNKiller, IUsePhantomButton, IDo
 
     => (AddRole as HamoRoleBase)?.OverrideProgressTextAsSeen(seer, ref enabled, ref text);
 
-    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
+    public override bool KnowsRoleOf(PlayerControl seen, bool isMeeting)
+        => ((seen.Is(CustomRoles.Jackal) || seen.Is(CustomRoles.JackalMafia) || seen.Is(CustomRoles.JackalAlien) || seen.Is(CustomRoles.JackalWolf)) && JackalMafiaCanAlsoBeExposedToJackal)
+            || ((AddRole as HamoRoleBase)?.KnowsRoleOf(seen, isMeeting) ?? false);
 
-    {
+    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref TownOfHostL.Core.RoleNameView view)
+        => (AddRole as HamoRoleBase)?.OverrideDisplayRoleNameAsSeer(seen, isMeeting, ref view);
 
-        if ((seen.Is(CustomRoles.Jackal) || seen.Is(CustomRoles.JackalMafia) || seen.Is(CustomRoles.JackalAlien) || seen.Is(CustomRoles.JackalWolf)) && JackalMafiaCanAlsoBeExposedToJackal)
+    public override bool ShowsRoleTo(PlayerControl seer, bool isMeeting)
+        => ((seer.Is(CustomRoles.Jackal) || seer.Is(CustomRoles.JackalMafia) || seer.Is(CustomRoles.JackalAlien) || seer.Is(CustomRoles.JackalWolf)) && JackalCanAlsoBeExposedToJMafia)
+            || ((AddRole as HamoRoleBase)?.ShowsRoleTo(seer, isMeeting) ?? false);
 
-        {
-
-            enabled = true;
-
-            addon = false;
-
-        }
-
-        (AddRole as HamoRoleBase)?.OverrideDisplayRoleNameAsSeer(seen, ref enabled, ref roleColor, ref roleText, ref addon);
-
-    }
-
-    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seen, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
-
-    {
-
-        if ((seen.Is(CustomRoles.Jackal) || seen.Is(CustomRoles.JackalMafia) || seen.Is(CustomRoles.JackalAlien) || seen.Is(CustomRoles.JackalWolf)) && JackalCanAlsoBeExposedToJMafia)
-
-        {
-
-            enabled = true;
-
-            addon = false;
-
-        }
-
-        (AddRole as HamoRoleBase)?.OverrideDisplayRoleNameAsSeen(seen, ref enabled, ref roleColor, ref roleText, ref addon);
-
-    }
+    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, bool isMeeting, ref TownOfHostL.Core.RoleNameView view)
+        => (AddRole as HamoRoleBase)?.OverrideDisplayRoleNameAsSeen(seer, isMeeting, ref view);
 
 
 
