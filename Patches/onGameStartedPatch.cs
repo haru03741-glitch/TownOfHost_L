@@ -543,9 +543,11 @@ class SelectRolesPatch
             HudManager.Instance.SetHudActive(true);
             pc.ResetKillCooldown();
 
-            // DirectAssign-Addon
-            if (pc.GetCustomRole().IsAddAddOn()
-                && (Options.AddOnBuffAssign[pc.GetCustomRole()].GetBool() || Options.AddOnDebuffAssign[pc.GetCustomRole()].GetBool()))
+            // DirectAssign-Addon (属性の設定を持たない役職 (hamo のマッドメイトなど) は付けない)
+            var mainRole = pc.GetCustomRole();
+            if (mainRole.IsAddAddOn()
+                && ((Options.AddOnBuffAssign.TryGetValue(mainRole, out var buffAssign) && buffAssign.GetBool())
+                    || (Options.AddOnDebuffAssign.TryGetValue(mainRole, out var debuffAssign) && debuffAssign.GetBool())))
             {
                 foreach (var Addon in CustomRolesHelper.AllAddOnRoles)
                 {
