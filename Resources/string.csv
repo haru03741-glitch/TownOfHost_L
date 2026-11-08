@@ -1307,7 +1307,7 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "MenuSearch.Result","Settings matching “{0}”: {1}","「{0}」の検索結果: {1} 件","匹配“{0}”的设置：{1} 项","符合「{0}」的設定：{1} 項","Настройки по запросу «{0}»: {1}","Configurações para “{0}”: {1}","Definições para “{0}”: {1}"
 "MenuSearch.NoHit","No settings match “{0}”","「{0}」に合う設定はありません","没有匹配“{0}”的设置","沒有符合「{0}」的設定","Ничего не найдено по запросу «{0}»","Nenhuma configuração para “{0}”","Nenhuma definição para “{0}”"
 "SettingsUI.Count","{0} items","{0} 件","{0} 项","{0} 項","{0} шт.","{0} itens","{0} itens"
-"SettingsUI.Reset","Reset","初期値に戻す","重置","重置","Сброс","Padrão","Padrão"
+"SettingsUI.Reset","Reset","初期値","重置","重置","Сброс","Padrão","Padrão"
 "SettingsUI.ResetAll","Reset all","すべて初期値に","全部重置","全部重置","Сбросить всё","Restaurar tudo","Repor tudo"
 "SettingsUI.Undo","Undo","元に戻す","撤销","復原","Отмена","Desfazer","Anular"
 "RoleBrowser.Chance","Chance","出現率","出现率","出現率","Шанс","Chance","Chance"
