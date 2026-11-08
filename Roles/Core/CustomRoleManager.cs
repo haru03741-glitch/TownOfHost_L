@@ -301,6 +301,7 @@ public static partial class CustomRoleManager
         NameColorOthers.Clear();
         KillBlockersOthers.Clear();
         TaskExemptionsOthers.Clear();
+        EveryoneNeedsSeenNamesOthers.Clear();
         CheckMurderInfos.Clear();
         OnMurderPlayerOthers.Clear();
         OnFixedUpdateOthers.Clear();
@@ -418,6 +419,11 @@ public static partial class CustomRoleManager
     /// 役職に関わらず、その人のタスクを免除するか (true で免除)。死後のタスク免除の設定など、その試合の役職が登録する
     /// </summary>
     public static HashSet<Func<NetworkedPlayerInfo, bool>> TaskExemptionsOthers = new();
+    /// <summary>
+    /// 見る人に関わらず、全員の他人の名前を組み直す状況か (true で組み直す)。呪い・停電中の変装など、その試合の役職が登録する。
+    /// 同じ役職が何人いても 1 つになるよう、捕まえる物の無いラムダか static メソッドで登録する
+    /// </summary>
+    public static HashSet<Func<bool>> EveryoneNeedsSeenNamesOthers = new();
     public static string ApplyNameColorOthers(PlayerControl seer, PlayerControl seen, string colorCode)
     {
         foreach (var overrideColor in NameColorOthers)
@@ -436,6 +442,7 @@ public static partial class CustomRoleManager
         NameColorOthers.Clear();
         KillBlockersOthers.Clear();
         TaskExemptionsOthers.Clear();
+        EveryoneNeedsSeenNamesOthers.Clear();
         CheckMurderInfos.Clear();
         OnMurderPlayerOthers.Clear();
         OnFixedUpdateOthers.Clear();

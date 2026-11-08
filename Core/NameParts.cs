@@ -95,15 +95,14 @@ public static class NameParts
     /// 見る人に関わらず、全員の 2 周目 (他人の名前) を組み立て直す状況か。NotifyRoles 1 回につき 1 回だけ見る。
     /// </summary>
     public static bool EveryoneNeedsSeenNames()
-        => Witch.IsSpelled()
-            || Bakery.IsPoisoned()
-            || (Utils.IsActive(SystemTypes.Electrical) && CustomRoles.Mare.IsEnable())
-            || (Utils.IsActive(SystemTypes.Comms) && Options.CommsCamouflage.GetBool())
-            || EvilDyer.IsColorCamouflage
+    {
+        if ((Utils.IsActive(SystemTypes.Comms) && Options.CommsCamouflage.GetBool())
             || ModeCatalog.IsCatchCat
-            || Options.GetNameChangeModes() == NameChange.Crew
-            || (CustomRoles.Workaholic.IsEnable() && Workaholic.Seen)
-            || CustomRoles.Rainbow.IsEnable();
+            || Options.GetNameChangeModes() == NameChange.Crew) return true;
+        foreach (var needs in CustomRoleManager.EveryoneNeedsSeenNamesOthers)
+            if (needs()) return true;
+        return false;
+    }
 
     /// <summary>seer が他人の名前を見る必要があるか (役職の宣言と、役職に関わらない状態)</summary>
     public static bool NeedsSeenNames(PlayerControl seer)

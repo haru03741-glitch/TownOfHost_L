@@ -33,6 +33,7 @@ public sealed class Bakery : RoleBase, ISoloWinner
         () => IsNeutral(player) ? HasTask.False : HasTask.True
     )
     {
+        CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(() => IsPoisoned());
         ChangeChances = OptionChangeChances.GetInt();
 
         CustomRoleManager.MarkOthers.Add(GetMarkOthers);

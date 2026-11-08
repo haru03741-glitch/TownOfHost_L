@@ -27,6 +27,7 @@ public sealed class Workaholic : RoleBase
         () => (CannotWinAtDeath && player.Data.IsDead) ? HasTask.False : HasTask.ForRecompute
     )
     {
+        CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(() => Seen);
         Seen = OptionSeen.GetBool();
         TaskSeen = OptionTaskSeen.GetBool();
         CannotWinAtDeath = OptionCannotWinAtDeath.GetBool();
