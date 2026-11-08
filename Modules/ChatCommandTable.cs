@@ -115,7 +115,14 @@ public static class ChatCommandTable
             Host = _ => Utils.ShowKillLog(),
             Remote = c => Utils.ShowKillLog(c.Player.PlayerId),
         },
-        new("/r", "/rename") { Usage = "CommandUsage.Rename", Host = c => Main.nickName = c.Arg(1) },
+        // 名前の変更は EHR 系に合わせて /rn。/r は EHR 系と同じく役職の説明に使う
+        new("/rn", "/rename", "/name") { Usage = "CommandUsage.Rename", Host = c => Main.nickName = c.Arg(1) },
+        new("/r", "/hr")
+        {
+            Usage = "CommandUsage.Role",
+            Host = c => ShowRoleInfo(Words(c), 1, byte.MaxValue, ShowActiveRoles),
+            Remote = c => ShowRoleInfo(Words(c), 1, c.Player.PlayerId, ShowActiveRoles),
+        },
         new("/hn", "/hidename")
         {
             Host = c =>
@@ -127,8 +134,8 @@ public static class ChatCommandTable
         new("/n", "/now")
         {
             Usage = "CommandUsage.Now",
-            Host = c => ShowNow(c.Arg(1), byte.MaxValue),
-            Remote = c => ShowNow(c.Arg(1), c.Player.PlayerId),
+            Host = c => ShowNow(c, byte.MaxValue),
+            Remote = c => ShowNow(c, c.Player.PlayerId),
         },
         new("/mode") { Usage = "CommandUsage.Mode", Host = c => Core.VanillaHideAndSeek.Command(c.Args) },
         new("/w") { Usage = "CommandUsage.ForceWin", Host = ForceWin },
@@ -218,13 +225,31 @@ public static class ChatCommandTable
         if (AmongUsClient.Instance.IsGameStarted) Utils.ShowMyRoleInfo(c.Player, c.Player.PlayerId);
     }
 
-    private static void ShowNow(string sub, byte sendTo)
+    // 空白が続いて空の引数が挟まっても (「/n  r 役職」) 読めるように、空でない語だけを見る
+    private static string[] Words(ChatCommandContext c) => c.Args.Where(a => a.Length > 0).ToArray();
+
+    /// <summary>
+    /// words[from] 以降を役職名として説明を返す (/r 役職名・/n r 役職名・/h r 役職名)。役職名が無い時は emptyAction
+    /// </summary>
+    private static void ShowRoleInfo(string[] words, int from, byte sendTo, Action<byte> emptyAction)
     {
-        switch (sub)
+        var role = string.Join(" ", words.Skip(from)).Trim();
+        if (role.Length == 0) emptyAction(sendTo);
+        else ChatCommands.GetRolesInfo(role, sendTo);
+    }
+
+    // 役職名が無い /r と /n r は有効な役職の一覧、/h r は使い方
+    private static void ShowActiveRoles(byte sendTo) => Utils.ShowActiveRoles(sendTo);
+    private static void ShowRoleHelp(byte sendTo) => ChatCommands.GetRolesInfo("", sendTo);
+
+    private static void ShowNow(ChatCommandContext c, byte sendTo)
+    {
+        var words = Words(c);
+        switch (words.ElementAtOrDefault(1)?.ToLowerInvariant())
         {
             case "r":
             case "roles":
-                Utils.ShowActiveRoles(sendTo);
+                ShowRoleInfo(words, 2, sendTo, ShowActiveRoles);
                 break;
             case "v":
             case "vanilla":
@@ -238,11 +263,12 @@ public static class ChatCommandTable
 
     private static void ShowHelp(ChatCommandContext c, byte sendTo, bool showGeneralHelp)
     {
-        switch (c.Arg(1))
+        var words = Words(c);
+        switch (words.ElementAtOrDefault(1)?.ToLowerInvariant())
         {
             case "r":
             case "roles":
-                ChatCommands.GetRolesInfo(c.Arg(2), sendTo);
+                ShowRoleInfo(words, 2, sendTo, ShowRoleHelp);
                 break;
             case "n":
             case "now":

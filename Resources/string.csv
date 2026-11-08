@@ -1429,7 +1429,7 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "Message.isReport","The meeting was started by the discovery of a dead body.\nReported dead body：{0}","死体発見により会議が開かれました。\n通報された死体：{0}","会议以发现一具尸体开始。\n报告的尸体：{0}"
 "Message.isButton","The meeting was started by an emergency button.","緊急ボタンにより会議が開かれました。","会议以使用紧急按钮开始."
 "Message.RevengeText","{0} is exiled, and another is died by revenge. \nmurdered：{1}","{0}が追放され、道連れが発生しました。\n{1}が死亡しています。","{0} 被投出，另一人因复仇而死. \n凶杀：{1}"
-"Message.HelpRoleNone","/help roles (/h r) command is only available in Japanese.","/help roles [役職名] (/h r [役職名])\nを入力することでその役職の説明が表示されます。",
+"Message.HelpRoleNone","Role descriptions (/r <role>, /h r <role>, /n r <role>) are only available in Japanese.","/r 役職名 (/h r 役職名・/n r 役職名でも可)\nを入力すると、その役職の説明が出ます。",
 "Message.SelectRolesUsage","Usage: /sr <player name> <role> (/sr list to show, /sr clear to clear)","使い方: /sr プレイヤー名 役職 (/sr list で一覧、/sr clear で解除)","","","","",""
 "Message.SelectRolesLobbyOnly","This command is only available in the lobby.","このコマンドはロビーでのみ使用できます。",
 "Message.SelectRolesNoPlayer","Player not found: {0}","プレイヤーが見つかりません: {0}",
@@ -6023,7 +6023,7 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "VanillaHns.Aborted","The host ended the game.","ホストが廃村にしました。","","","","",""
 "VanillaHns.FoxAlsoWin","The Fox also wins: {0}","生き残った狐 ({0}) も勝利です。","","","","",""
 "VanillaHns.TrollWin","The Troll {0} was caught and wins alone.","トロールの {0} が鬼にキルされたので、単独勝利です。","","","","",""
-"VanillaHns.Help","Commands in vanilla Hide and Seek:\n/h [role] : role description\n/n : current role settings\nRoles: {0}","本編のかくれんぼのコマンド:\n/h [役職名] … 役職の説明\n/n … 今の役職の設定\n役職: {0}","","","","",""
+"VanillaHns.Help","Commands in vanilla Hide and Seek:\n/h [role] or /r [role] : role description\n/n : current role settings\nRoles: {0}","本編のかくれんぼのコマンド:\n/h [役職名] か /r [役職名] … 役職の説明\n/n … 今の役職の設定\n役職: {0}","","","","",""
 "VanillaHns.NoRoles","No extra roles are enabled.","有効な追加役職はありません。","","","","",""
 "VanillaHns.YouAre","You are the {0}","あなたは{0}です","","","","",""
 "VanillaHideAndSeekLabel","Vanilla Hide and Seek","本編のかくれんぼ","","","","",""
@@ -6031,9 +6031,10 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "CommandUsage.Kick","<ID or name>","ID か名前","","","","",""
 "CommandUsage.Ban","<ID or exact name>","ID か名前 (完全一致)","","","","",""
 "CommandUsage.Rename","<name>","名前","","","","",""
+"CommandUsage.Role","[role]","[役職名]","","","","",""
 "CommandUsage.Mode","hns | normal","hns | normal","","","","",""
 "CommandUsage.ForceWin","crewmate | impostor | jackal | none","crewmate | impostor | jackal | none","","","","",""
-"CommandUsage.Now","[r | v]","[r | v]","","","","",""
+"CommandUsage.Now","[r [role] | v]","[r [役職名] | v]","","","","",""
 "CommandUsage.Help","[r <role> | n]","[r 役職名 | n]","","","","",""
 "CommandUsage.Template","<tag>","タグ","","","","",""
 "CommandUsage.MessageWait","<seconds>","秒数","","","","",""
