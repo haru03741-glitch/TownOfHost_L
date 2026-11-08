@@ -80,6 +80,7 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
   - タイトル画面から見れるInfoアナウンス画面
   - ドクター・スナイパーのアイデア
   - incremental GC を実行時に切る方法 ([Nebula-Public](https://github.com/Dolly1016/Nebula-Public))
+  - 設定画面の部品 (本編の絵で組む窓・スクロールする欄・ボタン) と、役職のカードの一覧と役職ごとの頁の設定画面 ([Nebula-Public](https://github.com/Dolly1016/Nebula-Public)・More Roles Plus 経由)
 - [Foolers Mod](https://github.com/MengTube/Foolers-Mod)
   - テロリスト
 - [Town-Of-Us-R](https://github.com/eDonnes124/Town-Of-Us-R)
@@ -97,14 +98,20 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
   - 他のプレイヤーの外見を PlayerInfo の送信で配る方式
   - 会議の後の暗転を防ぐ頭数合わせで、死者を見た目だけ生き返らせる方法
   - 偽の PlayerControl (CNO) を公式サーバーで通す形 (空の spawn・ID の循環・開始と会議明けの待ち)
+  - 設定画面にタブを足す作りと、設定の検索の一致判定 (More Roles Plus 経由で参照)
 - [Endless Host Roles](https://github.com/Gurge44/EndlessHostRoles)
   - 配布物に入れる Unity Doorstop と、pietro による修正版 Il2CppInterop
   - 他のプレイヤーの外見を、PlayerInfo の送信と本人への変身解除で着せ替える方式
   - 会議の後の暗転を防ぐため、生存クルーが足りない時に死者を見た目だけ生き返らせる方法
   - 名前で絵を描く偽の PlayerControl (CustomNetObject)
   - ポータルメーカーの印の絵
+  - 設定画面の検索欄 (本編のチャット入力欄を複製して使う作り)
 - [More Roles Plus](https://github.com/haru03741-glitch/More-Roles-Plus)
   - ロビーで本編のモード (通常 / かくれんぼ) を、GameManager を出し直して切り替える手順
+  - 設定画面の検索欄と検索の結果のタブ、左の列の区分の字の作り
+  - 設定画面の作り (設定の編集の部品・頁と目次・役職の一覧と役職ごとの頁・本編の設定の頁・スクロールする欄や入力欄などの部品)
+- [Town of Host: Enhanced](https://github.com/EnhancedNetwork/TownofHost-Enhanced)
+  - 設定画面の検索欄 (Drakos のコードを Endless Host Roles と More Roles Plus 経由で参照)
 - [MoreGamemodes](https://github.com/Rabek009/MoreGamemodes)
   - 退出ペナルティで部屋を立てられなくなるのを防ぐ処理
   - 名前で絵を描く偽の PlayerControl (CustomNetObject)
