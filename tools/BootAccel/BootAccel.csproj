@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<!-- BepInEx/patchers に置く単体の DLL。BepInEx の preloader が本体より先に読む。
+	     参照は BepInEx の core フォルダから取る (BepInEx.Preloader.Core は NuGet に無い)。
+	     Based on https://github.com/waffle-ful/Aeterna-End-K-not (EndKnot.BootAccel, GPL-3.0)
+	     -p:BepInExCore=<BepInEx/core のフォルダ> か -p:AmongUs=<Among Us のフォルダ> を付けてビルドする。 -->
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<Nullable>disable</Nullable>
+		<AssemblyName>TownOfHost_L.BootAccel</AssemblyName>
+		<RootNamespace>TownOfHostL.BootAccel</RootNamespace>
+		<Deterministic>true</Deterministic>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+		<GenerateDependencyFile>false</GenerateDependencyFile>
+		<DebugType>none</DebugType>
+		<BepInExCore Condition="'$(BepInExCore)' == '' And '$(AmongUs)' != ''">$(AmongUs)\BepInEx\core</BepInExCore>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="$(BepInExCore)\BepInEx.Core.dll" Private="false" />
+		<Reference Include="$(BepInExCore)\BepInEx.Preloader.Core.dll" Private="false" />
+		<Reference Include="$(BepInExCore)\BepInEx.Unity.IL2CPP.dll" Private="false" />
+		<Reference Include="$(BepInExCore)\0Harmony.dll" Private="false" />
+		<Reference Include="$(BepInExCore)\Il2CppInterop.Runtime.dll" Private="false" />
+	</ItemGroup>
+
+	<Target Name="CopyPatcher" AfterTargets="Build" Condition="'$(AmongUs)' != ''">
+		<Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(AmongUs)/BepInEx/patchers/" />
+	</Target>
+
+	<Target Name="CheckBepInExCore" BeforeTargets="ResolveAssemblyReferences">
+		<Error Condition="!Exists('$(BepInExCore)\BepInEx.Preloader.Core.dll')"
+			Text="BepInEx.Preloader.Core.dll が見つかりません。-p:BepInExCore=&lt;BepInEx/core&gt; か -p:AmongUs=&lt;Among Us のフォルダ&gt; を付けてください。" />
+	</Target>
+</Project>

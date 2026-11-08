@@ -80,6 +80,7 @@ public partial class Main : BasePlugin
     public static ConfigEntry<bool> ForceJapanese { get; private set; }
     public static ConfigEntry<bool> JapaneseRoleName { get; private set; }
     public static ConfigEntry<bool> IsMuteLobbyBGM { get; private set; }
+    public static ConfigEntry<bool> SleepAccountMenu { get; private set; }
     public static ConfigEntry<float> MessageWait { get; private set; }
     public static ConfigEntry<bool> KillFlashAfterDeadByHost { get; private set; }
 
@@ -153,6 +154,8 @@ public partial class Main : BasePlugin
         ForceJapanese = Config.Bind("Client Options", "Force Japanese", false);
         JapaneseRoleName = Config.Bind("Client Options", "Japanese Role Name", true);
         IsMuteLobbyBGM = Config.Bind("Client Options", "Mute Lobby BGM", false);
+        SleepAccountMenu = Config.Bind("Client Options", "Sleep Account Menu", true,
+            "Hide the account panel on the main menu until login finishes, so the menu can be used right after start-up.");
         DebugKeyInput = Config.Bind("Authentication", "Debug Key", "");
 
         Logger = BepInEx.Logging.Logger.CreateLogSource("TOH_L");

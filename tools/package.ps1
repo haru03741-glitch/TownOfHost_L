@@ -5,6 +5,7 @@
 #   Il2CppInterop.Runtime.dll は tools/InteropWbPatch で write barrier を通すように書き換える
 #   doorstop_config.ini は tools/package/doorstop_config.ini (GC_DISABLE_INCREMENTAL を置かない)
 #   BepInEx/config/BepInEx.cfg は tools/package/BepInEx.cfg (interop の先読みを切る)
+#   BepInEx/patchers/TownOfHost_L.BootAccel.dll は tools/BootAccel を、展開した BepInEx/core に対してビルドする
 #
 # 使い方: pwsh -NoProfile -File tools/package.ps1 -Dll build/TownOfHost_L.dll -Out build/TownOfHost_L.zip
 param(
@@ -68,6 +69,12 @@ try {
     if (Select-String -LiteralPath (Join-Path $stage 'doorstop_config.ini') -Pattern '^\s*GC_DISABLE_INCREMENTAL\s*=' -Quiet) {
         throw 'doorstop_config.ini must not set GC_DISABLE_INCREMENTAL'
     }
+
+    $accelOut = Join-Path $work 'bootaccel'
+    dotnet build (Join-Path $PSScriptRoot 'BootAccel/BootAccel.csproj') -c Release -v:q -nologo -o $accelOut "-p:BepInExCore=$(Join-Path $stage 'BepInEx/core')"
+    if ($LASTEXITCODE -ne 0) { throw "BootAccel build failed ($LASTEXITCODE)" }
+    New-Item -ItemType Directory -Force (Join-Path $stage 'BepInEx/patchers') | Out-Null
+    Copy-Item (Join-Path $accelOut 'TownOfHost_L.BootAccel.dll') (Join-Path $stage 'BepInEx/patchers/TownOfHost_L.BootAccel.dll') -Force
 
     Copy-Item $Dll (Join-Path $stage 'BepInEx/plugins/TownOfHost_L.dll') -Force
 

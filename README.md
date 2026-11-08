@@ -101,6 +101,8 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
   - 設定画面にタブを足す作りと、設定の検索の一致判定 (More Roles Plus 経由で参照)
   - 見せたくない書き込みを大きな空白で押し出し、会話を送り直す方法
   - チャットのコマンドの補完と貼り付け
+  - 起動の待ちを減らす BepInEx のパッチャー (Class::Init の走査結果の保存・プラグインの読み込みを最初の 2 フレームの後へ送る)
+  - 起動直後のメニューでアカウント表示を止め、ログインを待たずにメニューを使えるようにする方法 (More Roles Plus 経由)
 - [Endless Host Roles](https://github.com/Gurge44/EndlessHostRoles)
   - 配布物に入れる Unity Doorstop と、pietro による修正版 Il2CppInterop
   - 他のプレイヤーの外見を、PlayerInfo の送信と本人への変身解除で着せ替える方式
@@ -118,6 +120,7 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
   - 設定画面の作り (設定の編集の部品・頁と目次・役職の一覧と役職ごとの頁・本編の設定の頁・スクロールする欄や入力欄などの部品)
   - 名前を付けた設定の保存と設定のコード (プリセットの頁・プリセットのファイル・受け渡しのフォルダ)
   - チャットの入力欄の拡張 (全部の文字・補完・貼り付け・前の文の呼び戻し)・耳打ち・チャットの荒らし対策
+  - 起動直後のメニューでアカウント表示を止める処理と、ログインの途中でメニューを離れた時の続き
 - [Town of Host: Enhanced](https://github.com/EnhancedNetwork/TownofHost-Enhanced)
   - 設定画面の検索欄 (Drakos のコードを Endless Host Roles と More Roles Plus 経由で参照)
 - [MoreGamemodes](https://github.com/Rabek009/MoreGamemodes)
