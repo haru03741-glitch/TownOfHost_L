@@ -112,6 +112,9 @@ internal sealed class TextField : Widget
         Refresh();
     }
 
+    // Esc で入力をやめたフレーム (同じ Esc で画面まで閉じないよう、閉じる側が見る)
+    public static int CancelledFrame { get; private set; } = -1;
+
     public static void Blur()
     {
         var old = _focused;
@@ -188,7 +191,7 @@ internal sealed class TextField : Widget
         }
         if (Input.GetMouseButtonDown(0)) _clickedField = false;
 
-        if (f.OnCancel != null && Input.GetKeyDown(KeyCode.Escape)) { f.OnCancel(); return; }
+        if (f.OnCancel != null && Input.GetKeyDown(KeyCode.Escape)) { CancelledFrame = Time.frameCount; f.OnCancel(); return; }
         bool ctrl = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
         string v = f.Value;
         bool changed = false, submit = false;

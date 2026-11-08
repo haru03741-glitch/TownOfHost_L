@@ -56,6 +56,7 @@ public class GameSettingMenuPatch
     // 頁の置き場にする画面 (本編のゲーム設定の画面の複製)。Mod 設定の頁と、役職の区分・検索の結果の頁 (RoleBrowser 1 つ) で 1 枚ずつ
     static GameOptionsMenu ModTab;
     static GameOptionsMenu RoleHost;
+    static GameOptionsMenu PresetHost;
     static SettingsSearchBox SearchBox;
     // 検索欄の今の語 (検索の結果の頁を出している間だけ頁に渡す)
     static string searchQuery = "";
@@ -80,7 +81,8 @@ public class GameSettingMenuPatch
     {
         public PassiveButton Button;
         public int TabNum;
-        public TabGroup? Tab; // null = 本編のゲーム設定
+        public TabGroup? Tab; // null = 本編のゲーム設定 (Presets の時はプリセット)
+        public bool Presets;
         public TextMeshPro Label;
         public string Shown; // 字に書いた今の文
         public Transform Art;
@@ -129,7 +131,7 @@ public class GameSettingMenuPatch
         if (OpenMenu == null) return;
         foreach (var cat in Cats)
         {
-            if (cat.Label == null) continue;
+            if (cat.Label == null || cat.Presets) continue;
             // 書き込みは字の組み直しを伴うので、変わった時だけ
             var text = CategoryLabel(cat.Tab);
             if (text == cat.Shown) continue;
@@ -141,6 +143,7 @@ public class GameSettingMenuPatch
     // 頁の置き場の画面か (CreateSettings がどの頁を作るかを決める)
     internal static bool IsRoleHost(GameOptionsMenu menu) => menu && RoleHost && menu.Pointer == RoleHost.Pointer;
     internal static bool IsModTabMenu(GameOptionsMenu menu) => menu && ModTab && menu.Pointer == ModTab.Pointer;
+    internal static bool IsPresetHost(GameOptionsMenu menu) => menu && PresetHost && menu.Pointer == PresetHost.Pointer;
 
     // 左の列の一番下のボタンのすぐ下 (世界座標の左上と幅)。役職の区分ではここに絞り込みの札を置く
     internal static bool CatFoot(out Vector3 topLeft, out float width)
@@ -158,11 +161,12 @@ public class GameSettingMenuPatch
     }
 
     // 左の列のボタン 1 つ (本編のゲーム設定のボタンの複製・押す音と当てた時の見た目は本編のまま)
-    static void AddCat(GameSettingMenu menu, TabGroup? tab, int tabNum, float step, float scaleY)
+    static void AddCat(GameSettingMenu menu, TabGroup? tab, int tabNum, float step, float scaleY, bool presets = false)
     {
         var proto = templateGameSettingsButton;
         var btn = Object.Instantiate(proto, menu.GameSettingsButton.transform.parent);
-        btn.name = "Cat_" + (tab?.ToString() ?? "Game");
+        string key = presets ? "Presets" : tab?.ToString() ?? "Game";
+        btn.name = "Cat_" + key;
         btn.gameObject.SetActive(true);
         var z = proto.transform.localPosition.z;
         btn.transform.localPosition = new Vector3(CatX, CatTopY - Cats.Count * step, z);
@@ -182,15 +186,15 @@ public class GameSettingMenuPatch
         label.fontSizeMin = 1f;
         label.fontSizeMax = label.fontSize;
         label.alignment = TextAlignmentOptions.Center;
-        label.text = CategoryLabel(tab);
+        label.text = presets ? Translator.GetString("MenuCat.Presets") : CategoryLabel(tab);
 
-        var c = CatColor(tab);
+        var c = presets ? SettingsUI.PresetPage.TabColor : CatColor(tab);
         btn.inactiveSprites.GetComponent<SpriteRenderer>().color = new Color(c.r * 0.6f, c.g * 0.6f, c.b * 0.6f, 1f);
         btn.activeSprites.GetComponent<SpriteRenderer>().color = c;
         btn.selectedSprites.GetComponent<SpriteRenderer>().color = c;
 
-        var cat = new Cat { Button = btn, TabNum = tabNum, Tab = tab, Label = label, Shown = label.text };
-        AddCatArt(cat, $"TownOfHost_L.Resources.MenuCat_{tab?.ToString() ?? "Game"}.png");
+        var cat = new Cat { Button = btn, TabNum = tabNum, Tab = tab, Presets = presets, Label = label, Shown = label.text };
+        AddCatArt(cat, $"TownOfHost_L.Resources.MenuCat_{key}.png");
 
         btn.OnMouseOver = new UnityEngine.Events.UnityEvent();
         btn.OnMouseOut = new UnityEngine.Events.UnityEvent();
@@ -406,12 +410,13 @@ public class GameSettingMenuPatch
         var groups = EnumHelper.GetAllValues<TabGroup>()
             .Where(tab => !(TownOfHostL.Core.VanillaHideAndSeek.IsSuspended && !OptionItem.AllOptions.Any(o => o.Tab == tab && ModeCatalog.IsShown(o))))
             .ToList();
-        int catCount = 1 + groups.Count;
+        int catCount = 2 + groups.Count;
         float fit = catCount > CatFitCount ? (CatFitCount - 1f) / (catCount - 1f) : 1f;
+        AddCat(__instance, null, ModGameOptionsMenu.PresetTab, CatStepY * fit, CatScaleY * fit, presets: true);
         AddCat(__instance, null, 1, CatStepY * fit, CatScaleY * fit);
         foreach (var tab in groups)
             AddCat(__instance, tab, (int)tab + ModGameOptionsMenu.FirstModTab, CatStepY * fit, CatScaleY * fit);
-        __instance.DefaultButtonSelected = Cats[0].Button;
+        __instance.DefaultButtonSelected = Cats[1].Button;
         PlaceDescription(__instance);
         HighlightCat(ModGameOptionsMenu.TabIndex == ModGameOptionsMenu.SearchTab ? -1 : ModGameOptionsMenu.TabIndex);
 
@@ -422,6 +427,9 @@ public class GameSettingMenuPatch
         RoleHost = Object.Instantiate(templateGameOptionsMenu, __instance.GameSettingsTab.transform.parent);
         RoleHost.name = "RoleBrowser";
         RoleHost.gameObject.SetActive(false);
+        PresetHost = Object.Instantiate(templateGameOptionsMenu, __instance.GameSettingsTab.transform.parent);
+        PresetHost.name = "PresetPage";
+        PresetHost.gameObject.SetActive(false);
     }
     private static void SetDefaultButton(GameSettingMenu __instance)
     {
@@ -449,6 +457,7 @@ public class GameSettingMenuPatch
         {
             if (ModTab != null) ModTab.gameObject.SetActive(false);
             if (RoleHost != null) RoleHost.gameObject.SetActive(false);
+            if (PresetHost != null) PresetHost.gameObject.SetActive(false);
             HighlightCat(isSearch ? -1 : tabNum);
         }
 
@@ -478,7 +487,16 @@ public class GameSettingMenuPatch
             var group = isSearch ? (TabGroup?)null : (TabGroup)(tabNum - ModGameOptionsMenu.FirstModTab);
             bool modPage = group == TabGroup.ModMainSettings;
             var shown = modPage ? ModTab : RoleHost;
-            if (shown != null)
+            if (tabNum == ModGameOptionsMenu.PresetTab)
+            {
+                if (PresetHost != null)
+                {
+                    PresetHost.gameObject.SetActive(true);
+                    SettingsUI.PresetPage.Show();
+                    SetDescription(__instance, Translator.GetString("MenuDescriptionText.Presets"));
+                }
+            }
+            else if (shown != null)
             {
                 // 役職の頁は区分と検索の語を先に渡す (初めて出す時は、出す時に頁が作られる)
                 if (!modPage) SettingsUI.RolePage.Prepare(group, isSearch ? searchQuery : "");
@@ -535,9 +553,18 @@ public class GameSettingMenuPatch
     [HarmonyPatch(nameof(GameSettingMenu.Close)), HarmonyPrefix]
     private static bool ClosePrefix()
     {
-        if (!SettingsUI.OptEditor.IsTyping) return true;
-        SettingsUI.OptEditor.EndInput(false);
-        return false;
+        if (SettingsUI.OptEditor.IsTyping)
+        {
+            SettingsUI.OptEditor.EndInput(false);
+            return false;
+        }
+        // 名前の欄などに字を打っている間の Esc は、欄を抜けるだけ
+        if (SettingsUI.TextField.Typing || SettingsUI.TextField.CancelledFrame == Time.frameCount)
+        {
+            SettingsUI.TextField.Blur();
+            return false;
+        }
+        return true;
     }
 
     [HarmonyPatch(nameof(GameSettingMenu.Close)), HarmonyPostfix]
@@ -557,8 +584,10 @@ public class GameSettingMenuPatch
         Cats.Clear();
         if (ModTab != null) UnityEngine.Object.Destroy(ModTab);
         if (RoleHost != null) UnityEngine.Object.Destroy(RoleHost);
+        if (PresetHost != null) UnityEngine.Object.Destroy(PresetHost);
         ModTab = null;
         RoleHost = null;
+        PresetHost = null;
         SearchBox = null;
         searchSeq++;
         SettingsSearchBox.Forget();

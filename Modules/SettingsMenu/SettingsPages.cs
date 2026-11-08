@@ -13,7 +13,7 @@ namespace TownOfHostL.SettingsUI;
 internal static class SettingsPages
 {
     public static readonly SectionPage Mod = new("modpage", () => Translator.GetString("MenuCat.ModMainSettings"),
-        GameSettingMenuPatch.CatColor(TabGroup.ModMainSettings), ModGroups) { HeroSub = PresetName };
+        GameSettingMenuPatch.CatColor(TabGroup.ModMainSettings), ModGroups);
 
     public static readonly SectionPage Game = new("gamepage", () => Translator.GetString("MenuCat.Game"),
         GameSettingMenuPatch.CatColor(null), GameGroups, MapTop, VanillaGame.Rebuild, TopKey) { HeroSub = MapName };
@@ -31,6 +31,7 @@ internal static class SettingsPages
         Mod.Forget();
         Game.Forget();
         RolePage.Forget();
+        PresetPage.Forget();
         Tooltip.Hide();
         OptHistory.Clear();
         SettingsCover.Reset();
@@ -47,6 +48,7 @@ internal static class SettingsPages
     {
         RefreshOtherPages();
         RolePage.RefreshFromOutside();
+        PresetPage.RefreshFromOutside();
     }
 
     // 役職の頁 (RoleBrowser) の行で値を変えた後: 役職の頁以外の頁
@@ -123,13 +125,6 @@ internal static class SettingsPages
         if (option.IsHeaderName == "" || Enum.IsDefined(typeof(CustomRoles), option.Name))
             return option.GetName(disableColor: true).RemoveHtmlTags();
         return option.IsHeaderName.RemoveHtmlTags();
-    }
-
-    private static string PresetName()
-    {
-        foreach (var option in OptionItem.AllOptions)
-            if (option is PresetOptionItem p) return p.GetString().RemoveHtmlTags();
-        return "";
     }
 
     // ---- ゲーム: 本編の設定の節の並びのまま ----

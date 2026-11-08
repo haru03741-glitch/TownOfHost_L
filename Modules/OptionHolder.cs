@@ -49,13 +49,6 @@ public static partial class Options
         Logger.Info("Options.Load End", "Options");
     }
 
-    // プリセット
-    private static readonly string[] presets =
-    {
-        Main.Preset1.Value, Main.Preset2.Value, Main.Preset3.Value,
-        Main.Preset4.Value, Main.Preset5.Value
-    };
-
     // ゲームモード
     public static OptionItem GameMode;
     public static CustomGameMode CurrentGameMode => (CustomGameMode)GameMode.GetValue();
@@ -385,15 +378,10 @@ public static partial class Options
     public static void Load()
     {
 
-        // プリセット
-        _ = PresetOptionItem.Create(0, TabGroup.ModMainSettings)
-            .SetColor(new Color32(204, 204, 0, 255))
-            .SetHeader(true)
-            .SetGameMode(CustomGameMode.All);
-
         // ゲームモード
         GameMode = StringOptionItem.Create(1, "GameMode", gameModes, 0, TabGroup.ModMainSettings, false)
             .SetColor(new Color32(204, 204, 0, 255))
+            .SetHeader(true)
             .SetGameMode(CustomGameMode.All);
 
         HideGameSettings = StringOptionItem.Create((int)offsetId.FeatSpecial + 300, "HideGameSettings", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, true)

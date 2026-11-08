@@ -356,7 +356,8 @@ namespace TownOfHostL
             }
         }
 
-        public const int NumPresets = 5;
+        // 値の枠は 1 つ。名前を付けた設定の保存は、設定画面のプリセット (TOHL_DATA/Presets) で持つ
+        public const int NumPresets = 1;
         public const int PresetId = 0;
     }
 

@@ -51,6 +51,24 @@ public static class OptionSaver
             data = null;
         }
 
+        // 5 つの枠で保存していた頃のファイル: 枠ごとにプリセットのファイルへ書き出し、選んでいた枠を今の値にする
+        bool migrated = false;
+        if (data?.Presets != null && data.Presets.Length > 1)
+        {
+            Backup();
+            int current = data.Single != null && data.Single.TryGetValue(OldPresetKey, out var picked) ? Math.Clamp(picked, 0, data.Presets.Length - 1) : 0;
+            string[] names = { Main.Preset1.Value, Main.Preset2.Value, Main.Preset3.Value, Main.Preset4.Value, Main.Preset5.Value };
+            for (int i = 0; i < data.Presets.Length; i++)
+            {
+                if (data.Presets[i] == null) continue;
+                var name = i < names.Length && names[i] != $"Preset_{i + 1}" ? names[i] : $"Preset{i + 1}";
+                var written = SettingsUI.PresetStore.WriteMigrated(name, $"Preset{i + 1}", data.Presets[i]);
+                if (written != null) logger.Info($"{i + 1} 番目の枠の設定をプリセット「{written}」に書き出しました");
+            }
+            data.Presets = new[] { data.Presets[current] };
+            migrated = true;
+        }
+
         if (data == null || data.Version != Version)
         {
             if (data != null)
@@ -78,7 +96,11 @@ public static class OptionSaver
                         option.AllValues[i] = value;
             }
         }
+        if (migrated) WriteNow();
     }
+
+    // 5 つの枠を選んでいた設定の鍵 (枠を 1 つにする前の保存を読む時だけ使う)
+    private const string OldPresetKey = "Preset";
 
     private static SaveData Generate()
     {
