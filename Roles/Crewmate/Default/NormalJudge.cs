@@ -56,46 +56,42 @@ public sealed class NormalJudge : RoleBase
     }
     private static void SetupOptionItem()
     {
-        OptionJudgeTaskRequirementPercentage = FloatOptionItem.Create(RoleInfo, 3, OptionName.JudgeTaskRequirementPercentage, new(0f, 100f, 5f), 50f, false)
+        OptionJudgeTaskRequirementPercentage = FloatOptionItem.Create(RoleInfo, OptionName.JudgeTaskRequirementPercentage, new(0f, 100f, 5f), 50f, false)
             .SetValueFormat(OptionFormat.Percent);
-        OptionAbilityCount = IntegerOptionItem.Create(RoleInfo, 4, OptionName.JudgeAbilityCount, new(1, 15, 1), 1, false)
+        OptionAbilityCount = IntegerOptionItem.Create(RoleInfo, OptionName.JudgeAbilityCount, new(1, 15, 1), 1, false)
             .SetValueFormat(OptionFormat.Times);
-        SetUpJudgeTargetOption(CustomRoles.Madmate, 5);
-        CanJudgeNeutrals = StringOptionItem.Create(RoleInfo, 6, OptionName.JudgeCanJudgeNeutrals, JudgeOption, 0, false);
-        SetUpNeutralOptions(30);
+        SetUpJudgeTargetOption(CustomRoles.Madmate);
+        CanJudgeNeutrals = StringOptionItem.Create(RoleInfo, OptionName.JudgeCanJudgeNeutrals, JudgeOption, 0, false);
+        SetUpNeutralOptions();
     }
-    public static void SetUpNeutralOptions(int idOffset)
+    public static void SetUpNeutralOptions()
     {
         foreach (var neutral in CustomRolesHelper.AllStandardRoles.Where(x => x.IsNeutral()).ToArray())
         {
             if (neutral is CustomRoles.SchrodingerCat) continue;
-            SetUpJudgeTargetOption(neutral, idOffset, true, CanJudgeNeutrals);
-            idOffset++;
+            SetUpJudgeTargetOption(neutral, true, CanJudgeNeutrals);
         }
         foreach (var catType in EnumHelper.GetAllValues<SchrodingerCat.TeamType>())
         {
             if ((byte)catType < 50) continue;
-            SetUpSchrodingerCatJudgeTargetOption(catType, idOffset, true, CanJudgeNeutrals);
-            idOffset++;
+            SetUpSchrodingerCatJudgeTargetOption(catType, true, CanJudgeNeutrals);
         }
     }
-    public static void SetUpJudgeTargetOption(CustomRoles role, int idOffset, bool defaultValue = true, OptionItem parent = null)
+    public static void SetUpJudgeTargetOption(CustomRoles role, bool defaultValue = true, OptionItem parent = null)
     {
-        var id = RoleInfo.ConfigId + idOffset;
         parent ??= RoleInfo.RoleOption;
         var roleName = Utils.GetRoleName(role);
         Dictionary<string, string> replacementDic = new() { { "%role%", Utils.ColorString(Utils.GetRoleColor(role), roleName) } };
-        JudgeTargetOptions[role] = BooleanOptionItem.Create(id, OptionName.JudgeCanJudge + "%role%", defaultValue, RoleInfo.Tab, false).SetParent(parent).SetKeyName($"{OptionName.JudgeCanJudge}.{role}");
+        JudgeTargetOptions[role] = BooleanOptionItem.Create(OptionName.JudgeCanJudge + "%role%", defaultValue, RoleInfo.Tab, false).SetParent(parent).SetKeyName($"{OptionName.JudgeCanJudge}.{role}");
         JudgeTargetOptions[role].ReplacementDictionary = replacementDic;
     }
-    public static void SetUpSchrodingerCatJudgeTargetOption(SchrodingerCat.TeamType catType, int idOffset, bool defaultValue = true, OptionItem parent = null)
+    public static void SetUpSchrodingerCatJudgeTargetOption(SchrodingerCat.TeamType catType, bool defaultValue = true, OptionItem parent = null)
     {
-        var id = RoleInfo.ConfigId + idOffset;
         parent ??= RoleInfo.RoleOption;
         var inTeam = GetString("In%team%", new Dictionary<string, string>() { ["%team%"] = GetRoleString(catType.ToString()) });
         var catInTeam = Utils.ColorString(SchrodingerCat.GetCatColor(catType), Utils.GetRoleName(CustomRoles.SchrodingerCat) + inTeam);
         Dictionary<string, string> replacementDic = new() { ["%role%"] = catInTeam };
-        SchrodingerCatJudgeTargetOptions[catType] = BooleanOptionItem.Create(id, OptionName.JudgeCanJudge + "%role%", defaultValue, RoleInfo.Tab, false).SetParent(parent).SetKeyName($"{OptionName.JudgeCanJudge}.SchrodingerCat.{catType}");
+        SchrodingerCatJudgeTargetOptions[catType] = BooleanOptionItem.Create(OptionName.JudgeCanJudge + "%role%", defaultValue, RoleInfo.Tab, false).SetParent(parent).SetKeyName($"{OptionName.JudgeCanJudge}.SchrodingerCat.{catType}");
         SchrodingerCatJudgeTargetOptions[catType].ReplacementDictionary = replacementDic;
     }
 

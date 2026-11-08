@@ -59,19 +59,19 @@ public sealed class Guardian : HamoRoleBase, ISelfVoter
 
     static void SetupOptionItem()
     {
-        OptionGuardDurationMeetings = IntegerOptionItem.Create(RoleInfo, 10, OptionName.GuardianGuardDurationMeetings,
+        OptionGuardDurationMeetings = IntegerOptionItem.Create(RoleInfo, OptionName.GuardianGuardDurationMeetings,
             new(1, 10, 1), 2, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionMaxSimultaneousGuards = IntegerOptionItem.Create(RoleInfo, 11, OptionName.GuardianMaxSimultaneousGuards,
+        OptionMaxSimultaneousGuards = IntegerOptionItem.Create(RoleInfo, OptionName.GuardianMaxSimultaneousGuards,
             new(1, 14, 1), 1, false)
             .SetValueFormat(OptionFormat.Players);
-        OptionMaxLifetimeGuards = IntegerOptionItem.Create(RoleInfo, 12, OptionName.GuardianMaxLifetimeGuards,
+        OptionMaxLifetimeGuards = IntegerOptionItem.Create(RoleInfo, OptionName.GuardianMaxLifetimeGuards,
             new(1, 14, 1), 3, false)
             .SetValueFormat(OptionFormat.Players);
-        OptionRequiredTaskCount = IntegerOptionItem.Create(RoleInfo, 13, OptionName.GuardianRequiredTaskCount,
+        OptionRequiredTaskCount = IntegerOptionItem.Create(RoleInfo, OptionName.GuardianRequiredTaskCount,
             new(0, 8, 1), 3, false)
             .SetValueFormat(OptionFormat.Pieces);
-        OptionGuessShield = StringOptionItem.Create(RoleInfo, 14, OptionName.GuardianGuessShield, GuessShield.Selections, 0, false);
+        OptionGuessShield = StringOptionItem.Create(RoleInfo, OptionName.GuardianGuessShield, GuessShield.Selections, 0, false);
     }
 
     // 守っている人がゲッサーに当てられた時の守り方(生きている守護者のどれかが守っていれば効く)

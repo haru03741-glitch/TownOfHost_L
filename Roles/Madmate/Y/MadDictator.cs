@@ -33,8 +33,8 @@ public sealed class MadDictator : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionCanVent = BooleanOptionItem.Create(RoleInfo, 10, GeneralOption.CanVent, false, false);
-        Options.SetUpAddOnOptions(RoleInfo.ConfigId + 20, RoleInfo.RoleName, RoleInfo.Tab);
+        OptionCanVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, false, false);
+        Options.SetUpAddOnOptions(RoleInfo.RoleName, RoleInfo.Tab);
     }
     public override (byte? votedForId, int? numVotes, bool doVote) ModifyVote(byte voterId, byte sourceVotedForId, bool isIntentional)
     {

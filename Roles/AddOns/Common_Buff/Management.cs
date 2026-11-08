@@ -16,10 +16,10 @@ public static class Management
         setupOptions: SetupCustomOption,
         onAdd: Add,
         flags: RoleFlags.RefreshesNameOnMeetingStart,
+        getSuffix: (seer, seen, isMeeting) => GetSuffix(seer, seen, isMeeting),
         chatCommand: "マネジメント",
         assignAtRandom: true);
 
-    private static readonly int Id = (int)offsetId.AddonBuff + 100;
     private static List<byte> playerIdList = new();
 
     private static OptionItem OptionSeeNowtask;
@@ -27,8 +27,8 @@ public static class Management
 
     public static void SetupCustomOption()
     {
-        SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.Management);
-        OptionSeeNowtask = BooleanOptionItem.Create(Id + 10, "ManagementSeeNowtask", true, TabGroup.Addons, false);
+        SetupRoleOptions(TabGroup.Addons, CustomRoles.Management);
+        OptionSeeNowtask = BooleanOptionItem.Create("ManagementSeeNowtask", true, TabGroup.Addons, false);
     }
     [GameModuleInitializer]
     public static void Init()

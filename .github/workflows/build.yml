@@ -20,9 +20,9 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Check option ID duplicates
+      - name: Check option key overlaps
         shell: pwsh
-        run: ./tools/check-option-ids.ps1
+        run: ./tools/check-option-keys.ps1
 
       - name: Check translation keys
         shell: pwsh

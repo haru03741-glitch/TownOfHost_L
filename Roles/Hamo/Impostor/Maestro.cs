@@ -58,13 +58,13 @@ public sealed class Maestro : HamoRoleBase, IImpostor
 
     static void SetupOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.MaestroKillCooldown,
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.MaestroKillCooldown,
             new(0.5f, 180f, 0.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionReductionPerSelfReport = FloatOptionItem.Create(RoleInfo, 11, OptionName.MaestroReductionPerSelfReport,
+        OptionReductionPerSelfReport = FloatOptionItem.Create(RoleInfo, OptionName.MaestroReductionPerSelfReport,
             new(0.5f, 180f, 0.5f), 5f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionMinKillCooldown = FloatOptionItem.Create(RoleInfo, 12, OptionName.MaestroMinKillCooldown,
+        OptionMinKillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.MaestroMinKillCooldown,
             new(0.5f, 180f, 0.5f), 15f, false)
             .SetValueFormat(OptionFormat.Seconds);
     }

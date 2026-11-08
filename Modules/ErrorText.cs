@@ -186,7 +186,7 @@ namespace TownOfHostL
         // ==========
         // 001 Main
         Main_DictionaryError = 0010003, // 001-000-3 Main Dictionary Error
-        OptionIDDuplicate = 001_010_3, // 001-010-3 オプションIDが重複している
+        OptionKeyDuplicate = 001_010_3, // 001-010-3 オプションの保存のキーが重複している
         // 002 サポート関連
         UnsupportedVersion = 002_000_1,  // 002-000-1 AmongUsのバージョンが古い
 

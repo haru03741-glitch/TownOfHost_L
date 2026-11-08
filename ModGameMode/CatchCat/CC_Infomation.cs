@@ -129,7 +129,7 @@ static class Infomation
             sb.Append($" ・{M_ColorCatCount.GetName(true)}\n");
 
         sb.Append($"</line-height>\n");
-        foreach (var opt in OptionItem.AllOptions.Where(x => x.GetBool() && x.Parent == null && x.IsFeatureOption && (x.Id < Id || x.Id >= Id + 10000) && x.IsShown()))
+        foreach (var opt in OptionItem.AllOptions.Where(x => x.GetBool() && x.Parent == null && x.IsFeatureOption && x.GameMode != CustomGameMode.CatchCat && x.IsShown()))
         {
             if (Options.NotShowOption(opt.Name)) continue;
 

@@ -117,21 +117,21 @@ public sealed class UltraStar : HamoRoleBase, IKiller, ISchrodingerCatOwner
 
     {
 
-        OptionSpeed = FloatOptionItem.Create(RoleInfo, 9, OptionName.AddSpeed, new(0f, 5f, 0.25f), 2.0f, false)
+        OptionSpeed = FloatOptionItem.Create(RoleInfo, OptionName.AddSpeed, new(0f, 5f, 0.25f), 2.0f, false)
 
             .SetValueFormat(OptionFormat.Multiplier);
 
-        OptionCanseeAllplayer = BooleanOptionItem.Create(RoleInfo, 14, OptionName.UltraStarCanseeallplayer, false, false);
+        OptionCanseeAllplayer = BooleanOptionItem.Create(RoleInfo, OptionName.UltraStarCanseeallplayer, false, false);
 
-        Optioncankill = BooleanOptionItem.Create(RoleInfo, 10, OptionName.UltraStarCankill, false, false);
+        Optioncankill = BooleanOptionItem.Create(RoleInfo, OptionName.UltraStarCankill, false, false);
 
-        Optionkillcool = FloatOptionItem.Create(RoleInfo, 13, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 30f, false, Optioncankill)
+        Optionkillcool = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 30f, false, Optioncankill)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionCheckKill = BooleanOptionItem.Create(RoleInfo, 11, OptionName.UltraStarcheckkill, false, false, Optioncankill);
+        OptionCheckKill = BooleanOptionItem.Create(RoleInfo, OptionName.UltraStarcheckkill, false, false, Optioncankill);
 
-        OptionCanseeKillcooltime = BooleanOptionItem.Create(RoleInfo, 12, OptionName.UltraStarVentCanseekillcool, false, false, Optioncankill);
+        OptionCanseeKillcooltime = BooleanOptionItem.Create(RoleInfo, OptionName.UltraStarVentCanseekillcool, false, false, Optioncankill);
 
     }
 

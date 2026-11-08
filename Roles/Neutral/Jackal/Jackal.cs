@@ -75,14 +75,14 @@ namespace TownOfHostL.Roles.Neutral
 
         private static void SetupOptionItem()
         {
-            OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(2.5f, 180f, 2.5f), 30f, false)
+            OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(2.5f, 180f, 2.5f), 30f, false)
                 .SetValueFormat(OptionFormat.Seconds);
-            OptionCanVent = BooleanOptionItem.Create(RoleInfo, 11, GeneralOption.CanVent, true, false);
-            OptionCanUseSabotage = BooleanOptionItem.Create(RoleInfo, 12, GeneralOption.CanUseSabotage, false, false);
-            OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, 13, GeneralOption.ImpostorVision, true, false);
-            OptionCanSeeNameMushroomMixup = BooleanOptionItem.Create(RoleInfo, 14, OptionName.JackalCanSeeNameMushroomMixup, true, false);
-            OptionCanCreateSidekick = BooleanOptionItem.Create(RoleInfo, 15, OptionName.JackalCanCreateSidekick, true, false);
-            Options.SetUpAddOnOptions(RoleInfo.ConfigId + 20, RoleInfo.RoleName, RoleInfo.Tab);
+            OptionCanVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, true, false);
+            OptionCanUseSabotage = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanUseSabotage, false, false);
+            OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, GeneralOption.ImpostorVision, true, false);
+            OptionCanSeeNameMushroomMixup = BooleanOptionItem.Create(RoleInfo, OptionName.JackalCanSeeNameMushroomMixup, true, false);
+            OptionCanCreateSidekick = BooleanOptionItem.Create(RoleInfo, OptionName.JackalCanCreateSidekick, true, false);
+            Options.SetUpAddOnOptions(RoleInfo.RoleName, RoleInfo.Tab);
         }
         public override void Add()
         {

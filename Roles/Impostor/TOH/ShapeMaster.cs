@@ -35,7 +35,7 @@ public sealed class ShapeMaster : RoleBase, IImpostor, ISidekickable
 
     public static void SetupOptionItem()
     {
-        OptionShapeshiftDuration = FloatOptionItem.Create(RoleInfo, 10, OptionName.ShapeMasterShapeshiftDuration, new(1, 1000, 1), 10, false)
+        OptionShapeshiftDuration = FloatOptionItem.Create(RoleInfo, OptionName.ShapeMasterShapeshiftDuration, new(1, 1000, 1), 10, false)
             .SetValueFormat(OptionFormat.Seconds);
     }
 

@@ -36,7 +36,7 @@ public sealed class Trapper : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionBlockMoveTime = FloatOptionItem.Create(RoleInfo, 10, OptionName.TrapperBlockMoveTime, new(1f, 180f, 1f), 5f, false)
+        OptionBlockMoveTime = FloatOptionItem.Create(RoleInfo, OptionName.TrapperBlockMoveTime, new(1f, 180f, 1f), 5f, false)
             .SetValueFormat(OptionFormat.Seconds);
     }
     public override void OnMurderPlayerAsTarget(MurderInfo info)

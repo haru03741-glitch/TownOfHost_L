@@ -54,13 +54,13 @@ public sealed class Workaholic : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionSeen = BooleanOptionItem.Create(RoleInfo, 10, OptionName.WorkaholicSeen, true, false);
-        OptionTaskSeen = BooleanOptionItem.Create(RoleInfo, 11, OptionName.WorkaholicTaskSeen, true, false, OptionSeen);
-        OptionCannotWinAtDeath = BooleanOptionItem.Create(RoleInfo, 13, OptionName.WorkaholicCannotWinAtDeath, false, false);
-        OptionVentCooldown = FloatOptionItem.Create(RoleInfo, 12, GeneralOption.VentCooldown, new(0f, 180f, 2.5f), 0f, false)
+        OptionSeen = BooleanOptionItem.Create(RoleInfo, OptionName.WorkaholicSeen, true, false);
+        OptionTaskSeen = BooleanOptionItem.Create(RoleInfo, OptionName.WorkaholicTaskSeen, true, false, OptionSeen);
+        OptionCannotWinAtDeath = BooleanOptionItem.Create(RoleInfo, OptionName.WorkaholicCannotWinAtDeath, false, false);
+        OptionVentCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.VentCooldown, new(0f, 180f, 2.5f), 0f, false)
                 .SetValueFormat(OptionFormat.Seconds);
         // 20-23を使用
-        Tasks = Options.OverrideTasksData.Create(RoleInfo, 20);
+        Tasks = Options.OverrideTasksData.Create(RoleInfo);
     }
 
     public override void ApplyGameOptions(IGameOptions opt)

@@ -37,7 +37,7 @@ public sealed class NormalViper : RoleBase, IImpostor
 
     public static void SetupOptionItem()
     {
-        OptionViperDissolveTime = FloatOptionItem.Create(RoleInfo, 3, OptionName.ViperDissolveTime, new(5f, 90f, 5f), 30f, false)
+        OptionViperDissolveTime = FloatOptionItem.Create(RoleInfo, OptionName.ViperDissolveTime, new(5f, 90f, 5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
     }
 

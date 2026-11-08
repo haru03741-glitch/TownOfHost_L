@@ -63,15 +63,15 @@ public sealed class Charger : RoleBase, IImpostor
 
     private static void SetUpOptionItem()
     {
-        OptionkillCooldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.ChargerFirstKillCooldown, new(2.5f, 180f, 2.5f), 30f, false)
+        OptionkillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.ChargerFirstKillCooldown, new(2.5f, 180f, 2.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionChargeKillCooldown = FloatOptionItem.Create(RoleInfo, 11, OptionName.GrudgeChargerChargeKillCooldown, new(0.5f, 180f, 0.5f), 2f, false)
+        OptionChargeKillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.GrudgeChargerChargeKillCooldown, new(0.5f, 180f, 0.5f), 2f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionOneGaugeChargeCount = IntegerOptionItem.Create(RoleInfo, 12, OptionName.GrudgeChargerOneGaugeChargeCount, new(1, 30, 1), 6, false)
+        OptionOneGaugeChargeCount = IntegerOptionItem.Create(RoleInfo, OptionName.GrudgeChargerOneGaugeChargeCount, new(1, 30, 1), 6, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionOneGaugeAddKillCount = IntegerOptionItem.Create(RoleInfo, 14, OptionName.GrudgeChargerOneGaugeAddKillCount, new(1, 15, 1), 1, false)
+        OptionOneGaugeAddKillCount = IntegerOptionItem.Create(RoleInfo, OptionName.GrudgeChargerOneGaugeAddKillCount, new(1, 15, 1), 1, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionKillCountAtStartGame = IntegerOptionItem.Create(RoleInfo, 13, OptionName.GrudgeChargerKillCountAtStartGame, new(0, 2, 1), 0, false)
+        OptionKillCountAtStartGame = IntegerOptionItem.Create(RoleInfo, OptionName.GrudgeChargerKillCountAtStartGame, new(0, 2, 1), 0, false)
             .SetValueFormat(OptionFormat.Times);
     }
     public float CalculateKillCooldown() => chargeKillCooldown;

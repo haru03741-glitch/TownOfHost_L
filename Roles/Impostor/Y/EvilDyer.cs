@@ -47,9 +47,9 @@ public sealed class EvilDyer : RoleBase, IImpostor
     }
     private static void SetupOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(0f, 180f, 2.5f), 30f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 2.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionDyerTime = FloatOptionItem.Create(RoleInfo, 11, OptionName.EvilDyerDyeTime, new(0.5f, 30f, 0.5f), 7f, false)
+        OptionDyerTime = FloatOptionItem.Create(RoleInfo, OptionName.EvilDyerDyeTime, new(0.5f, 30f, 0.5f), 7f, false)
             .SetValueFormat(OptionFormat.Seconds);
     }
 

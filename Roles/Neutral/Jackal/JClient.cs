@@ -65,15 +65,15 @@ public sealed class JClient : RoleBase, IAdditionalWinner
 
     public static void SetupOptionItem()
     {
-        OptionCanVent = BooleanOptionItem.Create(RoleInfo, 10, OptionName.JClientCanVent, false, false);
-        OptionVentCooldown = FloatOptionItem.Create(RoleInfo, 11, OptionName.JClientVentCooldown, new(0f, 180f, 5f), 0f, false)
+        OptionCanVent = BooleanOptionItem.Create(RoleInfo, OptionName.JClientCanVent, false, false);
+        OptionVentCooldown = FloatOptionItem.Create(RoleInfo, OptionName.JClientVentCooldown, new(0f, 180f, 5f), 0f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionVentMaxTime = FloatOptionItem.Create(RoleInfo, 12, OptionName.JClientVentMaxTime, new(0f, 180f, 5f), 0f, false)
+        OptionVentMaxTime = FloatOptionItem.Create(RoleInfo, OptionName.JClientVentMaxTime, new(0f, 180f, 5f), 0f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionCanAlsoBeExposedToJackal = BooleanOptionItem.Create(RoleInfo, 13, OptionName.JClientCanAlsoBeExposedToJackal, false, false);
-        OptionAfterJackalDead = StringOptionItem.Create(RoleInfo, 14, OptionName.JClientAfterJackalDead, AfterJackalDeadModeText[0..3], 0, false);
-        Tasks = Options.OverrideTasksData.Create(RoleInfo, 20);
-        Options.SetUpAddOnOptions(RoleInfo.ConfigId + 30, RoleInfo.RoleName, RoleInfo.Tab);
+        OptionCanAlsoBeExposedToJackal = BooleanOptionItem.Create(RoleInfo, OptionName.JClientCanAlsoBeExposedToJackal, false, false);
+        OptionAfterJackalDead = StringOptionItem.Create(RoleInfo, OptionName.JClientAfterJackalDead, AfterJackalDeadModeText[0..3], 0, false);
+        Tasks = Options.OverrideTasksData.Create(RoleInfo);
+        Options.SetUpAddOnOptions(RoleInfo.RoleName, RoleInfo.Tab);
     }
 
     public enum AfterJackalDeadMode

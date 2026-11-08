@@ -15,15 +15,15 @@ public static class VIP
         "Ｖ",
         setupOptions: SetupCustomOption,
         onAdd: Add,
+        flags: RoleFlags.KillFlashToAll,
         chatCommand: "VIP",
         assignAtRandom: true);
 
-    private static readonly int Id = (int)offsetId.AddonBuff + 500;
     private static List<byte> playerIdList = new();
 
     public static void SetupCustomOption()
     {
-        SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.VIP);
+        SetupRoleOptions(TabGroup.Addons, CustomRoles.VIP);
     }
     [GameModuleInitializer]
     public static void Init()

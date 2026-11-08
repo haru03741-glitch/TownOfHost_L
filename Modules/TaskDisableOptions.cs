@@ -48,22 +48,20 @@ namespace TownOfHostL
 
         private static readonly Dictionary<TaskTypes, OptionItem> byTask = new();
 
-        /// <summary>見出し 1 つ + タスク 1 つずつの設定を作る。ID は baseId+1 から順に使う (見出しで 4、タスクで 73)。</summary>
-        /// <remarks>旧版の 15 種の ID (FeatTask+101〜115) とは重ねない。保存値が別の設定として読まれるため。</remarks>
-        public static void Create(int baseId, OptionItem parent)
+        /// <summary>見出し 1 つ + タスク 1 つずつの設定を作る (見出しで 4、タスクで 73)。</summary>
+        public static void Create(OptionItem parent)
         {
             byTask.Clear();
-            var id = baseId + 1;
             foreach (var (groupName, tasks) in Groups)
             {
-                var group = StringOptionItem.Create(id++, groupName, new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
+                var group = StringOptionItem.Create(groupName, new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
                     .SetParent(parent)
                     .SetColor(Color.green)
                     .SetGameMode(CustomGameMode.All);
                 foreach (var task in tasks)
                 {
                     var t = task;
-                    byTask[t] = StringOptionItem.Create(id++, "DisableTask." + t, new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
+                    byTask[t] = StringOptionItem.Create("DisableTask." + t, new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
                         .SetParent(group)
                         .SetOptionName(() => TranslationController.InstanceExists ? TranslationController.Instance.GetString(t) : t.ToString())
                         .SetGameMode(CustomGameMode.All);

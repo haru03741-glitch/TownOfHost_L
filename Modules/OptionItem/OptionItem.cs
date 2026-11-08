@@ -12,17 +12,15 @@ namespace TownOfHostL
         #region static
         public static IReadOnlyList<OptionItem> AllOptions => _allOptions;
         private static readonly List<OptionItem> _allOptions = new(1024);
-        public static IReadOnlyDictionary<int, OptionItem> FastOptions => _fastOptions;
-        private static readonly Dictionary<int, OptionItem> _fastOptions = new(1024);
         public static int CurrentPreset { get; set; }
-        public static bool IdDuplicated { get; private set; } = false;
+        /// <summary>保存のキーが重なった設定がある (DEBUG ビルドでだけ立てる)</summary>
+        public static bool KeyDuplicated { get; private set; } = false;
         #endregion
 
         // 必須情報(コンストラクタで必ず設定させる必要がある値)
-        public int Id { get; }
         /// <summary>
         /// 保存に使うキー。親をたどった名前の道筋 (例: Sheriff/KillCooldown)。
-        /// 同じ道筋の設定が他にもある時は、区別のため #ID を付ける。
+        /// 同じ道筋の設定が他にもある時は、区別のため 2 つ目から #2・#3… を付ける (KeyName で重ならないようにする)。
         /// </summary>
         public string Key => key ??= BuildKey();
         private string key;
@@ -77,10 +75,9 @@ namespace TownOfHostL
         public event EventHandler<UpdateValueEventArgs> UpdateValueEvent;
 
         // コンストラクタ
-        public OptionItem(int id, string name, int defaultValue, TabGroup tab, bool isSingleValue)
+        public OptionItem(string name, int defaultValue, TabGroup tab, bool isSingleValue)
         {
             // 必須情報の設定
-            Id = id;
             Name = name;
             DefaultValue = defaultValue;
             Tab = tab;
@@ -95,11 +92,12 @@ namespace TownOfHostL
             IsHidden = false;
             IsFixValue = false;
             IsText = false;
+            IsFeatureOption = CreatingFeatures;
             // オブジェクト初期化
             Children = new();
 
             // デフォルト値に設定
-            if (Id == PresetId)
+            if (this is PresetOptionItem)
             {
                 SingleValue = DefaultValue;
                 CurrentPreset = SingleValue;
@@ -114,24 +112,7 @@ namespace TownOfHostL
                     AllValues[i] = DefaultValue;
             }
 
-            // ID 登録
-            if (_fastOptions.TryAdd(id, this))
-            {
-                _allOptions.Add(this);
-            }
-            else
-            {
-#if DEBUG
-                IdDuplicated = true;
-#endif
-                var existing = _fastOptions[id];
-                Logger.Error(
-                    $"ID:{id} が重複しています " +
-                    $"(既存: Name={existing.Name}, Tab={existing.Tab}, Default={existing.DefaultValue}; " +
-                    $"新規: Name={Name}, Tab={Tab}, Default={DefaultValue})",
-                    "OptionItem"
-                );
-            }
+            _allOptions.Add(this);
         }
 
         // Setter
@@ -194,8 +175,10 @@ namespace TownOfHostL
         public virtual float GetFloat() => CurrentValue;
         public virtual string GetString() => ApplyFormat(CurrentValue.ToString());
         public virtual int GetValue() => IsSingleValue ? SingleValue : AllValues[CurrentPreset];
-        /// <summary>機能の設定 (offsetId.FeatSpecial 以降の帯。役職とゲームモード以外の設定一覧に出す物)</summary>
-        public bool IsFeatureOption => Id >= (int)Options.offsetId.FeatSpecial;
+        /// <summary>機能の設定 (設定一覧の「機能」の欄に出す物)。作った時に <see cref="CreatingFeatures"/> が立っていたか</summary>
+        public bool IsFeatureOption { get; }
+        /// <summary>立てている間に作った設定を機能の設定にする (Options.Load が機能の節の間だけ立てる)</summary>
+        public static bool CreatingFeatures { get; set; }
 
 
         public string ApplyFormat(string value)
@@ -245,19 +228,20 @@ namespace TownOfHostL
         private string KeyPath => Parent == null ? KeyName ?? Name : $"{Parent.Key}/{KeyName ?? Name}";
         private string BuildKey()
         {
-            // 確定の後に作られた設定。道筋が既にあれば #ID で区別する
+            // 確定の後に作られた設定。道筋が既にあれば、空いている #n で区別する
             var path = KeyPath;
-            if (byKey != null && !byKey.TryAdd(path, this))
+            if (byKey == null || byKey.TryAdd(path, this)) return path;
+            OnKeyOverlap(path);
+            for (int n = 2; ; n++)
             {
-                path = $"{path}#{Id}";
-                byKey[path] = this;
+                var numbered = $"{path}#{n}";
+                if (byKey.TryAdd(numbered, this)) return numbered;
             }
-            return path;
         }
 
         /// <summary>
-        /// 全部の設定のキーを確定する。親から順に、同じ道筋が重なったら、先に作られた 1 つは道筋のまま、残りに #ID を付ける。
-        /// 後から同じ名前の設定を足しても、前からある設定のキーは変わらない。
+        /// 全部の設定のキーを確定する。親から順に、同じ道筋が重なったら、先に作られた 1 つは道筋のまま、残りに作った順で #2・#3… を付ける。
+        /// 番号は作る順で決まり、間に同じ名前の設定を足すと後ろの番号がずれるので、重なりは KeyName で無くしておく。
         /// </summary>
         public static void FinalizeKeys()
         {
@@ -294,15 +278,25 @@ namespace TownOfHostL
                         byKey[path] = g[0];
                         continue;
                     }
-                    Logger.Warn($"設定のキー {path} が {g.Count} 個で重なっているので、後から作られた方に #ID を付けて区別します", "OptionItem");
-                    for (int i = 0; i < g.Count; i++)
+                    OnKeyOverlap(path);
+                    var n = 1;
+                    foreach (var o in g)
                     {
-                        var o = g[i];
-                        o.key = i == 0 && byKey.TryAdd(path, o) ? path : $"{path}#{o.Id}";
-                        byKey[o.key] = o;
+                        var k = n == 1 ? path : $"{path}#{n}";
+                        while (!byKey.TryAdd(k, o)) k = $"{path}#{++n}";
+                        o.key = k;
+                        n++;
                     }
                 }
             }
+        }
+
+        private static void OnKeyOverlap(string path)
+        {
+#if DEBUG
+            KeyDuplicated = true;
+#endif
+            Logger.Error($"設定のキー {path} が重なっています。KeyName で別の名前を付けてください", "OptionItem");
         }
 
         public static bool TryGetByKey(string key, out OptionItem option)
@@ -358,7 +352,6 @@ namespace TownOfHostL
 
         // 値の枠は 1 つ。名前を付けた設定の保存は、設定画面のプリセット (TOHL_DATA/Presets) で持つ
         public const int NumPresets = 1;
-        public const int PresetId = 0;
     }
 
     public enum TabGroup

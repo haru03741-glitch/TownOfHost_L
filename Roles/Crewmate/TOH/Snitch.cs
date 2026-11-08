@@ -79,13 +79,13 @@ public class Snitch : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionEnableTargetArrow = BooleanOptionItem.Create(RoleInfo, 10, OptionName.SnitchEnableTargetArrow, false, false);
-        OptionCanGetColoredArrow = BooleanOptionItem.Create(RoleInfo, 11, OptionName.SnitchCanGetArrowColor, false, false);
-        OptionCanFindNeutralKiller = BooleanOptionItem.Create(RoleInfo, 12, OptionName.SnitchCanFindNeutralKiller, false, false);
-        OptionCannotConfirmKillRoles = BooleanOptionItem.Create(RoleInfo, 14, OptionName.SnitchCannotConfirmKillRoles, false, false);
-        OptionRemainingTasks = IntegerOptionItem.Create(RoleInfo, 13, OptionName.SnitchRemainingTaskFound, new(0, 10, 1), 1, false)
+        OptionEnableTargetArrow = BooleanOptionItem.Create(RoleInfo, OptionName.SnitchEnableTargetArrow, false, false);
+        OptionCanGetColoredArrow = BooleanOptionItem.Create(RoleInfo, OptionName.SnitchCanGetArrowColor, false, false);
+        OptionCanFindNeutralKiller = BooleanOptionItem.Create(RoleInfo, OptionName.SnitchCanFindNeutralKiller, false, false);
+        OptionCannotConfirmKillRoles = BooleanOptionItem.Create(RoleInfo, OptionName.SnitchCannotConfirmKillRoles, false, false);
+        OptionRemainingTasks = IntegerOptionItem.Create(RoleInfo, OptionName.SnitchRemainingTaskFound, new(0, 10, 1), 1, false)
             .SetValueFormat(OptionFormat.Pieces);
-        Options.OverrideTasksData.Create(RoleInfo, 20);
+        Options.OverrideTasksData.Create(RoleInfo);
     }
     /// <summary>
     /// スニッチのターゲットであるかの判定

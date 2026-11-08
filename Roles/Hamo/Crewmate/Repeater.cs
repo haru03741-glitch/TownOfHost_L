@@ -69,19 +69,19 @@ public sealed class Repeater : HamoRoleBase, ISelfVoter
 
     static void SetupOptionItem()
     {
-        OptionTaskCountToUnlock = IntegerOptionItem.Create(RoleInfo, 10, OptionName.RepeaterTaskCountToUnlock,
+        OptionTaskCountToUnlock = IntegerOptionItem.Create(RoleInfo, OptionName.RepeaterTaskCountToUnlock,
             new(0, 255, 1), 5, false)
             .SetValueFormat(OptionFormat.Pieces);
-        OptionUseCount = IntegerOptionItem.Create(RoleInfo, 11, OptionName.RepeaterUseCount,
+        OptionUseCount = IntegerOptionItem.Create(RoleInfo, OptionName.RepeaterUseCount,
             new(1, 100, 1), 1, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionExtendSeconds = IntegerOptionItem.Create(RoleInfo, 12, OptionName.RepeaterExtendSeconds,
+        OptionExtendSeconds = IntegerOptionItem.Create(RoleInfo, OptionName.RepeaterExtendSeconds,
             new(10, 300, 5), 30, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionAdditionalVotes = IntegerOptionItem.Create(RoleInfo, 13, OptionName.RepeaterAdditionalVotes,
+        OptionAdditionalVotes = IntegerOptionItem.Create(RoleInfo, OptionName.RepeaterAdditionalVotes,
             new(0, 999, 1), 1, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionRevealJudgement = BooleanOptionItem.Create(RoleInfo, 14, OptionName.RepeaterRevealJudgement, true, false);
+        OptionRevealJudgement = BooleanOptionItem.Create(RoleInfo, OptionName.RepeaterRevealJudgement, true, false);
     }
 
     private bool CanUseAbility()

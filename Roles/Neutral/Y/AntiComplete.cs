@@ -60,15 +60,15 @@ public sealed class AntiComplete : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionGuardCount = IntegerOptionItem.Create(RoleInfo, 10, OptionName.AntiCompGuardCount, new(0, 20, 1), 2, false)
+        OptionGuardCount = IntegerOptionItem.Create(RoleInfo, OptionName.AntiCompGuardCount, new(0, 20, 1), 2, false)
                 .SetValueFormat(OptionFormat.Times);
-        OptionKnowOption = BooleanOptionItem.Create(RoleInfo, 11, OptionName.AntiCompKnowOption, false, false);
-        OptionKnowNotask = BooleanOptionItem.Create(RoleInfo, 12, OptionName.AntiCompKnowNotask, true, false, OptionKnowOption);
-        OptionKnowCompTask = BooleanOptionItem.Create(RoleInfo, 13, OptionName.AntiCompKnowCompTask, false, false, OptionKnowOption);
-        OptionAddGuardCount = IntegerOptionItem.Create(RoleInfo, 14, OptionName.AntiCompAddGuardCount, new(0, 10, 1), 0, false, OptionKnowOption)
+        OptionKnowOption = BooleanOptionItem.Create(RoleInfo, OptionName.AntiCompKnowOption, false, false);
+        OptionKnowNotask = BooleanOptionItem.Create(RoleInfo, OptionName.AntiCompKnowNotask, true, false, OptionKnowOption);
+        OptionKnowCompTask = BooleanOptionItem.Create(RoleInfo, OptionName.AntiCompKnowCompTask, false, false, OptionKnowOption);
+        OptionAddGuardCount = IntegerOptionItem.Create(RoleInfo, OptionName.AntiCompAddGuardCount, new(0, 10, 1), 0, false, OptionKnowOption)
                 .SetValueFormat(OptionFormat.Times);
         // 20-23を使用
-        Tasks = Options.OverrideTasksData.Create(RoleInfo, 20, OptionKnowOption);
+        Tasks = Options.OverrideTasksData.Create(RoleInfo, OptionKnowOption);
     }
     public override bool NeedsSeenNames => true;
 

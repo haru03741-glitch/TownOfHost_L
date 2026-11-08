@@ -23,14 +23,13 @@ public static class Sending
         assignAtRandom: true);
 
     private static Color RoleColor => Utils.GetRoleColor(CustomRoles.Sending);
-    private static readonly int Id = (int)offsetId.AddonBuff + 700;
     private static List<byte> playerIdList = new();
 
     private static PlayerControl ExiledPlayer = null;
 
     public static void SetupCustomOption()
     {
-        SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.Sending);
+        SetupRoleOptions(TabGroup.Addons, CustomRoles.Sending);
     }
     [GameModuleInitializer]
     public static void Init()

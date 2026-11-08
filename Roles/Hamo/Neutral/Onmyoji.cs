@@ -180,49 +180,49 @@ public sealed class Onmyoji : HamoRoleBase, IKiller, ISelfVoter
 
     {
 
-        SoloWinOption.Create(RoleInfo, 8, defo: 15);
+        SoloWinOption.Create(RoleInfo, defo: 15);
 
-        OptionWinTaskCount = IntegerOptionItem.Create(RoleInfo, 9, OptionName.OnmyojiWinTaskCount, new(1, 99, 1), 5, false)
+        OptionWinTaskCount = IntegerOptionItem.Create(RoleInfo, OptionName.OnmyojiWinTaskCount, new(1, 99, 1), 5, false)
 
             .SetValueFormat(OptionFormat.Times);
 
-        OptionCanUseVent = BooleanOptionItem.Create(RoleInfo, 10, GeneralOption.CanVent, true, false);
+        OptionCanUseVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, true, false);
 
-        OptionVentCooldown = FloatOptionItem.Create(RoleInfo, 11, "OnmyojiVentCooldown", new(0f, 60f, 2.5f), 15f, false, OptionCanUseVent)
-
-            .SetValueFormat(OptionFormat.Seconds);
-
-        OptionVentDuration = FloatOptionItem.Create(RoleInfo, 12, "OnmyojiVentDuration", new(0f, 60f, 2.5f), 10f, false, OptionCanUseVent)
+        OptionVentCooldown = FloatOptionItem.Create(RoleInfo, "OnmyojiVentCooldown", new(0f, 60f, 2.5f), 15f, false, OptionCanUseVent)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionImpostorVision = BooleanOptionItem.Create(RoleInfo, 13, GeneralOption.ImpostorVision, true, false);
+        OptionVentDuration = FloatOptionItem.Create(RoleInfo, "OnmyojiVentDuration", new(0f, 60f, 2.5f), 10f, false, OptionCanUseVent)
 
-        OptionCanCreateShikigami = BooleanOptionItem.Create(RoleInfo, 14, OptionName.OnmyojiCanCreateShikigami, true, false);
+            .SetValueFormat(OptionFormat.Seconds);
 
-        OptionCreateShikigamiCooldown = FloatOptionItem.Create(RoleInfo, 15, OptionName.OnmyojiCreateShikigamiCooldown,
+        OptionImpostorVision = BooleanOptionItem.Create(RoleInfo, GeneralOption.ImpostorVision, true, false);
+
+        OptionCanCreateShikigami = BooleanOptionItem.Create(RoleInfo, OptionName.OnmyojiCanCreateShikigami, true, false);
+
+        OptionCreateShikigamiCooldown = FloatOptionItem.Create(RoleInfo, OptionName.OnmyojiCreateShikigamiCooldown,
 
             new(0f, 60f, 2.5f), 20f, false, OptionCanCreateShikigami)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionNeedTaskToWin = BooleanOptionItem.Create(RoleInfo, 16, OptionName.OnmyojiNeedTaskToWin, true, false);
+        OptionNeedTaskToWin = BooleanOptionItem.Create(RoleInfo, OptionName.OnmyojiNeedTaskToWin, true, false);
 
-        OptionCanHijackCrewWin = BooleanOptionItem.Create(RoleInfo, 17, OptionName.OnmyojiCanHijackCrewWin, true, false);
+        OptionCanHijackCrewWin = BooleanOptionItem.Create(RoleInfo, OptionName.OnmyojiCanHijackCrewWin, true, false);
 
-        OptionDisableReport = BooleanOptionItem.Create(RoleInfo, 18, OptionName.OnmyojiDisableReport, false, false);
+        OptionDisableReport = BooleanOptionItem.Create(RoleInfo, OptionName.OnmyojiDisableReport, false, false);
 
-        OptionDisableEmergencyMeeting = BooleanOptionItem.Create(RoleInfo, 19, OptionName.OnmyojiDisableEmergencyMeeting, false, false);
+        OptionDisableEmergencyMeeting = BooleanOptionItem.Create(RoleInfo, OptionName.OnmyojiDisableEmergencyMeeting, false, false);
 
-        OptionShikigamiShiftCooldown = FloatOptionItem.Create(RoleInfo, 20, OptionName.OnmyojiShikigamiShiftCooldown, new(0f, 60f, 2.5f), 20f, false)
-
-            .SetValueFormat(OptionFormat.Seconds);
-
-        OptionShikigamiSuicideCooldown = FloatOptionItem.Create(RoleInfo, 21, OptionName.OnmyojiShikigamiSuicideCooldown, new(0f, 60f, 2.5f), 10f, false)
+        OptionShikigamiShiftCooldown = FloatOptionItem.Create(RoleInfo, OptionName.OnmyojiShikigamiShiftCooldown, new(0f, 60f, 2.5f), 20f, false)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        Options.OverrideTasksData.Create(RoleInfo, 30);
+        OptionShikigamiSuicideCooldown = FloatOptionItem.Create(RoleInfo, OptionName.OnmyojiShikigamiSuicideCooldown, new(0f, 60f, 2.5f), 10f, false)
+
+            .SetValueFormat(OptionFormat.Seconds);
+
+        Options.OverrideTasksData.Create(RoleInfo);
 
         PavlovDog.HideRoleOptions(CustomRoles.Shikigami);
 

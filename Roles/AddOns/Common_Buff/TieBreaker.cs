@@ -19,13 +19,12 @@ public static class TieBreaker
         chatCommand: "タイブレーカー",
         assignAtRandom: true);
 
-    private static readonly int Id = (int)offsetId.AddonBuff + 800;
     private static List<byte> playerIdList = new();
     private static Dictionary<byte, byte> TieBreakerVote = new();
 
     public static void SetupCustomOption()
     {
-        SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.TieBreaker);
+        SetupRoleOptions(TabGroup.Addons, CustomRoles.TieBreaker);
     }
     [GameModuleInitializer]
     public static void Init()

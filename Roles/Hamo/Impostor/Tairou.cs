@@ -42,9 +42,9 @@ namespace TownOfHostL.Roles.Hamo.Impostor
         public static bool TairouNotify;
         private static void SetupOptionItem()
         {
-            OptionTairoDeathReason = BooleanOptionItem.Create(RoleInfo, 10, OptionName.TairoDeathReason, true, false);
-            OptionTairouNotify = BooleanOptionItem.Create(RoleInfo, 11, OptionName.TairouNotify, true, false);
-            OptionTellResult = StringOptionItem.Create(RoleInfo, 12, OptionName.TairouTellResult, new[] { "TellResultCrewmate", "TellResultRandomRole" }, 0, false);
+            OptionTairoDeathReason = BooleanOptionItem.Create(RoleInfo, OptionName.TairoDeathReason, true, false);
+            OptionTairouNotify = BooleanOptionItem.Create(RoleInfo, OptionName.TairouNotify, true, false);
+            OptionTellResult = StringOptionItem.Create(RoleInfo, OptionName.TairouTellResult, new[] { "TellResultCrewmate", "TellResultRandomRole" }, 0, false);
         }
         public override CustomRoles TellResults(PlayerControl player)
         {

@@ -64,13 +64,13 @@ public sealed class FortuneTeller : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionNumOfForecast = IntegerOptionItem.Create(RoleInfo, 10, OptionName.FortuneTellerNumOfForecast, new(1, 20, 1), 2, false)
+        OptionNumOfForecast = IntegerOptionItem.Create(RoleInfo, OptionName.FortuneTellerNumOfForecast, new(1, 20, 1), 2, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionForecastTaskTrigger = IntegerOptionItem.Create(RoleInfo, 11, OptionName.TaskTrigger, new(0, 20, 1), 5, false)
+        OptionForecastTaskTrigger = IntegerOptionItem.Create(RoleInfo, OptionName.TaskTrigger, new(0, 20, 1), 5, false)
             .SetValueFormat(OptionFormat.Pieces);
-        OptionCanForecastNoDeadBody = BooleanOptionItem.Create(RoleInfo, 12, OptionName.FortuneTellerCanForecastNoDeadBody, false, false);
-        OptionConfirmCamp = BooleanOptionItem.Create(RoleInfo, 13, OptionName.FortuneTellerConfirmCamp, true, false);
-        OptionKillerOnly = BooleanOptionItem.Create(RoleInfo, 14, OptionName.FortuneTellerKillerOnly, true, false);
+        OptionCanForecastNoDeadBody = BooleanOptionItem.Create(RoleInfo, OptionName.FortuneTellerCanForecastNoDeadBody, false, false);
+        OptionConfirmCamp = BooleanOptionItem.Create(RoleInfo, OptionName.FortuneTellerConfirmCamp, true, false);
+        OptionKillerOnly = BooleanOptionItem.Create(RoleInfo, OptionName.FortuneTellerKillerOnly, true, false);
     }
 
     public override bool NeedsSeenNames => HasForecastResult();

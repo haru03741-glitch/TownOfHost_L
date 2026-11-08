@@ -52,13 +52,13 @@ public sealed class Samurai : HamoRoleBase, IImpostor, IUsePhantomButton
 
     static void SetupOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, OptionBaseCoolTime, 30f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, OptionBaseCoolTime, 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionAbilityCooldown = FloatOptionItem.Create(RoleInfo, 11, GeneralOption.Cooldown, OptionBaseCoolTime, 25f, false)
+        OptionAbilityCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.Cooldown, OptionBaseCoolTime, 25f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionCanVent = BooleanOptionItem.Create(RoleInfo, 12, GeneralOption.CanVent, true, false);
-        OptionCanSabotage = BooleanOptionItem.Create(RoleInfo, 13, GeneralOption.CanUseSabotage, true, false);
-        OptionSlashRange = FloatOptionItem.Create(RoleInfo, 14, OptionName.SamuraiSlashRange, new(0.5f, 6f, 0.25f), 2f, false)
+        OptionCanVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, true, false);
+        OptionCanSabotage = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanUseSabotage, true, false);
+        OptionSlashRange = FloatOptionItem.Create(RoleInfo, OptionName.SamuraiSlashRange, new(0.5f, 6f, 0.25f), 2f, false)
             .SetValueFormat(OptionFormat.Multiplier);
     }
 

@@ -54,14 +54,14 @@ public sealed class HateKiller : HamoRoleBase, IImpostor
 
     private static void SetupOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, OptionBaseCoolTime, 35f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, OptionBaseCoolTime, 35f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionDecreaseKillCool = FloatOptionItem.Create(RoleInfo, 11, OptionName.HateKillerDecreaseKillCool, new(0.5f, 180f, 0.5f), 4f, false)
+        OptionDecreaseKillCool = FloatOptionItem.Create(RoleInfo, OptionName.HateKillerDecreaseKillCool, new(0.5f, 180f, 0.5f), 4f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionMinimumKillCool = FloatOptionItem.Create(RoleInfo, 12, OptionName.HateKillerMinimumKillCool, new(0.5f, 180f, 0.5f), 15f, false)
+        OptionMinimumKillCool = FloatOptionItem.Create(RoleInfo, OptionName.HateKillerMinimumKillCool, new(0.5f, 180f, 0.5f), 15f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionCountImpostorVotes = BooleanOptionItem.Create(RoleInfo, 13, OptionName.HateKillerCountImpostorVotes, false, false);
-        OptionCountSelfVotes = BooleanOptionItem.Create(RoleInfo, 14, OptionName.HateKillerCountSelfVotes, false, false);
+        OptionCountImpostorVotes = BooleanOptionItem.Create(RoleInfo, OptionName.HateKillerCountImpostorVotes, false, false);
+        OptionCountSelfVotes = BooleanOptionItem.Create(RoleInfo, OptionName.HateKillerCountSelfVotes, false, false);
     }
 
     public override void Add()

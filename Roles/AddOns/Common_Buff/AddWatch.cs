@@ -21,12 +21,11 @@ public static class AddWatch
         chatCommand: "ウォッチング",
         assignAtRandom: true);
 
-    private static readonly int Id = (int)offsetId.AddonBuff + 200;
     private static List<byte> playerIdList = new();
 
     public static void SetupCustomOption()
     {
-        SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.AddWatch);
+        SetupRoleOptions(TabGroup.Addons, CustomRoles.AddWatch);
     }
     [GameModuleInitializer]
     public static void Init()

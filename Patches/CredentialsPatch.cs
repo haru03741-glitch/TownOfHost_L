@@ -112,9 +112,9 @@ namespace TownOfHostL
                 }
 
                 VersionChecker.Check();
-                if (OptionItem.IdDuplicated)
+                if (OptionItem.KeyDuplicated)
                 {
-                    ErrorText.Instance.AddError(ErrorCode.OptionIDDuplicate);
+                    ErrorText.Instance.AddError(ErrorCode.OptionKeyDuplicate);
                 }
 
                 if (SpecialEventText == null && TohLogo != null)

@@ -34,7 +34,7 @@ public sealed class NekoKabocha : RoleBase, IImpostor//, INekomata
     private static BooleanOptionItem optionRevengeOnExile;
     private static void SetupOptionItems()
     {
-        optionRevengeOnExile = BooleanOptionItem.Create(RoleInfo, 10, OptionName.NekoKabochaRevengeOnExile, false, false);
+        optionRevengeOnExile = BooleanOptionItem.Create(RoleInfo, OptionName.NekoKabochaRevengeOnExile, false, false);
     }
     private enum OptionName { NekoKabochaRevengeOnExile }
 

@@ -50,12 +50,12 @@ public sealed class Scavenger : RoleBase, IImpostor
 
     private static void SetUpOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(0f, 180f, 2.5f), 30f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 2.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionIsEatUpKillLimit = BooleanOptionItem.Create(RoleInfo, 20, OptionName.ScavengerIsEatUpKillLimit, false, false);
-        OptionLimitMaxCount = IntegerOptionItem.Create(RoleInfo, 21, OptionName.ScavengerLimitMaxCount, new(1, 15, 1), 2, false).SetParent(OptionIsEatUpKillLimit)
+        OptionIsEatUpKillLimit = BooleanOptionItem.Create(RoleInfo, OptionName.ScavengerIsEatUpKillLimit, false, false);
+        OptionLimitMaxCount = IntegerOptionItem.Create(RoleInfo, OptionName.ScavengerLimitMaxCount, new(1, 15, 1), 2, false).SetParent(OptionIsEatUpKillLimit)
             .SetValueFormat(OptionFormat.Pieces);
-        OptionIgnoreBait = BooleanOptionItem.Create(RoleInfo, 11, OptionName.ScavengerIgnoreBait, false, false);
+        OptionIgnoreBait = BooleanOptionItem.Create(RoleInfo, OptionName.ScavengerIgnoreBait, false, false);
     }
     public override void Add()
     {

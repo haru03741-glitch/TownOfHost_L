@@ -78,11 +78,11 @@ public sealed class Telepathisters : RoleBase, IImpostor, IKillFlashSeeable
 
     private static void SetupOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(2.5f, 180f, 2.5f), 20f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(2.5f, 180f, 2.5f), 20f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionCanSeeKillFlash = BooleanOptionItem.Create(RoleInfo, 11, OptionName.TelepathistersCanSeeKillFlash, true, false);
-        OptionCanSeeLastRoomInMeeting = BooleanOptionItem.Create(RoleInfo, 12, OptionName.TelepathistersCanSeeLastRoomInMeeting, true, false);
-        OptionVentMaxCount = IntegerOptionItem.Create(RoleInfo, 13, OptionName.TelepathistersOptionVentCount, new(1, 20, 1), 2, false)
+        OptionCanSeeKillFlash = BooleanOptionItem.Create(RoleInfo, OptionName.TelepathistersCanSeeKillFlash, true, false);
+        OptionCanSeeLastRoomInMeeting = BooleanOptionItem.Create(RoleInfo, OptionName.TelepathistersCanSeeLastRoomInMeeting, true, false);
+        OptionVentMaxCount = IntegerOptionItem.Create(RoleInfo, OptionName.TelepathistersOptionVentCount, new(1, 20, 1), 2, false)
             .SetValueFormat(OptionFormat.Times);
     }
 

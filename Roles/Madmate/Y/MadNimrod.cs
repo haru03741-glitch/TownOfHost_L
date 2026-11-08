@@ -44,8 +44,8 @@ public sealed class MadNimrod : RoleBase
 
     public static void SetupOptionItem()
     {
-        OptionCanVent = BooleanOptionItem.Create(RoleInfo, 10, GeneralOption.CanVent, false, false);
-        Options.SetUpAddOnOptions(RoleInfo.ConfigId + 20, RoleInfo.RoleName, RoleInfo.Tab);
+        OptionCanVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, false, false);
+        Options.SetUpAddOnOptions(RoleInfo.RoleName, RoleInfo.Tab);
     }
     public override void Add()
     {

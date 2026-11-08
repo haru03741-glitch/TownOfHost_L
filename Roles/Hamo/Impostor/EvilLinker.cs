@@ -115,15 +115,15 @@ public sealed class EvilLinker : HamoRoleBase, IImpostor, IUsePhantomButton
 
     {
 
-        OptionPlaceCooldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.EvilLinkerPlaceCooldown,
+        OptionPlaceCooldown = FloatOptionItem.Create(RoleInfo, OptionName.EvilLinkerPlaceCooldown,
 
             new(2.5f, 60f, 2.5f), 15f, false).SetValueFormat(OptionFormat.Seconds);
 
-        OptionMaxPairs = IntegerOptionItem.Create(RoleInfo, 11, OptionName.EvilLinkerMaxPairs,
+        OptionMaxPairs = IntegerOptionItem.Create(RoleInfo, OptionName.EvilLinkerMaxPairs,
 
             new(1, 10, 1), 3, false).SetValueFormat(OptionFormat.Times);
 
-        OptionWarpCooldown = FloatOptionItem.Create(RoleInfo, 12, OptionName.EvilLinkerWarpCooldown,
+        OptionWarpCooldown = FloatOptionItem.Create(RoleInfo, OptionName.EvilLinkerWarpCooldown,
 
             new(1f, 60f, 1f), 10f, false).SetValueFormat(OptionFormat.Seconds);
 

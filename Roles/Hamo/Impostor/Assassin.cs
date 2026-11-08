@@ -107,20 +107,20 @@ public sealed class Assassin : HamoRoleBase, IImpostor, IUsePhantomButton, IDoub
     }
     public static void SetupOptionItem()
     {
-        SoloWinOption.Create(RoleInfo, 11);
-        OptionCanCallMeetingKill = BooleanOptionItem.Create(RoleInfo, 10, OptionName.AssasinCanCallMeetingKill, false, false);
-        OptionHasOtherRole = BooleanOptionItem.Create(RoleInfo, 13, OptionName.AssasinHasOtherRole, false, false);
-        OptionHaveRole = FilterOptionItem.Create(RoleInfo, 12, OptionName.AssassinHaveRole, 0, false, OptionHasOtherRole, true, false, false, false, false, () => InvalidRoles());
-        OptionAssassinMeetingTime = IntegerOptionItem.Create(RoleInfo, 25, OptionName.AssassinMeetingTime, new(10, 180, 1), 35, false).SetValueFormat(OptionFormat.Seconds);
+        SoloWinOption.Create(RoleInfo);
+        OptionCanCallMeetingKill = BooleanOptionItem.Create(RoleInfo, OptionName.AssasinCanCallMeetingKill, false, false);
+        OptionHasOtherRole = BooleanOptionItem.Create(RoleInfo, OptionName.AssasinHasOtherRole, false, false);
+        OptionHaveRole = FilterOptionItem.Create(RoleInfo, OptionName.AssassinHaveRole, 0, false, OptionHasOtherRole, true, false, false, false, false, () => InvalidRoles());
+        OptionAssassinMeetingTime = IntegerOptionItem.Create(RoleInfo, OptionName.AssassinMeetingTime, new(10, 180, 1), 35, false).SetValueFormat(OptionFormat.Seconds);
 
-        ObjectOptionitem.Create(RoleInfo, 26, "AssassinMerlin", true, null).SetOptionName(() => "Merlin Setting").SetColor(Merlin.RoleInfo.RoleColor);
-        OptionMerlinHasTask = BooleanOptionItem.Create(RoleInfo, 24, OptionName.MerlinHasTask, false, false);
-        OptionMerlinNomalTask = Options.OverrideTasksData.Create(RoleInfo, 16, rolename: CustomRoles.Merlin, tasks: (true, 2, 0, 0), OptionMerlinHasTask);
-        OptionMerlinWorkTask = IntegerOptionItem.Create(RoleInfo, 15, OptionName.WalkerWalkTaskCount, (0, 99, 1), 6, false, OptionMerlinWorkTask);
-        OptionMerlinCanSeeNeutral = BooleanOptionItem.Create(RoleInfo, 20, OptionName.MerlinCanSeeNeutral, false, false);
-        OptionMerlinCanSeeMadmate = BooleanOptionItem.Create(RoleInfo, 21, OptionName.MerlinCanSeeMadmate, true, false, OptionMerlinCanSeeNeutral);
-        OptionMerlinOnlyNeutralKiller = BooleanOptionItem.Create(RoleInfo, 22, OptionName.MerlinOnlyNeutralKiller, false, false, OptionMerlinCanSeeNeutral);
-        OptionMerlinCantSeeNeutralColor = BooleanOptionItem.Create(RoleInfo, 23, OptionName.MerlinCantSeeNeutralColor, true, false, OptionMerlinCanSeeNeutral);
+        ObjectOptionitem.Create(RoleInfo, "AssassinMerlin", true, null).SetOptionName(() => "Merlin Setting").SetColor(Merlin.RoleInfo.RoleColor);
+        OptionMerlinHasTask = BooleanOptionItem.Create(RoleInfo, OptionName.MerlinHasTask, false, false);
+        OptionMerlinNomalTask = Options.OverrideTasksData.Create(RoleInfo, rolename: CustomRoles.Merlin, tasks: (true, 2, 0, 0), OptionMerlinHasTask);
+        OptionMerlinWorkTask = IntegerOptionItem.Create(RoleInfo, OptionName.WalkerWalkTaskCount, (0, 99, 1), 6, false, OptionMerlinWorkTask);
+        OptionMerlinCanSeeNeutral = BooleanOptionItem.Create(RoleInfo, OptionName.MerlinCanSeeNeutral, false, false);
+        OptionMerlinCanSeeMadmate = BooleanOptionItem.Create(RoleInfo, OptionName.MerlinCanSeeMadmate, true, false, OptionMerlinCanSeeNeutral);
+        OptionMerlinOnlyNeutralKiller = BooleanOptionItem.Create(RoleInfo, OptionName.MerlinOnlyNeutralKiller, false, false, OptionMerlinCanSeeNeutral);
+        OptionMerlinCantSeeNeutralColor = BooleanOptionItem.Create(RoleInfo, OptionName.MerlinCantSeeNeutralColor, true, false, OptionMerlinCanSeeNeutral);
     }
     public override void Add()
     {

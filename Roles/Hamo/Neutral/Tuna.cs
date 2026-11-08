@@ -53,13 +53,13 @@ public sealed class Tuna : HamoRoleBase
 
     private static void SetupOptionItem()
     {
-        SoloWinOption.Create(RoleInfo, 9, defo: 15);
-        OptStopTime = FloatOptionItem.Create(RoleInfo, 10, OptionName.TunaStopTime, new(0.5f, 5f, 0.5f), 3f, false)
+        SoloWinOption.Create(RoleInfo, defo: 15);
+        OptStopTime = FloatOptionItem.Create(RoleInfo, OptionName.TunaStopTime, new(0.5f, 5f, 0.5f), 3f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionCanVent = BooleanOptionItem.Create(RoleInfo, 11, GeneralOption.CanVent, false, false);
-        OptionVentCooldown = FloatOptionItem.Create(RoleInfo, 12, GeneralOption.Cooldown, new(0f, 180f, 0.5f), 15f, false, OptionCanVent)
+        OptionCanVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, false, false);
+        OptionVentCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.Cooldown, new(0f, 180f, 0.5f), 15f, false, OptionCanVent)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionVentMaxTime = FloatOptionItem.Create(RoleInfo, 13, GeneralOption.EngineerInVentCooldown, new(0f, 180f, 0.5f), 0f, false, OptionCanVent)
+        OptionVentMaxTime = FloatOptionItem.Create(RoleInfo, GeneralOption.EngineerInVentCooldown, new(0f, 180f, 0.5f), 0f, false, OptionCanVent)
             .SetZeroNotation(OptionZeroNotation.Infinity)
             .SetValueFormat(OptionFormat.Seconds);
     }

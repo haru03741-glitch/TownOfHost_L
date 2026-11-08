@@ -16,6 +16,7 @@ using TownOfHostL.Roles.AddOns.Impostor;
 using static TownOfHostL.Translator;
 using AmongUs.Data;
 
+using TownOfHostL.Core;
 using TownOfHostL.Core.Modes;
 
 namespace TownOfHostL;
@@ -379,8 +380,9 @@ static partial class ExtendedPlayerControl
         var role = player.GetCustomRole();
         if (temporaryRole)
         {
-            if (player.Is(CustomRoles.ChainShifterAddon))
-                return Utils.GetRoleColorCode(CustomRoles.ChainShifter);
+            var standIn = PlayerTraits.StandInRole(player);
+            if (standIn != CustomRoles.NotAssigned)
+                return Utils.GetRoleColorCode(standIn);
         }
 
         (Color c, string t) = (Color.clear, "");
@@ -394,8 +396,9 @@ static partial class ExtendedPlayerControl
         var role = player.GetCustomRole();
         if (temporaryRole)
         {
-            if (player.Is(CustomRoles.ChainShifterAddon))
-                return Utils.GetRoleColor(CustomRoles.ChainShifter);
+            var standIn = PlayerTraits.StandInRole(player);
+            if (standIn != CustomRoles.NotAssigned)
+                return Utils.GetRoleColor(standIn);
         }
 
         (Color c, string t) = (Color.clear, "");
@@ -627,14 +630,9 @@ static partial class ExtendedPlayerControl
             return true;
         }
 
-        // 役職による仕分け
-        if (seer.GetRoleClass() is IDeathReasonSeeable deathReasonSeeable)
-        {
-            return deathReasonSeeable.CheckSeeDeathReason(seen);
-        }
-        // IDeathReasonSeeable未対応役職はこちら
-        return (seer.Is(CustomRoles.SKMadmate) && Options.MadmateCanSeeDeathReason.GetBool())
-            || seer.Is(CustomRoles.Autopsy);
+        // 属性などの印は、役職ごとの条件より先に見る
+        if (PlayerTraits.SeesDeathReason(seer)) return true;
+        return seer.GetRoleClass() is IDeathReasonSeeable deathReasonSeeable && deathReasonSeeable.CheckSeeDeathReason(seen);
     }
     public static string GetRoleInfo(this PlayerControl player, bool InfoLong = false)
     {

@@ -61,26 +61,26 @@ public sealed class PavlovDog : PavlovDogBase
 
     private static void SetupOptionItem()
     {
-        SoloWinOption.Create(RoleInfo, 8);
-        ObjectOptionitem.Create(RoleInfo, 9, "PavlovOwnerOption", true, "")
+        SoloWinOption.Create(RoleInfo);
+        ObjectOptionitem.Create(RoleInfo, "PavlovOwnerOption", true, "")
             .SetOptionName(() => "Pavlov Owner Option");
-        OptionImprintCooldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.PavlovOwnerImprintCooldown, new(0f, 60f, 2.5f), 20f, false)
+        OptionImprintCooldown = FloatOptionItem.Create(RoleInfo, OptionName.PavlovOwnerImprintCooldown, new(0f, 60f, 2.5f), 20f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionMaxImprintCount = IntegerOptionItem.Create(RoleInfo, 11, OptionName.PavlovOwnerMaxImprintCount, new(1, 10, 1), 2, false)
+        OptionMaxImprintCount = IntegerOptionItem.Create(RoleInfo, OptionName.PavlovOwnerMaxImprintCount, new(1, 10, 1), 2, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionOwnerSuicideOnImpostor = BooleanOptionItem.Create(RoleInfo, 12, OptionName.PavlovOwnerSuicideOnImpostor, true, false);
+        OptionOwnerSuicideOnImpostor = BooleanOptionItem.Create(RoleInfo, OptionName.PavlovOwnerSuicideOnImpostor, true, false);
 
-        ObjectOptionitem.Create(RoleInfo, 19, "PavlovDogOption", true, "")
+        ObjectOptionitem.Create(RoleInfo, "PavlovDogOption", true, "")
             .SetOptionName(() => "Pavlov Dog Option");
-        OptionDogImpostorVision = BooleanOptionItem.Create(RoleInfo, 20, OptionName.PavlovDogImpostorVision, true, false);
-        OptionDogCanVent = BooleanOptionItem.Create(RoleInfo, 21, OptionName.PavlovDogCanVent, true, false);
-        OptionRampageKillCooldown = FloatOptionItem.Create(RoleInfo, 22, OptionName.PavlovDogRampageKillCooldown, new(2.5f, 60f, 2.5f), 15f, false)
+        OptionDogImpostorVision = BooleanOptionItem.Create(RoleInfo, OptionName.PavlovDogImpostorVision, true, false);
+        OptionDogCanVent = BooleanOptionItem.Create(RoleInfo, OptionName.PavlovDogCanVent, true, false);
+        OptionRampageKillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.PavlovDogRampageKillCooldown, new(2.5f, 60f, 2.5f), 15f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionRampageSuicideTime = FloatOptionItem.Create(RoleInfo, 23, OptionName.PavlovDogRampageSuicideTime, new(10f, 120f, 2.5f), 30f, false)
+        OptionRampageSuicideTime = FloatOptionItem.Create(RoleInfo, OptionName.PavlovDogRampageSuicideTime, new(10f, 120f, 2.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionResetRampageTimerOnMeeting = BooleanOptionItem.Create(RoleInfo, 24, OptionName.PavlovDogResetRampageTimerOnMeeting, true, false);
+        OptionResetRampageTimerOnMeeting = BooleanOptionItem.Create(RoleInfo, OptionName.PavlovDogResetRampageTimerOnMeeting, true, false);
 
-        RoleAddAddons.Create(RoleInfo, 30, NeutralKiller: true);
+        RoleAddAddons.Create(RoleInfo, NeutralKiller: true);
 
         HideRoleOptions(CustomRoles.PavlovOwner);
         HideRoleOptions(CustomRoles.PavlovDogImprint);

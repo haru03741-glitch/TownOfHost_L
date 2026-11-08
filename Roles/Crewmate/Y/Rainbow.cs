@@ -38,7 +38,7 @@ public sealed class Rainbow : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionDontSeeTaskTurn = BooleanOptionItem.Create(RoleInfo, 10, OptionName.RainbowDontSeeTaskTurn, false, false);
+        OptionDontSeeTaskTurn = BooleanOptionItem.Create(RoleInfo, OptionName.RainbowDontSeeTaskTurn, false, false);
     }
 
     public override void Add()

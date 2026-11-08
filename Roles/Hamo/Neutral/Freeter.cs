@@ -130,7 +130,7 @@ public sealed class Freeter : HamoRoleBase, IKiller, IAdditionalWinner
 
         OptUnemployedDeathTurns = IntegerOptionItem.Create(
 
-                RoleInfo, 10, OptionName.FreeterUnemployedDeathTurns,
+                RoleInfo, OptionName.FreeterUnemployedDeathTurns,
 
                 new(0, 15, 1), 3, false)
 
@@ -144,7 +144,7 @@ public sealed class Freeter : HamoRoleBase, IKiller, IAdditionalWinner
 
         OptInitialCooldown = FloatOptionItem.Create(
 
-                RoleInfo, 11, OptionName.FreeterInitialCooldown,
+                RoleInfo, OptionName.FreeterInitialCooldown,
 
                 new(0f, 60f, 2.5f), 20f, false)
 
@@ -156,7 +156,7 @@ public sealed class Freeter : HamoRoleBase, IKiller, IAdditionalWinner
 
         OptFinalCooldown = FloatOptionItem.Create(
 
-                RoleInfo, 12, OptionName.FreeterFinalCooldown,
+                RoleInfo, OptionName.FreeterFinalCooldown,
 
                 new(0f, 120f, 2.5f), 90f, false)
 
@@ -166,13 +166,13 @@ public sealed class Freeter : HamoRoleBase, IKiller, IAdditionalWinner
 
         OptSeeEmployerRole = BooleanOptionItem.Create(
 
-            RoleInfo, 13, OptionName.FreeterSeeEmployerRole, true, false);
+            RoleInfo, OptionName.FreeterSeeEmployerRole, true, false);
 
 
 
         OptSurvivalRequiredForWin = BooleanOptionItem.Create(
 
-            RoleInfo, 14, OptionName.FreeterSurvivalRequiredForWin, false, false);
+            RoleInfo, OptionName.FreeterSurvivalRequiredForWin, false, false);
 
     }
 

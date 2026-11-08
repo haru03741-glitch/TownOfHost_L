@@ -20,7 +20,6 @@ public static class AddLight
         chatCommand: "ライティング",
         assignAtRandom: true);
 
-    private static readonly int Id = (int)offsetId.AddonBuff + 0;
     private static List<byte> playerIdList = new();
 
     private static OptionItem OptionAddCrewmateVision;
@@ -33,12 +32,12 @@ public static class AddLight
 
     public static void SetupCustomOption()
     {
-        SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.AddLight);
-        OptionAddCrewmateVision = FloatOptionItem.Create(79210, "AddLightAddCrewmateVision", new(0f, 5f, 0.1f), 0.3f, TabGroup.Addons, false)
+        SetupRoleOptions(TabGroup.Addons, CustomRoles.AddLight);
+        OptionAddCrewmateVision = FloatOptionItem.Create("AddLightAddCrewmateVision", new(0f, 5f, 0.1f), 0.3f, TabGroup.Addons, false)
             .SetValueFormat(OptionFormat.Multiplier);
-        OptionAddImpostorVision = FloatOptionItem.Create(79211, "AddLightAddImpostorVision", new(0f, 5f, 0.1f), 0.5f, TabGroup.Addons, false)
+        OptionAddImpostorVision = FloatOptionItem.Create("AddLightAddImpostorVision", new(0f, 5f, 0.1f), 0.5f, TabGroup.Addons, false)
             .SetValueFormat(OptionFormat.Multiplier);
-        OptionDisableLightOut = BooleanOptionItem.Create(79212, "AddLighterDisableLightOut", true, TabGroup.Addons, false);
+        OptionDisableLightOut = BooleanOptionItem.Create("AddLighterDisableLightOut", true, TabGroup.Addons, false);
     }
     [GameModuleInitializer]
     public static void Init()

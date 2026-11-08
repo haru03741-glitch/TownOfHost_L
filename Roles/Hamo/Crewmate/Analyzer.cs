@@ -71,14 +71,15 @@ public sealed class Analyzer : HamoRoleBase
 
     static void SetupOptionItem()
     {
-        OptionMaximum = IntegerOptionItem.Create(RoleInfo, 10, GeneralOption.OptionCount, new(1, 99, 1), 2, false);
-        OptionTurnMax = IntegerOptionItem.Create(RoleInfo, 11, OptionName.AnalyzerTurnMax, new(1, 3, 1), 1, false);
-        OptionCooldown = FloatOptionItem.Create(RoleInfo, 12, GeneralOption.Cooldown, OptionBaseCoolTime, 30, false).SetValueFormat(OptionFormat.Seconds);
-        OptionCanTaskcount = IntegerOptionItem.Create(RoleInfo, 13, GeneralOption.cantaskcount, new(0, 99, 1), 5, false);
-        OptionAwakening = BooleanOptionItem.Create(RoleInfo, 14, GeneralOption.AbilityAwakening, false, false);
-        OptionUsetoImpostor = BooleanOptionItem.Create(RoleInfo, 15, OptionName.AnalyzerUseto, true, false);
-        OptionUsetoCrewmate = BooleanOptionItem.Create(RoleInfo, 16, OptionName.AnalyzerUseto, true, false);
-        OptionUsetoNeutral = BooleanOptionItem.Create(RoleInfo, 17, OptionName.AnalyzerUseto, true, false);
+        OptionMaximum = IntegerOptionItem.Create(RoleInfo, GeneralOption.OptionCount, new(1, 99, 1), 2, false);
+        OptionTurnMax = IntegerOptionItem.Create(RoleInfo, OptionName.AnalyzerTurnMax, new(1, 3, 1), 1, false);
+        OptionCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.Cooldown, OptionBaseCoolTime, 30, false).SetValueFormat(OptionFormat.Seconds);
+        OptionCanTaskcount = IntegerOptionItem.Create(RoleInfo, GeneralOption.cantaskcount, new(0, 99, 1), 5, false);
+        OptionAwakening = BooleanOptionItem.Create(RoleInfo, GeneralOption.AbilityAwakening, false, false);
+        // 3 つとも同じ名前 (%roleTypes% で表示が変わる) なので、保存のキーには陣営の名前を使う
+        OptionUsetoImpostor = BooleanOptionItem.Create(RoleInfo, OptionName.AnalyzerUseto, true, false).SetKeyName("AnalyzerUsetoImpostor");
+        OptionUsetoCrewmate = BooleanOptionItem.Create(RoleInfo, OptionName.AnalyzerUseto, true, false).SetKeyName("AnalyzerUsetoCrewmate");
+        OptionUsetoNeutral = BooleanOptionItem.Create(RoleInfo, OptionName.AnalyzerUseto, true, false).SetKeyName("AnalyzerUsetoNeutral");
         OptionUsetoImpostor.ReplacementDictionary = new Dictionary<string, string> { { "%roleTypes%", UtilsRoleText.GetRoleColorAndtext(CustomRoles.Impostor) } };
         OptionUsetoCrewmate.ReplacementDictionary = new Dictionary<string, string> { { "%roleTypes%", UtilsRoleText.GetRoleColorAndtext(CustomRoles.Crewmate) } };
         OptionUsetoNeutral.ReplacementDictionary = new Dictionary<string, string> { { "%roleTypes%", $"<#cccccc>{GetString("Neutral")}</color>" } };

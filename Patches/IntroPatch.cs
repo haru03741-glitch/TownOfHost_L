@@ -8,6 +8,7 @@ using TownOfHostL.Roles.Core;
 using static TownOfHostL.Translator;
 
 using TownOfHostL.Core.Modes;
+using TownOfHostL.Roles.AddOns;
 
 namespace TownOfHostL;
 
@@ -49,7 +50,8 @@ class SetUpRoleTextPatch
 
             foreach (var subRole in PlayerState.GetByPlayerId(PlayerControl.LocalPlayer.PlayerId).SubRoles)
             {
-                if (subRole == CustomRoles.ChainShifterAddon) continue;
+                // 役職を預かる印の属性は、属性として並べない
+                if ((AddOnList.Get(subRole)?.StandsFor ?? CustomRoles.NotAssigned) != CustomRoles.NotAssigned) continue;
                 __instance.RoleBlurbText.text += "\n" + Utils.ColorString(Utils.GetRoleColor(subRole), GetString($"{subRole}Info"));
             }
             __instance.RoleText.text = RoleText.GetRoleNameText(PlayerControl.LocalPlayer.PlayerId, showSubRole: false);

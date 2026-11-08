@@ -71,14 +71,14 @@ public sealed class ChainShifter : RoleBase
     private static void SetupOptionItem()
     {
         var cRolesString = ChangeRoles.Select(x => x.ToString()).ToArray();
-        OptionShiftTime = FloatOptionItem.Create(RoleInfo, 10, OptionName.ChainShifterShiftTime, new(1f, 10f, 1f), 4f, false)
+        OptionShiftTime = FloatOptionItem.Create(RoleInfo, OptionName.ChainShifterShiftTime, new(1f, 10f, 1f), 4f, false)
            .SetValueFormat(OptionFormat.Seconds);
-        OptionShiftDistance = FloatOptionItem.Create(RoleInfo, 11, OptionName.ChainShifterShiftDistance, new(0.5f, 2f, 0.1f), 1f, false)
+        OptionShiftDistance = FloatOptionItem.Create(RoleInfo, OptionName.ChainShifterShiftDistance, new(0.5f, 2f, 0.1f), 1f, false)
             .SetValueFormat(OptionFormat.Multiplier);
-        OptionShiftInactiveTime = FloatOptionItem.Create(RoleInfo, 12, OptionName.ChainShifterShiftInactiveTime, new(10f, 60f, 2.5f), 10f, false)
+        OptionShiftInactiveTime = FloatOptionItem.Create(RoleInfo, OptionName.ChainShifterShiftInactiveTime, new(10f, 60f, 2.5f), 10f, false)
            .SetValueFormat(OptionFormat.Seconds);
-        OptionShiftedRole = StringOptionItem.Create(RoleInfo, 13, OptionName.ChainShifterShiftedRole, cRolesString, 1, false);
-        OptionShiftWhenKilled = BooleanOptionItem.Create(RoleInfo, 14, OptionName.ChainShifterShiftWhenKilled, false, false);
+        OptionShiftedRole = StringOptionItem.Create(RoleInfo, OptionName.ChainShifterShiftedRole, cRolesString, 1, false);
+        OptionShiftWhenKilled = BooleanOptionItem.Create(RoleInfo, OptionName.ChainShifterShiftWhenKilled, false, false);
     }
     public override void Add()
     {

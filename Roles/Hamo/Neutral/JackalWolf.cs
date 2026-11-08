@@ -190,25 +190,26 @@ public sealed class JackalWolf : HamoRoleBase, ILNKiller, IUsePhantomButton, IDo
 
     {
 
-        OptionHaveRole = FilterOptionItem.Create(RoleInfo, 17, OptionName.AssassinHaveRole, 0, false, null, true, false, false, false, false, () => InvalidRoles());
-        OptionHaveRole2 = FilterOptionItem.Create(RoleInfo, 18, OptionName.AssassinHaveRole, 0, false, null, true, false, false, false, false, () => InvalidRoles());
+        OptionHaveRole = FilterOptionItem.Create(RoleInfo, OptionName.AssassinHaveRole, 0, false, null, true, false, false, false, false, () => InvalidRoles());
+        OptionHaveRole2 = FilterOptionItem.Create(RoleInfo, OptionName.AssassinHaveRole, 0, false, null, true, false, false, false, false, () => InvalidRoles());
+        OptionHaveRole2.SetKeyName("AssassinHaveRole2");
         OptionHaveRole2.SetOptionName(() => "付与する役職(2つ目・ランダムでどちらか)");
 
 
 
-        OptionCanVent = BooleanOptionItem.Create(RoleInfo, 11, GeneralOption.CanVent, true, false);
+        OptionCanVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, true, false);
 
-        OptionCanUseSabotage = BooleanOptionItem.Create(RoleInfo, 12, GeneralOption.CanUseSabotage, false, false);
+        OptionCanUseSabotage = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanUseSabotage, false, false);
 
-        OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, 13, GeneralOption.ImpostorVision, true, false);
+        OptionHasImpostorVision = BooleanOptionItem.Create(RoleInfo, GeneralOption.ImpostorVision, true, false);
 
-        OptionJJackalCanKillMafia = BooleanOptionItem.Create(RoleInfo, 14, "JackalCanKillMafia", false, false);
+        OptionJJackalCanKillMafia = BooleanOptionItem.Create(RoleInfo, "JackalCanKillMafia", false, false);
 
-        OptionJJackalMafiaCanAlsoBeExposedToJackal = BooleanOptionItem.Create(RoleInfo, 15, "JackalMafiaCanAlsoBeExposedToJackal", false, false);
+        OptionJJackalMafiaCanAlsoBeExposedToJackal = BooleanOptionItem.Create(RoleInfo, "JackalMafiaCanAlsoBeExposedToJackal", false, false);
 
-        OptionJackalCanAlsoBeExposedToJMafia = BooleanOptionItem.Create(RoleInfo, 16, "JackalCanAlsoBeExposedToJMafia", true, false);
+        OptionJackalCanAlsoBeExposedToJMafia = BooleanOptionItem.Create(RoleInfo, "JackalCanAlsoBeExposedToJMafia", true, false);
 
-        RoleAddAddons.Create(RoleInfo, 25, NeutralKiller: true);
+        RoleAddAddons.Create(RoleInfo, NeutralKiller: true);
 
     }
 

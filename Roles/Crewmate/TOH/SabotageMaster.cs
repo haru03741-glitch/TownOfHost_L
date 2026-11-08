@@ -65,13 +65,13 @@ public sealed class SabotageMaster : RoleBase, ISystemTypeUpdateHook
 
     public static void SetupOptionItem()
     {
-        OptionSkillLimit = IntegerOptionItem.Create(RoleInfo, 10, OptionName.SabotageMasterSkillLimit, new(0, 99, 1), 2, false)
+        OptionSkillLimit = IntegerOptionItem.Create(RoleInfo, OptionName.SabotageMasterSkillLimit, new(0, 99, 1), 2, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionFixesDoors = BooleanOptionItem.Create(RoleInfo, 11, OptionName.SabotageMasterFixesDoors, true, false);
-        OptionFixesReactors = BooleanOptionItem.Create(RoleInfo, 12, OptionName.SabotageMasterFixesReactors, true, false);
-        OptionFixesOxygens = BooleanOptionItem.Create(RoleInfo, 13, OptionName.SabotageMasterFixesOxygens, true, false);
-        OptionFixesComms = BooleanOptionItem.Create(RoleInfo, 14, OptionName.SabotageMasterFixesCommunications, true, false);
-        OptionFixesElectrical = BooleanOptionItem.Create(RoleInfo, 15, OptionName.SabotageMasterFixesElectrical, true, false);
+        OptionFixesDoors = BooleanOptionItem.Create(RoleInfo, OptionName.SabotageMasterFixesDoors, true, false);
+        OptionFixesReactors = BooleanOptionItem.Create(RoleInfo, OptionName.SabotageMasterFixesReactors, true, false);
+        OptionFixesOxygens = BooleanOptionItem.Create(RoleInfo, OptionName.SabotageMasterFixesOxygens, true, false);
+        OptionFixesComms = BooleanOptionItem.Create(RoleInfo, OptionName.SabotageMasterFixesCommunications, true, false);
+        OptionFixesElectrical = BooleanOptionItem.Create(RoleInfo, OptionName.SabotageMasterFixesElectrical, true, false);
     }
     bool ISystemTypeUpdateHook.UpdateReactorSystem(ReactorSystemType reactorSystem, byte amount)
     {

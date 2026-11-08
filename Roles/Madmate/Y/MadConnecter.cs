@@ -81,15 +81,15 @@ public sealed class MadConnecter : RoleBase, IKiller, IKillFlashSeeable
 
     private static void SetupOptionItem()
     {
-        OptionCanVent = BooleanOptionItem.Create(RoleInfo, 10, GeneralOption.CanVent, true, false);
-        OptionKnowImpostor = IntegerOptionItem.Create(RoleInfo, 11, OptionName.MadConnectorKnowImpostorsTasks, new(0, 30, 1), 2, false)
+        OptionCanVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, true, false);
+        OptionKnowImpostor = IntegerOptionItem.Create(RoleInfo, OptionName.MadConnectorKnowImpostorsTasks, new(0, 30, 1), 2, false)
             .SetValueFormat(OptionFormat.Pieces);
-        OptionKnowImpostorRole = IntegerOptionItem.Create(RoleInfo, 12, OptionName.MadConnectorKnowImpostorRoleTasks, new(0, 30, 1), 4, false, OptionKnowImpostor)
+        OptionKnowImpostorRole = IntegerOptionItem.Create(RoleInfo, OptionName.MadConnectorKnowImpostorRoleTasks, new(0, 30, 1), 4, false, OptionKnowImpostor)
             .SetValueFormat(OptionFormat.Pieces);
-        OptionKnowDeadBodyArrow = IntegerOptionItem.Create(RoleInfo, 13, OptionName.MadConnectorKnowDeadBodyArrowTasks, new(0, 30, 1), 0, false)
+        OptionKnowDeadBodyArrow = IntegerOptionItem.Create(RoleInfo, OptionName.MadConnectorKnowDeadBodyArrowTasks, new(0, 30, 1), 0, false)
             .SetValueFormat(OptionFormat.Pieces);
 
-        Options.SetUpAddOnOptions(RoleInfo.ConfigId + 20, RoleInfo.RoleName, RoleInfo.Tab);
+        Options.SetUpAddOnOptions(RoleInfo.RoleName, RoleInfo.Tab);
     }
     public float CalculateKillCooldown() => 0.01f;
     public override void ApplyGameOptions(IGameOptions opt)

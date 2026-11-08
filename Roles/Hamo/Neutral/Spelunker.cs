@@ -118,35 +118,35 @@ public sealed class Spelunker : HamoRoleBase, ISystemTypeUpdateHook
 
     {
 
-        SoloWinOption.Create(RoleInfo, 9, defo: 50);
+        SoloWinOption.Create(RoleInfo, defo: 50);
 
 
 
-        OptVentDeathChance = IntegerOptionItem.Create(RoleInfo, 10, OptionName.SpelunkerVentDeathChance, new(0, 100, 1), 30, false)
-
-            .SetValueFormat(OptionFormat.Percent);
-
-        OptLadderFallChance = IntegerOptionItem.Create(RoleInfo, 11, OptionName.SpelunkerLadderFallChance, new(0, 100, 1), 30, false)
+        OptVentDeathChance = IntegerOptionItem.Create(RoleInfo, OptionName.SpelunkerVentDeathChance, new(0, 100, 1), 30, false)
 
             .SetValueFormat(OptionFormat.Percent);
 
-        OptLiftZiplineFallChance = IntegerOptionItem.Create(RoleInfo, 12, OptionName.SpelunkerLiftZiplineFallChance, new(0, 100, 1), 30, false)
+        OptLadderFallChance = IntegerOptionItem.Create(RoleInfo, OptionName.SpelunkerLadderFallChance, new(0, 100, 1), 30, false)
 
             .SetValueFormat(OptionFormat.Percent);
 
-        OptDoorDeathChance = IntegerOptionItem.Create(RoleInfo, 13, OptionName.SpelunkerDoorDeathChance, new(0, 100, 1), 30, false)
+        OptLiftZiplineFallChance = IntegerOptionItem.Create(RoleInfo, OptionName.SpelunkerLiftZiplineFallChance, new(0, 100, 1), 30, false)
+
+            .SetValueFormat(OptionFormat.Percent);
+
+        OptDoorDeathChance = IntegerOptionItem.Create(RoleInfo, OptionName.SpelunkerDoorDeathChance, new(0, 100, 1), 30, false)
 
             .SetValueFormat(OptionFormat.Percent);
 
 
 
-        OptDieBySabotage = BooleanOptionItem.Create(RoleInfo, 14, OptionName.SpelunkerDieBySabotage, false, false);
+        OptDieBySabotage = BooleanOptionItem.Create(RoleInfo, OptionName.SpelunkerDieBySabotage, false, false);
 
-        OptLightSabotageDeathTime = FloatOptionItem.Create(RoleInfo, 15, OptionName.SpelunkerLightSabotageDeathTime, new(0f, 120f, 2.5f), 15f, false, OptDieBySabotage)
+        OptLightSabotageDeathTime = FloatOptionItem.Create(RoleInfo, OptionName.SpelunkerLightSabotageDeathTime, new(0f, 120f, 2.5f), 15f, false, OptDieBySabotage)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptCommsSabotageDeathTime = FloatOptionItem.Create(RoleInfo, 16, OptionName.SpelunkerCommsSabotageDeathTime, new(0f, 120f, 2.5f), 15f, false, OptDieBySabotage)
+        OptCommsSabotageDeathTime = FloatOptionItem.Create(RoleInfo, OptionName.SpelunkerCommsSabotageDeathTime, new(0f, 120f, 2.5f), 15f, false, OptDieBySabotage)
 
             .SetValueFormat(OptionFormat.Seconds);
 

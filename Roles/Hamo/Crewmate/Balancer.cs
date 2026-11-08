@@ -144,13 +144,13 @@ public sealed class Balancer : HamoRoleBase, ISelfVoter
 
     {
 
-        OptionMeetingTime = IntegerOptionItem.Create(RoleInfo, 10, Option.BalancerMeetingTime, new(15, 120, 1), 30, false)
+        OptionMeetingTime = IntegerOptionItem.Create(RoleInfo, Option.BalancerMeetingTime, new(15, 120, 1), 30, false)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionCanUseAllAlive = BooleanOptionItem.Create(RoleInfo, 11, Option.BalancerCanUseAllAlive, false, false);
+        OptionCanUseAllAlive = BooleanOptionItem.Create(RoleInfo, Option.BalancerCanUseAllAlive, false, false);
 
-        OptionCanMeetingAbility = BooleanOptionItem.Create(RoleInfo, 12, Option.BalancerCanUseMeetingAbility, false, false);
+        OptionCanMeetingAbility = BooleanOptionItem.Create(RoleInfo, Option.BalancerCanUseMeetingAbility, false, false);
 
         SaruWarningOption.AddTo(RoleInfo);
 

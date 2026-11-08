@@ -59,11 +59,11 @@ public sealed class Lighter : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionMaxVision = FloatOptionItem.Create(RoleInfo, 10, OptionName.LighterMaxVision, new(0.0f, 3.0f, 0.1f), 1.0f, false)
+        OptionMaxVision = FloatOptionItem.Create(RoleInfo, OptionName.LighterMaxVision, new(0.0f, 3.0f, 0.1f), 1.0f, false)
             .SetValueFormat(OptionFormat.Multiplier);
-        OptionTaskCompletedDisableLightOut = BooleanOptionItem.Create(RoleInfo, 11, OptionName.LighterTaskCompletedDisableLightOut, true, false);
-        OptionLighterTriggerType = StringOptionItem.Create(RoleInfo, 12, OptionName.LighterTriggerType, EnumHelper.GetAllNames<TriggerType>(), 0, false);
-        OptionLighterTaskTrigger = IntegerOptionItem.Create(RoleInfo, 13, OptionName.LighterTaskTrigger, new(1, 99, 1), 5, false, OptionLighterTriggerType)
+        OptionTaskCompletedDisableLightOut = BooleanOptionItem.Create(RoleInfo, OptionName.LighterTaskCompletedDisableLightOut, true, false);
+        OptionLighterTriggerType = StringOptionItem.Create(RoleInfo, OptionName.LighterTriggerType, EnumHelper.GetAllNames<TriggerType>(), 0, false);
+        OptionLighterTaskTrigger = IntegerOptionItem.Create(RoleInfo, OptionName.LighterTaskTrigger, new(1, 99, 1), 5, false, OptionLighterTriggerType)
             .SetValueFormat(OptionFormat.Pieces);
     }
 

@@ -19,12 +19,11 @@ public static class AddBait
         chatCommand: "ベイティング",
         assignAtRandom: true);
 
-    private static readonly int Id = (int)offsetId.AddonBuff + 1100;
     private static List<byte> playerIdList = new();
 
     public static void SetupCustomOption()
     {
-        SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.AddBait);
+        SetupRoleOptions(TabGroup.Addons, CustomRoles.AddBait);
     }
     [GameModuleInitializer]
     public static void Init()

@@ -1,5 +1,6 @@
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Neutral;
+using TownOfHostL.Roles.AddOns;
 
 namespace TownOfHostL.Core;
 
@@ -51,6 +52,31 @@ public static class PlayerTraits
     /// <summary>占い・霊媒の「キル役だけ」の設定で、キル役として数える (マッドシェリフ・グラージシェリフを含む)</summary>
     public static bool IsKillerForDivination(PlayerControl pc)
         => IsCountedKiller(pc) || pc.Is(CustomRoles.MadSheriff) || pc.Is(CustomRoles.GrudgeSheriff);
+
+    /// <summary>生きている間、他人のキルの光が見える (役職ごとの条件は IKillFlashSeeable で別に決める)</summary>
+    public static bool SeesKillFlash(PlayerControl pc)
+        => Has(pc, RoleFlags.SeesKillFlash) || (pc.Is(CustomRoles.SKMadmate) && Options.MadmateCanSeeKillFlash.GetBool());
+    /// <summary>この人がキルされた時は全員に光が見える</summary>
+    public static bool KillFlashToAll(PlayerControl pc) => Has(pc, RoleFlags.KillFlashToAll);
+    /// <summary>他人の死因が見える (役職ごとの条件は IDeathReasonSeeable で別に決める)</summary>
+    public static bool SeesDeathReason(PlayerControl pc)
+        => Has(pc, RoleFlags.SeesDeathReason) || (pc.Is(CustomRoles.SKMadmate) && Options.MadmateCanSeeDeathReason.GetBool());
+
+    /// <summary>他人の名前を自分用に組み立て直す必要がある (役職は RoleBase.NeedsSeenNames で別に決める)</summary>
+    public static bool NeedsSeenNames(PlayerControl pc) => Has(pc, RoleFlags.NeedsSeenNames);
+    /// <summary>追放された人の道連れの対象にならない</summary>
+    public static bool NotRevengeTarget(PlayerControl pc) => Has(pc, RoleFlags.NotRevengeTarget);
+    /// <summary>役職を預かる印の属性が付いていれば、その役職 (無ければ NotAssigned)</summary>
+    public static CustomRoles StandInRole(PlayerControl pc)
+    {
+        if (pc == null) return CustomRoles.NotAssigned;
+        foreach (var subRole in pc.GetCustomSubRoles())
+        {
+            var standsFor = AddOnList.Get(subRole)?.StandsFor ?? CustomRoles.NotAssigned;
+            if (standsFor != CustomRoles.NotAssigned) return standsFor;
+        }
+        return CustomRoles.NotAssigned;
+    }
 
     /// <summary>役職か、付いている属性のどれかがその印を持つ</summary>
     private static bool Has(PlayerControl pc, RoleFlags flag)

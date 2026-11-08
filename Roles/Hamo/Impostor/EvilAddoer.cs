@@ -62,11 +62,11 @@ namespace TownOfHostL.Roles.Hamo.Impostor
 
         {
 
-            KillCoolDown = FloatOptionItem.Create(RoleInfo, 3, GeneralOption.KillCooldown, new(0, 180, 0.5f), 30f, false).SetValueFormat(OptionFormat.Seconds);
+            KillCoolDown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0, 180, 0.5f), 30f, false).SetValueFormat(OptionFormat.Seconds);
 
-            OverrideKilldistance.Create(RoleInfo, 4);
+            OverrideKilldistance.Create(RoleInfo);
 
-            RoleAddAddons.Create(RoleInfo, 5, DefaaultOn: true);
+            RoleAddAddons.Create(RoleInfo, DefaaultOn: true);
 
         }
 

@@ -34,9 +34,9 @@ public sealed class NormalEngineer : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionVentCooldown = FloatOptionItem.Create(RoleInfo, 3, GeneralOption.VentCooldown, new(0f, 180f, 5f), 30f, false)
+        OptionVentCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.VentCooldown, new(0f, 180f, 5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionVentMaxTime = FloatOptionItem.Create(RoleInfo, 4, GeneralOption.VentMaxTime, new(0f, 180f, 5f), 15f, false)
+        OptionVentMaxTime = FloatOptionItem.Create(RoleInfo, GeneralOption.VentMaxTime, new(0f, 180f, 5f), 15f, false)
             .SetValueFormat(OptionFormat.Seconds);
     }
     public override void ApplyGameOptions(IGameOptions opt)

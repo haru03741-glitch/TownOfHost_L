@@ -48,13 +48,13 @@ namespace TownOfHostL.Roles.Impostor
 
         private static void SetupOptionItem()
         {
-            OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(2.5f, 180f, 2.5f), 30f, false)
+            OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(2.5f, 180f, 2.5f), 30f, false)
                 .SetValueFormat(OptionFormat.Seconds);
-            OptionDecreaseMeetingTime = IntegerOptionItem.Create(RoleInfo, 11, OptionName.TimeThiefDecreaseMeetingTime, new(0, 100, 1), 20, false)
+            OptionDecreaseMeetingTime = IntegerOptionItem.Create(RoleInfo, OptionName.TimeThiefDecreaseMeetingTime, new(0, 100, 1), 20, false)
                 .SetValueFormat(OptionFormat.Seconds);
-            OptionLowerLimitVotingTime = IntegerOptionItem.Create(RoleInfo, 12, OptionName.TimeThiefLowerLimitVotingTime, new(1, 300, 1), 10, false)
+            OptionLowerLimitVotingTime = IntegerOptionItem.Create(RoleInfo, OptionName.TimeThiefLowerLimitVotingTime, new(1, 300, 1), 10, false)
                 .SetValueFormat(OptionFormat.Seconds);
-            OptionReturnStolenTimeUponDeath = BooleanOptionItem.Create(RoleInfo, 13, OptionName.TimeThiefReturnStolenTimeUponDeath, true, false);
+            OptionReturnStolenTimeUponDeath = BooleanOptionItem.Create(RoleInfo, OptionName.TimeThiefReturnStolenTimeUponDeath, true, false);
         }
         public float CalculateKillCooldown() => KillCooldown;
         public int CalculateMeetingTimeDelta()

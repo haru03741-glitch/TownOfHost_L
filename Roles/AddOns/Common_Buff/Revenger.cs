@@ -18,12 +18,11 @@ public static class Revenger
         chatCommand: "リベンジャー",
         assignAtRandom: true);
 
-    private static readonly int Id = (int)offsetId.AddonBuff + 600;
     private static List<byte> playerIdList = new();
 
     public static void SetupCustomOption()
     {
-        SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.Revenger);
+        SetupRoleOptions(TabGroup.Addons, CustomRoles.Revenger);
     }
     [GameModuleInitializer]
     public static void Init()

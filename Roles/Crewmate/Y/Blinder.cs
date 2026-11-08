@@ -46,7 +46,7 @@ public sealed class Blinder : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionBlinderVision = FloatOptionItem.Create(RoleInfo, 10, OptionName.BlinderVision, new(0f, 5f, 0.05f), 0.5f, false)
+        OptionBlinderVision = FloatOptionItem.Create(RoleInfo, OptionName.BlinderVision, new(0f, 5f, 0.05f), 0.5f, false)
             .SetValueFormat(OptionFormat.Multiplier);
     }
     public override void Add()

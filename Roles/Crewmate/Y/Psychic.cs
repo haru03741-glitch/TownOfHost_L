@@ -55,14 +55,14 @@ public sealed class Psychic : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.Cooldown, new(0f, 180f, 2.5f), 30f, false)
+        OptionCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.Cooldown, new(0f, 180f, 2.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionTaskTrigger = IntegerOptionItem.Create(RoleInfo, 14, OptionName.TaskTrigger, new(0, 20, 1), 3, false)
+        OptionTaskTrigger = IntegerOptionItem.Create(RoleInfo, OptionName.TaskTrigger, new(0, 20, 1), 3, false)
             .SetValueFormat(OptionFormat.Pieces);
-        MaxCheckRole = IntegerOptionItem.Create(RoleInfo, 11, OptionName.PsychicMaxCheckRole, new(1, 15, 1), 3, false)
+        MaxCheckRole = IntegerOptionItem.Create(RoleInfo, OptionName.PsychicMaxCheckRole, new(1, 15, 1), 3, false)
             .SetValueFormat(OptionFormat.Times);
-        ConfirmCamp = BooleanOptionItem.Create(RoleInfo, 12, OptionName.FortuneTellerConfirmCamp, false, false);
-        KillerOnly = BooleanOptionItem.Create(RoleInfo, 13, OptionName.FortuneTellerKillerOnly, false, false);
+        ConfirmCamp = BooleanOptionItem.Create(RoleInfo, OptionName.FortuneTellerConfirmCamp, false, false);
+        KillerOnly = BooleanOptionItem.Create(RoleInfo, OptionName.FortuneTellerKillerOnly, false, false);
     }
     public override void Add()
     {

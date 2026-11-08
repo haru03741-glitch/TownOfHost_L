@@ -18,12 +18,11 @@ public static class PlusVote
         chatCommand: "プラスボート",
         assignAtRandom: true);
 
-    private static readonly int Id = (int)offsetId.AddonBuff + 900;
     private static List<byte> playerIdList = new();
 
     public static void SetupCustomOption()
     {
-        SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.PlusVote);
+        SetupRoleOptions(TabGroup.Addons, CustomRoles.PlusVote);
     }
     [GameModuleInitializer]
     public static void Init()

@@ -14,14 +14,14 @@ namespace TownOfHostL.Roles.AddOns.Crewmate
             "#ffff00",
             setupOptions: SetupCustomOption,
             flags: RoleFlags.FirstWriteAddOn | RoleFlags.DontSelectLoyalty,
-            chatCommand: "コンプリートクルー");
+            chatCommand: "コンプリートクルー",
+            prefixKey: "Complete-");
 
-        private static readonly int Id = (int)Options.offsetId.AddonCrew + 100;
         public static List<byte> playerIdList = new();
         public static void SetupCustomOption()
         {
-            Options.SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.CompleteCrew);
-            Options.SetUpAddOnOptions(Id + 10, CustomRoles.CompleteCrew, TabGroup.Addons);
+            Options.SetupRoleOptions(TabGroup.Addons, CustomRoles.CompleteCrew);
+            Options.SetUpAddOnOptions(CustomRoles.CompleteCrew, TabGroup.Addons);
         }
         public static void Init()
         {

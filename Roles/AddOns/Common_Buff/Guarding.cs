@@ -19,7 +19,6 @@ public static class Guarding
         chatCommand: "ガーディング",
         assignAtRandom: true);
 
-    private static readonly int Id = (int)offsetId.AddonBuff + 1000;
     private static List<byte> playerIdList = new();
 
     /// <summary>
@@ -29,7 +28,7 @@ public static class Guarding
 
     public static void SetupCustomOption()
     {
-        SetupRoleOptions(Id, TabGroup.Addons, CustomRoles.Guarding);
+        SetupRoleOptions(TabGroup.Addons, CustomRoles.Guarding);
     }
     [GameModuleInitializer]
     public static void Init()

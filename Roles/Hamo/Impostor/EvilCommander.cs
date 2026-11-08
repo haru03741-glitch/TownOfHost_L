@@ -57,16 +57,16 @@ public sealed class EvilCommander : HamoRoleBase, IImpostor, IUsePhantomButton
 
     static void SetupOptionItem()
     {
-        OptionAbilityCooldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.EvilCommanderAbilityCooldown,
+        OptionAbilityCooldown = FloatOptionItem.Create(RoleInfo, OptionName.EvilCommanderAbilityCooldown,
             new(0.5f, 180f, 0.5f), 29.5f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionAbilityUseLimit = IntegerOptionItem.Create(RoleInfo, 11, OptionName.EvilCommanderAbilityUseLimit,
+        OptionAbilityUseLimit = IntegerOptionItem.Create(RoleInfo, OptionName.EvilCommanderAbilityUseLimit,
             new(1, 99, 1), 1, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionOverrideKillCooldown = FloatOptionItem.Create(RoleInfo, 12, OptionName.EvilCommanderOverrideKillCooldown,
+        OptionOverrideKillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.EvilCommanderOverrideKillCooldown,
             new(0.5f, 180f, 0.5f), 15f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionApplyToMadmate = BooleanOptionItem.Create(RoleInfo, 13, OptionName.EvilCommanderApplyToMadmate, false, false);
+        OptionApplyToMadmate = BooleanOptionItem.Create(RoleInfo, OptionName.EvilCommanderApplyToMadmate, false, false);
     }
 
     public override void OnSpawn(bool initialState = false)

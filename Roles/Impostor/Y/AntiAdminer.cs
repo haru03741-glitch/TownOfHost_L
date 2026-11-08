@@ -46,7 +46,7 @@ public sealed class AntiAdminer : RoleBase, IImpostor
 
     private static void SetupOptionItem()
     {
-        OptionCanCheckCamera = BooleanOptionItem.Create(RoleInfo, 10, OptionName.AntiAdminerCanCheckCamera, false, false);
+        OptionCanCheckCamera = BooleanOptionItem.Create(RoleInfo, OptionName.AntiAdminerCanCheckCamera, false, false);
     }
 
     public override void OnFixedUpdate(PlayerControl player)

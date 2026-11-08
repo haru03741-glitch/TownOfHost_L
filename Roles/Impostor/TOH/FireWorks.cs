@@ -57,9 +57,9 @@ public sealed class FireWorks : RoleBase, IImpostor
 
     public static void SetupCustomOption()
     {
-        OptionFireWorksCount = IntegerOptionItem.Create(RoleInfo, 10, OptionName.FireWorksMaxCount, new(1, 3, 1), 1, false)
+        OptionFireWorksCount = IntegerOptionItem.Create(RoleInfo, OptionName.FireWorksMaxCount, new(1, 3, 1), 1, false)
             .SetValueFormat(OptionFormat.Pieces);
-        OptionFireWorksRadius = FloatOptionItem.Create(RoleInfo, 11, OptionName.FireWorksRadius, new(0.5f, 3f, 0.5f), 1f, false)
+        OptionFireWorksRadius = FloatOptionItem.Create(RoleInfo, OptionName.FireWorksRadius, new(0.5f, 3f, 0.5f), 1f, false)
             .SetValueFormat(OptionFormat.Multiplier);
     }
 

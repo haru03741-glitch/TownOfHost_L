@@ -12,7 +12,6 @@ namespace TownOfHostL.Roles
 {
     public static class RoleAssignManager
     {
-        private static readonly int idStart = (int)Options.offsetId.FeatSpecial + 200;
         class RandomAssignOptions
         {
             public int Min => min();
@@ -20,16 +19,16 @@ namespace TownOfHostL.Roles
             public int Max => max();
             private Func<int> max;
 
-            private RandomAssignOptions(int id, OptionItem parent, CustomRoleTypes roleTypes, int maxCount)
+            private RandomAssignOptions(OptionItem parent, CustomRoleTypes roleTypes, int maxCount)
             {
                 var replacementDictionary = new Dictionary<string, string>()
                 { { "%roleType%", GetString( $"CustomRoleTypes.{roleTypes}") } };
 
-                var minOption = IntegerOptionItem.Create(idStart + id + 1, "RoleTypeMin", new(0, maxCount, 1), 0, TabGroup.ModMainSettings, false)
+                var minOption = IntegerOptionItem.Create("RoleTypeMin", new(0, maxCount, 1), 0, TabGroup.ModMainSettings, false)
                     .SetParent(parent)
                     .SetKeyName($"RoleTypeMin.{roleTypes}")
                     .SetValueFormat(OptionFormat.Players);
-                var maxOption = IntegerOptionItem.Create(idStart + id + 2, "RoleTypeMax", new(0, maxCount, 1), 0, TabGroup.ModMainSettings, false)
+                var maxOption = IntegerOptionItem.Create("RoleTypeMax", new(0, maxCount, 1), 0, TabGroup.ModMainSettings, false)
                     .SetParent(parent)
                     .SetKeyName($"RoleTypeMax.{roleTypes}")
                     .SetValueFormat(OptionFormat.Players);
@@ -42,8 +41,8 @@ namespace TownOfHostL.Roles
 
                 RandomAssignOptionsCollection.Add(roleTypes, this);
             }
-            public static RandomAssignOptions Create(int id, OptionItem parent, CustomRoleTypes roleTypes, int maxCount = 15)
-                => new(id, parent, roleTypes, maxCount);
+            public static RandomAssignOptions Create(OptionItem parent, CustomRoleTypes roleTypes, int maxCount = 15)
+                => new(parent, roleTypes, maxCount);
         }
         private static AssignAlgorithm AssignMode => assignMode();
         private static Func<AssignAlgorithm> assignMode;
@@ -64,15 +63,15 @@ namespace TownOfHostL.Roles
         private static List<CustomRoles> AssignRoleList = new(CustomRolesHelper.AllRoles.Length);
         public static void SetupOptionItem()
         {
-            OptionAssignMode = StringOptionItem.Create(idStart, "AssignMode", AssignModeSelections, 0, TabGroup.ModMainSettings, false)
+            OptionAssignMode = StringOptionItem.Create("AssignMode", AssignModeSelections, 0, TabGroup.ModMainSettings, false)
                 .SetColor(Palette.LightBlue);
 
             assignMode = () => (AssignAlgorithm)OptionAssignMode.GetInt();
             RandomAssignOptionsCollection.Clear();
-            RandomAssignOptions.Create(10, OptionAssignMode, CustomRoleTypes.Impostor, 3);
-            RandomAssignOptions.Create(20, OptionAssignMode, CustomRoleTypes.Madmate);
-            RandomAssignOptions.Create(30, OptionAssignMode, CustomRoleTypes.Crewmate);
-            RandomAssignOptions.Create(40, OptionAssignMode, CustomRoleTypes.Neutral);
+            RandomAssignOptions.Create(OptionAssignMode, CustomRoleTypes.Impostor, 3);
+            RandomAssignOptions.Create(OptionAssignMode, CustomRoleTypes.Madmate);
+            RandomAssignOptions.Create(OptionAssignMode, CustomRoleTypes.Crewmate);
+            RandomAssignOptions.Create(OptionAssignMode, CustomRoleTypes.Neutral);
         }
         public static bool CheckRoleCount()
         {

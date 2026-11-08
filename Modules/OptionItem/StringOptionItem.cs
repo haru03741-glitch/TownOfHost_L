@@ -10,44 +10,44 @@ namespace TownOfHostL
         public string[] Selections;
 
         // コンストラクタ
-        public StringOptionItem(int id, string name, int defaultValue, TabGroup tab, bool isSingleValue, string[] selections)
-        : base(id, name, defaultValue, tab, isSingleValue)
+        public StringOptionItem(string name, int defaultValue, TabGroup tab, bool isSingleValue, string[] selections)
+        : base(name, defaultValue, tab, isSingleValue)
         {
             Rule = (0, selections.Length - 1, 1);
             Selections = selections;
         }
         public static StringOptionItem Create(
-            int id, string name, string[] selections, int defaultIndex, TabGroup tab, bool isSingleValue
+            string name, string[] selections, int defaultIndex, TabGroup tab, bool isSingleValue
         )
         {
             return new StringOptionItem(
-                id, name, defaultIndex, tab, isSingleValue, selections
+                name, defaultIndex, tab, isSingleValue, selections
             );
         }
         public static StringOptionItem Create(
-            int id, Enum name, string[] selections, int defaultIndex, TabGroup tab, bool isSingleValue
+            Enum name, string[] selections, int defaultIndex, TabGroup tab, bool isSingleValue
         )
         {
             return new StringOptionItem(
-                id, name.ToString(), defaultIndex, tab, isSingleValue, selections
+                name.ToString(), defaultIndex, tab, isSingleValue, selections
             );
         }
         public static StringOptionItem Create(
-             SimpleRoleInfo roleInfo, int idOffset, Enum name, string[] selections, int defaultIndex, bool isSingleValue, OptionItem parent = null
+             SimpleRoleInfo roleInfo, Enum name, string[] selections, int defaultIndex, bool isSingleValue, OptionItem parent = null
         )
         {
             var opt = new StringOptionItem(
-                roleInfo.ConfigId + idOffset, name.ToString(), defaultIndex, roleInfo.Tab, isSingleValue, selections
+                name.ToString(), defaultIndex, roleInfo.Tab, isSingleValue, selections
             );
             opt.SetParent(parent ?? roleInfo.RoleOption);
             return opt;
         }
         public static StringOptionItem Create(
-             SimpleRoleInfo roleInfo, int idOffset, string name, string[] selections, int defaultIndex, bool isSingleValue, OptionItem parent = null
+             SimpleRoleInfo roleInfo, string name, string[] selections, int defaultIndex, bool isSingleValue, OptionItem parent = null
         )
         {
             var opt = new StringOptionItem(
-                roleInfo.ConfigId + idOffset, name, defaultIndex, roleInfo.Tab, isSingleValue, selections
+                name, defaultIndex, roleInfo.Tab, isSingleValue, selections
             );
             opt.SetParent(parent ?? roleInfo.RoleOption);
             return opt;

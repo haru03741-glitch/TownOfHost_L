@@ -39,8 +39,8 @@ public sealed class NormalNoisemaker : RoleBase
     public static float alertDuration;
     private static void SetupOptionItem()
     {
-        OptionImpostorAlert = BooleanOptionItem.Create(RoleInfo, 3, OptionName.NoisemakerImpostorAlert, true, false);
-        OptionAlertDuration = FloatOptionItem.Create(RoleInfo, 4, OptionName.NoisemakerAlertDuration, new(1f, 30f, 1f), 10f, false)
+        OptionImpostorAlert = BooleanOptionItem.Create(RoleInfo, OptionName.NoisemakerImpostorAlert, true, false);
+        OptionAlertDuration = FloatOptionItem.Create(RoleInfo, OptionName.NoisemakerAlertDuration, new(1f, 30f, 1f), 10f, false)
             .SetValueFormat(OptionFormat.Seconds);
     }
     public override void ApplyGameOptions(IGameOptions opt)

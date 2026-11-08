@@ -47,11 +47,11 @@ public sealed class LoveCutter : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionVictoryCutCount = IntegerOptionItem.Create(RoleInfo, 10, OptionName.LoveCutterVictoryCutCount, new(1, 20, 1), 2, false)
+        OptionVictoryCutCount = IntegerOptionItem.Create(RoleInfo, OptionName.LoveCutterVictoryCutCount, new(1, 20, 1), 2, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionKnowKiller = BooleanOptionItem.Create(RoleInfo, 11, OptionName.LoveCutterKnowKiller, false, false);
+        OptionKnowKiller = BooleanOptionItem.Create(RoleInfo, OptionName.LoveCutterKnowKiller, false, false);
         // 20-23を使用
-        Tasks = Options.OverrideTasksData.Create(RoleInfo, 20, OptionKnowKiller);
+        Tasks = Options.OverrideTasksData.Create(RoleInfo, OptionKnowKiller);
     }
 
     public override bool OnCheckMurderAsTarget(MurderInfo info)

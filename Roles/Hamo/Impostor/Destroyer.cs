@@ -56,14 +56,14 @@ public sealed class Destroyer : HamoRoleBase, IImpostor
 
     static void SetupOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 35f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 35f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionCrushTime = FloatOptionItem.Create(RoleInfo, 11, OptionName.DestroyerCrushTime, new(1f, 10f, 0.5f), 3f, false)
+        OptionCrushTime = FloatOptionItem.Create(RoleInfo, OptionName.DestroyerCrushTime, new(1f, 10f, 0.5f), 3f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionLeaveTrace = BooleanOptionItem.Create(RoleInfo, 12, OptionName.DestroyerLeaveTrace, true, false);
-        OptionTraceTurns = IntegerOptionItem.Create(RoleInfo, 13, OptionName.DestroyerTraceTurns, new(1, 15, 1), 2, false, OptionLeaveTrace)
+        OptionLeaveTrace = BooleanOptionItem.Create(RoleInfo, OptionName.DestroyerLeaveTrace, true, false);
+        OptionTraceTurns = IntegerOptionItem.Create(RoleInfo, OptionName.DestroyerTraceTurns, new(1, 15, 1), 2, false, OptionLeaveTrace)
             .SetValueFormat(OptionFormat.Turns);
-        OptionAllKillFlash = BooleanOptionItem.Create(RoleInfo, 14, OptionName.DestroyerAllKillFlash, true, false);
+        OptionAllKillFlash = BooleanOptionItem.Create(RoleInfo, OptionName.DestroyerAllKillFlash, true, false);
     }
 
     public float CalculateKillCooldown() => killCooldown;

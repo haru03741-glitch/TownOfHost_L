@@ -93,19 +93,19 @@ public sealed class PlagueDoctor : HamoRoleBase, IKiller
     }
     private static void SetupOptionItem()
     {
-        SoloWinOption.Create(RoleInfo, 9, defo: 1);
-        OptionInfectLimit = IntegerOptionItem.Create(RoleInfo, 10, OptionName.PlagueDoctorInfectLimit, new(1, 3, 1), 1, false)
+        SoloWinOption.Create(RoleInfo, defo: 1);
+        OptionInfectLimit = IntegerOptionItem.Create(RoleInfo, OptionName.PlagueDoctorInfectLimit, new(1, 3, 1), 1, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionInfectWhenKilled = BooleanOptionItem.Create(RoleInfo, 11, OptionName.PlagueDoctorInfectWhenKilled, false, false);
-        OptionInfectTime = FloatOptionItem.Create(RoleInfo, 12, OptionName.PlagueDoctorInfectTime, new(3f, 20f, 1f), 8f, false)
+        OptionInfectWhenKilled = BooleanOptionItem.Create(RoleInfo, OptionName.PlagueDoctorInfectWhenKilled, false, false);
+        OptionInfectTime = FloatOptionItem.Create(RoleInfo, OptionName.PlagueDoctorInfectTime, new(3f, 20f, 1f), 8f, false)
            .SetValueFormat(OptionFormat.Seconds);
-        OptionInfectDistance = FloatOptionItem.Create(RoleInfo, 13, OptionName.PlagueDoctorInfectDistance, new(0.5f, 2f, 0.25f), 1.5f, false);
-        OptionInfectInactiveTime = FloatOptionItem.Create(RoleInfo, 14, OptionName.PlagueDoctorInfectInactiveTime, new(0.5f, 10f, 0.5f), 5f, false)
+        OptionInfectDistance = FloatOptionItem.Create(RoleInfo, OptionName.PlagueDoctorInfectDistance, new(0.5f, 2f, 0.25f), 1.5f, false);
+        OptionInfectInactiveTime = FloatOptionItem.Create(RoleInfo, OptionName.PlagueDoctorInfectInactiveTime, new(0.5f, 10f, 0.5f), 5f, false)
            .SetValueFormat(OptionFormat.Seconds);
-        OptionInfectCanInfectSelf = BooleanOptionItem.Create(RoleInfo, 15, OptionName.PlagueDoctorCanInfectSelf, false, false);
-        OptionInfectCanInfectVent = BooleanOptionItem.Create(RoleInfo, 16, OptionName.PlagueDoctorCanInfectVent, false, false);
-        OptionDestroyPlague = BooleanOptionItem.Create(RoleInfo, 18, OptionName.PlagueDoctorDestroyPlague, false, false);
-        OverrideKilldistance.Create(RoleInfo, 17);
+        OptionInfectCanInfectSelf = BooleanOptionItem.Create(RoleInfo, OptionName.PlagueDoctorCanInfectSelf, false, false);
+        OptionInfectCanInfectVent = BooleanOptionItem.Create(RoleInfo, OptionName.PlagueDoctorCanInfectVent, false, false);
+        OptionDestroyPlague = BooleanOptionItem.Create(RoleInfo, OptionName.PlagueDoctorDestroyPlague, false, false);
+        OverrideKilldistance.Create(RoleInfo);
     }
 
     private int InfectCount;

@@ -40,6 +40,15 @@ public sealed class AddOnInfo
     public readonly string ChatCommand;
     /// <summary>試合の開始で、設定の人数と確率に従って無作為に配る (重ねて付けられる)</summary>
     public readonly bool AssignAtRandom;
+    /// <summary>
+    /// 役職を預かる印の属性なら、預かっている役職 (それ以外は NotAssigned)。
+    /// 役職の説明・名前の色の一時表示ではその役職として出し、イントロの属性の一覧には出さない
+    /// </summary>
+    public readonly CustomRoles StandsFor;
+    /// <summary>持ち主の名前の次の行に付ける文字 (seer, seen, isMeeting)。持ち主が seer の時だけ呼ぶ。持たない属性は null</summary>
+    public readonly Func<PlayerControl, PlayerControl, bool, string> GetSuffix;
+    /// <summary>役職名の先頭に付ける時の、短い表示の翻訳キー (FirstWriteAddOn 用)。null なら属性の名前をそのまま出す</summary>
+    public readonly string PrefixKey;
 
     public AddOnInfo(
         CustomRoles role,
@@ -52,7 +61,10 @@ public sealed class AddOnInfo
         RoleFlags flags = RoleFlags.None,
         AddOnWin win = null,
         string chatCommand = null,
-        bool assignAtRandom = false)
+        bool assignAtRandom = false,
+        CustomRoles standsFor = CustomRoles.NotAssigned,
+        Func<PlayerControl, PlayerControl, bool, string> getSuffix = null,
+        string prefixKey = null)
     {
         Role = role;
         Group = group;
@@ -64,6 +76,9 @@ public sealed class AddOnInfo
         Win = win;
         ChatCommand = chatCommand;
         AssignAtRandom = assignAtRandom;
+        StandsFor = standsFor;
+        GetSuffix = getSuffix;
+        PrefixKey = prefixKey;
         Flags = flags | group switch
         {
             AddOnGroup.Buff => RoleFlags.BuffAddOn,

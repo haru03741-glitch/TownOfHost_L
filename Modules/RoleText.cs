@@ -109,17 +109,8 @@ public static class RoleText
             // 必ず省略せずに先頭に表示させる属性
             foreach (var subRole in subRolesList.Where(role => role.IsFirstWriteAddOn()))
             {
-                var str = subRole.ToString();
-                // 先頭に表示する属性の中で専用表示にするもの
-                switch (subRole)
-                {
-                    case CustomRoles.LastImpostor:
-                        str = "Last-";
-                        break;
-                    case CustomRoles.CompleteCrew:
-                        str = "Complete-";
-                        break;
-                }
+                // 先頭に表示する属性は、短い表示があればそれを使う
+                var str = AddOnList.Get(subRole)?.PrefixKey ?? subRole.ToString();
                 roleText.Append(Utils.ColorString(Utils.GetRoleColor(subRole), Translator.GetRoleString(str)));
                 count--;
             }

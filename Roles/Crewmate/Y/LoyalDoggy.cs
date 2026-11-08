@@ -69,10 +69,10 @@ public sealed class LoyalDoggy : RoleBase
 
     public static void SetupOptionItem()
     {
-        OptionMasterSeeMasterMark = BooleanOptionItem.Create(RoleInfo, 10, OptionName.LoyalDoggyMasterSeeMasterMark, false, false);
-        OptionIgnoreTaskAfterDeadMaster = BooleanOptionItem.Create(RoleInfo, 11, OptionName.LoyalDoggyIgnoreTaskAfterDeadMaster, true, false);
-        OptionIsInfoPoor = BooleanOptionItem.Create(RoleInfo, 12, OptionName.LoyalDoggyIsInfoPoor, false, false).SetParent(OptionIgnoreTaskAfterDeadMaster);
-        OptionIsClumsy = BooleanOptionItem.Create(RoleInfo, 13, OptionName.LoyalDoggyIsClumsy, false, false).SetParent(OptionIgnoreTaskAfterDeadMaster);
+        OptionMasterSeeMasterMark = BooleanOptionItem.Create(RoleInfo, OptionName.LoyalDoggyMasterSeeMasterMark, false, false);
+        OptionIgnoreTaskAfterDeadMaster = BooleanOptionItem.Create(RoleInfo, OptionName.LoyalDoggyIgnoreTaskAfterDeadMaster, true, false);
+        OptionIsInfoPoor = BooleanOptionItem.Create(RoleInfo, OptionName.LoyalDoggyIsInfoPoor, false, false).SetParent(OptionIgnoreTaskAfterDeadMaster);
+        OptionIsClumsy = BooleanOptionItem.Create(RoleInfo, OptionName.LoyalDoggyIsClumsy, false, false).SetParent(OptionIgnoreTaskAfterDeadMaster);
     }
 
     public override (byte? votedForId, int? numVotes, bool doVote) ModifyVote(byte voterId, byte sourceVotedForId, bool isIntentional)

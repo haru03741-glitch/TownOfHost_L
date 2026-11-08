@@ -90,45 +90,45 @@ public sealed class Walkure : HamoRoleBase, ISelfVoter, IKiller
 
     private static void SetupOptionItem()
     {
-        OptionMeetingRevealLimit = IntegerOptionItem.Create(RoleInfo, 10, OptionName.WalkureMeetingRevealLimit, new(0, 15, 1), 2, false)
+        OptionMeetingRevealLimit = IntegerOptionItem.Create(RoleInfo, OptionName.WalkureMeetingRevealLimit, new(0, 15, 1), 2, false)
             .SetZeroNotation(OptionZeroNotation.Infinity)
             .SetValueFormat(OptionFormat.Times);
-        OptionShowRoleToRevealed = BooleanOptionItem.Create(RoleInfo, 11, OptionName.WalkureShowRoleToRevealed, true, false);
-        OptionExileVoteCount = IntegerOptionItem.Create(RoleInfo, 12, OptionName.WalkureExileVoteCount, new(1, 15, 1), 3, false)
+        OptionShowRoleToRevealed = BooleanOptionItem.Create(RoleInfo, OptionName.WalkureShowRoleToRevealed, true, false);
+        OptionExileVoteCount = IntegerOptionItem.Create(RoleInfo, OptionName.WalkureExileVoteCount, new(1, 15, 1), 3, false)
             .SetValueFormat(OptionFormat.Votes);
-        OptionFollowCrewmateCount = IntegerOptionItem.Create(RoleInfo, 13, OptionName.WalkureFollowCrewmateCount, new(1, 15, 1), 4, false)
+        OptionFollowCrewmateCount = IntegerOptionItem.Create(RoleInfo, OptionName.WalkureFollowCrewmateCount, new(1, 15, 1), 4, false)
             .SetValueFormat(OptionFormat.Players);
-        OptionRemoveRoleCrewmateCount = IntegerOptionItem.Create(RoleInfo, 14, OptionName.WalkureRemoveRoleCrewmateCount, new(1, 15, 1), 3, false)
+        OptionRemoveRoleCrewmateCount = IntegerOptionItem.Create(RoleInfo, OptionName.WalkureRemoveRoleCrewmateCount, new(1, 15, 1), 3, false)
             .SetValueFormat(OptionFormat.Players);
-        OptionNeedRevealToWin = BooleanOptionItem.Create(RoleInfo, 15, OptionName.WalkureNeedRevealToWin, true, false);
-        OptionNeedRevealCount = IntegerOptionItem.Create(RoleInfo, 16, OptionName.WalkureNeedRevealCount, new(1, 15, 1), 3, false, OptionNeedRevealToWin)
+        OptionNeedRevealToWin = BooleanOptionItem.Create(RoleInfo, OptionName.WalkureNeedRevealToWin, true, false);
+        OptionNeedRevealCount = IntegerOptionItem.Create(RoleInfo, OptionName.WalkureNeedRevealCount, new(1, 15, 1), 3, false, OptionNeedRevealToWin)
             .SetValueFormat(OptionFormat.Times);
-        OptionNotifyRevealShortage = BooleanOptionItem.Create(RoleInfo, 17, OptionName.WalkureNotifyRevealShortage, false, false);
-        OptionNotifyRevealShortageDay = IntegerOptionItem.Create(RoleInfo, 18, OptionName.WalkureNotifyRevealShortageDay, new(1, 15, 1), 3, false, OptionNotifyRevealShortage)
+        OptionNotifyRevealShortage = BooleanOptionItem.Create(RoleInfo, OptionName.WalkureNotifyRevealShortage, false, false);
+        OptionNotifyRevealShortageDay = IntegerOptionItem.Create(RoleInfo, OptionName.WalkureNotifyRevealShortageDay, new(1, 15, 1), 3, false, OptionNotifyRevealShortage)
             .SetValueFormat(OptionFormat.day);
 
-        OptionReflectRoleChange = BooleanOptionItem.Create(RoleInfo, 19, OptionName.WalkureReflectRoleChange, true, false);
-        OptionReflectCrewmateRoleChanges = BooleanOptionItem.Create(RoleInfo, 20, OptionName.WalkureReflectCrewmateRoleChanges, true, false, OptionReflectRoleChange);
-        OptionReflectImpostorRoleChanges = BooleanOptionItem.Create(RoleInfo, 21, OptionName.WalkureReflectImpostorRoleChanges, true, false, OptionReflectRoleChange);
-        OptionReflectJackalRoleChanges = BooleanOptionItem.Create(RoleInfo, 22, OptionName.WalkureReflectJackalRoleChanges, true, false, OptionReflectRoleChange);
+        OptionReflectRoleChange = BooleanOptionItem.Create(RoleInfo, OptionName.WalkureReflectRoleChange, true, false);
+        OptionReflectCrewmateRoleChanges = BooleanOptionItem.Create(RoleInfo, OptionName.WalkureReflectCrewmateRoleChanges, true, false, OptionReflectRoleChange);
+        OptionReflectImpostorRoleChanges = BooleanOptionItem.Create(RoleInfo, OptionName.WalkureReflectImpostorRoleChanges, true, false, OptionReflectRoleChange);
+        OptionReflectJackalRoleChanges = BooleanOptionItem.Create(RoleInfo, OptionName.WalkureReflectJackalRoleChanges, true, false, OptionReflectRoleChange);
 
-        OptionSeeingRevealCount = FloatOptionItem.Create(RoleInfo, 23, OptionName.WalkureRevealBuffSeeing, new(1f, 15f, 1f), 1f, false)
+        OptionSeeingRevealCount = FloatOptionItem.Create(RoleInfo, OptionName.WalkureRevealBuffSeeing, new(1f, 15f, 1f), 1f, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionWatchingRevealCount = FloatOptionItem.Create(RoleInfo, 24, OptionName.WalkureRevealBuffWatching, new(1f, 15f, 1f), 2f, false)
+        OptionWatchingRevealCount = FloatOptionItem.Create(RoleInfo, OptionName.WalkureRevealBuffWatching, new(1f, 15f, 1f), 2f, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionLightingRevealCount = FloatOptionItem.Create(RoleInfo, 25, OptionName.WalkureRevealBuffLighting, new(1f, 15f, 1f), 3f, false)
+        OptionLightingRevealCount = FloatOptionItem.Create(RoleInfo, OptionName.WalkureRevealBuffLighting, new(1f, 15f, 1f), 3f, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionTiebreakerRevealCount = FloatOptionItem.Create(RoleInfo, 26, OptionName.WalkureRevealBuffTiebreaker, new(1f, 15f, 1f), 4f, false)
+        OptionTiebreakerRevealCount = FloatOptionItem.Create(RoleInfo, OptionName.WalkureRevealBuffTiebreaker, new(1f, 15f, 1f), 4f, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionGuesserRevealCount = FloatOptionItem.Create(RoleInfo, 27, OptionName.WalkureRevealBuffGuesser, new(1f, 15f, 1f), 5f, false)
+        OptionGuesserRevealCount = FloatOptionItem.Create(RoleInfo, OptionName.WalkureRevealBuffGuesser, new(1f, 15f, 1f), 5f, false)
             .SetValueFormat(OptionFormat.Times);
 
-        OptionCanKillAfterReveal = BooleanOptionItem.Create(RoleInfo, 28, OptionName.WalkureCanKillAfterReveal, true, false);
-        OptionKillRevealCount = FloatOptionItem.Create(RoleInfo, 29, OptionName.WalkureKillRevealCount, new(1f, 15f, 1f), 6f, false, OptionCanKillAfterReveal)
+        OptionCanKillAfterReveal = BooleanOptionItem.Create(RoleInfo, OptionName.WalkureCanKillAfterReveal, true, false);
+        OptionKillRevealCount = FloatOptionItem.Create(RoleInfo, OptionName.WalkureKillRevealCount, new(1f, 15f, 1f), 6f, false, OptionCanKillAfterReveal)
             .SetValueFormat(OptionFormat.Times);
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 30, GeneralOption.KillCooldown, new(0f, 255f, 0.5f), 40f, false, OptionCanKillAfterReveal)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 255f, 0.5f), 40f, false, OptionCanKillAfterReveal)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionCanVent = BooleanOptionItem.Create(RoleInfo, 31, GeneralOption.CanVent, false, false, OptionCanKillAfterReveal);
+        OptionCanVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, false, false, OptionCanKillAfterReveal);
     }
     public enum RoleChangeSource
     {

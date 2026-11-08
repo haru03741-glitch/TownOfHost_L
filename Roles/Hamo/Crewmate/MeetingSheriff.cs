@@ -146,21 +146,21 @@ public sealed class MeetingSheriff : HamoRoleBase, ISelfVoter
 
     {
 
-        OptionSheriffShotLimit = IntegerOptionItem.Create(RoleInfo, 10, Option.SheriffShotLimit, new(1, 15, 1), 1, false)
+        OptionSheriffShotLimit = IntegerOptionItem.Create(RoleInfo, Option.SheriffShotLimit, new(1, 15, 1), 1, false)
 
             .SetValueFormat(OptionFormat.Times);
 
-        Optioncantaskcount = IntegerOptionItem.Create(RoleInfo, 11, Option.cantaskcount, new(0, 99, 1), 5, false);
+        Optioncantaskcount = IntegerOptionItem.Create(RoleInfo, Option.cantaskcount, new(0, 99, 1), 5, false);
 
-        OptionMeetingSheriffCanKillMadMate = BooleanOptionItem.Create(RoleInfo, 12, Option.MeetingSheriffCanKillMadMate, true, false);
+        OptionMeetingSheriffCanKillMadMate = BooleanOptionItem.Create(RoleInfo, Option.MeetingSheriffCanKillMadMate, true, false);
 
-        OptionMeetingSheriffCanKillNeutrals = BooleanOptionItem.Create(RoleInfo, 13, Option.MeetingSheriffCanKillNeutrals, true, false);
+        OptionMeetingSheriffCanKillNeutrals = BooleanOptionItem.Create(RoleInfo, Option.MeetingSheriffCanKillNeutrals, true, false);
 
-        OptionMeetingSheriffCanKillLovers = BooleanOptionItem.Create(RoleInfo, 15, Option.SheriffCanKillLovers, true, false);
+        OptionMeetingSheriffCanKillLovers = BooleanOptionItem.Create(RoleInfo, Option.SheriffCanKillLovers, true, false);
 
         SaruWarningOption.AddTo(RoleInfo);
 
-        Option1MeetingMaximum = IntegerOptionItem.Create(RoleInfo, 14, GeneralOption.MeetingMaxTime, new(0, 99, 1), 0, false)
+        Option1MeetingMaximum = IntegerOptionItem.Create(RoleInfo, GeneralOption.MeetingMaxTime, new(0, 99, 1), 0, false)
 
             .SetValueFormat(OptionFormat.Times).SetZeroNotation(OptionZeroNotation.Infinity);
 

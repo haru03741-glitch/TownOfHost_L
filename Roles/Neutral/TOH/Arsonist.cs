@@ -64,9 +64,9 @@ public sealed class Arsonist : RoleBase, IKiller
 
     private static void SetupOptionItem()
     {
-        OptionDouseTime = FloatOptionItem.Create(RoleInfo, 10, OptionName.ArsonistDouseTime, new(1f, 10f, 1f), 3f, false)
+        OptionDouseTime = FloatOptionItem.Create(RoleInfo, OptionName.ArsonistDouseTime, new(1f, 10f, 1f), 3f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionDouseCooldown = FloatOptionItem.Create(RoleInfo, 11, GeneralOption.Cooldown, new(5f, 100f, 1f), 10f, false)
+        OptionDouseCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.Cooldown, new(5f, 100f, 1f), 10f, false)
             .SetValueFormat(OptionFormat.Seconds);
     }
     public override bool NeedsSeenNames => true;

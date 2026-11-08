@@ -183,16 +183,16 @@ public sealed class Surrogate : HamoRoleBase, IImpostor, IKiller, IUsePhantomBut
 
     private static void SetupOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(0f, 180f, 1f), 40f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 1f), 40f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionPhantomCooldown = FloatOptionItem.Create(RoleInfo, 11, "SurrogatePhantomCooldown", new(0f, 255f, 1f), 35f, false)
+        OptionPhantomCooldown = FloatOptionItem.Create(RoleInfo, "SurrogatePhantomCooldown", new(0f, 255f, 1f), 35f, false)
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionMadProxySection = ObjectOptionitem.Create(RoleInfo, 12, "MadProxySettings", true, null);
-        OptionMadProxyKillCooldown = FloatOptionItem.Create(RoleInfo, 13, GeneralOption.KillCooldown, new(0f, 180f, 1f), 40f, false)
+        OptionMadProxySection = ObjectOptionitem.Create(RoleInfo, "MadProxySettings", true, null);
+        OptionMadProxyKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 1f), 40f, false)
             .SetValueFormat(OptionFormat.Seconds)
             .SetParent(OptionMadProxySection);
-        OptionMadProxyTransformDuration = FloatOptionItem.Create(RoleInfo, + 14, GeneralOption.Duration, new(0f, 255f, 1f), 12f, false)
+        OptionMadProxyTransformDuration = FloatOptionItem.Create(RoleInfo, GeneralOption.Duration, new(0f, 255f, 1f), 12f, false)
             .SetValueFormat(OptionFormat.Seconds)
             .SetParent(OptionMadProxySection);
     }

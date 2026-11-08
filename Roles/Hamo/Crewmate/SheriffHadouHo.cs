@@ -95,18 +95,18 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
 
     static void SetupOptionItem()
     {
-        OptionCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.Cooldown,
+        OptionCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.Cooldown,
             new(0f, 60f, 0.5f), 30f, false).SetValueFormat(OptionFormat.Seconds);
-        OptionChargeTime = FloatOptionItem.Create(RoleInfo, 11, OptionName.SheriffHadouHoChargeTime,
+        OptionChargeTime = FloatOptionItem.Create(RoleInfo, OptionName.SheriffHadouHoChargeTime,
             new(0.5f, 10f, 0.5f), 3f, false).SetValueFormat(OptionFormat.Seconds);
-        OptionShotLimit = IntegerOptionItem.Create(RoleInfo, 12, OptionName.SheriffHadouHoShotLimit,
+        OptionShotLimit = IntegerOptionItem.Create(RoleInfo, OptionName.SheriffHadouHoShotLimit,
             new(1, 15, 1), 3, false).SetValueFormat(OptionFormat.Times);
-        OptionSelfDestructOnMiss = BooleanOptionItem.Create(RoleInfo, 13,
+        OptionSelfDestructOnMiss = BooleanOptionItem.Create(RoleInfo,
             OptionName.SheriffHadouHoSelfDestruct, true, false);
-        OptionBeamColorMode = StringOptionItem.Create(RoleInfo, 14,
+        OptionBeamColorMode = StringOptionItem.Create(RoleInfo,
             OptionName.SheriffHadouHoBeamColorMode,
             new string[] { "Cyan", "Yellow" }, 1, false);
-        OptionBeamUnlockTask = IntegerOptionItem.Create(RoleInfo, 15,
+        OptionBeamUnlockTask = IntegerOptionItem.Create(RoleInfo,
             OptionName.SheriffHadouHoBeamUnlockTask,
             new(0, 10, 1), 0, false).SetValueFormat(OptionFormat.Times);
     }

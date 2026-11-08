@@ -44,9 +44,9 @@ public sealed class Chairman : RoleBase
     public int LeftButtonCount;
     private static void SetupOptionItem()
     {
-        OptionNumOfUseButton = IntegerOptionItem.Create(RoleInfo, 10, OptionName.MayorNumOfUseButton, new(1, 20, 1), 2, false)
+        OptionNumOfUseButton = IntegerOptionItem.Create(RoleInfo, OptionName.MayorNumOfUseButton, new(1, 20, 1), 2, false)
             .SetValueFormat(OptionFormat.Times);
-        OptionIgnoreSkip = BooleanOptionItem.Create(RoleInfo, 11, OptionName.ChairmanIgnoreSkip, false, false);
+        OptionIgnoreSkip = BooleanOptionItem.Create(RoleInfo, OptionName.ChairmanIgnoreSkip, false, false);
     }
     public override void ApplyGameOptions(IGameOptions opt)
     {

@@ -61,10 +61,10 @@ public sealed class FoxSpirit : RoleBase, ISystemTypeUpdateHook, ISoloWinner
 
     private static void SetupOptionItem()
     {
-        OptionTaskCount = IntegerOptionItem.Create(RoleInfo, 10, OptionName.FoxSpiritTaskCount, new(1, 50, 1), 10, false)
+        OptionTaskCount = IntegerOptionItem.Create(RoleInfo, OptionName.FoxSpiritTaskCount, new(1, 50, 1), 10, false)
                 .SetValueFormat(OptionFormat.Pieces);
-        OptionKilledAfterFinishTask = BooleanOptionItem.Create(RoleInfo, 11, OptionName.FoxSpiritKilledAfterFinishTask, true, false);
-        OptionIgnoreGhostTask = BooleanOptionItem.Create(RoleInfo, 12, OptionName.FoxSpiritIgnoreGhostTask, true, false);
+        OptionKilledAfterFinishTask = BooleanOptionItem.Create(RoleInfo, OptionName.FoxSpiritKilledAfterFinishTask, true, false);
+        OptionIgnoreGhostTask = BooleanOptionItem.Create(RoleInfo, OptionName.FoxSpiritIgnoreGhostTask, true, false);
     }
     public static (bool, int, int) TaskData => (false, 0, OptionTaskCount.GetInt());
     public SoloWinTier SoloWinTier => SoloWinTier.Tasks;

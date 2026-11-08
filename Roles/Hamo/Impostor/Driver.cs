@@ -65,23 +65,23 @@ public sealed class Driver : HamoRoleBase, IImpostor, IKillFlashSeeable, IDeathR
     public static bool HasGuard;
     public static void SetupOptionItems()
     {
-        OptionDriverCanSeeBraid = BooleanOptionItem.Create(RoleInfo, 21, OptionName.DriverCanSeeBraid, false, false);
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 9, OptionName.KillCooldown, new(0f, 180f, 0.5f), 30f, false)
+        OptionDriverCanSeeBraid = BooleanOptionItem.Create(RoleInfo, OptionName.DriverCanSeeBraid, false, false);
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.KillCooldown, new(0f, 180f, 0.5f), 30f, false)
                 .SetValueFormat(OptionFormat.Seconds);
-        OptionBraidKillCooldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.BraidKillCooldown, new(0f, 180f, 0.5f), 15f, false)
+        OptionBraidKillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.BraidKillCooldown, new(0f, 180f, 0.5f), 15f, false)
                 .SetValueFormat(OptionFormat.Seconds);
-        OptionGiveKillFlash = BooleanOptionItem.Create(RoleInfo, 11, OptionName.GiveKillFlash, false, false);
-        OptionGiveKillFlashtaskTrigger = IntegerOptionItem.Create(RoleInfo, 12, OptionName.DriverTaskTrigger, new(1, 297, 1), 5, false, OptionGiveKillFlash);
-        OptionGiveKnowDeathreason = BooleanOptionItem.Create(RoleInfo, 13, OptionName.GiveKnowDeathreason, false, false);
-        OptionGiveKnowDeathreasontaskTrigger = IntegerOptionItem.Create(RoleInfo, 14, OptionName.DriverTaskTrigger, new(1, 297, 1), 5, false, OptionGiveKnowDeathreason);
-        OptionGiveWatchVotes = BooleanOptionItem.Create(RoleInfo, 15, OptionName.GiveWatchVotes, false, false);
-        OptionGiveWatchVotestaskTrigger = IntegerOptionItem.Create(RoleInfo, 16, OptionName.DriverTaskTrigger, new(1, 297, 1), 5, false, OptionGiveWatchVotes);
-        OptionGiveGuard = BooleanOptionItem.Create(RoleInfo, 17, OptionName.GiveGuard, false, false);
-        OptionGiveGuardtaskTrigger = IntegerOptionItem.Create(RoleInfo, 18, OptionName.DriverTaskTrigger, new(1, 297, 1), 5, false, OptionGiveGuard);
-        ObjectOptionitem.Create(RoleInfo, 33, "BraidSetting", true, null).SetOptionName(() => "Braid Setting");
-        OptionBraidCanSeeDriver = BooleanOptionItem.Create(RoleInfo, 19, OptionName.BraidCanSeeDriver, false, false);
-        OptionBraidCanUseVent = BooleanOptionItem.Create(RoleInfo, 22, OptionName.BraidCanVent, true, false);
-        Braid.Tasks = Options.OverrideTasksData.Create(RoleInfo, 50, CustomRoles.Braid);
+        OptionGiveKillFlash = BooleanOptionItem.Create(RoleInfo, OptionName.GiveKillFlash, false, false);
+        OptionGiveKillFlashtaskTrigger = IntegerOptionItem.Create(RoleInfo, OptionName.DriverTaskTrigger, new(1, 297, 1), 5, false, OptionGiveKillFlash);
+        OptionGiveKnowDeathreason = BooleanOptionItem.Create(RoleInfo, OptionName.GiveKnowDeathreason, false, false);
+        OptionGiveKnowDeathreasontaskTrigger = IntegerOptionItem.Create(RoleInfo, OptionName.DriverTaskTrigger, new(1, 297, 1), 5, false, OptionGiveKnowDeathreason);
+        OptionGiveWatchVotes = BooleanOptionItem.Create(RoleInfo, OptionName.GiveWatchVotes, false, false);
+        OptionGiveWatchVotestaskTrigger = IntegerOptionItem.Create(RoleInfo, OptionName.DriverTaskTrigger, new(1, 297, 1), 5, false, OptionGiveWatchVotes);
+        OptionGiveGuard = BooleanOptionItem.Create(RoleInfo, OptionName.GiveGuard, false, false);
+        OptionGiveGuardtaskTrigger = IntegerOptionItem.Create(RoleInfo, OptionName.DriverTaskTrigger, new(1, 297, 1), 5, false, OptionGiveGuard);
+        ObjectOptionitem.Create(RoleInfo, "BraidSetting", true, null).SetOptionName(() => "Braid Setting");
+        OptionBraidCanSeeDriver = BooleanOptionItem.Create(RoleInfo, OptionName.BraidCanSeeDriver, false, false);
+        OptionBraidCanUseVent = BooleanOptionItem.Create(RoleInfo, OptionName.BraidCanVent, true, false);
+        Braid.Tasks = Options.OverrideTasksData.Create(RoleInfo, CustomRoles.Braid);
     }
 
     public bool? CheckKillFlash(MurderInfo info) => Braid.DriverseeKillFlash;

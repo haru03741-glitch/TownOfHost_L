@@ -68,11 +68,11 @@ public sealed class TimeSleeper : HamoRoleBase, IImpostor, IUsePhantomButton
 
     static void SetUpOptionItem()
     {
-        OptionPhantomCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.Cooldown, OptionBaseCoolTime, 30f, false)
+        OptionPhantomCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.Cooldown, OptionBaseCoolTime, 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionRecordDuration = FloatOptionItem.Create(RoleInfo, 11, OptionName.TimeSleeperRecordDuration, new(1f, 20f, 0.5f), 5f, false)
+        OptionRecordDuration = FloatOptionItem.Create(RoleInfo, OptionName.TimeSleeperRecordDuration, new(1f, 20f, 0.5f), 5f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionRewindSpeed = FloatOptionItem.Create(RoleInfo, 12, OptionName.TimeSleeperRewindSpeed, new(0.5f, 5f, 0.5f), 1f, false)
+        OptionRewindSpeed = FloatOptionItem.Create(RoleInfo, OptionName.TimeSleeperRewindSpeed, new(0.5f, 5f, 0.5f), 1f, false)
             .SetValueFormat(OptionFormat.Multiplier);
     }
 

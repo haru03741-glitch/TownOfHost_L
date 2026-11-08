@@ -39,8 +39,8 @@ public sealed class Doctor : RoleBase, IDeathReasonSeeable
 
     private static void SetupOptionItem()
     {
-        OptionHasVital = BooleanOptionItem.Create(RoleInfo, 11, OptionName.DoctorHasVital, true, false);
-        OptionTaskCompletedBatteryCharge = FloatOptionItem.Create(RoleInfo, 10, OptionName.DoctorTaskCompletedBatteryCharge, new(0f, 10f, 1f), 5f, false, OptionHasVital)
+        OptionHasVital = BooleanOptionItem.Create(RoleInfo, OptionName.DoctorHasVital, true, false);
+        OptionTaskCompletedBatteryCharge = FloatOptionItem.Create(RoleInfo, OptionName.DoctorTaskCompletedBatteryCharge, new(0f, 10f, 1f), 5f, false, OptionHasVital)
             .SetValueFormat(OptionFormat.Seconds);
     }
     public override bool NeedsSeenNames => true;

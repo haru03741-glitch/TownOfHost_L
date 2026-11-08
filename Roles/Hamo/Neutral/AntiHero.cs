@@ -143,13 +143,13 @@ public sealed class AntiHero : HamoRoleBase, IAdditionalWinner, IKiller
 
     {
 
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, OptionName.AntiHeroKillCooldown,
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.AntiHeroKillCooldown,
 
             new(0f, 180f, 1f), 40f, false)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionKillUseCount = IntegerOptionItem.Create(RoleInfo, 11, OptionName.AntiHeroKillUseCount,
+        OptionKillUseCount = IntegerOptionItem.Create(RoleInfo, OptionName.AntiHeroKillUseCount,
 
             new(0, 99, 1), 3, false)
 
@@ -157,12 +157,12 @@ public sealed class AntiHero : HamoRoleBase, IAdditionalWinner, IKiller
 
         // アンチヒーローの単独勝利優先度(専用ヘルパーで登録。既定値35)
 
-        SoloWinOption.Create(RoleInfo, 12, defo: 35);
+        SoloWinOption.Create(RoleInfo, defo: 35);
 
-        OptionMarkVisible = BooleanOptionItem.Create(RoleInfo, 13, OptionName.AntiHeroMarkVisible, true, false);
+        OptionMarkVisible = BooleanOptionItem.Create(RoleInfo, OptionName.AntiHeroMarkVisible, true, false);
 
-        OptionMarkClearOnDeath = BooleanOptionItem.Create(RoleInfo, 14, OptionName.AntiHeroMarkClearOnDeath, true, false);
-        OptionNoKillCrewWin = BooleanOptionItem.Create(RoleInfo, 15, OptionName.AntiHeroNoKillCrewWin, true, false)
+        OptionMarkClearOnDeath = BooleanOptionItem.Create(RoleInfo, OptionName.AntiHeroMarkClearOnDeath, true, false);
+        OptionNoKillCrewWin = BooleanOptionItem.Create(RoleInfo, OptionName.AntiHeroNoKillCrewWin, true, false)
             .SetOptionName(() => "一度もキルしなかった時、クルーメイトの勝利に追加勝利する");
 
     }

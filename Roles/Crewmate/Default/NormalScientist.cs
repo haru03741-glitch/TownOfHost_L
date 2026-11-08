@@ -37,9 +37,9 @@ public sealed class NormalScientist : RoleBase
 
     private static void SetupOptionItem()
     {
-        OptionVitalCooldown = FloatOptionItem.Create(RoleInfo, 3, OptionName.VitalCooldown, new(0f, 180f, 5f), 15f, false)
+        OptionVitalCooldown = FloatOptionItem.Create(RoleInfo, OptionName.VitalCooldown, new(0f, 180f, 5f), 15f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionVitalBatteryDuration = FloatOptionItem.Create(RoleInfo, 4, OptionName.VitalBatteryDuration, new(5f, 180f, 5f), 5f, false)
+        OptionVitalBatteryDuration = FloatOptionItem.Create(RoleInfo, OptionName.VitalBatteryDuration, new(5f, 180f, 5f), 5f, false)
             .SetValueFormat(OptionFormat.Seconds);
     }
     public override void ApplyGameOptions(IGameOptions opt)

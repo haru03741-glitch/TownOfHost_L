@@ -61,12 +61,12 @@ public sealed class MadAvenger : HamoRoleBase, IKillFlashSeeable, IDeathReasonSe
 
     public static void SetupOptionItem()
     {
-        SoloWinOption.Create(RoleInfo, 10);
-        OptionCooldown = FloatOptionItem.Create(RoleInfo, 13, OptionName.TaskBattleVentCooldown, new(0f, 180f, 0.5f), 45f, false).SetValueFormat(OptionFormat.Seconds);
-        OptionCount = IntegerOptionItem.Create(RoleInfo, 14, OptionName.MadAvengerMeetingPlayerCount, new(1, 15, 1), 8, false).SetValueFormat(OptionFormat.Players);
-        OptionVent = BooleanOptionItem.Create(RoleInfo, 15, OptionName.MadAvengerReserveTimeCanVent, true, false);
-        OptionCanseeimpostorCount = BooleanOptionItem.Create(RoleInfo, 16, OptionName.MadAvengerCanSeeImpCount, true, false);
-        Tasks = Options.OverrideTasksData.Create(RoleInfo, 20);
+        SoloWinOption.Create(RoleInfo);
+        OptionCooldown = FloatOptionItem.Create(RoleInfo, OptionName.TaskBattleVentCooldown, new(0f, 180f, 0.5f), 45f, false).SetValueFormat(OptionFormat.Seconds);
+        OptionCount = IntegerOptionItem.Create(RoleInfo, OptionName.MadAvengerMeetingPlayerCount, new(1, 15, 1), 8, false).SetValueFormat(OptionFormat.Players);
+        OptionVent = BooleanOptionItem.Create(RoleInfo, OptionName.MadAvengerReserveTimeCanVent, true, false);
+        OptionCanseeimpostorCount = BooleanOptionItem.Create(RoleInfo, OptionName.MadAvengerCanSeeImpCount, true, false);
+        Tasks = Options.OverrideTasksData.Create(RoleInfo);
     }
     public override void ApplyGameOptions(IGameOptions opt)
     {

@@ -42,9 +42,9 @@ public sealed class Pusher : HamoRoleBase, IImpostor, IUsePhantomButton
 
     static void SetupOptionItem()
     {
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 10, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 30f, false)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionPushCooldown = FloatOptionItem.Create(RoleInfo, 11, OptionName.PusherCooldown, new(0f, 180f, 2.5f), 15f, false)
+        OptionPushCooldown = FloatOptionItem.Create(RoleInfo, OptionName.PusherCooldown, new(0f, 180f, 2.5f), 15f, false)
             .SetValueFormat(OptionFormat.Seconds);
     }
 

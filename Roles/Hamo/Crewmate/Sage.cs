@@ -116,11 +116,11 @@ public sealed class Sage : HamoRoleBase
 
     {
 
-        OptionBarrierDuration = FloatOptionItem.Create(RoleInfo, 10, OptionName.SageBarrierDuration,
+        OptionBarrierDuration = FloatOptionItem.Create(RoleInfo, OptionName.SageBarrierDuration,
 
             new(1f, 15f, 0.5f), 5f, false).SetValueFormat(OptionFormat.Seconds);
 
-        OptionBarrierCooldown = FloatOptionItem.Create(RoleInfo, 11, OptionName.SageBarrierCooldown,
+        OptionBarrierCooldown = FloatOptionItem.Create(RoleInfo, OptionName.SageBarrierCooldown,
 
             new(2.5f, 60f, 2.5f), 20f, false).SetValueFormat(OptionFormat.Seconds);
 

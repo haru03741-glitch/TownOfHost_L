@@ -172,59 +172,59 @@ public sealed class Evolver : HamoRoleBase, IImpostor, IUsePhantomButton
 
     {
 
-        OptionHasOtherVision = BooleanOptionItem.Create(RoleInfo, 10, OptionName.EvolverHasOtherVision, false, false);
+        OptionHasOtherVision = BooleanOptionItem.Create(RoleInfo, OptionName.EvolverHasOtherVision, false, false);
 
-        OptionVision = FloatOptionItem.Create(RoleInfo, 11, OptionName.EvolverVision, new(0f, 5f, 0.05f), 1.25f, false, OptionHasOtherVision)
+        OptionVision = FloatOptionItem.Create(RoleInfo, OptionName.EvolverVision, new(0f, 5f, 0.05f), 1.25f, false, OptionHasOtherVision)
 
             .SetValueFormat(OptionFormat.Multiplier);
 
-        OptionReceiveVisionEffect = BooleanOptionItem.Create(RoleInfo, 12, OptionName.EvolverReceiveVisionEffect, true, false, OptionHasOtherVision);
+        OptionReceiveVisionEffect = BooleanOptionItem.Create(RoleInfo, OptionName.EvolverReceiveVisionEffect, true, false, OptionHasOtherVision);
 
 
 
-        OptionHasOtherKillCooldown = BooleanOptionItem.Create(RoleInfo, 13, OptionName.EvolverHasOtherKillCooldown, true, false);
+        OptionHasOtherKillCooldown = BooleanOptionItem.Create(RoleInfo, OptionName.EvolverHasOtherKillCooldown, true, false);
 
-        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, 14, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 30f, false, OptionHasOtherKillCooldown)
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.KillCooldown, new(0f, 180f, 0.5f), 30f, false, OptionHasOtherKillCooldown)
 
             .SetValueFormat(OptionFormat.Seconds);
 
 
 
-        OptionHasOtherKillRange = BooleanOptionItem.Create(RoleInfo, 15, OptionName.EvolverHasOtherKillRange, false, false);
+        OptionHasOtherKillRange = BooleanOptionItem.Create(RoleInfo, OptionName.EvolverHasOtherKillRange, false, false);
 
-        OptionKillRange = StringOptionItem.Create(RoleInfo, 16, OptionName.EvolverKillRange,
+        OptionKillRange = StringOptionItem.Create(RoleInfo, OptionName.EvolverKillRange,
 
             new[] { "Short", "Middle", "Long" }, 1, false, OptionHasOtherKillRange);
 
 
 
-        OptionPlayAnimation = BooleanOptionItem.Create(RoleInfo, 17, OptionName.EvolverPlayAnimation, true, false);
+        OptionPlayAnimation = BooleanOptionItem.Create(RoleInfo, OptionName.EvolverPlayAnimation, true, false);
 
-        OptionRemoveBody = BooleanOptionItem.Create(RoleInfo, 18, OptionName.EvolverRemoveBody, false, false);
+        OptionRemoveBody = BooleanOptionItem.Create(RoleInfo, OptionName.EvolverRemoveBody, false, false);
 
-        OptionEatRange = FloatOptionItem.Create(RoleInfo, 19, OptionName.EvolverEatRange, new(0.5f, 5f, 0.25f), 1.5f, false)
+        OptionEatRange = FloatOptionItem.Create(RoleInfo, OptionName.EvolverEatRange, new(0.5f, 5f, 0.25f), 1.5f, false)
 
             .SetValueFormat(OptionFormat.Multiplier);
 
 
 
-        OptionReduceRate = FloatOptionItem.Create(RoleInfo, 20, OptionName.EvolverReduceRate, new(0f, 90f, 1f), 10f, false)
+        OptionReduceRate = FloatOptionItem.Create(RoleInfo, OptionName.EvolverReduceRate, new(0f, 90f, 1f), 10f, false)
 
             .SetValueFormat(OptionFormat.Percent);
 
-        OptionReduceRateMultiplier = FloatOptionItem.Create(RoleInfo, 21, OptionName.EvolverReduceRateMultiplier, new(1f, 3f, 0.1f), 1.5f, false)
+        OptionReduceRateMultiplier = FloatOptionItem.Create(RoleInfo, OptionName.EvolverReduceRateMultiplier, new(1f, 3f, 0.1f), 1.5f, false)
 
             .SetValueFormat(OptionFormat.Multiplier);
 
-        OptionEvolveCooldown = FloatOptionItem.Create(RoleInfo, 22, OptionName.EvolverEvolveCooldown, new(0f, 120f, 1f), 20f, false)
+        OptionEvolveCooldown = FloatOptionItem.Create(RoleInfo, OptionName.EvolverEvolveCooldown, new(0f, 120f, 1f), 20f, false)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionEatTime = FloatOptionItem.Create(RoleInfo, 23, OptionName.EvolverEatTime, new(0.5f, 30f, 0.5f), 3f, false)
+        OptionEatTime = FloatOptionItem.Create(RoleInfo, OptionName.EvolverEatTime, new(0.5f, 30f, 0.5f), 3f, false)
 
             .SetValueFormat(OptionFormat.Seconds);
 
-        OptionMaxEvolveCount = IntegerOptionItem.Create(RoleInfo, 24, OptionName.EvolverMaxEvolveCount, new(0, 15, 1), 5, false)
+        OptionMaxEvolveCount = IntegerOptionItem.Create(RoleInfo, OptionName.EvolverMaxEvolveCount, new(0, 15, 1), 5, false)
 
             .SetZeroNotation(OptionZeroNotation.Infinity);
 

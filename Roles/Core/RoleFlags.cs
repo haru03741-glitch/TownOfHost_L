@@ -78,4 +78,14 @@ public enum RoleFlags : ulong
     NotCounted = 1UL << 30,
     /// <summary>会議の名前の CO 可否の表示に、役職ごとの設定を作らない</summary>
     NoComingOutOption = 1UL << 31,
+    /// <summary>生きている間、他人のキル (自分が殺した・殺された時を除く) の光が見える</summary>
+    SeesKillFlash = 1UL << 32,
+    /// <summary>この人がキルされた時は、死んでいる人や殺した本人も含めて全員に光が見える</summary>
+    KillFlashToAll = 1UL << 33,
+    /// <summary>名前の所に他人の死因が見える</summary>
+    SeesDeathReason = 1UL << 34,
+    /// <summary>追放された人の道連れの対象にならない</summary>
+    NotRevengeTarget = 1UL << 35,
+    /// <summary>他人の名前を自分用に組み立て直す必要がある (属性用。役職は RoleBase の NeedsSeenNames で決める)</summary>
+    NeedsSeenNames = 1UL << 36,
 }

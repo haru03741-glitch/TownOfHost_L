@@ -46,8 +46,8 @@ public sealed class CursedWolf : RoleBase, IImpostor
 
     public static void SetupOptionItem()
     {
-        OptionKillMotion = StringOptionItem.Create(RoleInfo, 11, OptionName.CursedWolfGuardSpellMotion, EnumHelper.GetAllNames<KillMotionOption>(), 0, false);
-        OptionGuardSpellTimes = IntegerOptionItem.Create(RoleInfo, 10, OptionName.CursedWolfGuardSpellTimes, new(1, 15, 1), 3, false)
+        OptionKillMotion = StringOptionItem.Create(RoleInfo, OptionName.CursedWolfGuardSpellMotion, EnumHelper.GetAllNames<KillMotionOption>(), 0, false);
+        OptionGuardSpellTimes = IntegerOptionItem.Create(RoleInfo, OptionName.CursedWolfGuardSpellTimes, new(1, 15, 1), 3, false)
             .SetValueFormat(OptionFormat.Times);
     }
     public override void Add()
