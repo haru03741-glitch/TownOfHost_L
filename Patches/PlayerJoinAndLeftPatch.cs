@@ -130,11 +130,6 @@ namespace TownOfHostL
             {
                 if (data == null || data.Character == null) return;
 
-                if (CustomRoles.Executioner.IsPresent())
-                    Executioner.ChangeRoleByTarget(data.Character.PlayerId);
-                if (CustomRoles.Lawyer.IsPresent())
-                    Lawyer.ChangeRoleByTarget(data.Character);
-
                 VentEnterTask.TaskRemove(data.Character.PlayerId);
             }
             catch (Exception ex)

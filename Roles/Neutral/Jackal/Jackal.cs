@@ -47,6 +47,15 @@ namespace TownOfHostL.Roles.Neutral
             canCreateSidekick = OptionCanCreateSidekick.GetBool();
 
             canSidekickCount = canCreateSidekick ? 1 : 0;
+            CustomRoleManager.OnPlayerDeadOthers.Add(OnPlayerDeadOthers);
+        }
+        /// <summary>ジャッカルが死んだら (死に方によらず) 少し後にサイドキックの昇格を見る</summary>
+        private static void OnPlayerDeadOthers(byte playerId, CustomDeathReason reason)
+        {
+            if (CustomRoleManager.GetByPlayerId(playerId) is not Jackal) return;
+
+            Logger.Info($"checkPromoted byDead({reason}) Jackal:{playerId}", "Jackal");
+            new LateTask(() => CheckPromoted(), 0.5f, "JackalPromotedByDead");
         }
 
         private static OptionItem OptionKillCooldown;
@@ -177,22 +186,6 @@ namespace TownOfHostL.Roles.Neutral
             }
 
             return true;
-        }
-        public override void OnMurderPlayerAsTarget(MurderInfo info)
-        {
-            if (!AmongUsClient.Instance.AmHost) return;
-            if (Player.PlayerId != info.AttemptTarget.PlayerId) return;
-
-            Logger.Info($"checkPromoted byKill Jackal:{Player?.Data?.name}", "Jackal");
-            new LateTask(() => CheckPromoted(), 0.5f, "JackalPromotedByKill");
-        }
-        public override void OnExileWrapUp(NetworkedPlayerInfo exiled, ref bool DecidedWinner)
-        {
-            if (!AmongUsClient.Instance.AmHost) return;
-            if (Player.PlayerId != exiled.PlayerId) return;
-
-            Logger.Info($"checkPromoted byExiled Jackal:{Player?.Data?.name}", "Jackal");
-            new LateTask(() => CheckPromoted(), 0.5f, "JackalPromotedByExiled");
         }
         public override void AfterMeetingTasks()
         {

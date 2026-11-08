@@ -42,6 +42,13 @@ public static class Lovers
         var lover = Utils.GetPlayerById(playerId);
         if (!playersList.Contains(lover))
             playersList.Add(lover);
+        CustomRoleManager.OnPlayerDeadOthers.Add(OnPlayerDead);
+    }
+    /// <summary>恋人が死んだら (死に方によらず) 相方が後を追う。会議中なら会議の後に死ぬ</summary>
+    private static void OnPlayerDead(byte playerId, CustomDeathReason _)
+    {
+        if (GameStates.IsMeeting) VoteSuicide(playerId);
+        else KillSuicide(playerId);
     }
     public static bool IsEnable => playersList.Count > 0;
 
