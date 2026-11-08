@@ -151,11 +151,7 @@ public sealed class Lawyer : RoleBase, ILateWinner
             }
         }
     }
-    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref bool enabled, ref string roleText)
-    {
-        if (KnowTargetRole && Target != null && seen.PlayerId == Target.PlayerId)
-            enabled = true;
-    }
+    public override bool KnowsRoleOf(PlayerControl seen, bool isMeeting) => KnowTargetRole && Target != null && seen.PlayerId == Target.PlayerId;
     public override string GetMark(PlayerControl seer, PlayerControl seen, bool _ = false)
     {
         //seenが省略の場合seer

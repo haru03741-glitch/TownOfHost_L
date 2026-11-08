@@ -144,18 +144,18 @@ public sealed class FortuneTeller : RoleBase
         if (seen == null || !isForMeeting) return string.Empty;
         return ForecastResult.ContainsKey(seen.PlayerId) ? Utils.ColorString(RoleInfo.RoleColor, "★") : string.Empty;
     }
-    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref bool enabled, ref string roleText)
+    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, bool isMeeting, ref TownOfHostL.Core.RoleNameView view)
     {
         if (!isMeeting) return;
         if (!ForecastResult.ContainsKey(seen.PlayerId)) return;
         if (KillerOnly &&
             !TownOfHostL.Core.PlayerTraits.IsKillerForDivination(seen)) return;
 
-        enabled = true;
+        view.Enabled = true;
 
         if (!ConfirmCamp) return;   //役職表示
 
-        roleText = TownOfHostL.Core.NameParts.TeamText(seen);   //陣営表示
+        view.Replace(TownOfHostL.Core.NameParts.TeamText(seen));   //陣営表示
     }
     public override bool KnowsRoleColorOf(PlayerControl target, bool isMeeting)
     {

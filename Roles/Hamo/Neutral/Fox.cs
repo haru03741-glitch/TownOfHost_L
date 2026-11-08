@@ -155,17 +155,7 @@ public sealed class Fox : HamoRoleBase, ISystemTypeUpdateHook, IRoomTasker
         timer = 0;
         Logger.Info($"現在のメーター{NowMeter}", "Fox");
     }
-    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
-    {
-        if (IsShowMyRole is false) return;
-        if (seer == Player) return;
-
-        if (CanSeeFox(seer))
-        {//生きてて キラーであるかキラー以外も見えるか
-            enabled = true;
-            addon = false;
-        }
-    }
+    public override bool ShowsRoleTo(PlayerControl seer, bool isMeeting) => IsShowMyRole && seer != Player && CanSeeFox(seer);
     bool CanSeeFox(PlayerControl seer)
     {
         if (seer.IsAlive())

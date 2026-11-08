@@ -303,19 +303,9 @@ public sealed class PavlovOwner : HamoRoleBase, IKiller, IAdditionalWinner, ISch
     public override string GetProgressText(bool comms = false, bool GameLog = false)
         => $"<color=#b8860b>({RemainingImprintCount})</color>";
 
-    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
-    {
-        addon = false;
-        if (PavlovDog.IsPavlovTeam(Player) && PavlovDog.IsPavlovTeam(seen))
-            enabled = true;
-    }
+    public override bool KnowsRoleOf(PlayerControl seen, bool isMeeting) => PavlovDog.IsPavlovTeam(Player) && PavlovDog.IsPavlovTeam(seen);
 
-    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
-    {
-        addon = false;
-        if (PavlovDog.IsPavlovTeam(seer) && PavlovDog.IsPavlovTeam(Player))
-            enabled = true;
-    }
+    public override bool ShowsRoleTo(PlayerControl seer, bool isMeeting) => PavlovDog.IsPavlovTeam(seer) && PavlovDog.IsPavlovTeam(Player);
 
     public bool OverrideKillButtonText(out string text)
     {
@@ -567,19 +557,9 @@ public abstract class PavlovDogBase : HamoRoleBase, IKiller, IAdditionalWinner, 
         return "<color=#ff6633>(!!)</color>";
     }
 
-    public override void OverrideDisplayRoleNameAsSeer(PlayerControl seen, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
-    {
-        addon = false;
-        if (PavlovDog.IsPavlovTeam(Player) && PavlovDog.IsPavlovTeam(seen))
-            enabled = true;
-    }
+    public override bool KnowsRoleOf(PlayerControl seen, bool isMeeting) => PavlovDog.IsPavlovTeam(Player) && PavlovDog.IsPavlovTeam(seen);
 
-    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, ref bool enabled, ref Color roleColor, ref string roleText, ref bool addon)
-    {
-        addon = false;
-        if (PavlovDog.IsPavlovTeam(seer) && PavlovDog.IsPavlovTeam(Player))
-            enabled = true;
-    }
+    public override bool ShowsRoleTo(PlayerControl seer, bool isMeeting) => PavlovDog.IsPavlovTeam(seer) && PavlovDog.IsPavlovTeam(Player);
 
     protected void SendRPC()
     {
