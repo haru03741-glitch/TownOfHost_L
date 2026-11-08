@@ -14,7 +14,8 @@ namespace TownOfHostL.Roles.AddOns.Crewmate
             "#ffff00",
             setupOptions: SetupCustomOption,
             flags: RoleFlags.FirstWriteAddOn | RoleFlags.DontSelectLoyalty,
-            chatCommand: "コンプリートクルー");
+            chatCommand: "コンプリートクルー",
+            prefixKey: "Complete-");
 
         public static List<byte> playerIdList = new();
         public static void SetupCustomOption()

@@ -27,7 +27,9 @@ using TownOfHostL.Roles.Neutral;
 using UnityEngine;
 using static TownOfHostL.Translator;
 
+using TownOfHostL.Core;
 using TownOfHostL.Core.Modes;
+using TownOfHostL.Roles.AddOns;
 
 namespace TownOfHostL;
 
@@ -202,30 +204,15 @@ public static partial class Utils
         // 霊界キルフラッシュ
         if (seer.GetCustomRole().IsSpectator()) return true;
         if (CheckKillFlashAfterDead(seer) && seer != target) return true;
-        // ターゲット(属性)
-        foreach (var subRole in PlayerState.GetByPlayerId(target.PlayerId).SubRoles)
-        {
-            if (subRole == CustomRoles.VIP) return true;
-        }
-        // ターゲット(役職)
+        // 殺された人の側
+        if (PlayerTraits.KillFlashToAll(target)) return true;
         if (target == BestieWolf.EnableKillFlash) return true;
 
         if (seer.Data.IsDead || killer == seer || target == seer) return false;
 
-        if (seer.GetRoleClass() is IKillFlashSeeable killFlashSeeable)
-        {
-            return killFlashSeeable.CheckKillFlash(info);
-        }
-        foreach (var subRole in PlayerState.GetByPlayerId(seer.PlayerId).SubRoles)
-        {
-            if (subRole == CustomRoles.AddSeer) return true;
-        }
-
-        return seer.GetCustomRole() switch
-        {
-            // IKillFlashSeeable未適用役職はここに書く
-            _ => seer.Is(CustomRoles.SKMadmate) && Options.MadmateCanSeeKillFlash.GetBool(),
-        };
+        // 属性などの印は、役職ごとの条件より先に見る (役職の条件が偽でも属性の光は消さない)
+        if (PlayerTraits.SeesKillFlash(seer)) return true;
+        return seer.GetRoleClass() is IKillFlashSeeable killFlashSeeable && killFlashSeeable.CheckKillFlash(info);
     }
     public static void KillFlash(this PlayerControl player)
     {
@@ -516,13 +503,11 @@ public static partial class Utils
         {
             if (subRole != CustomRoles.NotAssigned)
             {
-                if (myRole == CustomRoles.ChainShifter && subRole == CustomRoles.ChainShifterAddon) continue;
+                // 役職を預かる印の属性は、預かっている役職の説明を出す (その役職そのものなら出さない)
+                var standsFor = AddOnList.Get(subRole)?.StandsFor ?? CustomRoles.NotAssigned;
+                if (standsFor != CustomRoles.NotAssigned && myRole == standsFor) continue;
 
-                var subroleName = subRole.ToString();
-                if (subRole == CustomRoles.ChainShifterAddon)
-                {
-                    subroleName = CustomRoles.ChainShifter.ToString();
-                }
+                var subroleName = (standsFor != CustomRoles.NotAssigned ? standsFor : subRole).ToString();
 
                 var subroleString = $"<size=85%>{GetString(subroleName)}</size>".Color(GetRoleColor(subRole).ToReadableColor());
                 var subroleInfoString = $"{GetString($"{subroleName}InfoLong")}</line-height></size>";
@@ -604,9 +589,8 @@ public static partial class Utils
         {
             SendMessageAutoSplit(GetString("CurrentActiveSettingsHelp") + ":", true, sendTo: PlayerId);
             SendMessageAutoSplit(GetString("HideAndSeekInfo"), true, sendTo: PlayerId);
-            if (CustomRoles.HASFox.IsEnable()) { SendMessageAutoSplit(GetRoleName(CustomRoles.HASFox) + GetString("HASFoxInfoLong"), true, sendTo: PlayerId); }
-            if (CustomRoles.HASTroll.IsEnable()) { SendMessageAutoSplit(GetRoleName(CustomRoles.HASTroll) + GetString("HASTrollInfoLong"), true, sendTo: PlayerId); }
-            if (CustomRoles.HASPortalMaker.IsEnable()) { SendMessageAutoSplit(GetRoleName(CustomRoles.HASPortalMaker) + GetString("HASPortalMakerInfoLong"), true, sendTo: PlayerId); }
+            foreach (var role in CustomRolesHelper.AllHASRoles)
+                if (role.IsEnable()) SendMessageAutoSplit(GetRoleName(role) + GetString($"{role}InfoLong"), true, sendTo: PlayerId);
         }
         else if (ModeCatalog.IsCatchCat)
         {
@@ -741,9 +725,8 @@ public static partial class Utils
         if (ModeCatalog.IsHideAndSeekWithOwnRoles)
         {
             sb.Append(GetString("Roles")).Append(':');
-            if (CustomRoles.HASFox.IsEnable()) sb.AppendFormat("\n{0}:{1}", GetRoleName(CustomRoles.HASFox), CustomRoles.HASFox.GetCount());
-            if (CustomRoles.HASTroll.IsEnable()) sb.AppendFormat("\n{0}:{1}", GetRoleName(CustomRoles.HASTroll), CustomRoles.HASTroll.GetCount());
-            if (CustomRoles.HASPortalMaker.IsEnable()) sb.AppendFormat("\n{0}:{1}", GetRoleName(CustomRoles.HASPortalMaker), CustomRoles.HASPortalMaker.GetCount());
+            foreach (var role in CustomRolesHelper.AllHASRoles)
+                if (role.IsEnable()) sb.AppendFormat("\n{0}:{1}", GetRoleName(role), role.GetCount());
             SendMessageAutoSplit(sb.ToString(), true, title, PlayerId);
             sb.Clear().Append(GetString("Settings")).Append(':');
             sb.Append(GetString("HideAndSeek"));
@@ -786,8 +769,7 @@ public static partial class Utils
 
                 foreach (var role in Options.CustomRoleCounts.Keys)
                 {
-                    if (!role.IsEnable() || role is CustomRoles.HASFox or CustomRoles.HASTroll or CustomRoles.HASPortalMaker
-                        || role.IsCCRole() /*|| role.Key.IsONRole()*/)
+                    if (!role.IsEnable() || role.IsHASRole() || role.IsCCRole() /*|| role.Key.IsONRole()*/)
                     {
                         continue;
                     }
@@ -864,8 +846,7 @@ public static partial class Utils
         sb.Append($"━━━━━━━━━━━━【{GetString("Roles")}】━━━━━━━━━━━━");
         foreach (var role in Options.CustomRoleCounts)
         {
-            if (!role.Key.IsEnable() || role.Key is CustomRoles.HASFox or CustomRoles.HASTroll
-                || role.Key.IsCCRole() /*|| role.Key.IsONRole()*/) continue;
+            if (!role.Key.IsEnable() || role.Key.IsHASRole() || role.Key.IsCCRole() /*|| role.Key.IsONRole()*/) continue;
 
             if (role.Key.IsAddOn() || role.Key.IsOtherAddOn())
                 sb.Append($"\n〖{GetRoleName(role.Key)}×{role.Key.GetCount()}〗\n");

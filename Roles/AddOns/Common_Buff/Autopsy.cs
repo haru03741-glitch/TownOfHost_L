@@ -15,6 +15,7 @@ public static class Autopsy
         "Ａ",
         setupOptions: SetupCustomOption,
         onAdd: Add,
+        flags: RoleFlags.SeesDeathReason,
         chatCommand: "オートプシー",
         assignAtRandom: true);
 

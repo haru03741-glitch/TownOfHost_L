@@ -16,6 +16,7 @@ public static class Management
         setupOptions: SetupCustomOption,
         onAdd: Add,
         flags: RoleFlags.RefreshesNameOnMeetingStart,
+        getSuffix: (seer, seen, isMeeting) => GetSuffix(seer, seen, isMeeting),
         chatCommand: "マネジメント",
         assignAtRandom: true);
 

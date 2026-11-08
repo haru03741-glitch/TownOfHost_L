@@ -15,7 +15,8 @@ namespace TownOfHostL.Roles.AddOns.Impostor
             "#ff1919",
             setupOptions: SetupCustomOption,
             flags: RoleFlags.FirstWriteAddOn | RoleFlags.DontSelectLoyalty,
-            chatCommand: "ラストインポスター");
+            chatCommand: "ラストインポスター",
+            prefixKey: "Last-");
 
         public static byte currentId = byte.MaxValue;
         public static OptionItem IsChangeKillCooldown;

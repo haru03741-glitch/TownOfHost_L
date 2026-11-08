@@ -15,6 +15,7 @@ public static class VIP
         "Ｖ",
         setupOptions: SetupCustomOption,
         onAdd: Add,
+        flags: RoleFlags.KillFlashToAll,
         chatCommand: "VIP",
         assignAtRandom: true);
 

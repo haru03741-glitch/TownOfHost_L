@@ -12,7 +12,8 @@ public static class ChainShifterAddon
         AddOnGroup.None,
         "#666666",
         onAdd: Add,
-        flags: RoleFlags.FirstWriteAddOn | RoleFlags.TasksNotCountedForWin | RoleFlags.NeverWins);
+        flags: RoleFlags.FirstWriteAddOn | RoleFlags.TasksNotCountedForWin | RoleFlags.NeverWins | RoleFlags.NotRevengeTarget,
+        standsFor: CustomRoles.ChainShifter);
 
     //public static Color RoleColor = Utils.GetRoleColor(CustomRoles.ChainShifter);
 

@@ -15,6 +15,7 @@ public static class AddSeer
         "Ｓ",
         setupOptions: SetupCustomOption,
         onAdd: Add,
+        flags: RoleFlags.SeesKillFlash,
         chatCommand: "シーイング",
         assignAtRandom: true);
 

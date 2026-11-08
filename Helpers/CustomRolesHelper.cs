@@ -78,6 +78,8 @@ static partial class CustomRolesHelper
     public static bool HasRoleFlag(this CustomRoles role, RoleFlags flags) => role.Def().Has(flags);
 
     //CC
+    /// <summary>Mod のかくれんぼだけで使う役職</summary>
+    public static bool IsHASRole(this CustomRoles role) => System.Array.IndexOf(AllHASRoles, role) >= 0;
     public static bool IsCCRole(this CustomRoles role) => role.Def().Has(RoleFlags.CCLeader | RoleFlags.CCColorCat | RoleFlags.CCNoCat);
     public static bool IsCCLeaderRoles(this CustomRoles role) => role.Def().Has(RoleFlags.CCLeader);
     public static bool IsCCCatRoles(this CustomRoles role) => role.Def().Has(RoleFlags.CCColorCat | RoleFlags.CCNoCat);

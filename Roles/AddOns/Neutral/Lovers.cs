@@ -17,7 +17,7 @@ public static class Lovers
         "#ff6be4",
         setupOptions: SetupCustomOption,
         onAdd: Add,
-        flags: RoleFlags.FirstWriteAddOn | RoleFlags.Pair | RoleFlags.TasksNotCountedForWin | RoleFlags.NoTeamWin,
+        flags: RoleFlags.FirstWriteAddOn | RoleFlags.Pair | RoleFlags.TasksNotCountedForWin | RoleFlags.NoTeamWin | RoleFlags.NeedsSeenNames,
         win: new(SoloWinTier.Pair, CustomWinner.Lovers, CheckSoloWin, CheckAdditionalWin),
         chatCommand: "ラバーズ");
 

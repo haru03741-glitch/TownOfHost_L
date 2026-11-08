@@ -9,6 +9,7 @@ using TownOfHostL.Roles.Impostor;
 using TownOfHostL.Roles.Neutral;
 
 using TownOfHostL.Core.Modes;
+using TownOfHostL.Roles.AddOns;
 
 namespace TownOfHostL.Core;
 
@@ -43,14 +44,17 @@ public static class NameParts
     }
 
     /// <summary>
-    /// 名前の次の行に付けるサフィックス。Management と死体の矢印は自分の名前にしか出ない。
+    /// 名前の次の行に付けるサフィックス。属性のサフィックスと死体の矢印は自分の名前にしか出ない。
     /// </summary>
     public static StringBuilder AppendSuffix(StringBuilder sb, PlayerControl seer, PlayerControl seen, bool isMeeting)
     {
         sb.Append(seer.GetRoleClass()?.GetSuffix(seer, seen, isMeeting));
         sb.Append(CustomRoleManager.GetSuffixOthers(seer, seen, isMeeting));
-        if (seer.Is(CustomRoles.Management))
-            sb.Append(Management.GetSuffix(seer, seen, isMeeting));
+        foreach (var subRole in seer.GetCustomSubRoles())
+        {
+            var getSuffix = AddOnList.Get(subRole)?.GetSuffix;
+            if (getSuffix != null) sb.Append(getSuffix(seer, seen, isMeeting));
+        }
         if (!isMeeting)
             sb.Append(TargetDeadArrow.GetDeadBodiesArrow(seer, seen ?? seer));
         return sb;
@@ -108,7 +112,7 @@ public static class NameParts
             || PlayerState.GetByPlayerId(seer.PlayerId).TargetColorData.Count > 0
             || seer.IsCountedNeutralKiller()
             || seer.GetRoleClass()?.NeedsSeenNames == true
-            || seer.Is(CustomRoles.Lovers)
+            || PlayerTraits.NeedsSeenNames(seer)
             || VentEnterTask.HaveTask(seer)
             || Duelist.CheckNotify(seer);
 

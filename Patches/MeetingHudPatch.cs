@@ -12,6 +12,7 @@ using TownOfHostL.Roles.Neutral;
 using UnityEngine;
 using static TownOfHostL.Translator;
 using TownOfHostL.Core.Modes;
+using TownOfHostL.Core;
 
 namespace TownOfHostL;
 
@@ -504,8 +505,8 @@ public static partial class MeetingHudPatch
             // 第三陣営を道連れするか（設定）
             if (candidate.Is(CustomRoleTypes.Neutral) && !Options.RevengeNeutral.GetBool()) continue;
 
-            // チェインシフターは道連れされない（涙）
-            if (candidate.Is(CustomRoles.ChainShifterAddon)) continue;
+            // 道連れされない印 (チェインシフターなど)
+            if (PlayerTraits.NotRevengeTarget(candidate)) continue;
 
             TargetList.Add(candidate);
         }
