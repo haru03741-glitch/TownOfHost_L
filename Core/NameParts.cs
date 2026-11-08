@@ -113,6 +113,7 @@ public static class NameParts
             || seer.IsCountedNeutralKiller()
             || seer.GetRoleClass()?.NeedsSeenNames == true
             || PlayerTraits.NeedsSeenNames(seer)
+            || PlayerTraits.SeesDeathReason(seer)
             || VentEnterTask.HaveTask(seer)
             || Duelist.CheckNotify(seer);
 
