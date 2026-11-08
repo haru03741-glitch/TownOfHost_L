@@ -1295,7 +1295,33 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "MenuDescriptionText.NeutralRoles","Edit neutral role settings for your game lobby.","ニュートラル役職の設定を編集する。",
 "MenuDescriptionText.UnitRoles","Edit unit role settings for your game lobby.","ユニット役職の設定を編集する。",
 "MenuDescriptionText.Addons","Edit add-on settings for your game lobby.","属性の設定を編集する。",
-
+"MenuCat.Game","Game","ゲーム","游戏","遊戲","Игра","Jogo","Jogo"
+"MenuCat.ModMainSettings","Mod Setup","MOD 設定","模组设置","模組設定","Настройки мода","Config. do Mod","Config. do Mod"
+"MenuCat.ImpostorRoles","Impostors","インポスター","内鬼","偽裝者","Предатели","Impostores","Impostores"
+"MenuCat.MadmateRoles","Madmates","マッドメイト","叛徒","叛徒","Безумцы","Madmates","Madmates"
+"MenuCat.CrewmateRoles","Crewmates","クルーメイト","船员","船員","Экипаж","Tripulantes","Tripulantes"
+"MenuCat.NeutralRoles","Neutrals","ニュートラル","中立","中立","Нейтралы","Neutros","Neutros"
+"MenuCat.UnitRoles","Units","ユニット","组合","組合","Группы","Unidades","Unidades"
+"MenuCat.Addons","Add-Ons","属性","附加","附加","Атрибуты","Atributos","Atributos"
+"MenuSearch.Hint","Search settings and roles","設定と役職を探す","搜索设置和职业","搜尋設定與職業","Поиск настроек и ролей","Buscar configurações e funções","Procurar definições e funções"
+"MenuSearch.Result","Settings matching “{0}”: {1}","「{0}」の検索結果: {1} 件","匹配“{0}”的设置：{1} 项","符合「{0}」的設定：{1} 項","Настройки по запросу «{0}»: {1}","Configurações para “{0}”: {1}","Definições para “{0}”: {1}"
+"MenuSearch.NoHit","No settings match “{0}”","「{0}」に合う設定はありません","没有匹配“{0}”的设置","沒有符合「{0}」的設定","Ничего не найдено по запросу «{0}»","Nenhuma configuração para “{0}”","Nenhuma definição para “{0}”"
+"SettingsUI.Count","{0} items","{0} 件","{0} 项","{0} 項","{0} шт.","{0} itens","{0} itens"
+"SettingsUI.Reset","Reset","初期値に戻す","重置","重置","Сброс","Padrão","Padrão"
+"SettingsUI.ResetAll","Reset all","すべて初期値に","全部重置","全部重置","Сбросить всё","Restaurar tudo","Repor tudo"
+"SettingsUI.Undo","Undo","元に戻す","撤销","復原","Отмена","Desfazer","Anular"
+"RoleBrowser.Chance","Chance","出現率","出现率","出現率","Шанс","Chance","Chance"
+"RoleBrowser.EnabledOnly","Enabled only","有効な役職だけ","仅显示启用","僅顯示啟用","Только включённые","Só ativadas","Só ativadas"
+"RoleBrowser.Sort0","Order: default","並び: 標準","排序：默认","排序：預設","Порядок: обычный","Ordem: padrão","Ordem: padrão"
+"RoleBrowser.Sort1","Order: by chance","並び: 出現率","排序：出现率","排序：出現率","Порядок: по шансу","Ordem: por chance","Ordem: por chance"
+"RoleBrowser.Sort2","Order: by name","並び: 名前","排序：名称","排序：名稱","Порядок: по имени","Ordem: por nome","Ordem: por nome"
+"RoleBrowser.NoMatch","Nothing to show","表示するものがありません","没有可显示的内容","沒有可顯示的內容","Нечего показывать","Nada para mostrar","Nada para mostrar"
+"RoleBrowser.Hint","Hover a card to see its summary. Click to edit it here. Right-click toggles 0% / max.","カードに合わせると要約を表示し、クリックするとここで編集できます。右クリックで出現率を 0% と最大値に切り替えます。","指向卡片可查看概要，点击后在此编辑。右键可在 0% 和最大值之间切换。","指向卡片可查看概要，點擊後在此編輯。右鍵可在 0% 和最大值之間切換。","Наведите на карточку для сводки, нажмите для правки. ПКМ переключает 0% / максимум.","Passe o rato num cartão para ver o resumo; clique para editar. Botão direito alterna 0% / máximo.","Passe o rato num cartão para ver o resumo; clique para editar. Botão direito alterna 0% / máximo."
+"RoleBrowser.EnabledBig","{0} / {1} on","{0} / {1} 有効","{0} / {1} 已启用","{0} / {1} 已啟用","{0} / {1} вкл.","{0} / {1} ativas","{0} / {1} ativas"
+"RoleBrowser.BulkTeam","Change all of {0} at once","{0}の役職をまとめて変更","批量修改{0}","批次修改{0}","Изменить всё: {0}","Alterar todas: {0}","Alterar todas: {0}"
+"RoleBrowser.ChanceTo","Chance to {0}%","出現率を {0}% にする","出现率设为 {0}%","出現率設為 {0}%","Шанс {0}%","Chance {0}%","Chance {0}%"
+"RoleBrowser.CountTo","Max to {0}","最大数を {0} にする","最多人数设为 {0}","最多人數設為 {0}","Максимум {0}","Máximo {0}","Máximo {0}"
+"GameSettingHelpText.Page","・Double-click a value:\n  type a number\n・Shift + ± :\n  change 5 steps at a time\n・Hover the ? mark:\n  show the explanation","・値の欄をダブルクリック:\n　数を打ち込む\n・Shift+±:\n　5倍幅で変更\n・「?」に合わせる:\n　詳しい説明を表示",
 "GameSettingHelpText","","・オプション名クリック:\n　詳細説明を表示\n・左Shift+±クリック:\n　5倍幅で変更",
 "PresetChangedWarning","","もしプリセットや各オプションの値を変更しても表示が更新されない場合は、一度設定画面を開き直してください。",
 

@@ -12,6 +12,8 @@ namespace TownOfHostL
         static int resolutionIndex = 0;
         public static void Postfix(ControllerManager __instance)
         {
+            // 設定画面の検索欄に字を打っている間は、キー操作として受け取らない
+            if (SettingsSearchBox.IsTyping || SettingsUI.TextField.Typing) return;
             if (GameStates.IsLobby)
             {
                 //カスタム設定切り替え

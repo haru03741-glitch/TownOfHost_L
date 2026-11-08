@@ -70,8 +70,6 @@ namespace TownOfHostL
         public OptionItem Parent { get; private set; }
         public List<OptionItem> Children;
 
-        public OptionBehaviour OptionBehaviour;
-
         // イベント
         // eventキーワードにより、クラス外からのこのフィールドに対する以下の操作は禁止されます。
         // - 代入 (+=, -=を除く)
@@ -215,31 +213,6 @@ namespace TownOfHostL
             return string.Format(Translator.GetString("Format." + ValueFormat), value);
         }
 
-        // 外部からの操作
-        public virtual void Refresh()
-        {
-            // メニューを閉じると行は破棄される。is の型判定は破棄済み (Unity の null) を弾かないので先に見る
-            if (OptionBehaviour == null) return;
-            if (OptionBehaviour is StringOption stringOption)
-            {
-                stringOption.TitleText.text = GetName();
-                stringOption.Value = CurrentValue;
-                stringOption.oldValue = CurrentValue;
-                stringOption.ValueText.text = GetString();
-            }
-            else if (OptionBehaviour is NumberOption numberOption)
-            {
-                numberOption.TitleText.text = GetName();
-                numberOption.Value = GetFloat();
-                numberOption.oldValue = numberOption.Value;
-                numberOption.ValueText.text = GetString();
-            }
-            else if (OptionBehaviour is ToggleOption toggleOption)
-            {
-                toggleOption.TitleText.text = GetName();
-                toggleOption.CheckMark.enabled = GetBool();
-            }
-        }
         public virtual void SetValue(int afterValue, bool doSave, bool doSync = true)
         {
             int beforeValue = CurrentValue;
@@ -249,15 +222,12 @@ namespace TownOfHostL
                 AllValues[CurrentPreset] = afterValue;
 
             CallUpdateValueEvent(beforeValue, afterValue);
-            Refresh();
-            if (Children.Count > 0 && beforeValue != CurrentValue)
-            {
-                GameOptionsMenuPatch.RefreshChildSettings();
-            }
             if (doSync)
                 SyncAllOptions();
             if (doSave)
                 OptionSaver.RequestSave();
+            // 開いている設定画面の頁へ、値と出る行の変わりを写す (画面の側で落ちても、値と保存は済んでいる)
+            if (!SettingsUI.SettingsPages.Batching) SettingsUI.SettingsPages.RefreshAllSafe();
         }
         public virtual void SetValue(int afterValue, bool doSync = true) => SetValue(afterValue, true, doSync);
 
@@ -345,9 +315,8 @@ namespace TownOfHostL
         public static void SwitchPreset(int newPreset)
         {
             CurrentPreset = Math.Clamp(newPreset, 0, NumPresets - 1);
-            foreach (var op in AllOptions)
-                op.Refresh();
             SyncAllOptions();
+            SettingsUI.SettingsPages.RefreshAllSafe();
         }
         public static void SyncAllOptions()
         {

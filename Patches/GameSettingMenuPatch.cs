@@ -1,9 +1,13 @@
+// Based on https://github.com/haru03741-glitch/More-Roles-Plus src/Options/SettingsMenu.cs (GPL-3.0),
+// which is based on https://github.com/waffle-ful/Aeterna-End-K-not Patches/GameOptionsMenuPatch.cs (GPL-3.0)
+// 画面の枠は本編の大きさのまま。左の列 1 本 (ゲーム / Mod 設定 / 区分ごと) と板の上の検索欄で、全部の設定へ行く
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
+using TownOfHostL.Core.Modes;
 using Object = UnityEngine.Object;
 
 namespace TownOfHostL;
@@ -29,23 +33,6 @@ public class GameSettingMenuPatch
         MaxCount,
     }
 
-    // ボタンに表示する名前
-    public static string[] buttonName = new string[]{
-        "Game Settings",
-        "TOH_L Settings",
-        "Impostor Roles",
-        "Madmate Roles",
-        "Crewmate Roles",
-        "Neutral Roles",
-        "Unit Roles",
-        "Add-Ons"
-    };
-
-    // 配置ボタン座標
-    private static Vector3 buttonPosition = new(-3.94f, 0.9f, 0f);
-    // ボタンサイズ
-    private static Vector3 buttonSize = new(0.45f, 0.6f, 1f);
-
     private static GameOptionsMenu templateGameOptionsMenu;
     private static PassiveButton templateGameSettingsButton;
 
@@ -66,283 +53,415 @@ public class GameSettingMenuPatch
             menu.MenuDescriptionText.text += PresetChangedWarning;
     }
 
-    // MOD設定用ボタン格納変数
-    static Dictionary<TabGroup, PassiveButton> ModSettingsButtons = new();
-    // MOD設定メニュー用タブ格納変数
-    static Dictionary<TabGroup, GameOptionsMenu> ModSettingsTabs = new();
+    // 頁の置き場にする画面 (本編のゲーム設定の画面の複製)。Mod 設定の頁と、役職の区分・検索の結果の頁 (RoleBrowser 1 つ) で 1 枚ずつ
+    static GameOptionsMenu ModTab;
+    static GameOptionsMenu RoleHost;
+    static SettingsSearchBox SearchBox;
+    // 検索欄の今の語 (検索の結果の頁を出している間だけ頁に渡す)
+    static string searchQuery = "";
+    static GameSettingMenu OpenMenu;
+    // 検索を空にした時に戻るタブ
+    static int ReturnTab = 1;
+
+    // 左の列 (設定画面の座標・MRP と同じ寸法)。X は本編のタブのボタンと同じ所。
+    // ボタンが CatFitCount 個を超えたら、同じ高さに収まるよう間隔とボタンの高さを詰める
+    const float CatX = -2.96f, CatTopY = 1.6f, CatStepY = 0.46f;
+    const float CatScaleX = 1f, CatScaleY = 0.78f;
+    const int CatFitCount = 7;
+    // 区分の絵: ボタンの高さに対する絵の高さ・選んだ時の大きさ
+    const float CatArtHeight = 1.05f, CatArtPicked = 1.15f;
+    // 検索欄は板の上の縁より上・右上の本編のボタンの列に掛からない所
+    static readonly Vector2 SearchBoxPosition = new(-1.65f, 2.6f);
+    const float SearchBoxWidth = 3.4f;
+    const float SearchBoxHeight = 0.42f;
+
+    // 左の列のボタン (押すと出すタブの番号)
+    sealed class Cat
+    {
+        public PassiveButton Button;
+        public int TabNum;
+        public TabGroup? Tab; // null = 本編のゲーム設定
+        public TextMeshPro Label;
+        public string Shown; // 字に書いた今の文
+        public Transform Art;
+        public Vector3 ArtPos, ArtScale;
+        public float ArtLift;
+    }
+    static readonly List<Cat> Cats = new();
+
+    static readonly Dictionary<TabGroup, string> CategoryColors = new()
+    {
+        [TabGroup.ModMainSettings] = "#ffef3a",
+        [TabGroup.ImpostorRoles] = "#ff3b3b",
+        [TabGroup.MadmateRoles] = "#ff6a3d",
+        [TabGroup.CrewmateRoles] = "#8cffff",
+        [TabGroup.NeutralRoles] = "#ffab1b",
+        [TabGroup.UnitRoles] = "#c6f26e",
+        [TabGroup.Addons] = "#ff9ae8",
+    };
+    const string GameCategoryColor = "#8aa2ff";
+
+    internal static Color CatColor(TabGroup? tab)
+    {
+        var hex = tab is TabGroup t && CategoryColors.TryGetValue(t, out var c) ? c : GameCategoryColor;
+        return ColorUtility.TryParseHtmlString(hex, out var col) ? col : Color.white;
+    }
+
+    static string CategoryLabel(TabGroup? tab)
+    {
+        if (tab is not TabGroup group) return Translator.GetString("MenuCat.Game");
+        var name = Translator.GetString($"MenuCat.{group}");
+        if (group == TabGroup.ModMainSettings) return name;
+
+        int total = 0, lit = 0;
+        foreach (var option in Options.CustomRoleSpawnChances.Values)
+        {
+            if (option.Tab != group || !option.IsShown()) continue;
+            total++;
+            if (option.GetInt() > 0) lit++;
+        }
+        return total == 0 ? name : $"{name}<size=65%>  {lit}/{total}</size>";
+    }
+
+    // 出る役職の数が変わった時 (出現率の項目は子を持つので RefreshChildSettings から呼ばれる)
+    public static void RefreshCategoryLabels()
+    {
+        if (OpenMenu == null) return;
+        foreach (var cat in Cats)
+        {
+            if (cat.Label == null) continue;
+            // 書き込みは字の組み直しを伴うので、変わった時だけ
+            var text = CategoryLabel(cat.Tab);
+            if (text == cat.Shown) continue;
+            cat.Shown = text;
+            cat.Label.text = text;
+        }
+    }
+
+    // 頁の置き場の画面か (CreateSettings がどの頁を作るかを決める)
+    internal static bool IsRoleHost(GameOptionsMenu menu) => menu && RoleHost && menu.Pointer == RoleHost.Pointer;
+    internal static bool IsModTabMenu(GameOptionsMenu menu) => menu && ModTab && menu.Pointer == ModTab.Pointer;
+
+    // 左の列の一番下のボタンのすぐ下 (世界座標の左上と幅)。役職の区分ではここに絞り込みの札を置く
+    internal static bool CatFoot(out Vector3 topLeft, out float width)
+    {
+        topLeft = default;
+        width = 0f;
+        if (Cats.Count == 0) return false;
+        var btn = Cats[Cats.Count - 1].Button;
+        var col = btn ? btn.GetComponent<Collider2D>() : null;
+        if (!col) return false;
+        var b = col.bounds;
+        topLeft = new Vector3(b.min.x, b.min.y - b.size.y * 0.25f, b.center.z);
+        width = b.size.x;
+        return true;
+    }
+
+    // 左の列のボタン 1 つ (本編のゲーム設定のボタンの複製・押す音と当てた時の見た目は本編のまま)
+    static void AddCat(GameSettingMenu menu, TabGroup? tab, int tabNum, float step, float scaleY)
+    {
+        var proto = templateGameSettingsButton;
+        var btn = Object.Instantiate(proto, menu.GameSettingsButton.transform.parent);
+        btn.name = "Cat_" + (tab?.ToString() ?? "Game");
+        btn.gameObject.SetActive(true);
+        var z = proto.transform.localPosition.z;
+        btn.transform.localPosition = new Vector3(CatX, CatTopY - Cats.Count * step, z);
+        var ps = proto.transform.localScale;
+        btn.transform.localScale = new Vector3(ps.x * CatScaleX, ps.y * scaleY, ps.z);
+
+        // 字: 縦横の縮みを揃え (横だけ潰れないよう)、はみ出す分は自動で小さくする
+        var label = btn.GetComponentInChildren<TextMeshPro>();
+        label.DestroyTranslator();
+        float fix = scaleY / CatScaleX;
+        var ls = label.transform.localScale;
+        label.transform.localScale = new Vector3(ls.x * fix, ls.y, ls.z);
+        var rt = label.rectTransform;
+        rt.sizeDelta = new Vector2(rt.sizeDelta.x / fix, rt.sizeDelta.y);
+        label.enableWordWrapping = false;
+        label.enableAutoSizing = true;
+        label.fontSizeMin = 1f;
+        label.fontSizeMax = label.fontSize;
+        label.alignment = TextAlignmentOptions.Center;
+        label.text = CategoryLabel(tab);
+
+        var c = CatColor(tab);
+        btn.inactiveSprites.GetComponent<SpriteRenderer>().color = new Color(c.r * 0.6f, c.g * 0.6f, c.b * 0.6f, 1f);
+        btn.activeSprites.GetComponent<SpriteRenderer>().color = c;
+        btn.selectedSprites.GetComponent<SpriteRenderer>().color = c;
+
+        var cat = new Cat { Button = btn, TabNum = tabNum, Tab = tab, Label = label, Shown = label.text };
+        AddCatArt(cat, $"TownOfHost_L.Resources.MenuCat_{tab?.ToString() ?? "Game"}.png");
+
+        btn.OnMouseOver = new UnityEngine.Events.UnityEvent();
+        btn.OnMouseOut = new UnityEngine.Events.UnityEvent();
+        btn.OnClick = new();
+        btn.OnClick.AddListener((Action)(() => menu.ChangeTab(tabNum, false)));
+        menu.ControllerSelectable.Add(btn);
+        Cats.Add(cat);
+    }
+
+    // ボタンの左端に区分の絵 (クルーのポーズ)。字は絵の右の残りの幅へ寄せる
+    static void AddCatArt(Cat cat, string resource)
+    {
+        var btn = cat.Button;
+        var bg = btn.inactiveSprites.GetComponent<SpriteRenderer>();
+        var sprite = Utils.LoadSprite(resource, 100f);
+        if (bg == null || sprite == null) return;
+        var t = btn.transform;
+        var b = bg.bounds;
+        Vector3 min = t.InverseTransformPoint(b.min), max = t.InverseTransformPoint(b.max);
+        float h = max.y - min.y;
+        var ls = t.lossyScale;
+        float aspect = ls.y / ls.x; // ボタンは縦横で縮みが違うので、絵の横を戻す
+        float artH = h * CatArtHeight;
+
+        var go = new GameObject("CatArt");
+        go.layer = btn.gameObject.layer;
+        go.transform.SetParent(t, false);
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = sprite;
+        sr.sortingOrder = bg.sortingOrder + 1;
+        float s = artH / sprite.bounds.size.y;
+        go.transform.localScale = new Vector3(s * aspect, s, 1f);
+        go.transform.localPosition = new Vector3(min.x, min.y + h * 0.04f + artH / 2f, -0.01f);
+        // 絵の左端をボタンの左の縁の少し内側へ (ポーズで横幅が違う)
+        go.transform.position += new Vector3(b.min.x + b.size.y * 0.08f - sr.bounds.min.x, 0f, 0f);
+        cat.Art = go.transform;
+        cat.ArtPos = go.transform.localPosition;
+        cat.ArtScale = go.transform.localScale;
+        cat.ArtLift = h * 0.07f;
+
+        var label = cat.Label;
+        if (label.sortingOrder <= sr.sortingOrder) label.sortingOrder = sr.sortingOrder + 1;
+        // 字の左の余白 = 絵の右端まで
+        float edge = label.transform.InverseTransformPoint(new Vector3(sr.bounds.max.x, b.center.y, b.center.z)).x;
+        float m = edge - label.rectTransform.rect.xMin;
+        if (m > 0f) label.margin = new Vector4(m, 0f, 0f, 0f);
+    }
+
+    // 説明の字 (区分の説明と、行に当てた時の長い説明) を左の列の下から板の下の縁までに置く。長い時は字を小さくする
+    static void PlaceDescription(GameSettingMenu menu)
+    {
+        var desc = menu.MenuDescriptionText;
+        var last = Cats.Count > 0 ? Cats[^1].Button : null;
+        var col = last != null ? last.GetComponent<Collider2D>() : null;
+        var panel = menu.transform.FindChild("PanelSprite");
+        var panelSr = panel != null ? panel.GetComponent<SpriteRenderer>() : null;
+        if (desc == null || col == null || panelSr == null) return;
+        var b = col.bounds;
+        float top = b.min.y - b.size.y * 0.3f;
+        float bottom = panelSr.bounds.min.y + b.size.y * 0.5f;
+        if (top <= bottom) return;
+        descTop = top;
+        descBottom = bottom;
+
+        desc.DestroyTranslator();
+        var t = desc.transform;
+        t.SetParent(last.transform.parent, true);
+        var rt = desc.rectTransform;
+        rt.pivot = new Vector2(0f, 1f);
+        t.position = new Vector3(b.min.x, top, t.position.z);
+        var ls = t.lossyScale;
+        if (ls.x > 0f && ls.y > 0f) rt.sizeDelta = new Vector2(b.size.x / ls.x, (top - bottom) / ls.y);
+        desc.alignment = TextAlignmentOptions.TopLeft;
+        desc.enableWordWrapping = true;
+        // TMP の自動縮小はこの字では効かなかったので、字を書くたびに高さを測って縮める (FitDescription)
+        desc.enableAutoSizing = false;
+        // 画面は開き直しても使い回されるので、元の大きさは最初の 1 回だけ控える (縮めた後の大きさを控えない)
+        if (DescBaseSize <= 0f) DescBaseSize = desc.fontSize;
+        desc.gameObject.SetActive(true);
+    }
+
+    // 説明の置き場の上端と下端 (世界の座標・置けなかった時は上端 <= 下端)
+    static float descTop, descBottom;
+
+    // below = 説明の上に空ける高さ (役職の区分では左の列の下に絞り込みの札が入る)
+    static void SetDescription(GameSettingMenu menu, string text, float below = 0f)
+    {
+        var desc = menu.MenuDescriptionText;
+        if (desc == null) return;
+        desc.DestroyTranslator();
+        if (descTop > descBottom)
+        {
+            // 札の下に字が入る高さが残らない時は説明を出さない (板の外へはみ出さないように)
+            float top = descTop - below;
+            desc.gameObject.SetActive(top - descBottom >= 0.35f);
+            var t = desc.transform;
+            t.position = new Vector3(t.position.x, top, t.position.z);
+            var ls = t.lossyScale;
+            if (ls.y > 0f) desc.rectTransform.sizeDelta = new Vector2(desc.rectTransform.sizeDelta.x, (top - descBottom) / ls.y);
+        }
+        desc.text = text + (PresetChanged ? PresetChangedWarning : "");
+        FitDescription(desc);
+    }
+
+    static float DescBaseSize;
+
+    // 説明が置き場の高さに入るまで字を小さくする
+    static void FitDescription(TextMeshPro desc)
+    {
+        if (DescBaseSize <= 0f) return;
+        var size = desc.rectTransform.sizeDelta;
+        desc.fontSize = DescBaseSize;
+        for (int i = 0; i < 12 && desc.fontSize > 0.8f; i++)
+        {
+            if (desc.GetPreferredValues(desc.text, size.x, 0f).y <= size.y) break;
+            desc.fontSize *= 0.9f;
+        }
+    }
+
+    // 今のタブに当たるボタンだけを選んだ見た目に (検索の間はどれも選ばない)。選んだ区分のクルーは少し大きく持ち上げる
+    static void HighlightCat(int tabNum)
+    {
+        foreach (var cat in Cats)
+        {
+            if (cat.Button == null) continue;
+            bool on = cat.TabNum == tabNum;
+            cat.Button.SelectButton(on);
+            if (cat.Art == null) continue;
+            cat.Art.localScale = on ? cat.ArtScale * CatArtPicked : cat.ArtScale;
+            cat.Art.localPosition = on ? cat.ArtPos + new Vector3(0f, cat.ArtLift, 0f) : cat.ArtPos;
+        }
+    }
+
+    // 打つたびに全部の項目を照らして行を作り直すと重いので、打つ手が止まってから探す
+    const float SearchDelay = 0.25f;
+    static int searchSeq;
+
+    static void OnSearchChanged(string query)
+    {
+        int seq = ++searchSeq;
+        _ = new LateTask(() =>
+        {
+            if (seq == searchSeq) ApplySearch(query);
+        }, SearchDelay, "", outlivesSession: true);
+    }
+
+    static void ApplySearch(string query)
+    {
+        if (OpenMenu == null) return;
+        var q = query?.Trim() ?? "";
+        // 英数字 1 文字ではほぼ全部の項目に当たるので探さない (日本語などは 1 文字でも役職の名前になる)
+        if (q.Length == 1 && q[0] < 0x80) q = "";
+        bool onSearch = ModGameOptionsMenu.TabIndex == ModGameOptionsMenu.SearchTab;
+        if (SettingsSearch.Tokens(q).Length == 0)
+        {
+            searchQuery = "";
+            if (onSearch) OpenMenu.ChangeTab(ReturnTab, false);
+            return;
+        }
+        searchQuery = q;
+        // 検索の結果を出している間は、頁の中身を替えて説明を書き替えるだけ (タブの出し直しはしない)
+        if (onSearch && SettingsUI.RolePage.Built)
+        {
+            SettingsUI.RolePage.SetQuery(q);
+            SetDescription(OpenMenu, SearchDescription());
+            return;
+        }
+        if (!onSearch) ReturnTab = ModGameOptionsMenu.TabIndex;
+        OpenMenu.ChangeTab(ModGameOptionsMenu.SearchTab, false);
+    }
+
+    static string SearchDescription()
+    {
+        int count = SettingsUI.RolePage.HitCount;
+        return count == 0
+            ? string.Format(Translator.GetString("MenuSearch.NoHit"), searchQuery)
+            : string.Format(Translator.GetString("MenuSearch.Result"), searchQuery, count);
+    }
 
     // ゲーム設定メニュー 初期関数
     [HarmonyPatch(nameof(GameSettingMenu.Start)), HarmonyPrefix]
     [HarmonyPriority(Priority.First)]
     public static void StartPostfix(GameSettingMenu __instance)
     {
+        // 前の画面が Close を通らずに消えていたら (退出・試合の開始など)、閉じた時と同じ後始末をここで済ませる
+        if ((object)OpenMenu != null) CloseMenu();
+        ModGameOptionsMenu.TabIndex = 1;
         PresetChanged = false;
+        OpenMenu = __instance;
+        ReturnTab = 1;
+        searchQuery = "";
 
-        /******** テキスト複製 ********/
-        var infoBox = __instance.transform.FindChild("What Is This?");
-        var gameSettingTextObject = Object.Instantiate(infoBox.gameObject, __instance.transform);
-        gameSettingTextObject.gameObject.SetActive(true);
-        gameSettingTextObject.name = "GameSettingText";
-        gameSettingTextObject.transform.localPosition = new Vector3(-0.45f, 0.88f, -1f);
-        gameSettingTextObject.transform.localScale = new Vector3(1.1f, 1.1f, 1f);
-
-        gameSettingTextObject.transform.FindChild("InfoImage").gameObject.SetActive(false);
-        gameSettingTextObject.transform.FindChild("Cube").gameObject.SetActive(false);
-
-        var gameSettingTextTMP = gameSettingTextObject.GetComponentInChildren<TextMeshPro>();
-        gameSettingTextTMP.DestroyTranslator();
-        gameSettingTextTMP.text = Translator.GetString("GameSettingHelpText");
-        gameSettingTextTMP.alignment = TextAlignmentOptions.BottomLeft;
-
-        /******** パネル ********/
-        var panelSprite = __instance.transform.FindChild("PanelSprite");
-        panelSprite.localScale = new Vector3(0.5635f, 0.62f, 1f);
-
-        var leftSideBack = __instance.transform.Find("PanelSprite/LeftSideTint");
-        leftSideBack.localScale = new Vector3(0.45f, 0.897f, 1f);
-        leftSideBack.localPosition = new Vector3(-7.3133f, 0.0189f, -0.1f);
-
+        // 本編のタブのボタン 3 つと左上の題は出さない (左の列が同じ役目)
+        foreach (var vanillaButton in new[] { __instance.GameSettingsButton, __instance.RoleSettingsButton, __instance.GamePresetsButton })
+        {
+            vanillaButton.gameObject.SetActive(false);
+            __instance.ControllerSelectable.Remove(vanillaButton);
+        }
         var gameSettingsLabel = __instance.transform.FindChild("GameSettingsLabel");
-        gameSettingsLabel.localScale = new Vector3(0.6f, 0.6f, 1f);
-        gameSettingsLabel.localPosition = new Vector3(-4.03f, 2f, -3f);
+        if (gameSettingsLabel != null) gameSettingsLabel.gameObject.SetActive(false);
 
-        infoBox.localScale = new Vector3(0.8f, 0.8f, 1f);
-        infoBox.localPosition = new Vector3(5.74f, -2.42f, -1f);
-        infoBox.FindChild("Cube").gameObject.SetActive(false);
+        // 本編の説明の箱は出さない。説明の字だけを左の列の下へ移す (列を作った後)
+        __instance.transform.FindChild("What Is This?").gameObject.SetActive(false);
 
-        var infoBoxText = infoBox.FindChild("InfoText");
-        infoBoxText.localPosition = new Vector3(-2.945f, 3.2145f, -2f);
-        infoBoxText.GetComponent<RectTransform>().sizeDelta = new(3.5f, 5f);
+        // 検索欄: 板の上 (どの区分からでも全部を探す)
+        var buttonParent = __instance.GameSettingsButton.transform.parent;
+        var searchPos = new Vector3(SearchBoxPosition.x, SearchBoxPosition.y, __instance.GameSettingsButton.transform.localPosition.z);
+        SearchBox = SettingsSearchBox.Create(buttonParent, searchPos, SearchBoxWidth, SearchBoxHeight,
+            Translator.GetString("MenuSearch.Hint"), OnSearchChanged);
 
-        var mainArea = __instance.transform.FindChild("MainArea");
-        mainArea.localScale = new Vector3(0.95f, 0.95f, 1f);
-        mainArea.localPosition = new Vector3(0.6f, -0.817f, -1f);
+        // 左の列: ゲーム (本編) と TOHL の区分。本編のかくれんぼでは、出す設定が 1 つも無い区分は出さない
+        Cats.Clear();
+        var groups = EnumHelper.GetAllValues<TabGroup>()
+            .Where(tab => !(TownOfHostL.Core.VanillaHideAndSeek.IsSuspended && !OptionItem.AllOptions.Any(o => o.Tab == tab && ModeCatalog.IsShown(o))))
+            .ToList();
+        int catCount = 1 + groups.Count;
+        float fit = catCount > CatFitCount ? (CatFitCount - 1f) / (catCount - 1f) : 1f;
+        AddCat(__instance, null, 1, CatStepY * fit, CatScaleY * fit);
+        foreach (var tab in groups)
+            AddCat(__instance, tab, (int)tab + ModGameOptionsMenu.FirstModTab, CatStepY * fit, CatScaleY * fit);
+        __instance.DefaultButtonSelected = Cats[0].Button;
+        PlaceDescription(__instance);
+        HighlightCat(ModGameOptionsMenu.TabIndex == ModGameOptionsMenu.SearchTab ? -1 : ModGameOptionsMenu.TabIndex);
 
-        var closeButton = __instance.transform.FindChild("CloseButton");
-        closeButton.localScale = new Vector3(0.5f, 0.5f, 1f);
-        closeButton.localPosition = new Vector3(5.05f, 2.05f, -13f);
-
-        /******** ボタン作成 ********/
-
-        // 各グループ毎にボタンを作成する
-        ModSettingsButtons = new();
-        foreach (var tab in EnumHelper.GetAllValues<TabGroup>())
-        {
-            // ゲーム設定ボタンを元にコピー
-            var button = Object.Instantiate(templateGameSettingsButton, __instance.GameSettingsButton.transform.parent);
-            button.gameObject.SetActive(true);
-            // 名前は「button_ + ボタン名」
-            button.name = "Button_" + buttonName[(int)tab + 1]; // buttonName[0]はバニラ設定用の名前なので+1
-            // ボタンテキスト
-            var label = button.GetComponentInChildren<TextMeshPro>();
-            // ボタンテキストの翻訳破棄
-            label.DestroyTranslator();
-            // ボタンテキストの名前変更
-            label.text = "";
-            // ボタンテキストの色変更
-            button.activeTextColor = button.inactiveTextColor = Color.black;
-            // ボタンテキストの選択中の色変更
-            button.selectedTextColor = Color.blue;
-
-            var activeButton = Utils.LoadSprite($"TownOfHost_L.Resources.Tab_Active_{tab}.png", 100f);
-            // 各種スプライトをオリジナルのものに変更
-            button.inactiveSprites.GetComponent<SpriteRenderer>().sprite = Utils.LoadSprite($"TownOfHost_L.Resources.Tab_Small_{tab}.png", 100f);
-            button.activeSprites.GetComponent<SpriteRenderer>().sprite = activeButton;
-            button.selectedSprites.GetComponent<SpriteRenderer>().sprite = activeButton;
-
-            // Y座標オフセット
-            Vector3 offset = new(0.0f, 0.45f * ((int)tab + 1), 0.0f);
-            // ボタンの座標設定
-            button.transform.localPosition = buttonPosition - offset;
-            // ボタンのサイズ設定
-            button.transform.localScale = buttonSize;
-
-            // ボタンがクリックされた時の設定
-            var buttonComponent = button.GetComponent<PassiveButton>();
-            buttonComponent.OnClick = new();
-            // ボタンがクリックされるとタブをそのものに変更する
-            buttonComponent.OnClick.AddListener(
-                (Action)(() => __instance.ChangeTab((int)tab + 3, false)));
-
-            // ボタン登録
-            ModSettingsButtons.Add(tab, button);
-            // 本編のかくれんぼでは、出す設定が 1 つも無いタブのボタンを出さない
-            if (TownOfHostL.Core.VanillaHideAndSeek.IsSuspended && !OptionItem.AllOptions.Any(o => o.Tab == tab && TownOfHostL.Core.Modes.ModeCatalog.IsShown(o)))
-                button.gameObject.SetActive(false);
-        }/******** ボタン作成 ここまで ********/
-
-        /******** タブ作成 ********/
-        //// ストリングオプションのテンプレート作成
-        //var templateStringOption = GameObject.Find("Main Camera/PlayerOptionsMenu(Clone)/MainArea/GAME SETTINGS TAB/Scroller/SliderInner/GameOption_String(Clone)").GetComponent<StringOption>();
-        //if (templateStringOption == null) return;
-
-        ModGameOptionsMenu.OptionList = new();
-        ModGameOptionsMenu.BehaviourList = new();
-        ModGameOptionsMenu.CategoryHeaderList = new();
-        ModGameOptionsMenu.SettingsMenus = new();
-
-        // 各グループ毎にタブを作成する/基盤作成
-        ModSettingsTabs = new();
-        foreach (var tab in EnumHelper.GetAllValues<TabGroup>())
-        {
-            // ゲーム設定タブからコピー
-            var setTab = Object.Instantiate(templateGameOptionsMenu, __instance.GameSettingsTab.transform.parent);
-            // 名前はゲーム設定タブEnumから取得
-            setTab.name = ((GameSettingMenuTab)tab + 3).ToString();
-            //// 中身を削除
-            //setTab.GetComponentsInChildren<OptionBehaviour>().Do(x => Object.Destroy(x.gameObject));
-            //setTab.GetComponentsInChildren<CategoryHeaderMasked>().Do(x => Object.Destroy(x.gameObject));
-            setTab.gameObject.SetActive(false);
-
-            // 設定タブを追加
-            ModSettingsTabs.Add(tab, setTab);
-        }
-
-        foreach (var tab in EnumHelper.GetAllValues<TabGroup>())
-        {
-            if (ModSettingsButtons.TryGetValue(tab, out var button))
-            {
-                __instance.ControllerSelectable.Add(button);
-            }
-        }
-
-        //⇒GamOptionsMenuPatchで処理
-        //// 各グループ毎にタブを作成する/中身追加
-        //foreach (var tab in EnumHelper.GetAllValues<TabGroup>())
-        //{
-        //    // オプションをまとめて格納する
-        //    Il2CppSystem.Collections.Generic.List<OptionBehaviour> scOptions = new();
-
-        //    // オプションを全てまわす
-        //    foreach (var option in OptionItem.AllOptions)
-        //    {
-        //        // オプションを出すタブでないなら次
-        //        if (option.Tab != tab) continue;
-
-        //        // ビヘイビアがまだ設定されていないなら
-        //        if (option.OptionBehaviour == null)
-        //        {
-        //            // ストリングオプションをコピー
-        //            var stringOption = Object.Instantiate(templateStringOption, GameObject.Find($"{ModSettingsTabs[tab].name}/Scroller/SliderInner").transform);
-        //            // オプションListに追加
-        //            scOptions.Add(stringOption);
-        //            stringOption.OnValueChanged = new System.Action<OptionBehaviour>((o) => { });
-        //            stringOption.TitleText.text = option.Name;
-        //            stringOption.Value = stringOption.oldValue = option.CurrentValue;
-        //            stringOption.ValueText.text = option.GetString();
-        //            stringOption.name = option.Name;
-        //            stringOption.transform.FindChild("LabelBackground").localScale = new Vector3(1.6f, 1f, 1f);
-        //            stringOption.transform.FindChild("LabelBackground").SetLocalX(-2.2695f);
-        //            stringOption.transform.FindChild("PlusButton (1)").localPosition += new Vector3(option.IsFixValue ? 100f : 1.1434f, option.IsFixValue ? 100f : 0f, option.IsFixValue ? 100f : 0f);
-        //            stringOption.transform.FindChild("MinusButton (1)").localPosition += new Vector3(option.IsFixValue ? 100f : 0.3463f, option.IsFixValue ? 100f : 0f, option.IsFixValue ? 100f : 0f);
-        //            stringOption.transform.FindChild("Value_TMP (1)").localPosition += new Vector3(0.7322f, 0f, 0f);
-        //            stringOption.transform.FindChild("ValueBox").localScale += new Vector3(0.2f, 0f, 0f);
-        //            stringOption.transform.FindChild("ValueBox").localPosition += new Vector3(0.7322f, 0f, 0f);
-        //            stringOption.transform.FindChild("Title Text").localPosition += new Vector3(-1.096f, 0f, 0f);
-        //            stringOption.transform.FindChild("Title Text").GetComponent<RectTransform>().sizeDelta = new Vector2(6.5f, 0.37f);
-        //            stringOption.transform.FindChild("Title Text").GetComponent<TMPro.TextMeshPro>().alignment = TMPro.TextAlignmentOptions.MidlineLeft;
-        //            stringOption.SetClickMask(ModSettingsTabs[tab].ButtonClickMask);
-
-        //            // ビヘイビアに作成したストリングオプションを設定
-        //            option.OptionBehaviour = stringOption;
-        //        }
-        //        // ビヘイビアのobjectを表示
-        //        option.OptionBehaviour.gameObject.SetActive(true);
-        //    }
-        //    // タブの子にオプションリストを設定
-        //    ModSettingsTabs[tab].Children = scOptions;
-        //    // 選択されるときに表示するため、初期値はfalse
-        //    ModSettingsTabs[tab].gameObject.SetActive(false);
-        //    // 有効にする
-        //    ModSettingsTabs[tab].enabled = true;
-        //}
+        // 頁の置き場にする画面を作る (ゲーム設定の画面の複製)。Mod 設定用と、役職の区分・検索の結果用
+        ModTab = Object.Instantiate(templateGameOptionsMenu, __instance.GameSettingsTab.transform.parent);
+        ModTab.name = GameSettingMenuTab.Mod_MainSettings.ToString();
+        ModTab.gameObject.SetActive(false);
+        RoleHost = Object.Instantiate(templateGameOptionsMenu, __instance.GameSettingsTab.transform.parent);
+        RoleHost.name = "RoleBrowser";
+        RoleHost.gameObject.SetActive(false);
     }
     private static void SetDefaultButton(GameSettingMenu __instance)
     {
-        /******** デフォルトボタン設定 ********/
-        // プリセット設定 非表示
-        __instance.GamePresetsButton.gameObject.SetActive(false);
-
-        /**** ゲーム設定ボタンを変更 ****/
-        var gameSettingButton = __instance.GameSettingsButton;
-        // 座標指定
-        gameSettingButton.transform.localPosition = new(-3f, -0.5f, 0f);
-        // ボタンテキスト
-        var textLabel = gameSettingButton.GetComponentInChildren<TextMeshPro>();
-        // 翻訳破棄
-        textLabel.DestroyTranslator();
-        // バニラ設定ボタンの名前を設定
-        textLabel.text = "";
-        // ボタンテキストの色変更
-        gameSettingButton.activeTextColor = gameSettingButton.inactiveTextColor = Color.black;
-        // ボタンテキストの選択中の色変更
-        gameSettingButton.selectedTextColor = Color.blue;
-
-        var vanillaActiveButton = Utils.LoadSprite($"TownOfHost_L.Resources.Tab_Active_VanillaGameSettings.png", 100f);
-        // 各種スプライトをオリジナルのものに変更
-        gameSettingButton.inactiveSprites.GetComponent<SpriteRenderer>().sprite = Utils.LoadSprite($"TownOfHost_L.Resources.Tab_Small_VanillaGameSettings.png", 100f);
-        gameSettingButton.activeSprites.GetComponent<SpriteRenderer>().sprite = vanillaActiveButton;
-        gameSettingButton.selectedSprites.GetComponent<SpriteRenderer>().sprite = vanillaActiveButton;
-        // ボタンの座標設定
-        gameSettingButton.transform.localPosition = buttonPosition;
-        // ボタンのサイズ設定
-        gameSettingButton.transform.localScale = buttonSize;
-        /**** ゲーム設定ボタンを変更 ここまで ****/
-
-        // バニラ役職設定 非表示
-        __instance.RoleSettingsButton.gameObject.SetActive(false);
-        /******** デフォルトボタン設定 ここまで ********/
-
-        __instance.DefaultButtonSelected = gameSettingButton;
+        // 左の列は Start で作る。コントローラーで選べるのはその列だけにする
         __instance.ControllerSelectable = new();
-        __instance.ControllerSelectable.Add(gameSettingButton);
     }
 
     [HarmonyPatch(nameof(GameSettingMenu.ChangeTab)), HarmonyPrefix]
     public static bool ChangeTabPrefix(GameSettingMenu __instance, ref int tabNum, [HarmonyArgument(1)] bool previewOnly)
     {
         ModGameOptionsMenu.TabIndex = tabNum;
+        bool isSearch = tabNum == ModGameOptionsMenu.SearchTab;
 
-        GameOptionsMenu settingsTab;
-        PassiveButton button;
+        // 検索の途中で区分を選んだら、検索の語を消してその区分を出す
+        // (TabIndex を先に替えてあるので、語を消した時の「元のタブへ戻る」は走らない)
+        if (!previewOnly && !isSearch && SearchBox != null && SearchBox.Query.Length > 0)
+        {
+            ReturnTab = tabNum;
+            SearchBox.Clear();
+            searchSeq++;
+            searchQuery = "";
+        }
 
         if ((previewOnly && Controller.currentTouchType == Controller.TouchType.Joystick) || !previewOnly)
         {
-            foreach (var tab in EnumHelper.GetAllValues<TabGroup>())
-            {
-                if (ModSettingsTabs.TryGetValue(tab, out settingsTab) &&
-                    settingsTab != null)
-                {
-                    settingsTab.gameObject.SetActive(false);
-                }
-            }
-            foreach (var tab in EnumHelper.GetAllValues<TabGroup>())
-            {
-                if (ModSettingsButtons.TryGetValue(tab, out button) &&
-                    button != null)
-                {
-                    button.SelectButton(false);
-                }
-            }
+            if (ModTab != null) ModTab.gameObject.SetActive(false);
+            if (RoleHost != null) RoleHost.gameObject.SetActive(false);
+            HighlightCat(isSearch ? -1 : tabNum);
         }
 
         if (!previewOnly)
         {
-            var whatIsThis = __instance.transform.FindChild("What Is This?");
-            var mainArea = __instance.transform.FindChild("MainArea");
-
-            if (tabNum < 3)
-            {
-                whatIsThis.gameObject.SetActive(false);
-                mainArea.localPosition = new Vector3(0.6f, -0.817f, -1f);
-            }
-            else
-            {
-                whatIsThis.gameObject.SetActive(true);
-                mainArea.localPosition = new Vector3(-0.26f, -0.817f, -1f);
-            }
+            __instance.transform.FindChild("What Is This?").gameObject.SetActive(false);
+            if (!ModGameOptionsMenu.IsModTab(tabNum))
+                SetDescription(__instance, TranslationController.Instance.GetString(StringNames.GameSettingsDescription)
+                    + "\n\n" + Translator.GetString("GameSettingHelpText.Page"));
+            // 検索の結果の行など、頁の外で変えた値を頁へ写す
+            SettingsUI.SettingsPages.RefreshFromOutside();
         }
-        if (tabNum < 3)
+        if (!ModGameOptionsMenu.IsModTab(tabNum))
         {
             return true;
         }
@@ -356,14 +475,23 @@ public class GameSettingMenuPatch
             __instance.GameSettingsButton.SelectButton(false);
             __instance.RoleSettingsButton.SelectButton(false);
 
-            if (ModSettingsTabs.TryGetValue((TabGroup)(tabNum - 3), out settingsTab) &&
-                settingsTab != null)
+            var group = isSearch ? (TabGroup?)null : (TabGroup)(tabNum - ModGameOptionsMenu.FirstModTab);
+            bool modPage = group == TabGroup.ModMainSettings;
+            var shown = modPage ? ModTab : RoleHost;
+            if (shown != null)
             {
-                settingsTab.gameObject.SetActive(true);
-                GameOptionsMenuPatch.RefreshSettings(settingsTab, (TabGroup)(tabNum - 3));
-                __instance.MenuDescriptionText.DestroyTranslator();
-                __instance.MenuDescriptionText.text = Translator.GetString($"MenuDescriptionText.{(TabGroup)(tabNum - 3)}");
-                if (PresetChanged) __instance.MenuDescriptionText.text += PresetChangedWarning;
+                // 役職の頁は区分と検索の語を先に渡す (初めて出す時は、出す時に頁が作られる)
+                if (!modPage) SettingsUI.RolePage.Prepare(group, isSearch ? searchQuery : "");
+                shown.gameObject.SetActive(true);
+                if (!modPage) SettingsUI.RolePage.Apply();
+                // 検索の結果の行など、頁の外で変えた値を頁へ写す
+                SettingsUI.SettingsPages.RefreshFromOutside();
+                // 名前の「?」と打ち込みで操作するので、説明の操作の案内も頁用
+                if (isSearch) SetDescription(__instance, SearchDescription());
+                else
+                    SetDescription(__instance,
+                        Translator.GetString($"MenuDescriptionText.{group}") + (modPage ? "\n\n" + Translator.GetString("GameSettingHelpText.Page") : ""),
+                        modPage ? 0f : SettingsUI.RolePage.ChipsWorldHeight);
             }
         }
         if (previewOnly)
@@ -374,17 +502,6 @@ public class GameSettingMenuPatch
         }
         __instance.ToggleLeftSideDarkener(true);
         __instance.ToggleRightSideDarkener(false);
-        //if (ModSettingsTabs.TryGetValue((TabGroup)(tabNum - 3), out settingsTab) &&
-        //    settingsTab != null)
-        //{
-        //    settingsTab.OpenMenu();
-        //}
-        if (ModSettingsButtons.TryGetValue((TabGroup)(tabNum - 3), out button) &&
-            button != null)
-        {
-            button.SelectButton(true);
-        }
-
         return false;
     }
 
@@ -414,46 +531,39 @@ public class GameSettingMenuPatch
 
         return false;
     }
-    [HarmonyPatch(nameof(GameSettingMenu.Close)), HarmonyPostfix]
-    private static void ClosePostfix(GameSettingMenu __instance)
+    // 数を打ち込んでいる間の Esc は、打ち込みをやめるだけ (設定画面は閉じない)
+    [HarmonyPatch(nameof(GameSettingMenu.Close)), HarmonyPrefix]
+    private static bool ClosePrefix()
     {
-        // 各行の OnValueChanged に入れた管理側のデリゲートはメニューを握り、GameObject を消しても
-        // メニュー全体 (全行・TMP・材質) が回収されなくなる。消す前に参照を外す
-        foreach (var button in ModSettingsButtons.Values)
-        {
-            try { button.OnClick?.RemoveAllListeners(); } catch { }
-            UnityEngine.Object.Destroy(button);
-        }
-        foreach (var tab in ModSettingsTabs.Values)
-        {
-            ReleaseMenu(tab);
-            UnityEngine.Object.Destroy(tab);
-        }
-        ModSettingsButtons = new();
-        ModSettingsTabs = new();
-        ModGameOptionsMenu.OptionList = new();
-        ModGameOptionsMenu.BehaviourList = new();
-        ModGameOptionsMenu.CategoryHeaderList = new();
-        ModGameOptionsMenu.SettingsMenus = new();
-        GameOptionsMenuPatch.Instance = null;
-        // 閉じた後にメニューの外 (コマンドやプリセットの切り替え) から値が変わっても、破棄された行を書きにいかない
-        foreach (var option in OptionItem.AllOptions) option.OptionBehaviour = null;
+        if (!SettingsUI.OptEditor.IsTyping) return true;
+        SettingsUI.OptEditor.EndInput(false);
+        return false;
     }
-    private static void ReleaseMenu(GameOptionsMenu menu)
+
+    [HarmonyPatch(nameof(GameSettingMenu.Close)), HarmonyPostfix]
+    private static void ClosePostfix() => CloseMenu();
+
+    private static void CloseMenu()
     {
-        if ((object)menu == null) return;
-        try
+        // 頁 (自前の部品) を全部捨てる。ホストは本編のゲーム設定を変えていれば保存して全員へ送る
+        SettingsUI.SettingsPages.Forget();
+        if (AmongUsClient.Instance && AmongUsClient.Instance.AmHost) SettingsUI.VanillaGame.OnMenuClosed();
+        else SettingsUI.VanillaGame.Dirty = false;
+        // 左の列のボタンに入れたデリゲートは画面を握り、GameObject を消しても画面全体が回収されなくなる。消す前に外す
+        foreach (var cat in Cats)
         {
-            var children = menu.Children;
-            if (children == null) return;
-            for (int i = 0; i < children.Count; i++)
-            {
-                var child = children[i];
-                if ((object)child != null) child.OnValueChanged = null;
-            }
-            children.Clear();
+            try { cat.Button?.OnClick?.RemoveAllListeners(); } catch { }
         }
-        catch { }
+        Cats.Clear();
+        if (ModTab != null) UnityEngine.Object.Destroy(ModTab);
+        if (RoleHost != null) UnityEngine.Object.Destroy(RoleHost);
+        ModTab = null;
+        RoleHost = null;
+        SearchBox = null;
+        searchSeq++;
+        SettingsSearchBox.Forget();
+        searchQuery = "";
+        OpenMenu = null;
     }
 }
 

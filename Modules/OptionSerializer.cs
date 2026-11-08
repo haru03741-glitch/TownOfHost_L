@@ -153,14 +153,17 @@ public static class OptionSerializer
             var value = split[1] == "" ? 1 : Base62.ToInt(split[1]);
             parsedModOptions[lastId] = value;
         }
-        foreach (var option in OptionItem.AllOptions)
+        SettingsUI.SettingsPages.Batch(() =>
         {
-            if (option is PresetOptionItem)
+            foreach (var option in OptionItem.AllOptions)
             {
-                continue;
+                if (option is PresetOptionItem)
+                {
+                    continue;
+                }
+                option.SetValue(parsedModOptions.TryGetValue(option.Id, out var value) ? value : 0, false);
             }
-            option.SetValue(parsedModOptions.TryGetValue(option.Id, out var value) ? value : 0, false);
-        }
+        });
         OptionItem.SyncAllOptions();
     }
     /// <summary>

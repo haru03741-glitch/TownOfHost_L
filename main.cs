@@ -227,7 +227,6 @@ public partial class Main : BasePlugin
 
         ClassInjector.RegisterTypeInIl2Cpp<ErrorText>();
         ClassInjector.RegisterTypeInIl2Cpp<BooleanOptionItem.BooleanGameSetting>();
-        ClassInjector.RegisterTypeInIl2Cpp<LabelHoverBehaviour>();
 
         // かくれんぼの間に休ませる仕組みと delegate 型のキャッシュは、TOHL の Harmony を外しても残る別の Harmony に置く
         TownOfHostL.Core.VanillaHideAndSeek.Init(this);
