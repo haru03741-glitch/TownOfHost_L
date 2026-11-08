@@ -27,6 +27,7 @@ public sealed class Medic : RoleBase
         player
     )
     {
+        CustomRoleManager.AddKillGuard(200, GuardPlayerCheckMurder);
         TaskTrigger = OptionTaskTrigger.GetInt();
     }
 

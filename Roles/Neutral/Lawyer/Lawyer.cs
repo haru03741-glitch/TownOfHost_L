@@ -36,7 +36,7 @@ public sealed class Lawyer : RoleBase, ILateWinner
 
         Lawyers.Add(this);
         CustomRoleManager.MarkOthers.Add(GetMarkOthers);
-        CustomRoleManager.OnMurderPlayerOthers.Add(OnMurderPlayerOthers);
+        CustomRoleManager.OnPlayerDeadOthers.Add(OnPlayerDeadOthers);
 
         Target = null;
     }
@@ -47,7 +47,7 @@ public sealed class Lawyer : RoleBase, ILateWinner
         if (Lawyers.Count <= 0)
         {
             CustomRoleManager.MarkOthers.Remove(GetMarkOthers);
-            CustomRoleManager.OnMurderPlayerOthers.Remove(OnMurderPlayerOthers);
+            CustomRoleManager.OnPlayerDeadOthers.Remove(OnPlayerDeadOthers);
         }
     }
 
@@ -138,17 +138,16 @@ public sealed class Lawyer : RoleBase, ILateWinner
             Target = null;
         }
     }
-    public static void OnMurderPlayerOthers(MurderInfo info)
+    /// <summary>依頼人が追放以外で死んだら追跡者になる (追放された時は OnExileWrapUp で、生きていれば少し後に変わる)</summary>
+    public static void OnPlayerDeadOthers(byte playerId, CustomDeathReason _)
     {
-        var target = info.AttemptTarget;
-
+        if (playerId == CustomRoleManager.ExileWrapUpPlayerId) return;
         foreach (var lawyer in Lawyers.ToArray())
         {
-            if (lawyer.Target == target)
-            {
-                lawyer.ChangeRole();
-                break;
-            }
+            if (lawyer.Target?.PlayerId != playerId) continue;
+
+            lawyer.ChangeRole();
+            break;
         }
     }
     public override bool KnowsRoleOf(PlayerControl seen, bool isMeeting) => KnowTargetRole && Target != null && seen.PlayerId == Target.PlayerId;
@@ -178,16 +177,6 @@ public sealed class Lawyer : RoleBase, ILateWinner
         }
     }
 
-    public static void ChangeRoleByTarget(PlayerControl target)
-    {
-        foreach (var lawyer in Lawyers)
-        {
-            if (lawyer.Target != target) continue;
-
-            lawyer.ChangeRole();
-            break;
-        }
-    }
     public void ChangeRole()
     {
         SendRPC(Player.PlayerId);

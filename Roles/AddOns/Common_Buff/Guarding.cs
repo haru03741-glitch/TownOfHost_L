@@ -42,6 +42,7 @@ public static class Guarding
             playerIdList.Add(playerId);
         if (!GuardingList.Contains(playerId))
             GuardingList.Add(playerId);
+        CustomRoleManager.AddKillGuard(100, OnCheckMurder);
     }
 
     /// <summary>

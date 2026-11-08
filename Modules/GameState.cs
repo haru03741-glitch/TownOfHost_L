@@ -108,12 +108,15 @@ public partial class PlayerState
 
     public void SetDead()
     {
+        var wasDead = IsDead;
         IsDead = true;
         if (AmongUsClient.Instance.AmHost)
         {
             RPC.SendDeathReason(PlayerId, DeathReason);
             var host = PlayerControl.LocalPlayer;
             if (host != null && host.PlayerId == PlayerId) CompleteHostTasksOnDeath(host);
+            // 死に方によらない「誰かが死んだ」の知らせ。同じ人に 2 度呼ばれても 1 度だけ
+            if (!wasDead) CustomRoleManager.NotifyPlayerDead(PlayerId, DeathReason);
         }
     }
     /// <summary>

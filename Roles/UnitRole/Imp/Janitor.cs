@@ -35,6 +35,13 @@ public sealed class Janitor : RoleBase, IImpostor
         IsAliveAfterGodfatherDead = OptionJanitorIsAliveAfterGodfatherDead.GetBool();
         JanitorCanKill = OptionJanitorCanKill.GetBool();
         JanitorKillCooldown = OptionJanitorKillCooldown.GetFloat();
+        CustomRoleManager.OnPlayerDeadOthers.Add(OnPlayerDead);
+    }
+    /// <summary>ゴッドファーザーが死んだら (死に方によらず) 後を追うかを見る。会議中なら会議の後に死ぬ</summary>
+    private static void OnPlayerDead(byte playerId, CustomDeathReason _)
+    {
+        if (GameStates.IsMeeting) VoteSuicide(playerId);
+        else KillSuicide(playerId);
     }
     private static float CleanCooldown;
     public static bool TrackTarget;

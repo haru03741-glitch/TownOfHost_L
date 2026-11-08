@@ -88,12 +88,8 @@ public static partial class CustomRoleManager
             {
                 // イビルディバイナーのみ占いのためここで先に処理
                 if (killerRole is EvilDiviner diviner && !diviner.OnCheckMurder(info)) return false;
-                // ガーディング属性によるガード
-                if (Guarding.OnCheckMurder(info)) { }
-                // メディックの対象プレイヤー
-                else if (Medic.GuardPlayerCheckMurder(info)) { }
-                // 背徳者の対象プレイヤー
-                else if (Immoralist.GuardPlayerCheckMurder(info)) { }
+                // 役職に関わらないガード (ガーディング・メディック・背徳者など)
+                if (TryKillGuards(info)) { }
                 // ターゲットのキルチェック処理実行
                 else if (targetRole != null && info.DontRoleAbility is not true)
                 {
@@ -213,16 +209,7 @@ public static partial class CustomRoleManager
             onMurderPlayer(info);
         }
 
-        if (info.IsMeeting)
-        {
-            Lovers.VoteSuicide(attemptTarget.PlayerId);
-            Janitor.VoteSuicide(attemptTarget.PlayerId);
-        }
-        else
-        {
-            Lovers.KillSuicide(attemptTarget.PlayerId);
-            Janitor.KillSuicide(attemptTarget.PlayerId);
-        }
+        // 恋人・ジャニターの後追いは、下の SetDead の「誰かが死んだ」の知らせで動く
 
         //TargetDeadArrow
         if (!info.IsMeeting) TargetDeadArrow.UpdateDeadBody();
@@ -302,6 +289,8 @@ public static partial class CustomRoleManager
         KillBlockersOthers.Clear();
         TaskExemptionsOthers.Clear();
         EveryoneNeedsSeenNamesOthers.Clear();
+        KillGuardsOthers.Clear();
+        OnPlayerDeadOthers.Clear();
         CheckMurderInfos.Clear();
         OnMurderPlayerOthers.Clear();
         OnFixedUpdateOthers.Clear();
@@ -424,6 +413,53 @@ public static partial class CustomRoleManager
     /// 同じ役職が何人いても 1 つになるよう、捕まえる物の無いラムダか static メソッドで登録する
     /// </summary>
     public static HashSet<Func<bool>> EveryoneNeedsSeenNamesOthers = new();
+    /// <summary>
+    /// 狙われた人の役職に関わらずキルを止めるガード (ガーディング属性・メディックの守り・背徳者の守りなど)。
+    /// order の小さい順に見て、最初に true を返したガードでキルを止め、残りのガードと狙われた人の OnCheckMurderAsTarget は見ない。
+    /// 今の order: ガーディング 100・メディック 200・背徳者 300
+    /// </summary>
+    private static readonly List<(int Order, Func<MurderInfo, bool> TryGuard)> KillGuardsOthers = new();
+    /// <summary>キルのガードを登録する。同じデリゲートは 1 つにまとめるので、static メソッドで登録する</summary>
+    public static void AddKillGuard(int order, Func<MurderInfo, bool> tryGuard)
+    {
+        if (KillGuardsOthers.Exists(g => g.TryGuard == tryGuard)) return;
+        var index = KillGuardsOthers.FindIndex(g => g.Order > order);
+        KillGuardsOthers.Insert(index < 0 ? KillGuardsOthers.Count : index, (order, tryGuard));
+    }
+    /// <summary>
+    /// 誰かが死んだ時 (キル・追放・会議後の死・切断・役職の能力による死など、死に方によらず 1 人 1 回)。ホストだけで呼ぶ。
+    /// 引数は死んだ人の PlayerId と死因。PlayerState.SetDead から呼ぶ
+    /// </summary>
+    public static HashSet<Action<byte, CustomDeathReason>> OnPlayerDeadOthers = new();
+    /// <summary>
+    /// 投票で追放された人の後処理 (OnExileWrapUp の後の SetDead) の間だけ、その人の PlayerId。それ以外は byte.MaxValue。
+    /// 追放を OnExileWrapUp で扱う役職が、知らせの側で同じ死を 2 度扱わないために見る (死因が Vote でも、全員追放や処刑は追放の後処理を通らない)
+    /// </summary>
+    public static byte ExileWrapUpPlayerId { get; private set; } = byte.MaxValue;
+    public static void SetDeadByExile(byte playerId)
+    {
+        var state = PlayerState.GetByPlayerId(playerId);
+        if (state == null) return;
+        ExileWrapUpPlayerId = playerId;
+        try { state.SetDead(); }
+        finally { ExileWrapUpPlayerId = byte.MaxValue; }
+    }
+    public static void NotifyPlayerDead(byte playerId, CustomDeathReason reason)
+    {
+        if (OnPlayerDeadOthers.Count == 0) return;
+        // 中で役職が変わって登録が外れても回せるよう、写しを回す
+        foreach (var onDead in OnPlayerDeadOthers.ToArray())
+        {
+            try { onDead(playerId, reason); }
+            catch (Exception ex) { Logger.Exception(ex, "OnPlayerDeadOthers"); }
+        }
+    }
+    private static bool TryKillGuards(MurderInfo info)
+    {
+        foreach (var (_, tryGuard) in KillGuardsOthers)
+            if (tryGuard(info)) return true;
+        return false;
+    }
     public static string ApplyNameColorOthers(PlayerControl seer, PlayerControl seen, string colorCode)
     {
         foreach (var overrideColor in NameColorOthers)
@@ -443,6 +479,8 @@ public static partial class CustomRoleManager
         KillBlockersOthers.Clear();
         TaskExemptionsOthers.Clear();
         EveryoneNeedsSeenNamesOthers.Clear();
+        KillGuardsOthers.Clear();
+        OnPlayerDeadOthers.Clear();
         CheckMurderInfos.Clear();
         OnMurderPlayerOthers.Clear();
         OnFixedUpdateOthers.Clear();

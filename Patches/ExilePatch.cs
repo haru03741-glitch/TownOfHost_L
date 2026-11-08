@@ -83,7 +83,7 @@ namespace TownOfHostL
                     }
                     Sending.OnExileWrapUp(exiled.Object);
 
-                    if (CustomWinnerHolder.WinnerTeam != CustomWinner.Terrorist) PlayerState.GetByPlayerId(exiled.PlayerId).SetDead();
+                    if (CustomWinnerHolder.WinnerTeam != CustomWinner.Terrorist) CustomRoleManager.SetDeadByExile(exiled.PlayerId);
                 }
                 AntiBlackout.SendGameData();
                 Modules.Net.OutfitSync.FlushPending();
@@ -155,7 +155,6 @@ namespace TownOfHostL
                         (byte playerId, CustomDeathReason reason) = (x.Key, x.Value);
 
                         var player = Utils.GetPlayerById(playerId);
-                        var roleClass = CustomRoleManager.GetByPlayerId(playerId);
                         var requireResetCam = player?.GetCustomRole().GetRoleInfo()?.IsDesyncImpostor == true;
                         var state = PlayerState.GetByPlayerId(playerId);
                         Logger.Info($"{player.GetNameWithRole()}を{reason}で死亡させました", "AfterMeetingDeath");
@@ -166,10 +165,7 @@ namespace TownOfHostL
                             player?.SetRealKiller(player, true);
                         if (requireResetCam)
                             player?.ResetPlayerCam(1f);
-                        Executioner.ChangeRoleByTarget(playerId);
-                        Lawyer.ChangeRoleByTarget(player);
-                        if (roleClass is Jackal jackal)
-                            Jackal.CheckPromoted();
+                        // エクスキューショナー・弁護士・ジャッカルは SetDead の「誰かが死んだ」の知らせで動く
                         Elder.DeadByRevenge(playerId);
                     });
                     Main.AfterMeetingDeathPlayers.Clear();

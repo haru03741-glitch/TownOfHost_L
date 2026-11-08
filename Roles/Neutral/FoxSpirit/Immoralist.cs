@@ -38,6 +38,7 @@ public sealed class Immoralist : RoleBase, IAdditionalWinner, ISystemTypeUpdateH
         player,
         () => HasTask.ForRecompute)
     {
+        CustomRoleManager.AddKillGuard(300, GuardPlayerCheckMurder);
         CanAlsoBeExposedToFox = OptionCanAlsoBeExposedToJackal.GetBool();
         AddGuard = OptionAddGuard.GetBool();
         AddGuardTiming = (AddGuardTimingOption)OptionAddGuardTiming.GetValue();
