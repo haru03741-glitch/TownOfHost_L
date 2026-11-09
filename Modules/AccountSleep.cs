@@ -38,6 +38,15 @@ internal static class AccountSleep
         // 本編は右の窓のマスクをログインが終わってから有効にする。窓の中の絵はマスクの内側だけ描くので、
         // 幕を外したままだとログインまで右の窓 (背景・オンラインの画面のボタン) が真っ黒になる
         if (__instance.rightPanelMask) __instance.rightPanelMask.SetActive(true);
+        // 本編はログインの途中 (権限の確認が済むまで) 「オンライン」を押せなくしている。
+        // 部屋作りの通信は下の HoldTokenRefresh でログインまで待たせるので、メニューが出たらすぐ押せるようにする
+        var online = __instance.PlayOnlineButton;
+        if (online)
+        {
+            online.SetButtonEnableState(true);
+            var sprite = online.GetComponentInChildren<PlayOnlineButtonSprite>();
+            if (sprite) sprite.SetState(true);
+        }
         menu = __instance;
         asleep = true;
         sleptBeforeLogin = true;
