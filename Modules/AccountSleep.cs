@@ -34,6 +34,9 @@ internal static class AccountSleep
         var am = AccountManager.Instance;
         if (!am || !am.gameObject.activeSelf) return;
         am.gameObject.SetActive(false);
+        // 本編は右の窓のマスクをログインが終わってから有効にする。窓の中の絵はマスクの内側だけ描くので、
+        // 幕を外したままだとログインまで右の窓 (背景・オンラインの画面のボタン) が真っ黒になる
+        if (__instance.rightPanelMask) __instance.rightPanelMask.SetActive(true);
         menu = __instance;
         asleep = true;
         sleptBeforeLogin = true;
