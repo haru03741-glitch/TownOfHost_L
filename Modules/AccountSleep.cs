@@ -1,3 +1,4 @@
+using BepInEx.Unity.IL2CPP.Utils.Collections;
 using HarmonyLib;
 using TownOfHostL.Core.Modes;
 using UnityEngine;
@@ -18,7 +19,7 @@ internal static class AccountSleep
     private static bool asleep;
     private static bool sleptBeforeLogin; // 本編の幕を外したまま、ログインがまだ終わっていない
     private static bool continuingWithoutMenu; // メニューの無いまま、ログインの続きを回した
-    private static bool holdOnline; // ログインが終わるまで部屋作りを止める
+    private static bool loginFailed; // ログインに失敗した (トークン更新を待たせ続けない)
     private static MainMenuManager menu;
 
     [HarmonyPatch(typeof(MainMenuManager), nameof(MainMenuManager.Start)), HarmonyPostfix]
@@ -40,7 +41,6 @@ internal static class AccountSleep
         menu = __instance;
         asleep = true;
         sleptBeforeLogin = true;
-        holdOnline = true;
         Logger.Info("asleep until the menu finishes starting up", "AccountSleep");
     }
 
@@ -94,22 +94,28 @@ internal static class AccountSleep
 
     // ログインの途中で部屋を作る・探すと、本編のマッチメーカーのトークン更新が UserIDToken の NullReference で止まり、
     // そのプロセスでは以後ずっと部屋が作れなくなる (2026-11-08 実機で確認。アカウント表示を止めなくても起きる)。
-    // 本編では幕がこれを押させない。幕を外している間は先へ進ませず、アカウント表示を起こして幕を戻す
-    [HarmonyPatch(typeof(MainMenuManager), nameof(MainMenuManager.OpenOnlineMenu)), HarmonyPrefix]
-    private static bool HoldOnlineMenu() => !HoldOnlineUntilLogin("online menu");
-    [HarmonyPatch(typeof(MainMenuManager), nameof(MainMenuManager.OpenCreateGame)), HarmonyPrefix]
-    private static bool HoldCreateGame() => !HoldOnlineUntilLogin("create game");
-    [HarmonyPatch(typeof(CreateGameOptions), nameof(CreateGameOptions.Confirm)), HarmonyPrefix]
-    private static bool HoldConfirm() => !HoldOnlineUntilLogin("create game confirm");
-
-    private static bool HoldOnlineUntilLogin(string what)
+    // 画面は止めず、トークン更新だけをログインが終わるまで待たせる。確定の後の「接続中」がその分だけ延びる
+    [HarmonyPatch(typeof(HttpMatchmakerManager), nameof(HttpMatchmakerManager.CoRefreshTokenInternal)), HarmonyPostfix]
+    private static void HoldTokenRefresh(ref Il2CppSystem.Collections.IEnumerator __result)
     {
-        if (!holdOnline) return false;
+        if (LoginSettled()) return;
+        __result = WaitForLogin(__result).WrapToIl2Cpp();
+    }
+
+    private static System.Collections.IEnumerator WaitForLogin(Il2CppSystem.Collections.IEnumerator original)
+    {
+        float start = Time.realtimeSinceStartup;
+        Logger.Info("token refresh held until login finishes", "AccountSleep");
+        while (!LoginSettled()) yield return null;
+        Logger.Info($"token refresh resumed after {Time.realtimeSinceStartup - start:F1}s", "AccountSleep");
+        while (original.MoveNext()) yield return original.Current;
+    }
+
+    private static bool LoginSettled()
+    {
+        if (loginFailed) return true;
         var eos = EOSManager.Instance;
-        if (!eos || eos.loginFlowFinished) { holdOnline = false; return false; }
-        Logger.Info($"{what} held until login finishes", "AccountSleep");
-        Wake("online before login");
-        return true;
+        return !eos || eos.loginFlowFinished;
     }
 
     [HarmonyPatch(typeof(MainMenuManager), nameof(MainMenuManager.OpenAccountMenu)), HarmonyPrefix]
@@ -136,7 +142,7 @@ internal static class AccountSleep
         }
     }
 
-    // ログインに失敗したら、そこから先は本編の画面に任せる (ログインが終わらないまま部屋作りを止め続けない)
+    // ログインに失敗したら、そこから先は本編の画面に任せる (ログインが終わらないままトークン更新を止め続けない)
     [HarmonyPatch]
     private static class SignInFailPatches
     {
@@ -145,7 +151,7 @@ internal static class AccountSleep
         [HarmonyPrefix]
         public static void Prefix()
         {
-            holdOnline = false;
+            loginFailed = true;
             sleptBeforeLogin = false;
         }
     }
