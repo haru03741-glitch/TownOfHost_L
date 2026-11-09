@@ -18,7 +18,6 @@ internal static class AccountSleep
 {
     private static bool asleep;
     private static bool sleptBeforeLogin; // 本編の幕を外したまま、ログインがまだ終わっていない
-    private static bool continuingWithoutMenu; // メニューの無いまま、ログインの続きを回した
     private static bool loginFailed; // ログインに失敗した (トークン更新を待たせ続けない)
     private static MainMenuManager menu;
 
@@ -27,7 +26,6 @@ internal static class AccountSleep
     {
         // 前のメニューが起動処理を終える前に消えていたら、止めたままにしない
         if (asleep && !menu) Wake("previous menu gone");
-        continuingWithoutMenu = false;
         if (asleep || !Main.SleepAccountMenu.Value) return;
         var eos = EOSManager.Instance;
         if (!eos || eos.loginFlowFinished) return; // ログイン済みでメニューへ戻った時は本編のまま
@@ -76,27 +74,58 @@ internal static class AccountSleep
         catch (System.Exception e) { Logger.Warn($"wake failed: {e.Message}", "AccountSleep"); }
     }
 
+    // 本編はログイン (RunLogin) をメニューの起動処理のコルーチンの中で回すので、ログインの途中でメニューを離れると
+    // ログインごと止まり、フレンドコードもログイン完了も来ないままになる。ログインはメニューの外の EOSManager の上で回し、
+    // メニューの起動処理にはその終わりを待つだけのコルーチンを返す
+    [HarmonyPatch(typeof(EOSManager), nameof(EOSManager.RunLogin)), HarmonyPostfix]
+    private static void RunLoginOutsideMenu(EOSManager __instance, ref Il2CppSystem.Collections.IEnumerator __result)
+    {
+        var state = new LoginRun();
+        __instance.StartCoroutine(DriveLogin(__result, state).WrapToIl2Cpp());
+        __result = WaitLogin(state).WrapToIl2Cpp();
+    }
+
+    private sealed class LoginRun { public bool Done; }
+
+    private static System.Collections.IEnumerator DriveLogin(Il2CppSystem.Collections.IEnumerator original, LoginRun state)
+    {
+        try
+        {
+            while (original.MoveNext()) yield return original.Current;
+        }
+        finally { state.Done = true; }
+    }
+
+    private static System.Collections.IEnumerator WaitLogin(LoginRun state)
+    {
+        while (!state.Done) yield return null;
+    }
+
     // ログインの途中でメニューから別の画面へ移ると、本編のログインの最終段がメニューと一緒に消えた物
     // (排出ボタン・ショップ) を触って例外で止まり、フレンドコードもログイン完了も来ないまま
-    // ローカル扱いになる。メニューが無ければ排出ボタンの演出を飛ばして続き (保存待ち→フレンドコード→ショップ→完了) だけ始める
+    // ローカル扱いになる。メニューが無ければ排出ボタンの演出を飛ばして続き (保存待ち→フレンドコード→ショップ→完了) だけ始める。
+    // アカウント表示を止めていない時 (設定で切った時・メニューの起動処理より前に離れた時) も同じように止まるので、いつでも当てる
     [HarmonyPatch(typeof(EOSManager), nameof(EOSManager.BeginFinalPartsOfLoginFlow)), HarmonyPrefix]
     private static bool MenuGoneLoginFinish(EOSManager __instance)
     {
-        if (!sleptBeforeLogin || Object.FindObjectOfType<MainMenuManager>()) return true;
+        if (Object.FindObjectOfType<MainMenuManager>()) return true;
         sleptBeforeLogin = false;
-        continuingWithoutMenu = true;
         Wake("menu gone");
         Logger.Info("menu gone before login finished, continuing without it", "AccountSleep");
         __instance.StartCoroutine(__instance.WaitForStorageToSave());
         return false;
     }
 
-    // 続きの中のショップの初期化も、消えたメニューのショップなら飛ばす
+    // 続きの中のショップの初期化も、メニューが無ければ飛ばす (本編は次にメニューを開いた時に初期化し直す)。
+    // メニューのショップが消えた後に本編が StoreMenu.Instance を引くと、中身の無いショップが今の画面に作られ、
+    // その Start が中身を探して NullReference になる。初期化を飛ばす時はそれも消す (作られたフレームなので Start より先に消える)
     [HarmonyPatch(typeof(StoreMenu), nameof(StoreMenu.Initialize)), HarmonyPrefix]
     private static bool StoreGoneGuard(StoreMenu __instance)
     {
-        if (!continuingWithoutMenu || __instance) return true;
-        continuingWithoutMenu = false;
+        if (__instance && Object.FindObjectOfType<MainMenuManager>()) return true;
+        var eos = EOSManager.Instance;
+        if (__instance && (!eos || eos.loginFlowFinished)) return true;
+        if (__instance) Object.Destroy(__instance.gameObject);
         Logger.Info("store gone before login finished, skipped its setup", "AccountSleep");
         return false;
     }
