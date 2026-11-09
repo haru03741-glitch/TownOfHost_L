@@ -96,6 +96,8 @@ public static partial class AntiBlackout
     // 謝辞: 死者を見た目だけ生き返らせて頭数をそろえる方法は Endless Host Roles (Gurge44, GPL-3.0) と End K not に倣った。
     private static readonly Dictionary<int, List<PlayerControl>> filledCrew = new();
     private static readonly Dictionary<byte, (bool isDead, bool Disconnected)> deferredDead = new();
+    // デシンクの人の画面に送った身代わり (演出の後で RoleView の見え方へ戻す)
+    private static readonly Dictionary<int, (PlayerControl seer, List<PlayerControl> dummies)> desyncDummies = new();
 
     public static void SetRoleChange(PlayerControl killer = null, bool fillCrew = false)
     {
@@ -120,7 +122,11 @@ public static partial class AntiBlackout
         foreach (var pc in Main.AllPlayerControls.Where(x => !x.Data.Disconnected))
         {
             if (pc.PlayerId == PlayerControl.LocalPlayer.PlayerId) continue;
-            if (pc.IsAlive() && pc.GetCustomRole().GetRoleInfo()?.IsDesyncImpostor == true) continue;
+            // デシンクの人は、自分の画面で自分がキル役なら生存インポスターが自分で足りるので送らない。
+            // キルを持つ前の役職 (ワルキューレなど) は自分をクルーに見せ、他人はキルの対象に見せるので、
+            // その画面には生存インポスターがいない。追放の演出の締めでクルーの勝ちとみなして暗転する (2026-11-10 実機で確認)
+            bool desync = RoleView.IsDesync(pc);
+            if (pc.IsAlive() && desync && RoleView.IsKillerRole(RoleView.Living(pc, pc))) continue;
             // 身代わりのインポスターの外に、生きたキル役が既に見えている画面 (役職の能力でキル役になった本人・その仲間) には身代わりを足さない。
             // 足すとその画面の生存インポスターが増え、追放の演出の締めで試合が終わったとみなして暗転する (2026-11-09 実機で確認)。
             // 死者を幽霊のクルーにする分は送る (会議中は全員を生きているとして送るので、死んだキル役の ImpostorGhost も生存インポスターに数えられる)
@@ -142,6 +148,11 @@ public static partial class AntiBlackout
                     .Write(true)
                     .EndRpc();
                 count++;
+                if (desync && pc.IsAlive())
+                {
+                    if (!desyncDummies.TryGetValue(clientId, out var sent)) desyncDummies[clientId] = sent = (pc, new());
+                    sent.dummies.Add(dummy);
+                }
             }
             int lacking = 0;
             if (fillCrew)
@@ -190,6 +201,35 @@ public static partial class AntiBlackout
         ExiledPlayerId = -1;
     }
 
+    /// <summary>デシンクの人の画面に送った身代わりのインポスターを、見え方の表 (RoleView) どおりに戻す</summary>
+    private static void RevertDesyncDummies()
+    {
+        if (desyncDummies.Count == 0) return;
+        if (CustomWinnerHolder.WinnerTeam == CustomWinner.Default && GameStates.IsInGame)
+        {
+            foreach (var (clientId, (seer, dummies)) in desyncDummies)
+            {
+                if (seer == null || seer.Data == null || seer.Data.Disconnected) continue;
+                var sender = CustomRpcSender.Create("AntiBlackout.RevertDesyncDummies", Hazel.SendOption.Reliable);
+                sender.StartMessage(clientId);
+                int count = 0;
+                foreach (var dummy in dummies)
+                {
+                    if (dummy == null || dummy.Data == null || dummy.Data.Disconnected) continue;
+                    sender.StartRpc(dummy.NetId, RpcCalls.SetRole)
+                        .Write((ushort)RoleView.Living(dummy, seer))
+                        .Write(true)
+                        .EndRpc();
+                    count++;
+                }
+                if (count > 0) { sender.EndMessage(); sender.SendMessage(); }
+                else sender.stream.Recycle();
+                logger.Info($"デシンクの人の画面の身代わりを戻した: {seer.name} ({count} 人)");
+            }
+        }
+        desyncDummies.Clear();
+    }
+
     // 追放者を伏せて票を締めた時だけ、客の画面で生きたクルーに見えている追放者を返す
     private static PlayerControl GetExiledForFill(List<PlayerControl> impostorLike)
     {
@@ -216,6 +256,7 @@ public static partial class AntiBlackout
     // 追放の演出の締めで各クライアントが判定を終えた後に呼ぶ
     public static void RevertFilledCrew()
     {
+        RevertDesyncDummies();
         if (deferredDead.Count > 0)
         {
             foreach (var info in GameData.Instance.AllPlayers)
@@ -340,5 +381,6 @@ public static partial class AntiBlackout
         recognizeType = RecognizeType.Impostor;
         filledCrew.Clear();
         deferredDead.Clear();
+        desyncDummies.Clear();
     }
 }

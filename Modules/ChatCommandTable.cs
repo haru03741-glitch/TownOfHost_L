@@ -160,6 +160,12 @@ public static class ChatCommandTable
             Remote = c => ShowHelp(c, c.Player.PlayerId, showGeneralHelp: false),
         },
         new("/m", "/myrole") { Host = ShowMyRole, Remote = ShowMyRole },
+        // マッドマジックの変身先を選ぶ (会議で自投票した後)
+        new("/mm")
+        {
+            Host = c => (PlayerControl.LocalPlayer.GetRoleClass() as Roles.Madmate.MadMagic)?.HandleCommand(c.Args),
+            Remote = c => (c.Player.GetRoleClass() as Roles.Madmate.MadMagic)?.HandleCommand(c.Args),
+        },
         new("/t", "/template")
         {
             Usage = "CommandUsage.Template",
