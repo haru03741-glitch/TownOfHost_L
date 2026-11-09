@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -17,10 +18,12 @@ public static class SelectRoles
 
     public static void AddToAssignRoleList(List<CustomRoles> assignRoleList)
     {
-        foreach (var role in reserved.Values)
+        // 同じ役職を 2 人以上に予約した時も、その人数ぶんを一覧の先頭に置く (元の一覧の方が多ければそちらの数を保つ)
+        foreach (var group in reserved.Values.GroupBy(r => r))
         {
-            assignRoleList.Remove(role);
-            assignRoleList.Insert(0, role);
+            int had = assignRoleList.RemoveAll(r => r == group.Key);
+            for (int i = Math.Max(had, group.Count()); i > 0; i--)
+                assignRoleList.Insert(0, group.Key);
         }
     }
 
