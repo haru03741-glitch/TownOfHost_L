@@ -144,7 +144,8 @@ public static class OutfitSync
 
     static void ResendNames(PlayerControl target)
     {
-        if (Main.LastNotifyNames == null) return;
+        // ロビーの LastNotifyNames は前の試合の名前 (役職の表示入り) なので送らない。ロビーでは PlayerInfo の名前のままでよい
+        if (Main.LastNotifyNames == null || !GameStates.IsInGame) return;
         foreach (var seer in Main.AllPlayerControls)
         {
             if (seer == null || seer.AmOwner) continue;
@@ -162,9 +163,10 @@ public static class OutfitSync
         pending.Clear();
     }
 
+    // CheckShapeshift は試合の始めにしか空にならず、変身したまま試合が終わった人はロビーでも true のまま残るので、ロビーでは見ない
     static bool IsShifted(PlayerControl pc)
         => pc.CurrentOutfitType == PlayerOutfitType.Shapeshifted
-            || (Main.CheckShapeshift.TryGetValue(pc.PlayerId, out var s) && s);
+            || (GameStates.IsInGame && Main.CheckShapeshift.TryGetValue(pc.PlayerId, out var s) && s);
 
     static void WriteAndSend(PlayerControl target, NetworkedPlayerInfo data, bool refresh, List<PlayerControl> copiers)
     {

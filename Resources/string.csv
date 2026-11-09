@@ -767,6 +767,14 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "NoPet","Prohibited pet","ペット禁止",,,,
 "NoDuplicateHat","No duplicate hats","他の人と同じハット使用禁止",,,,
 "NoDuplicateSkin","No duplicate skins","他の人と同じスキン使用禁止",,,,
+"SkinControleProhibited","{0} is not allowed in this room, so it was removed.","この部屋では使えない{0}を外しました。",,,,
+"SkinControleDuplicate","{0} is the same as another player's, so it was removed.","他の人と同じ{0}を使っていたため外しました。",,,,
+"SkinControleByHost","The host removed your {0}.","ホストが{0}を外しました。",,,,
+"SkinPartHat","hat","ハット",,,,
+"SkinPartSkin","skin","スキン",,,,
+"SkinPartVisor","visor","バイザー",,,,
+"SkinPartPet","pet","ペット",,,,
+"SkinPartDelimiter",", ","、",,,,
 "FixFirstKillCooldown","Normalize First Kill Cooldown","初期スポーン時のクールダウン修正","修正首刀冷却时间","修正開場時的殺人冷卻時間","Нормализовать откат убийства в начале Игры","Normalizar Tempo de Recarga do Primeiro Abate"
 "FixFirstKillCooldownInfoLong","","最初のスポーン時のキルクールを10秒ではなく設定したキルクール秒数に変更する機能。",
 "GhostCantSeeOtherRoles","Ghost Can't See Other Roles","幽霊が他人の役職を見ることができない","幽灵不可见他人职业","幽靈不可以看見所有玩家職業",
@@ -1378,6 +1386,7 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "ModNameLobbyDisplay","Show ModName(Lobby)","Mod名ロビー表示",
 "OpenLogFolder","Open Log Folder","ログフォルダを開く"
 "IsMuteLobbyBGM","Mute Lobby BGM","ロビーBGMをミュート",
+"OnlyTohlLobbies","Find Only TOH_L Lobbies","TOH_Lの部屋だけ表示",
 "UnloadMod","Disable The Mod","Modを無効化","切换为原版","","Отключить мод",""
 "UnloadWarning","<color=#ffff00><size=200%>Warning</size></color>\n\nTo re-enable the mod, you must restart the game. Would you like to continue anyway?","<color=#ffff00><size=200%>警告</size></color>\n\nModを再び有効化するにはゲームの再起動が必要です。本当に無効化しますか？","<color=#ffff00><size=200%>警告：</size></color>\n\n切换后需要重启游戏来恢复模组，确定要切换原版吗？","","<color=#ffff00><size=200%>Внимание!</size></color>\n\nДля повторного включения мода необходимо перезапустить игру. Вы все равно хотите продолжить?",""
 "CannotUnloadDuringGame","The mod cannot be disabled during a game.","試合中はModを無効化できません","游戏中不能切换原版","","Мод нельзя отключить во время игры.",""
@@ -1386,7 +1395,6 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "Unload","DISABLE","無効化","确认","","ОТКЛЮЧИТЬ",""
 "DumpLog","Output Log","ログを出力","输出日志","","Вывести Журнал",""
 "Start","Start","開始",
-"OnlyTohlLobbies","Find Only TOH_L Lobbies","TOH_Lの部屋だけ表示",
 
 "## ヘルプテキスト"
 "CommandList","Command List:","コマンド一覧:","指令列表:","指令列表:","Список команд:","Lista de Comandos:"
@@ -6036,6 +6044,7 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "CommandUsage.SelectRoles","<ID> <role> | list | clear","ID 役職 | list | clear","","","","",""
 "CommandUsage.Start","[seconds | c]","[秒数 | c]","","","","",""
 "CommandUsage.Kick","<ID or name>","ID か名前","","","","",""
+"CommandUsage.OffSkin","<color name>","色の名前","","","","",""
 "CommandUsage.Ban","<ID or exact name>","ID か名前 (完全一致)","","","","",""
 "CommandUsage.Rename","<name>","名前","","","","",""
 "CommandUsage.Role","[role]","[役職名]","","","","",""

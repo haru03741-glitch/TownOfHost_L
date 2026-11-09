@@ -127,16 +127,15 @@ namespace TownOfHostL
         }
         public static void Postfix(PlayerControl __instance, [HarmonyArgument(0)] byte callId, [HarmonyArgument(1)] MessageReader reader)
         {
-            //switch ((RpcCalls)callId)
-            //{
-            //    case RpcCalls.SetHatStr:
-            //    case RpcCalls.SetSkinStr:
-            //    case RpcCalls.SetPetStr:
-            //    case RpcCalls.SetVisorStr:
-            //        SkinControle.ProhibitedSkinCheck(__instance);
-            //        SkinControle.DuplicateSkinCheck(__instance);
-            //        break;
-            //}
+            switch ((RpcCalls)callId)
+            {
+                case RpcCalls.SetHatStr:
+                case RpcCalls.SetSkinStr:
+                case RpcCalls.SetPetStr:
+                case RpcCalls.SetVisorStr:
+                    SkinControle.Check(__instance);
+                    break;
+            }
 
             //CustomRPC以外は処理しない
             if (callId < (byte)CustomRPC.VersionCheck) return;

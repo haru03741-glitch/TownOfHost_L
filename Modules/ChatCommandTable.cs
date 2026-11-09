@@ -109,6 +109,11 @@ public static class ChatCommandTable
         new("/mt", "/endmeeting") { Host = _ => { if (GameStates.IsMeeting) MeetingHud.Instance.RpcClose(); } },
         new("/kick") { Usage = "CommandUsage.Kick", Host = c => ChatCommands.KickCommand(c.Args, ban: false) },
         new("/ban") { Usage = "CommandUsage.Ban", Host = c => ChatCommands.KickCommand(c.Args, ban: true) },
+        new("/offhat") { Usage = "CommandUsage.OffSkin", Host = c => SkinControle.ClearCommand(c, true, false, false, false) },
+        new("/offskin") { Usage = "CommandUsage.OffSkin", Host = c => SkinControle.ClearCommand(c, false, true, false, false) },
+        new("/offvisor") { Usage = "CommandUsage.OffSkin", Host = c => SkinControle.ClearCommand(c, false, false, true, false) },
+        new("/offpet") { Usage = "CommandUsage.OffSkin", Host = c => SkinControle.ClearCommand(c, false, false, false, true) },
+        new("/offskinall") { Usage = "CommandUsage.OffSkin", Host = c => SkinControle.ClearCommand(c, true, true, true, true) },
         new("/win", "/winner")
         {
             Host = _ => Utils.SendMessageAutoSplit("Winner: " + string.Join(",", Main.winnerList.Select(b => Main.AllPlayerNames[b])), true),
