@@ -25,8 +25,9 @@
 		<Reference Include="$(BepInExCore)\Il2CppInterop.Runtime.dll" Private="false" />
 	</ItemGroup>
 
+	<Import Project="..\Deploy.targets" />
 	<Target Name="CopyPatcher" AfterTargets="Build" Condition="'$(AmongUs)' != ''">
-		<Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(AmongUs)/BepInEx/patchers/" />
+		<DeployToGame SourceFile="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(AmongUs)\BepInEx\patchers" />
 	</Target>
 
 	<Target Name="CheckBepInExCore" BeforeTargets="ResolveAssemblyReferences">

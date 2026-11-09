@@ -1,0 +1,64 @@
+<Project>
+	<!-- Among Us のフォルダへビルドした DLL を置く。
+	     起動中の Among Us は読み込んだ DLL を書き込み禁止で掴むので、普通のコピーは失敗して古い DLL が残る。
+	     ただし名前の変更は通るため、掴まれていたら旧版を <名前>.dll.old-<時刻> へ退避してから新版を置く。
+	     BepInEx は *.dll しか読まないので退避した物は読まれない。次に置く時に、掴まれていなければ消す。
+	     起動中のゲームは旧版のままなので、新版を試すには Among Us を再起動する (その旨をビルドの出力に出す)。 -->
+	<!-- 手元にある Steam 版と Epic 版の両方へ置く。-p:AmongUs で渡したフォルダに加えて、既定の場所に Among Us があればそこへも置く。
+	     別の場所に入れているなら -p:AmongUsSteam=… / -p:AmongUsEpic=… で差し替える (空にすると置かない)。 -->
+	<PropertyGroup>
+		<AmongUsSteam Condition="'$(AmongUsSteam)' == '' And Exists('C:\Program Files (x86)\Steam\steamapps\common\Among Us\BepInEx')">C:\Program Files (x86)\Steam\steamapps\common\Among Us</AmongUsSteam>
+		<AmongUsEpic Condition="'$(AmongUsEpic)' == '' And Exists('C:\Program Files\Epic Games\AmongUs\BepInEx')">C:\Program Files\Epic Games\AmongUs</AmongUsEpic>
+	</PropertyGroup>
+
+	<!-- $(AmongUs) と、既定の場所の Steam 版・Epic 版の plugins へ置く (同じフォルダは 1 回だけ)。 -->
+	<Target Name="DeployPluginToGames">
+		<ItemGroup>
+			<_GameFolder Include="$([System.IO.Path]::GetFullPath('$(AmongUs)').TrimEnd(''))" Condition="'$(AmongUs)' != ''" />
+			<_GameFolder Include="$([System.IO.Path]::GetFullPath('$(AmongUsSteam)').TrimEnd(''))" Condition="'$(AmongUsSteam)' != ''" />
+			<_GameFolder Include="$([System.IO.Path]::GetFullPath('$(AmongUsEpic)').TrimEnd(''))" Condition="'$(AmongUsEpic)' != ''" />
+			<_GameFolderUnique Include="@(_GameFolder->Distinct())" />
+		</ItemGroup>
+		<DeployToGame SourceFile="$(TargetPath)" DestinationFolder="%(_GameFolderUnique.Identity)\BepInEx\plugins" />
+	</Target>
+
+	<UsingTask TaskName="DeployToGame" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+		<ParameterGroup>
+			<SourceFile ParameterType="System.String" Required="true" />
+			<DestinationFolder ParameterType="System.String" Required="true" />
+		</ParameterGroup>
+		<Task>
+			<Using Namespace="System" />
+			<Using Namespace="System.IO" />
+			<Code Type="Fragment" Language="cs"><![CDATA[
+var name = Path.GetFileName(SourceFile);
+Directory.CreateDirectory(DestinationFolder);
+var dst = Path.Combine(DestinationFolder, name);
+
+var stillLoaded = false;
+foreach (var old in Directory.GetFiles(DestinationFolder, name + ".old-*"))
+{
+    try { File.Delete(old); }
+    catch (IOException) { stillLoaded = true; }
+    catch (UnauthorizedAccessException) { stillLoaded = true; }
+}
+
+try
+{
+    File.Copy(SourceFile, dst, true);
+    if (stillLoaded)
+        Log.LogWarning("配置: " + name + " を置き換えたが、起動中の Among Us は前に退避した旧版を使っている。新版は Among Us を再起動すると読まれる。");
+    else
+        Log.LogMessage(MessageImportance.Normal, "配置: " + dst);
+}
+catch (IOException)
+{
+    var moved = dst + ".old-" + DateTime.Now.ToString("yyyyMMddHHmmss");
+    File.Move(dst, moved);
+    File.Copy(SourceFile, dst, false);
+    Log.LogWarning("配置: " + name + " は起動中の Among Us が使っていたので、旧版を " + Path.GetFileName(moved) + " へ退避して置き換えた。起動中のゲームは旧版のまま。新版は Among Us を再起動すると読まれる。");
+}
+]]></Code>
+		</Task>
+	</UsingTask>
+</Project>

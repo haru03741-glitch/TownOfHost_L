@@ -15,7 +15,8 @@
 		<Reference Include="$(AmongUs)\BepInEx\core\BepInEx.Preloader.Core.dll" Private="false" />
 		<EmbeddedResource Include="loader.ps1" LogicalName="loader.ps1" />
 	</ItemGroup>
+	<Import Project="..\Deploy.targets" />
 	<Target Name="CopyPatcher" AfterTargets="Build" Condition="'$(AmongUs)' != ''">
-		<Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(AmongUs)/BepInEx/patchers/" />
+		<DeployToGame SourceFile="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(AmongUs)\BepInEx\patchers" />
 	</Target>
 </Project>

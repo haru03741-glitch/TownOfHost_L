@@ -43,7 +43,6 @@
 		</PackageReference>
 	</ItemGroup>
 
-	<Target Name="Copy" AfterTargets="Build" Condition="'$(AmongUs)' != ''">
-		<Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(AmongUs)/BepInEx/plugins/" Condition="'$(Configuration)' == 'Debug'" />
-	</Target>
+	<Import Project="tools\Deploy.targets" />
+	<Target Name="Copy" AfterTargets="Build" Condition="'$(AmongUs)' != '' And '$(Configuration)' == 'Debug'" DependsOnTargets="DeployPluginToGames" />
 </Project>
