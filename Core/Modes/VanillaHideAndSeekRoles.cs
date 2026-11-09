@@ -196,9 +196,13 @@ public static class VanillaHideAndSeekRoles
         if (pendingResult == null) return;
         // 前の試合の結果を、別の部屋や次のロビーで出し直さない
         if (UnityEngine.Time.realtimeSinceStartup > resultUntil) { pendingResult = null; return; }
-        // ホストは自分のチャット欄に出すだけ (送らない)
-        if (HudManager.InstanceExists && PlayerControl.LocalPlayer)
-            HudManager.Instance.Chat.AddChat(PlayerControl.LocalPlayer, pendingResult);
+        // ホストは自分のチャット欄に出すだけ (送らない)。ロビーに入った直後に足すと本編がチャット欄を作り直して消えるので、客と同じだけ遅らせる
+        var hostText = pendingResult;
+        _ = new LateTask(() =>
+        {
+            if (HudManager.InstanceExists && PlayerControl.LocalPlayer)
+                HudManager.Instance.Chat.AddChat(PlayerControl.LocalPlayer, hostText);
+        }, AnnounceDelay, "VanillaHideAndSeekRoles.AnnounceHost", outlivesSession: true);
     }
 
     private static void OnPlayerJoined(int clientId)
