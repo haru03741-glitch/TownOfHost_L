@@ -672,6 +672,9 @@ public sealed class Balancer : HamoRoleBase, ISelfVoter
 
                 _ = new LateTask(() => Utils.AllPlayerKillFlash(), 1f, "BMkillf", true);
 
+                // 名前は会議を開く前に戻す (開いた後に戻すと、会議用に送った名前を素の名前で上書きする)
+                PlayerCatch.GetPlayerById(Target1)?.RpcSetName(Main.AllPlayerNames[Target1]);
+                PlayerCatch.GetPlayerById(Target2)?.RpcSetName(Main.AllPlayerNames[Target2]);
                 MeetingTargets = new[] { Target1, Target2 };
                 ReportDeadBodyPatch.ExReportDeadBody(reporter, oniku.Data, false, "Balancer.meeting", UtilsRoleText.GetRoleColorCode(CustomRoles.Balancer));
 
@@ -689,13 +692,7 @@ public sealed class Balancer : HamoRoleBase, ISelfVoter
 
             {
 
-                //名前を戻す
-
                 UtilsGameLog.AddGameLog("Meeting", string.Format(GetString("BalancerMeetingInfo"), UtilsName.GetPlayerColor(PlayerCatch.GetPlayerById(Target1), true), UtilsName.GetPlayerColor(PlayerCatch.GetPlayerById(Target2), true)).Split("\n")[0] + "</color>");
-
-                PlayerCatch.GetPlayerById(Target1)?.RpcSetName(Main.AllPlayerNames[Target1]);
-
-                PlayerCatch.GetPlayerById(Target2)?.RpcSetName(Main.AllPlayerNames[Target2]);
 
             }, 2.8f);
 

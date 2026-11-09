@@ -109,9 +109,9 @@ namespace TownOfHostL.Roles.Impostor
                 if (target.MyPhysics.Animations.IsPlayingAnyLadderAnimation())
                 {
                     // プレイヤーが梯子を使用している場合の特別なキル処理
+                    PlayerState.GetByPlayerId(target.PlayerId).DeathReason = CustomDeathReason.Bite;
                     target.SetRealKiller(vampire);
                     target.RpcMurderPlayer(target);
-                    PlayerState.GetByPlayerId(target.PlayerId).DeathReason = CustomDeathReason.Bite;
                     Logger.Info($"Vampireに噛まれている{target.name}は梯子を使用中にキルされました。", "Vampire.KillBitten");
                 }
                 else

@@ -44,7 +44,7 @@ public sealed class Rainbow : RoleBase
 
     public override void Add()
     {
-        int chance = IRandom.Instance.Next(0, 17);
+        int chance = IRandom.Instance.Next(0, RainbowColors.Length);
         colorchange = chance;
         Player.SetNamePlate("nameplate_flagRainbow");
         CustomRpcSender.Create(name: $"RpcSetNamePlate({Player.Data.PlayerName})").AutoStartRpc(Player.NetId, (byte)RpcCalls.SetNamePlateStr)
@@ -60,7 +60,10 @@ public sealed class Rainbow : RoleBase
     {
         if (!AmongUsClient.Instance.AmHost || !GameStates.IsInTask || !player.IsAlive()) return;
 
-        colorchange %= 18;
+        // カモフラ中は送らない (送るとカモフラの色を上書きし、誰が虹色か分かる)。明けたらすぐ送り直す
+        if (Camouflage.IsCamouflage) { lastSentColor = -1; return; }
+
+        colorchange %= RainbowColors.Length;
         // 色が変わった時だけ送る (毎フレーム送ると同種 Reliable の連射で公式鯖に切断される)
         int color = RainbowColors[(int)colorchange];
         if (color != lastSentColor)

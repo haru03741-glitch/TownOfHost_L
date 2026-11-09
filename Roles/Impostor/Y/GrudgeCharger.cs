@@ -101,6 +101,12 @@ public sealed class GrudgeCharger : RoleBase, IImpostor
     }
     public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
     {
+        ClearTarget();
+    }
+    // 狙いを外す時は矢印も消す (残すと会議の後やキルの後も矢印の計算が回り続ける)
+    private void ClearTarget()
+    {
+        if (KillWaitPlayer != null) TargetArrow.Remove(Player.PlayerId, KillWaitPlayer.PlayerId);
         KillWaitPlayer = null;
     }
     public override void OnFixedUpdate(PlayerControl player)
@@ -119,7 +125,7 @@ public sealed class GrudgeCharger : RoleBase, IImpostor
         var KillRange = GameManager.Instance.LogicOptions.GetKillDistance();
         if (targetDistance <= KillRange && Player.CanMove && target.CanMove)
         {
-            KillWaitPlayer = null;
+            ClearTarget();
             if (CustomRoleManager.OnCheckMurder(Player, target, true))
             {
                 killLimit--;
@@ -137,10 +143,7 @@ public sealed class GrudgeCharger : RoleBase, IImpostor
 
     public override void AfterMeetingTasks()
     {
-        if (KillWaitPlayer != null)
-        {
-            TargetArrow.Remove(Player.PlayerId, KillWaitPlayer.PlayerId);
-        }
+        ClearTarget();
         Player.MarkDirtySettings();
         Player.RpcResetAbilityCooldown();
     }

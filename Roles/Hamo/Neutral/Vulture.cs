@@ -469,7 +469,8 @@ public sealed class Vulture : HamoRoleBase, IKillFlashSeeable, IAdditionalWinner
 
 
 
-        for (byte i = 0; i < Viperkilledplayers.Count; i++)
+        // キーは死んだ人の PlayerId なので、0 からの添字ではなくキーで回す
+        foreach (byte i in Viperkilledplayers.Keys.ToArray())
 
         {
 

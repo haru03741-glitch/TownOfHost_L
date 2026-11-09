@@ -35,6 +35,8 @@ public sealed class EvilDyer : RoleBase, IImpostor
         IsColorCamouflage = false;
     }
     public static bool IsColorCamouflage = false;
+    // 染めの世代。続けてキルした時や会議で戻した後に、古い戻しの予約が走らないようにする
+    private static int dyeId;
     // 0 = 赤
     private static NetworkedPlayerInfo.PlayerOutfit CamouflageRedOutfit = new NetworkedPlayerInfo.PlayerOutfit().Set("", 0, "", "", "", "");
 
@@ -58,9 +60,11 @@ public sealed class EvilDyer : RoleBase, IImpostor
 
     public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
     {
+        dyeId++;
         if (IsColorCamouflage && AmongUsClient.Instance.AmHost)
         {
             Main.AllPlayerControls.Do(pc => Camouflage.RpcSetSkin(false, pc));
+            IsColorCamouflage = false;
             Utils.NotifyRoles(NoCache: true);
         }
     }
@@ -75,8 +79,10 @@ public sealed class EvilDyer : RoleBase, IImpostor
             IsColorCamouflage = true;
             Utils.NotifyRoles(NoCache: true);
 
+            int id = ++dyeId;
             _ = new LateTask(() =>
             {
+                if (id != dyeId) return;
                 Main.AllPlayerControls.Do(pc => Camouflage.RpcSetSkin(false, pc));
                 IsColorCamouflage = false;
                 Utils.NotifyRoles(NoCache: true);
