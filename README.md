@@ -68,7 +68,7 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
 - [TownOfPlus](https://github.com/tugaru1975/TownOfPlus)
   - MODクライアント視点霊界での視界ズーム
 - [SuperNewRoles](https://github.com/ykundesu/SuperNewRoles)
-  - 猫又系役職の道連れ・純愛者・神・自爆魔・マッドジェスター/マッドてるてる・パン屋レアコメント・にじいろスター/スター・ロビーBGMのミュート・波動砲
+  - 猫又系役職の道連れ・純愛者・神・自爆魔・マッドジェスター/マッドてるてる・パン屋レアコメント・にじいろスター/スター・ロビーBGMのミュート・波動砲・公式サーバーへの Mod GUID の登録 (オンラインの時だけ付け、ローカルの部屋では外す)
 - [TheOtherRoles](https://github.com/TheOtherRolesAU/TheOtherRoles)
   - サングラス・弁護士・VIP・タイブレーカー・ゲッサー・チェインシフター・ゴッドファーザー＆ジャニター/マフィア・ジャッカルサイドキック
   - バウンティハンター・ヴァンパイア・魔女・ベイト・メイヤー・シェリフ・スニッチ・ライター・シーア・ジャッカルのアイデア、Mod の作り方
@@ -122,6 +122,7 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
   - 名前を付けた設定の保存と設定のコード (プリセットの頁・プリセットのファイル・受け渡しのフォルダ)
   - チャットの入力欄の拡張 (全部の文字・補完・貼り付け・前の文の呼び戻し)・耳打ち・チャットの荒らし対策
   - 起動直後のメニューでアカウント表示を止める処理と、ログインの途中でメニューを離れた時の続き
+  - 「ゲームを探す」画面で Mod GUID を付ける処理と、中身の無い mod の検索条件を外す処理 (SuperNewRoles の Mod GUID の登録を More Roles Plus が広げた物)
 - [Town of Host: Enhanced](https://github.com/EnhancedNetwork/TownofHost-Enhanced)
   - 設定画面の検索欄 (Drakos のコードを Endless Host Roles と More Roles Plus 経由で参照)
 - [MoreGamemodes](https://github.com/Rabek009/MoreGamemodes)
