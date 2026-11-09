@@ -40,7 +40,6 @@ public static partial class CustomWinnerHolder
     public static bool ResetAndSetAndChWinner(CustomWinner winner, byte playerId, bool AddWin = true, CustomRoles hantrole = CustomRoles.NotAssigned)
     {
         GameStates.CalledMeeting = false;
-        if (WinnerTeam == CustomWinner.Default) WinPriority = -1;
         var priority = SoloWinOption.AllData.TryGetValue(hantrole is CustomRoles.NotAssigned ? (CustomRoles)winner : hantrole, out var data)
             ? data.OptionWin.GetInt() : 0;
         if (WinPriority < priority)

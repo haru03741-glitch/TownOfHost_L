@@ -34,6 +34,8 @@ namespace TownOfHostL
         public static void Reset()
         {
             WinnerTeam = CustomWinner.Default;
+            // 勝者を決め直すたびに優先度も戻す (前の試合や前の勝者の優先度で、単独勝利が追加勝利に化けないように)
+            WinPriority = -1;
             AdditionalWinnerRoles = new();
             WinnerRoles = new();
             WinnerIds = new();
