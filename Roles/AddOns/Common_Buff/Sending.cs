@@ -54,7 +54,7 @@ public static class Sending
     {
         if (ExiledPlayer == null) return string.Empty;
 
-        var ExiledPlayerName = ExiledPlayer.Data.PlayerName;
+        var ExiledPlayerName = ExiledPlayer.GetRealName(isMeeting: true);
         if (ExiledPlayer.Is(CustomRoleTypes.Impostor))
             return ColorString(RoleColor, string.Format(GetString("isImpostor"), ExiledPlayerName));
         else

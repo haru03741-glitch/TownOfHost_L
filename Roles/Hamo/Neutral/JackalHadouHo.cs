@@ -1763,7 +1763,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
             var skTarget = GetPlayerById(skCandidateId);
 
-            string tName = skTarget != null ? skTarget.Data.PlayerName : "???";
+            string tName = skTarget != null ? skTarget.GetRealName() : "???";
 
             if (!SkCanApproach)
 

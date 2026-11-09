@@ -805,7 +805,7 @@ public sealed class VillageChief : HamoRoleBase, IKiller, ISelfVoter
 
             var cand = GetPlayerById(NextAppointCandidate);
 
-            string name = cand != null ? cand.Data.PlayerName : "???";
+            string name = cand != null ? cand.GetRealName() : "???";
 
             if (!CanApproach)
 

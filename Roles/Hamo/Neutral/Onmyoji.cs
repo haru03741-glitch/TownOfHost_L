@@ -1096,7 +1096,7 @@ public sealed class Onmyoji : HamoRoleBase, IKiller, ISelfVoter
 
             var target = GetPlayerById(NextShikigamiCandidate);
 
-            string name = target != null ? target.Data.PlayerName : "???";
+            string name = target != null ? target.GetRealName() : "???";
 
             if (!SkCanApproach)
 
