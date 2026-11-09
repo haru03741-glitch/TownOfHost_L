@@ -88,7 +88,10 @@ public static class GameLogMark
         if (Offset < 0) return false;
         var folder = Utils.GetLogFolder();
         string t = DateTime.Now.ToString("yyyy-MM-dd_HH.mm.ss");
-        string path = $"{folder.FullName}/TownOfHost-v{Main.PluginVersion}-{t}-game{SessionId}.log";
+        string stem = $"{folder.FullName}/TownOfHost-v{Main.PluginVersion}-{t}-game{SessionId}";
+        // 同じ秒に続けて打つと名前が重なり、CreateNew が IOException になるので番号を足す
+        string path = $"{stem}.log";
+        for (int n = 2; File.Exists(path); n++) path = $"{stem}-{n}.log";
         string header =
             $"# TownOfHost_L v{Main.PluginVersion} ({ThisAssembly.Git.Branch}@{ThisAssembly.Git.Commit})\n" +
             $"# 試合 #{SessionId} の開始 ({StartedAt:yyyy-MM-dd HH:mm:ss}) から {DateTime.Now:HH:mm:ss} まで\n";
@@ -118,8 +121,16 @@ public static class DevCommands
     {
         if (c.Arg(1) is "game" or "g")
         {
-            if (!GameLogMark.Dump()) Reply(c, "まだ試合をしていないので、切り出せるログがありません");
-            else Reply(c, $"試合 #{GameLogMark.SessionId} のログを保存しました");
+            try
+            {
+                if (!GameLogMark.Dump()) Reply(c, "まだ試合をしていないので、切り出せるログがありません");
+                else Reply(c, $"試合 #{GameLogMark.SessionId} のログを保存しました");
+            }
+            catch (Exception ex)
+            {
+                Logger.Exception(ex, "DevCommands");
+                Reply(c, $"ログの保存に失敗しました: {ex.Message}");
+            }
             return;
         }
         Utils.DumpLog();
