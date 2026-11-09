@@ -32,6 +32,9 @@ public static class ClientEffects
     static readonly Dictionary<uint, List<Renderer>> dummyRenderers = new();
     // 出た直後は見た目がまだ組み上がっていないことがあるので、初めの間は取り直す
     static readonly Dictionary<uint, float> dummyFoundAt = new();
+    // 隠すよう言われた時刻。この間に一度も見つからない netId (もう消えた物) は捨てる
+    static readonly Dictionary<uint, float> dummyAddedAt = new();
+    const float DummyForgetAfter = 10f;
     const float DummyRecollectFor = 2f;
     static readonly List<Func<bool>> running = new();
     static readonly List<Func<bool>> runningHud = new();
@@ -100,6 +103,7 @@ public static class ClientEffects
         if (!CanSend) return false;
         Send(Kind.HideDummy, w => w.WritePacked(netId));
         hiddenDummies.Add(netId);
+        dummyAddedAt[netId] = Time.time;
         nextHideAt = 0f;
         return true;
     }
@@ -507,7 +511,11 @@ public static class ClientEffects
             switch ((Kind)reader.ReadByte())
             {
                 case Kind.HideDummy:
-                    hiddenDummies.Add(reader.ReadPackedUInt32());
+                    {
+                        uint hideId = reader.ReadPackedUInt32();
+                        hiddenDummies.Add(hideId);
+                        dummyAddedAt[hideId] = Time.time;
+                    }
                     nextHideAt = 0f;
                     break;
                 case Kind.NovaGuide:
@@ -638,7 +646,7 @@ public static class ClientEffects
         if (stains.Count > 0) UpdateStains();
         if (GameStates.IsLobby)
         {
-            if (hiddenDummies.Count > 0) { hiddenDummies.Clear(); dummyRenderers.Clear(); dummyFoundAt.Clear(); }
+            if (hiddenDummies.Count > 0) { hiddenDummies.Clear(); dummyRenderers.Clear(); dummyFoundAt.Clear(); dummyAddedAt.Clear(); }
             if (jumboSent || jumbos.Count > 0 || lastDeathFx.Count > 0)
             {
                 jumboSent = false;
@@ -653,18 +661,42 @@ public static class ClientEffects
         {
             nextHideAt = Time.time + 0.1f;
             nextHideAt = Time.time + 0.25f;
+            List<uint> gone = null;
             foreach (var netId in hiddenDummies)
             {
+                bool found = dummyFoundAt.TryGetValue(netId, out var foundAt);
                 if (!dummyRenderers.TryGetValue(netId, out var renderers) || renderers == null
-                    || (dummyFoundAt.TryGetValue(netId, out var foundAt) && Time.time - foundAt < DummyRecollectFor))
+                    || (found && Time.time - foundAt < DummyRecollectFor))
                 {
                     // 名前の絵だけでなく体も消す (波動砲の CNO は体が見える)
                     var dummy = AmongUsClient.Instance.FindObjectByNetId<PlayerControl>(netId);
-                    if (dummy == null) continue;
+                    if (dummy == null)
+                    {
+                        // 見つけた後に消えた物と、いつまでも出てこない物は覚えておかない (撃つたびに netId が増えるので)
+                        if (found || (dummyAddedAt.TryGetValue(netId, out var addedAt) && Time.time - addedAt > DummyForgetAfter)) (gone ??= new()).Add(netId);
+                        continue;
+                    }
                     dummyRenderers[netId] = renderers = new List<Renderer>(dummy.GetComponentsInChildren<Renderer>(true));
                     dummyFoundAt.TryAdd(netId, Time.time);
                 }
-                foreach (var r in renderers) if (r != null && r.enabled) r.enabled = false;
+                bool alive = false;
+                foreach (var r in renderers)
+                {
+                    if (r == null) continue;
+                    alive = true;
+                    if (r.enabled) r.enabled = false;
+                }
+                if (!alive) (gone ??= new()).Add(netId);
+            }
+            if (gone != null)
+            {
+                foreach (var netId in gone)
+                {
+                    hiddenDummies.Remove(netId);
+                    dummyRenderers.Remove(netId);
+                    dummyFoundAt.Remove(netId);
+                    dummyAddedAt.Remove(netId);
+                }
             }
         }
         if (!GameStates.IsInGame)

@@ -75,9 +75,10 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
     static OptionItem OptionSelfDestructOnMiss;
     static bool SelfDestructOnMiss;
     static OptionItem OptionKillImpostor;
+    static OptionItem OptionBeamWarning;
     static bool KillImpostor;
 
-    enum OptionName { HadouHoChargeTime, HadouHoSelfDestruct, HadouHoKillImpostor, HadouHoBeamTime }
+    enum OptionName { HadouHoChargeTime, HadouHoSelfDestruct, HadouHoKillImpostor, HadouHoBeamTime, HadouHoBeamWarning }
 
     static void SetUpOptionItem()
     {
@@ -87,6 +88,7 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
         OptionBeamTime = FloatOptionItem.Create(RoleInfo, OptionName.HadouHoBeamTime, new(0.5f, 10f, 0.5f), 3f, false).SetValueFormat(OptionFormat.Seconds);
         OptionSelfDestructOnMiss = BooleanOptionItem.Create(RoleInfo, OptionName.HadouHoSelfDestruct, false, false);
         OptionKillImpostor = BooleanOptionItem.Create(RoleInfo, OptionName.HadouHoKillImpostor, false, false);
+        OptionBeamWarning = BooleanOptionItem.Create(RoleInfo, OptionName.HadouHoBeamWarning, false, false);
     }
 
     public override void Add()
@@ -154,7 +156,7 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
         Charging = true;
         chargeTimer = 0f;
         TownOfHostL.Modules.ClientEffects.Charge(Player, ChargeTime, new Color(1f, 0.55f, 0.2f));
-        beam?.BeginCharge(HadouHoBeam.SmallWarningSize);
+        beam?.BeginCharge(OptionBeamWarning.GetBool() ? HadouHoBeam.SmallWarningSize : 0);
         HamoSpeedTable.Instance[Player.PlayerId] = Main.MinSpeed;
         Player.MarkDirtySettings();
         Utils.AllPlayerKillFlash();

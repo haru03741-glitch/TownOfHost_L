@@ -232,6 +232,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
     static bool SelfDestructOnMiss;
 
     static OptionItem OptionKillJackal;
+    static OptionItem OptionBeamWarning;
 
     static bool KillJackal;
 
@@ -278,6 +279,8 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
         JackalHadouHoSelfDestruct,
 
         JackalHadouHoKillJackal,
+
+        JackalHadouHoBeamWarning,
 
         JackalHadouHoSidekickCooldown,
 
@@ -346,6 +349,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
         OptionSelfDestructOnMiss = BooleanOptionItem.Create(RoleInfo, OptionName.JackalHadouHoSelfDestruct, false, false);
 
         OptionKillJackal = BooleanOptionItem.Create(RoleInfo, OptionName.JackalHadouHoKillJackal, false, false);
+        OptionBeamWarning = BooleanOptionItem.Create(RoleInfo, OptionName.JackalHadouHoBeamWarning, false, false);
 
         OptionCanVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, true, false);
 
@@ -821,7 +825,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
             IsSuperCharging = true;
             superChargeTimer = 0f;
-            beam?.BeginCharge(HadouHoBeam.SuperSize);
+            beam?.BeginCharge(OptionBeamWarning.GetBool() ? HadouHoBeam.SuperSize : 0);
 
             Utils.AllPlayerKillFlash();
 
@@ -835,7 +839,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
             IsCharging = true;
             chargeTimer = 0f;
-            beam?.BeginCharge(HadouHoBeam.NormalSize);
+            beam?.BeginCharge(OptionBeamWarning.GetBool() ? HadouHoBeam.NormalSize : 0);
             Utils.AllPlayerKillFlash();
 
         }

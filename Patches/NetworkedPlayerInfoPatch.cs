@@ -16,10 +16,10 @@ class GameDataSerializePatch
 
     public static bool Prefix(NetworkedPlayerInfo __instance, ref bool __result)
     {
-        if (AmongUsClient.Instance == null || !GameStates.IsInGame)
-        {
-            __result = true;
-            return true;
+        if (AmongUsClient.Instance == null || !GameStates.IsInGame)
+        {
+            __result = true;
+            return true;
         }
         // CNO の絵を名前に載せて送る時は、その名前のまま送る
         if (Core.CustomNetObject.SerializingSprite) return true;

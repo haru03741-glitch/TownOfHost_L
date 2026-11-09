@@ -56,6 +56,7 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
     static float ChargeTime;
     static OptionItem OptionShotLimit;
     static OptionItem OptionSelfDestructOnMiss;
+    static OptionItem OptionBeamWarning;
     static bool SelfDestructOnMiss;
     static OptionItem OptionBeamColorMode;
     static int BeamColorModeValue;
@@ -92,6 +93,7 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
         SheriffHadouHoBeamColorMode,
         SheriffHadouHoBeamUnlockTask,
         SheriffHadouHoSelfDestruct,
+        SheriffHadouHoBeamWarning,
     }
 
     static void SetupOptionItem()
@@ -104,6 +106,8 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
             new(1, 15, 1), 3, false).SetValueFormat(OptionFormat.Times);
         OptionSelfDestructOnMiss = BooleanOptionItem.Create(RoleInfo,
             OptionName.SheriffHadouHoSelfDestruct, true, false);
+        OptionBeamWarning = BooleanOptionItem.Create(RoleInfo,
+            OptionName.SheriffHadouHoBeamWarning, false, false);
         OptionBeamColorMode = StringOptionItem.Create(RoleInfo,
             OptionName.SheriffHadouHoBeamColorMode,
             new string[] { "Cyan", "Yellow" }, 1, false);
@@ -231,7 +235,7 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
         Player.MarkDirtySettings();
         Utils.AllPlayerKillFlash();
         Player.SyncSettings();
-        beam?.BeginCharge(HadouHoBeam.NormalSize);
+        beam?.BeginCharge(OptionBeamWarning.GetBool() ? HadouHoBeam.NormalSize : 0);
         _prevCharging = true;
         _prevBeamMark = false;
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true);

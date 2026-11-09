@@ -76,6 +76,8 @@ public sealed class CustomNetObject
     private static float lastMeetingAt = float.NegativeInfinity;
     private static float nextSpawnAt;
     private static float nextSpritePacketAt;
+    // 会議中 (追放の演出を含む) は見た目の包みを送らない。名前を戻す側の PlayerInfo が会議中は送られず、絵の名前がホストに残るため
+    private static bool inMeeting;
 
     private State state = State.Waiting;
     private PlayerControl pc;
@@ -200,7 +202,8 @@ public sealed class CustomNetObject
     {
         float now = Time.realtimeSinceStartup;
         // CNO が 1 体も無い会議でも数えておく (会議の後に作った CNO を、明けて 10 秒の間に出さないため)
-        if (GameSession.Current != null && (MeetingHud.Instance || ExileController.Instance)) lastMeetingAt = now;
+        inMeeting = MeetingHud.Instance || ExileController.Instance;
+        if (GameSession.Current != null && inMeeting) lastMeetingAt = now;
         if (all.Count == 0) return;
         var client = AmongUsClient.Instance;
         if (!client || !client.AmHost || GameSession.Current == null || !PlayerControl.LocalPlayer) return;
@@ -242,14 +245,14 @@ public sealed class CustomNetObject
                 if (state == State.Spawned) SendVisibility(now);
                 else if (state == State.Visible)
                 {
-                    if (now < nextSpritePacketAt) return;
+                    if (now < nextSpritePacketAt || inMeeting) return;
                     SendSprite(now);
                 }
                 else Resnap(now);
                 return;
             case State.Live:
                 if (!pc) { Despawn(); return; }
-                if (pendingSprite != null && now >= nextSpritePacketAt) { SendSprite(now); pendingSprite = null; }
+                if (pendingSprite != null && now >= nextSpritePacketAt && !inMeeting) { SendSprite(now); pendingSprite = null; }
                 UpdatePosition(now);
                 return;
         }
@@ -325,7 +328,7 @@ public sealed class CustomNetObject
             nextId = nextId <= MinPlayerId ? MaxPlayerId : (byte)(nextId - 1);
             if (usedIds.Add(candidate)) return candidate;
         }
-        // 55 体が同時に出ていることは無いはずだが、出ていたら重ねて使う (見た目が混ざるだけ)
+        // 54 体が同時に出ていることは無いはずだが、出ていたら重ねて使う (見た目が混ざるだけ)
         Log.Error(Tag, "CNO の ID が足りません");
         return nextId;
     }

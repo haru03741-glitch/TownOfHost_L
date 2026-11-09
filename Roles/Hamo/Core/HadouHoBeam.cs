@@ -7,7 +7,7 @@ namespace TownOfHostL.Modules;
 
 /// <summary>
 /// 波動砲系 (波動砲・シェリフ波動砲・ジャッカル波動砲) のためとビームを、CNO の名前の絵で描く。
-/// 一発ごとに 2 体を出す: 撃ち手の前に置く★のゲートと、ゲートの前端から伸びる線 (発射の 1 秒前から ⚠ の予告、撃つとビーム)。
+/// 一発ごとに 2 体を出す: 撃ち手の前に置く★のゲートと、ゲートの中心から伸びる線 (発射の 1 秒前から ⚠ の予告、撃つとビーム)。
 /// 撃ち終わり・会議・死亡で消す。
 ///
 /// 撃つ向きは、ため始めまでにホストへ届いた位置の左右の動きで決め、ための間は変えない。客の体の向き (FlipX) は
@@ -23,7 +23,7 @@ namespace TownOfHostL.Modules;
 /// </summary>
 public sealed class HadouHoBeam
 {
-    private const float GateForward = 1.5f, GateUp = 0.3f, GateRadius = 0.5f;
+    private const float GateForward = 1.5f, GateUp = 0.3f;
     private const string GateSprite = "<size=24><color=#ff7a00>★</color></size>";
     private const byte BodyColor = 4; // オレンジ (ゲートの色)
     /// <summary>ふつうのビームの太さ (太さ 2 × 30)。</summary>
@@ -62,6 +62,9 @@ public sealed class HadouHoBeam
     private int warningSize;
     private uint hiddenGate, hiddenLine;
     private float chargeStartedAt;
+    // 途中で消えた CNO を出し直すのは、この間隔を空けてから (消える原因が続く時に spawn を繰り返さない)
+    private const float RecreateGap = 0.5f;
+    private float nextRecreateAt;
     // 今の向きで一番進んだ x と、前のフレームの位置
     private float extremeX;
     private Vector2 lastPos;
@@ -94,6 +97,12 @@ public sealed class HadouHoBeam
     public void TrackDirection()
     {
         if (owner == null) return;
+        // ホスト自身の向きは手元の体の向きがそのまま本人の向き
+        if (owner.AmOwner)
+        {
+            if (owner.cosmetics != null) facingLeft = owner.cosmetics.FlipX;
+            return;
+        }
         var pos = owner.GetTruePosition();
         if (!tracking || (pos - lastPos).sqrMagnitude > JumpDistance * JumpDistance)
         {
@@ -128,7 +137,8 @@ public sealed class HadouHoBeam
     /// </summary>
     public bool WaitForDirection(Action startCharge)
     {
-        if (owner == null || !BackToWall()) return false;
+        // ホスト自身は手元の向きが本人の向きなので待たせない
+        if (owner == null || owner.AmOwner || !BackToWall()) return false;
         pendingStart = startCharge;
         pendingUntil = Time.realtimeSinceStartup + DirectionCheckTime;
         return true;
@@ -155,7 +165,7 @@ public sealed class HadouHoBeam
         return false;
     }
 
-    /// <summary>ためを始める。<see cref="FacingLeft"/> の側にゲートを出し、撃ち終わるまで向きを変えない。</summary>
+    /// <summary>ためを始める (<paramref name="warningSize"/> が 0 なら撃つ前の予告を出さない)。<see cref="FacingLeft"/> の側にゲートを出し、撃ち終わるまで向きを変えない。</summary>
     public void BeginCharge(int warningSize)
     {
         End();
@@ -175,17 +185,21 @@ public sealed class HadouHoBeam
     public void Charging(float remaining)
     {
         if (gate == null || owner == null) return;
-        if (gate.IsGone) gate = Cno.Create(GateSprite, GatePosition(), BodyColor);
-        if (line == null || line.IsGone) line = Cno.Create(warned ? WarningSprite() : "", LinePosition(), BodyColor);
-        if (gate == null || line == null) return;
-        if (!warned && remaining <= WarningLead)
+        if ((gate.IsGone || line == null || line.IsGone) && Time.realtimeSinceStartup >= nextRecreateAt)
+        {
+            nextRecreateAt = Time.realtimeSinceStartup + RecreateGap;
+            if (gate.IsGone) gate = Cno.Create(GateSprite, GatePosition(), BodyColor);
+            if (line == null || line.IsGone) line = Cno.Create(warned ? WarningSprite() : "", LinePosition(), BodyColor);
+        }
+        if (gate == null || line == null || gate.IsGone || line.IsGone) return;
+        if (!warned && warningSize > 0 && remaining <= WarningLead)
         {
             warned = true;
             line.ChangeSprite(WarningSprite());
         }
     }
 
-    /// <summary>ゲートの前端からビームを伸ばす。<paramref name="colorHex"/> は "#RRGGBB"、<paramref name="size"/> は太さ。</summary>
+    /// <summary>ゲートからビームを伸ばす。<paramref name="colorHex"/> は "#RRGGBB"、<paramref name="size"/> は太さ。</summary>
     public void Fire(string colorHex, int size)
     {
         if (gate == null || line == null || owner == null) return;
@@ -237,5 +251,6 @@ public sealed class HadouHoBeam
     private Vector2 GatePosition()
         => (Vector2)owner.transform.position + new Vector2(Direction.x * GateForward, GateUp);
 
-    private Vector2 LinePosition() => GatePosition() + Direction * GateRadius;
+    // 線はゲートの中心から伸ばす (End K not はゲートの前端からだが、それだと線の CNO の体が★からはみ出して見える)
+    private Vector2 LinePosition() => GatePosition();
 }
