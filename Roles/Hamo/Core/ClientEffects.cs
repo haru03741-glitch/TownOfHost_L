@@ -29,7 +29,10 @@ public static class ClientEffects
     public static bool SkipNovaDummies => NovaOn && Options.ClientEffectsSkipDummy.GetBool() && EveryoneHasMod();
 
     static readonly HashSet<uint> hiddenDummies = new();
-    static readonly Dictionary<uint, List<MeshRenderer>> dummyRenderers = new();
+    static readonly Dictionary<uint, List<Renderer>> dummyRenderers = new();
+    // 出た直後は見た目がまだ組み上がっていないことがあるので、初めの間は取り直す
+    static readonly Dictionary<uint, float> dummyFoundAt = new();
+    const float DummyRecollectFor = 2f;
     static readonly List<Func<bool>> running = new();
     static readonly List<Func<bool>> runningHud = new();
     static readonly Dictionary<byte, Guide> guides = new();
@@ -49,10 +52,6 @@ public static class ClientEffects
 
     static bool IsModPlayer(PlayerControl pc)
         => pc != null && !pc.AmOwner && (pc.IsModClient() || NonHostRpcGuard.IsHidden(pc.PlayerId));
-
-    // その人の画面では、ビームを名前の文字ではなく専用の演出で描くか
-    public static bool DrawsBeamFor(PlayerControl seer)
-        => NovaOn && seer != null && (seer.AmOwner || IsModPlayer(seer));
 
     public static bool EveryoneHasMod()
     {
@@ -95,12 +94,14 @@ public static class ClientEffects
         }
     }
 
-    public static void HideDummy(uint netId)
+    /// <summary>MOD を入れている人とホストの画面から、その netId のダミーを隠す。送れなかった時は false。</summary>
+    public static bool HideDummy(uint netId)
     {
-        if (!CanSend) return;
+        if (!CanSend) return false;
         Send(Kind.HideDummy, w => w.WritePacked(netId));
         hiddenDummies.Add(netId);
         nextHideAt = 0f;
+        return true;
     }
 
     public static void NovaGuide(PlayerControl owner, Vector2 body, float angle, bool locked)
@@ -637,7 +638,7 @@ public static class ClientEffects
         if (stains.Count > 0) UpdateStains();
         if (GameStates.IsLobby)
         {
-            if (hiddenDummies.Count > 0) { hiddenDummies.Clear(); dummyRenderers.Clear(); }
+            if (hiddenDummies.Count > 0) { hiddenDummies.Clear(); dummyRenderers.Clear(); dummyFoundAt.Clear(); }
             if (jumboSent || jumbos.Count > 0 || lastDeathFx.Count > 0)
             {
                 jumboSent = false;
@@ -654,11 +655,14 @@ public static class ClientEffects
             nextHideAt = Time.time + 0.25f;
             foreach (var netId in hiddenDummies)
             {
-                if (!dummyRenderers.TryGetValue(netId, out var renderers) || renderers == null)
+                if (!dummyRenderers.TryGetValue(netId, out var renderers) || renderers == null
+                    || (dummyFoundAt.TryGetValue(netId, out var foundAt) && Time.time - foundAt < DummyRecollectFor))
                 {
-                    var text = AmongUsClient.Instance.FindObjectByNetId<PlayerControl>(netId)?.cosmetics?.nameText;
-                    if (text == null) continue;
-                    dummyRenderers[netId] = renderers = new List<MeshRenderer>(text.GetComponentsInChildren<MeshRenderer>(true));
+                    // 名前の絵だけでなく体も消す (波動砲の CNO は体が見える)
+                    var dummy = AmongUsClient.Instance.FindObjectByNetId<PlayerControl>(netId);
+                    if (dummy == null) continue;
+                    dummyRenderers[netId] = renderers = new List<Renderer>(dummy.GetComponentsInChildren<Renderer>(true));
+                    dummyFoundAt.TryAdd(netId, Time.time);
                 }
                 foreach (var r in renderers) if (r != null && r.enabled) r.enabled = false;
             }
