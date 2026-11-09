@@ -187,6 +187,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
     bool _prevSuperCharging;
 
     bool _prevBeamMark;
+    HadouHoBeam beam;
 
 
 
@@ -450,7 +451,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
 
         PetActionManager.Register(Player.PlayerId, OnPetUsed);
-
+        beam = new HadouHoBeam(Player, drawnByClientEffects: false);
     }
 
 
@@ -458,6 +459,8 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
     public override void OnDestroy()
 
     {
+
+        beam?.End();
 
         PetActionManager.Unregister(Player.PlayerId);
 
@@ -491,7 +494,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
             IsFiring = false;
 
-            SetRoleTextHeight(false);
+            beam?.End();
 
         }
 
@@ -804,8 +807,8 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
         {
 
             IsSuperCharging = true;
-
             superChargeTimer = 0f;
+            beam?.BeginCharge(HadouHoBeam.SuperSize);
 
             Utils.AllPlayerKillFlash();
 
@@ -818,9 +821,8 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
         {
 
             IsCharging = true;
-
             chargeTimer = 0f;
-
+            beam?.BeginCharge(HadouHoBeam.NormalSize);
             Utils.AllPlayerKillFlash();
 
         }
@@ -879,28 +881,6 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
 
 
-    void SetRoleTextHeight(bool beaming)
-
-    {
-
-        var nameText = Player != null ? Player.cosmetics?.nameText : null;
-        if (nameText == null) return;
-        var rt = nameText.transform.Find("RoleText");
-
-        if (rt == null) return;
-
-        var tmp = rt.GetComponent<TMPro.TextMeshPro>();
-
-        if (tmp == null) return;
-
-        if (beaming) { tmp.text = "<alpha=#00>　</alpha>"; rt.SetLocalY(0.35f); }
-
-        else { tmp.enabled = true; rt.SetLocalY(0.35f); }
-
-    }
-
-
-
     private void ResetAllState()
 
     {
@@ -935,7 +915,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
         Player.RpcSetColor((byte)PlayerColor);
 
-        SetRoleTextHeight(false);
+        beam?.End();
 
     }
 
@@ -1131,23 +1111,25 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
         if (ShowBeamMark && Player.IsAlive()) ApplyBeamHit();
 
-        if (IsCharging && chargeTimer >= ChargeTime) FireBeam();
+        if (!IsCharging && !IsSuperCharging && !ShowBeamMark) beam?.TrackDirection();
+        if (IsCharging || IsSuperCharging)
+            beam?.Charging(IsSuperCharging ? SuperChargeTime - superChargeTimer : ChargeTime - chargeTimer);
+        // ★が客の画面に出るまで (会議明けの待ちなど) は撃たない。見えないビームで倒さないため
+        bool beamReady = beam?.Ready ?? true;
+        if (IsCharging && chargeTimer >= ChargeTime && beamReady) FireBeam();
 
-        if (IsSuperCharging && superChargeTimer >= SuperChargeTime) FireSuperBeam();
+        if (IsSuperCharging && superChargeTimer >= SuperChargeTime && beamReady) FireSuperBeam();
 
     }
 
 
 
     void FireBeam()
-
     {
-
         if (IsDead || !Player.IsAlive()) return;
-
-        BeamFacingLeft = Player.cosmetics.FlipX;
-
+        BeamFacingLeft = beam?.FacingLeft ?? Player.cosmetics.FlipX;
         SendBeamDirection(BeamFacingLeft);
+        beam?.Fire("#00b4eb", HadouHoBeam.NormalSize);
 
         Utils.AllPlayerKillFlash();
 
@@ -1155,7 +1137,6 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
         HasHit = false; ShowBeamMark = true; IsSuperBeam = false;
 
-        SetRoleTextHeight(true);
 
         _prevCharging = false; _prevBeamMark = true;
 
@@ -1172,14 +1153,11 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
 
     void FireSuperBeam()
-
     {
-
         if (IsDead || !Player.IsAlive()) return;
-
-        BeamFacingLeft = Player.cosmetics.FlipX;
-
+        BeamFacingLeft = beam?.FacingLeft ?? Player.cosmetics.FlipX;
         SendBeamDirection(BeamFacingLeft);
+        beam?.Fire("#FF0000", HadouHoBeam.SuperSize);
 
         Utils.AllPlayerKillFlash();
 
@@ -1213,7 +1191,6 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
 
 
-        SetRoleTextHeight(true);
 
         _prevSuperCharging = false; _prevBeamMark = true;
 
@@ -1239,7 +1216,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
             ShowBeamMark = false; _prevBeamMark = false; IsSuperBeam = false;
 
-            SetRoleTextHeight(false); IsFiring = false;
+            beam?.End(); IsFiring = false;
 
             HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
 
@@ -1253,7 +1230,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
         ShowBeamMark = false; _prevBeamMark = false; IsSuperBeam = false;
 
-        SetRoleTextHeight(false);
+        beam?.End();
 
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
 
@@ -1616,124 +1593,6 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
         if (reader.BytesRemaining > 0)
 
             skCandidateId = reader.ReadByte();
-
-    }
-
-
-
-    public override bool GetTemporaryName(ref string name, ref bool NoMarker, bool isForMeeting, PlayerControl seer, PlayerControl seen = null)
-
-    {
-
-        seen ??= seer;
-
-        if (!Player.IsAlive() || isForMeeting) return false;
-
-        string myColor = "#" + ColorUtility.ToHtmlStringRGB(Palette.PlayerColors[Player.Data.DefaultOutfit.ColorId]);
-
-
-
-        if ((IsCharging || IsSuperCharging) && seen.PlayerId == Player.PlayerId)
-
-        {
-
-            bool fl = seer.PlayerId == Player.PlayerId ? Player.cosmetics.FlipX : BeamFacingLeft;
-
-            string bigStar = $"<size=800%><color={myColor}>★</color></size>";
-
-            string blank = "　　　";
-
-            name = "<line-height=1200%>\n" + (fl ? bigStar + blank : blank + bigStar) + "</line-height>";
-
-            NoMarker = true; return true;
-
-        }
-
-
-
-        if (seen == seer && Is(seer) && !seer.IsModClient() && (IsCharging || IsSuperCharging || ShowBeamMark))
-
-        {
-
-            if (ShowBeamMark && seen.PlayerId == Player.PlayerId) { BuildBeamName(ref name, myColor, false); NoMarker = true; return true; }
-
-            return false;
-
-        }
-
-
-
-        if (ShowBeamMark && seen.PlayerId == Player.PlayerId)
-
-        {
-
-            SetRoleTextHeight(true);
-
-            BuildBeamName(ref name, myColor, true);
-
-            NoMarker = true; return true;
-
-        }
-
-        return false;
-
-    }
-
-
-
-    void BuildBeamName(ref string name, string myColor, bool wider)
-
-    {
-
-        SetRoleTextHeight(true);
-
-        bool fl = BeamFacingLeft;
-
-        string star = $"<voffset=0.35em><size=800%><color={myColor}>★</color></size></voffset>";
-
-
-
-        string beam = IsSuperBeam ? "<#f00>━━━━━</color>" : "<#00CFFF>━━━━━━━</color>";
-
-        string finalBeam = IsSuperBeam ? beam : beam + beam;
-
-
-
-        string blank = IsSuperBeam ? "<size=1800%>　</size>" : "<size=1200%>　</size>";
-
-        string sB = fl ? star + blank : blank + star;
-
-        string lB = fl ? finalBeam + sB : sB + finalBeam;
-
-
-
-        string hugeBlank = "<alpha=#00>" + new string('　', IsSuperBeam ? 1 : 10) + "</alpha>";
-
-
-
-        string ls;
-
-        if (IsSuperBeam)
-
-            ls = wider ? "<line-height=15000%>\n" : "<line-height=11000%>\n";
-
-        else
-
-            ls = wider ? "<line-height=5300%>\n" : "<line-height=4300%>\n";
-
-
-
-        string ss = IsSuperBeam ? "<size=15000%>" : "<size=5000%>";
-
-        string se = "</size></line-height>";
-
-
-
-        name = fl
-
-            ? ls + $"{ss}{lB}{se}{ss}{hugeBlank}{se}"
-
-            : ls + $"{ss}{hugeBlank}{se}{ss}{lB}{se}";
 
     }
 

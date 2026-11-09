@@ -68,7 +68,7 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
 - [TownOfPlus](https://github.com/tugaru1975/TownOfPlus)
   - MODクライアント視点霊界での視界ズーム
 - [SuperNewRoles](https://github.com/ykundesu/SuperNewRoles)
-  - 猫又系役職の道連れ・純愛者・神・自爆魔・マッドジェスター/マッドてるてる・パン屋レアコメント・にじいろスター/スター・ロビーBGMのミュート
+  - 猫又系役職の道連れ・純愛者・神・自爆魔・マッドジェスター/マッドてるてる・パン屋レアコメント・にじいろスター/スター・ロビーBGMのミュート・波動砲
 - [TheOtherRoles](https://github.com/TheOtherRolesAU/TheOtherRoles)
   - サングラス・弁護士・VIP・タイブレーカー・ゲッサー・チェインシフター・ゴッドファーザー＆ジャニター/マフィア・ジャッカルサイドキック
   - バウンティハンター・ヴァンパイア・魔女・ベイト・メイヤー・シェリフ・スニッチ・ライター・シーア・ジャッカルのアイデア、Mod の作り方
@@ -103,6 +103,7 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
   - チャットのコマンドの補完と貼り付け
   - 起動の待ちを減らす BepInEx のパッチャー (Class::Init の走査結果の保存・プラグインの読み込みを最初の 2 フレームの後へ送る)
   - 起動直後のメニューでアカウント表示を止め、ログインを待たずにメニューを使えるようにする方法 (More Roles Plus 経由)
+  - 波動砲のためとビームを偽の PlayerControl の名前で描く方法 (透明な列と見える列を並べる・文字の大きさを絶対値で書く)
 - [Endless Host Roles](https://github.com/Gurge44/EndlessHostRoles)
   - 配布物に入れる Unity Doorstop と、pietro による修正版 Il2CppInterop
   - 他のプレイヤーの外見を、PlayerInfo の送信と本人への変身解除で着せ替える方式
@@ -127,6 +128,8 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
   - 退出ペナルティで部屋を立てられなくなるのを防ぐ処理
   - 名前で絵を描く偽の PlayerControl (CustomNetObject)
   - チャットを大きな空白で押し出す処理
+- [TownOfHost-hamo](https://github.com/rar006/TownOfHost-hamo)
+  - 波動砲・シェリフ波動砲・ジャッカル波動砲・ノヴァなど、hamo から移した役職
 - TownOfNext (KARPED1EM)
   - チャットの入力欄の文字数の上限を広げる方法
 - [TownOfHost-K](https://github.com/KYMario/TownOfHost-K)

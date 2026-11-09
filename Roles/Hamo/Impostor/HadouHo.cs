@@ -61,6 +61,7 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
     bool spawnCooldownStarted = false;
     bool _prevCharging;
     bool _prevBeamMark;
+    HadouHoBeam beam;
     public static bool Charging;
     static OptionItem OptionCoolDown;
     static float Cooldown;
@@ -93,10 +94,13 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
         PlayerSpeed = HamoSpeedTable.Instance[Player.PlayerId];
         PlayerColor = Player.Data.DefaultOutfit.ColorId;
         spawnCooldownStarted = false;
+        // MOD を入れている人とホストは ClientEffects の演出でためとビームを見るので、CNO を隠す
+        beam = new HadouHoBeam(Player, drawnByClientEffects: true);
     }
 
     public override void OnDestroy()
     {
+        beam?.End();
         CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
 
         if (IsCharging || ShowBeamMark || IsFiring)
@@ -112,7 +116,7 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
             Charging = false;
             ShowBeamMark = false;
             IsFiring = false;
-            SetRoleTextHeight(false);
+            beam?.End();
         }
     }
 
@@ -137,6 +141,7 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
         Charging = true;
         chargeTimer = 0f;
         TownOfHostL.Modules.ClientEffects.Charge(Player, ChargeTime, new Color(1f, 0.55f, 0.2f));
+        beam?.BeginCharge(HadouHoBeam.SmallWarningSize);
         HamoSpeedTable.Instance[Player.PlayerId] = Main.MinSpeed;
         Player.MarkDirtySettings();
         Utils.AllPlayerKillFlash();
@@ -148,19 +153,6 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
         _prevCharging = true;
         _prevBeamMark = false;
         SendRpc();
-    }
-
-    void SetRoleTextHeight(bool beaming)
-    {
-        // 抜けた後に残った処理から呼ばれると、名前の文字がもう無くて落ちていた
-        var nameText = Player != null ? Player.cosmetics?.nameText : null;
-        if (nameText == null) return;
-        var t = nameText.transform.Find("RoleText");
-        if (t == null) return;
-        var rt = t.GetComponent<TMPro.TextMeshPro>();
-        if (rt == null) return;
-        if (beaming) { rt.text = "<alpha=#00>　</alpha>"; t.SetLocalY(0.35f); }
-        else { rt.enabled = true; t.SetLocalY(0.35f); }
     }
 
     private void ResetState()
@@ -177,7 +169,7 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
         HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
         Player.MarkDirtySettings();
         Player.RpcSetColor((byte)PlayerColor);
-        SetRoleTextHeight(false);
+        beam?.End();
     }
 
     public override void OnFixedUpdate(PlayerControl player)
@@ -217,22 +209,30 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
             UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
         }
 
+        beam?.Tick();
+        if (!IsCharging && !ShowBeamMark) beam?.TrackDirection();
         if (ShowBeamMark && Player.IsAlive()) ApplyBeamHit();
-        if (IsCharging) { chargeTimer += Time.fixedDeltaTime; if (chargeTimer >= ChargeTime) FireBeam(); }
+        if (IsCharging)
+        {
+            chargeTimer += Time.fixedDeltaTime;
+            beam?.Charging(ChargeTime - chargeTimer);
+            // ★が客の画面に出るまで (会議明けの待ちなど) は撃たない。見えないビームで倒さないため
+            if (chargeTimer >= ChargeTime && (beam?.Ready ?? true)) FireBeam();
+        }
     }
 
     void FireBeam()
     {
         if (IsDead || !Player.IsAlive()) return;
-        BeamFacingLeft = Player.cosmetics.FlipX;
+        BeamFacingLeft = beam?.FacingLeft ?? Player.cosmetics.FlipX;
         SendBeamDirection(BeamFacingLeft);
         TownOfHostL.Modules.ClientEffects.ChargeStop(Player);
         var beamFrom = Player.GetTruePosition() + (BeamFacingLeft ? Vector2.left : Vector2.right) * 0.5f;
         TownOfHostL.Modules.ClientEffects.NovaBeam(Player, beamFrom, BeamFacingLeft ? 180f : 0f, TownOfHostL.Modules.ClientEffects.MapReach(beamFrom, BeamFacingLeft ? Vector2.left : Vector2.right), 2.2f, BeamTime);
         TownOfHostL.Modules.ClientEffects.Sound(TownOfHostL.Modules.ClientEffects.SoundKind.NovaFire);
+        beam?.Fire("#FF6600", HadouHoBeam.NormalSize);
         Utils.AllPlayerKillFlash();
         IsCharging = false; chargeTimer = 0f; HasHit = false; ShowBeamMark = true;
-        SetRoleTextHeight(true);
         _prevCharging = false;
         _prevBeamMark = true;
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
@@ -245,7 +245,7 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
             {
                 Charging = false;
                 ShowBeamMark = false; _prevBeamMark = false;
-                SetRoleTextHeight(false); IsFiring = false;
+                beam?.End(); IsFiring = false;
                 HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
                 Player.MarkDirtySettings();
                 Player.RpcSetColor((byte)PlayerColor);
@@ -254,7 +254,7 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
             Charging = false;
 
             ShowBeamMark = false; _prevBeamMark = false;
-            SetRoleTextHeight(false);
+            beam?.End();
             UtilsNotifyRoles.NotifyRoles(ForceLoop: true); SendRpc();
 
             if (!HasHit && SelfDestructOnMiss)
@@ -354,68 +354,19 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
             UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
     }
 
-    public override bool GetTemporaryName(ref string name, ref bool NoMarker, bool isForMeeting, PlayerControl seer, PlayerControl seen = null)
-    {
-        seen ??= seer;
-        if (!Player.IsAlive() || isForMeeting) return false;
-        // MOD を入れている人の画面では、ためとビームを専用の演出で描くので、名前の文字のビームは出さない
-        if (TownOfHostL.Modules.ClientEffects.DrawsBeamFor(seer)) return false;
-        string myColor = "#" + ColorUtility.ToHtmlStringRGB(Palette.PlayerColors[Player.Data.DefaultOutfit.ColorId]);
-
-        if (IsCharging && seen.PlayerId == Player.PlayerId)
-        {
-            bool fl = seer.PlayerId == Player.PlayerId ? Player.cosmetics.FlipX : BeamFacingLeft;
-            string bigStar = $"<size=800%><color={myColor}>★</color></size>";
-            string blank = "　　　";
-            name = "<line-height=1200%>\n" + (fl ? bigStar + blank : blank + bigStar) + "</line-height>";
-            NoMarker = true; return true;
-        }
-
-        if (seen == seer && Is(seer) && !seer.IsModClient() && (IsCharging || ShowBeamMark))
-        {
-            if (ShowBeamMark && seen.PlayerId == Player.PlayerId) { BuildBeamName(ref name, myColor, false); NoMarker = true; return true; }
-            return false;
-        }
-
-        if (ShowBeamMark && seen.PlayerId == Player.PlayerId)
-        {
-            SetRoleTextHeight(true);
-            BuildBeamName(ref name, myColor, true);
-            NoMarker = true; return true;
-        }
-        return false;
-    }
-
-    void BuildBeamName(ref string name, string myColor, bool wider)
-    {
-        SetRoleTextHeight(true);
-        bool fl = BeamFacingLeft;
-        string star = $"<voffset=0.35em><size=800%><color={myColor}>★</color></size></voffset>";
-        string beam = "<#00CFFF>━━━━━━━</color>";
-        string blank = "<size=1200%>　</size>";
-        string sB = fl ? star + blank : blank + star;
-        string lB = fl ? beam + beam + sB : sB + beam + beam;
-        string hugeBlank = "<alpha=#00>　　　　　　　　　　</alpha>";
-        string ls = wider ? "<line-height=5300%>\n" : "<line-height=4300%>\n";
-        string ss = "<size=5000%>", se = "</size></line-height>";
-        name = fl
-            ? ls + $"{ss}{lB}{se}{ss}{hugeBlank}{se}"
-            : ls + $"{ss}{hugeBlank}{se}{ss}{lB}{se}";
-    }
-
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
     {
         seen ??= seer;
         if (seen.PlayerId != seer.PlayerId || isForMeeting || !Player.IsAlive()) return "";
         if (!IsCharging) return $"{(isForHud ? "" : "<size=60%>")}<color=#ff0000>ファントムボタン → チャージ発射</color>";
-        return $"{(isForHud ? "" : "<size=100%>")}<color=#ff0000>チャージ中... {(ChargeTime - chargeTimer):F1}s</color>";
+        return $"{(isForHud ? "" : "<size=100%>")}<color=#ff0000>チャージ中... {Mathf.Max(0f, ChargeTime - chargeTimer):F1}s</color>";
     }
 
     public string GetLowerTextOthers(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
     {
         seen ??= seer;
         if (seen != seer || isForMeeting || !Player.IsAlive()) return "";
-        if (IsCharging && seer.PlayerId != Player.PlayerId) return $"\n<size=100%><color=#ff0000>チャージ中... {(int)(ChargeTime - chargeTimer)}s</color></size>";
+        if (IsCharging && seer.PlayerId != Player.PlayerId) return $"\n<size=100%><color=#ff0000>チャージ中... {(int)Mathf.Max(0f, ChargeTime - chargeTimer)}s</color></size>";
         if (ShowBeamMark && seer.PlayerId != Player.PlayerId) return "\n<size=100%><color=#ff0000>ビーム中</color></size>";
         return "";
     }
@@ -433,7 +384,7 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
         {
             Charging = false;
             ShowBeamMark = false; _prevBeamMark = false;
-            SetRoleTextHeight(false); IsFiring = false;
+            beam?.End(); IsFiring = false;
             HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
             Player.MarkDirtySettings();
             UtilsNotifyRoles.NotifyRoles(); SendRpc(); return;
@@ -443,7 +394,7 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
         _prevCharging = false;
         _prevBeamMark = false;
         ShowBeamMark = false; _prevBeamMark = false;
-        SetRoleTextHeight(false);
+        beam?.End();
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true); SendRpc();
         HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed; Player.MarkDirtySettings();
         var charge = OptionChargeTime.GetFloat() - chargeTimer;

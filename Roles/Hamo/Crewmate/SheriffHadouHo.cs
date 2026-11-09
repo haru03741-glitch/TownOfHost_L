@@ -72,6 +72,7 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
     bool spawnCooldownStarted;
     bool _prevCharging;
     bool _prevBeamMark;
+    HadouHoBeam beam;
     bool BeamFacingLeft;
     int PlayerColor;
     bool beamMode;
@@ -124,10 +125,12 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
         nowcool = Cooldown;
         LastCooltime = (int)Cooldown;
         PetActionManager.Register(Player.PlayerId, OnPetUsed);
+        beam = new HadouHoBeam(Player, drawnByClientEffects: false);
     }
 
     public override void OnDestroy()
     {
+        beam?.End();
         PetActionManager.Unregister(Player.PlayerId);
         CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
     }
@@ -215,22 +218,11 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
         Player.MarkDirtySettings();
         Utils.AllPlayerKillFlash();
         Player.SyncSettings();
+        beam?.BeginCharge(HadouHoBeam.NormalSize);
         _prevCharging = true;
         _prevBeamMark = false;
         UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
         SendRpc();
-    }
-
-    void SetRoleTextHeight(bool beaming)
-    {
-        var nameText = Player != null ? Player.cosmetics?.nameText : null;
-        if (nameText == null) return;
-        var t = nameText.transform.Find("RoleText");
-        if (t == null) return;
-        var rt = t.GetComponent<TMPro.TextMeshPro>();
-        if (rt == null) return;
-        if (beaming) { rt.text = "<alpha=#00>　</alpha>"; t.SetLocalY(0.35f); }
-        else { rt.enabled = true; t.SetLocalY(0.35f); }
     }
 
     void ResetBeamState()
@@ -244,7 +236,7 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
         _prevBeamMark = false;
         HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
         Player.MarkDirtySettings();
-        SetRoleTextHeight(false);
+        beam?.End();
     }
 
     public override void OnFixedUpdate(PlayerControl player)
@@ -300,10 +292,13 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
         }
 
         if (ShowBeamMark && Player.IsAlive()) ApplyBeamHit();
+        if (!IsCharging && !ShowBeamMark) beam?.TrackDirection();
         if (IsCharging)
         {
             chargeTimer += Time.fixedDeltaTime;
-            if (chargeTimer >= ChargeTime) FireBeam();
+            beam?.Charging(ChargeTime - chargeTimer);
+            // ★が客の画面に出るまで (会議明けの待ちなど) は撃たない。見えないビームで倒さないため
+            if (chargeTimer >= ChargeTime && (beam?.Ready ?? true)) FireBeam();
         }
     }
 
@@ -311,15 +306,15 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
     {
         if (!Player.IsAlive()) return;
 
-        BeamFacingLeft = Player.cosmetics.FlipX;
+        BeamFacingLeft = beam?.FacingLeft ?? Player.cosmetics.FlipX;
         SendBeamDirection(BeamFacingLeft);
+        beam?.Fire(BeamColor, HadouHoBeam.NormalSize);
         Utils.AllPlayerKillFlash();
 
         IsCharging = false;
         chargeTimer = 0f;
         HasHit = false;
         ShowBeamMark = true;
-        SetRoleTextHeight(true);
         _prevCharging = false;
         _prevBeamMark = true;
         ShotLimit--;
@@ -332,7 +327,7 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
             if (!Player.IsAlive())
             {
                 ShowBeamMark = false; _prevBeamMark = false;
-                SetRoleTextHeight(false); IsFiring = false;
+                beam?.End(); IsFiring = false;
                 HamoSpeedTable.Instance[Player.PlayerId] = PlayerSpeed;
                 Player.MarkDirtySettings();
                 Player.RpcSetColor((byte)PlayerColor);
@@ -340,7 +335,7 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
             }
 
             ShowBeamMark = false; _prevBeamMark = false;
-            SetRoleTextHeight(false);
+            beam?.End();
             UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
             SendRpc();
 
@@ -418,72 +413,7 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
         ApplyModeDesync(beamMode);
     }
 
-    public override bool GetTemporaryName(ref string name, ref bool NoMarker,
-        bool isForMeeting, PlayerControl seer, PlayerControl seen = null)
-    {
-        seen ??= seer;
-        if (!Player.IsAlive() || isForMeeting) return false;
-
-        string myColor = "#" + ColorUtility.ToHtmlStringRGB(
-            Palette.PlayerColors[Player.Data.DefaultOutfit.ColorId]);
-
-        if (IsCharging && seen.PlayerId == Player.PlayerId)
-        {
-            bool fl = seer.PlayerId == Player.PlayerId
-                ? Player.cosmetics.FlipX : BeamFacingLeft;
-            string bigStar = $"<size=800%><color={myColor}>★</color></size>";
-            string blank = "　　　";
-            name = "<line-height=1200%>\n"
-                 + (fl ? bigStar + blank : blank + bigStar)
-                 + "</line-height>";
-            NoMarker = true; return true;
-        }
-
-        if (seen == seer && Is(seer) && !seer.IsModClient()
-            && (IsCharging || ShowBeamMark))
-        {
-            if (ShowBeamMark && seen.PlayerId == Player.PlayerId)
-            {
-                BuildBeamName(ref name, myColor, false);
-                NoMarker = true; return true;
-            }
-            return false;
-        }
-
-        if (ShowBeamMark && seen.PlayerId == Player.PlayerId)
-        {
-            SetRoleTextHeight(true);
-            BuildBeamName(ref name, myColor, true);
-            NoMarker = true; return true;
-        }
-
-        return false;
-    }
-
-    void BuildBeamName(ref string name, string myColor, bool wider)
-    {
-        SetRoleTextHeight(true);
-        bool fl = BeamFacingLeft;
-        string star = $"<voffset=0.35em><size=800%><color={myColor}>★</color></size></voffset>";
-        string beam = BuildBeamBlock();
-        string blank = "<size=1200%>　</size>";
-        string sB = fl ? star + blank : blank + star;
-        string longBeam = fl ? beam + beam + sB : sB + beam + beam;
-        string hugeBlank = "<alpha=#00>　　　　　　　　　　</alpha>";
-        string ls = wider ? "<line-height=5300%>\n" : "<line-height=4300%>\n";
-        string ss = "<size=5000%>", se = "</size></line-height>";
-
-        name = fl
-            ? ls + $"{ss}{longBeam}{se}{ss}{hugeBlank}{se}"
-            : ls + $"{ss}{hugeBlank}{se}{ss}{longBeam}{se}";
-    }
-
-    string BuildBeamBlock()
-    {
-        if ((BeamColorMode)BeamColorModeValue == BeamColorMode.Yellow)
-            return "<color=#f8cd46>━━━━━━━</color>";
-        return "<color=#00CFFF>━━━━━━━</color>";
-    }
+    string BeamColor => (BeamColorMode)BeamColorModeValue == BeamColorMode.Yellow ? "#f8cd46" : "#00CFFF";
 
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null,
         bool isForMeeting = false, bool isForHud = false)
@@ -512,7 +442,7 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
         }
 
         if (IsCharging)
-            return $"{size}<color=#ff0000>チャージ中... {(ChargeTime - chargeTimer):F1}s</color>";
+            return $"{size}<color=#ff0000>チャージ中... {Mathf.Max(0f, ChargeTime - chargeTimer):F1}s</color>";
 
         string ready = nowcool <= 0f
             ? " <color=#00ff88>(発射可能)</color>"
@@ -526,7 +456,7 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
         seen ??= seer;
         if (seen != seer || isForMeeting || !Player.IsAlive()) return "";
         if (IsCharging && seer.PlayerId != Player.PlayerId)
-            return $"\n<color=#ff0000>チャージ中... {(int)(ChargeTime - chargeTimer)}s</color>";
+            return $"\n<color=#ff0000>チャージ中... {(int)Mathf.Max(0f, ChargeTime - chargeTimer)}s</color>";
         if (ShowBeamMark && seer.PlayerId != Player.PlayerId)
             return "\n<color=#ff0000>ビーム中</color>";
         return "";
