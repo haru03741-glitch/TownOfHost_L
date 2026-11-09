@@ -180,8 +180,8 @@ public sealed class Potentialist : RoleBase
     {
         Logger.Info($"{player.GetNameWithRole()}：役職リストから{nextRole}を割り当てます", "Potentialist");
         var nextRoleBaseTypes = nextRole.GetRoleTypes();
-        RoleTypes roleTypes;
-
+        // 役職を替えてから、見え方を規則どおりに送る
+        player.RpcSetCustomRole(nextRole);
         switch (nextRoleBaseTypes)
         {
             case RoleTypes.Crewmate:
@@ -191,45 +191,16 @@ public sealed class Potentialist : RoleBase
             case RoleTypes.Engineer:
             case RoleTypes.Tracker:
             case RoleTypes.Noisemaker:
-                foreach (var pc in Main.AllPlayerControls.Where(x => x != null && !x.Data.Disconnected))
-                {
-                    // base:能力持ちクルー視点
-                    if (player.PlayerId == PlayerControl.LocalPlayer.PlayerId) player.SetRoleEx(nextRoleBaseTypes);
-                    else pc.RpcSetRoleDesync(nextRoleBaseTypes, player.GetClientId());
-
-                    if (pc.PlayerId == player.PlayerId) continue;
-
-                    //他クルー視点
-                    if (pc.PlayerId == PlayerControl.LocalPlayer.PlayerId) player.SetRoleEx(nextRoleBaseTypes);
-                    else player.RpcSetRoleDesync(nextRoleBaseTypes, pc.GetClientId());
-                }
+                // 全員の画面で本人の役職だけを替える (本人の画面の他の人は変えない)
+                RoleView.ApplyToEveryone(player);
                 break;
-            // shepeShifterなどはホストのみアビリティボタンについての問題があるため一旦Impostor
             case RoleTypes.Impostor:
             case RoleTypes.Shapeshifter:
             case RoleTypes.Phantom:
-                foreach (var pc in Main.AllPlayerControls.Where(x => x != null && !x.Data.Disconnected))
-                {
-                    // base:impostor視点
-                    roleTypes = RoleTypes.Scientist;
-                    if (pc.PlayerId == player.PlayerId) roleTypes = RoleTypes.Impostor;
-                    else if (!pc.IsAlive()) roleTypes = RoleTypes.CrewmateGhost;
-                    else if (pc.GetCustomRole().GetRoleTypes() == RoleTypes.Noisemaker) roleTypes = RoleTypes.Noisemaker;
-
-                    if (player.PlayerId == PlayerControl.LocalPlayer.PlayerId) pc.StartCoroutine(pc.CoSetRole(roleTypes, true));
-                    else pc.RpcSetRoleDesync(roleTypes, player.GetClientId());
-
-                    if (pc.PlayerId == player.PlayerId) continue;
-
-                    //他クルー視点
-                    roleTypes = RoleTypes.Scientist;
-
-                    if (pc.PlayerId == PlayerControl.LocalPlayer.PlayerId) player.StartCoroutine(player.CoSetRole(roleTypes, true));
-                    else player.RpcSetRoleDesync(roleTypes, pc.GetClientId());
-                }
+                // ホストの手元では変身・消失のボタンに問題があるので、ホストだけ一旦インポスターにする
+                RoleView.ApplyBasisChange(player, player.PlayerId == PlayerControl.LocalPlayer.PlayerId ? RoleTypes.Impostor : null);
                 break;
         }
-        player.RpcSetCustomRole(nextRole);
 
         //色表示
         NameColorManager.RemoveAll(player.PlayerId);

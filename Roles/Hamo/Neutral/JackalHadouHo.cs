@@ -1837,7 +1837,9 @@ public sealed class Tama : HamoRoleBase, IKiller
 
         opt.SetVision(true);
 
-        if (!JackalHadouHo.GetTamaCanLoad())
+        // 設定を送るたびに呼ばれるので、生きていて、まだエンジニアにしていない時だけ送る
+        if (!JackalHadouHo.GetTamaCanLoad() && Player.IsAlive()
+            && !(Modules.RoleView.TryGet(Player, Player, out var tamaRole) && tamaRole == RoleTypes.Engineer))
 
             Player.RpcSetRoleDesync(RoleTypes.Engineer, Player.GetClientId());
 

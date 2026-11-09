@@ -264,39 +264,20 @@ public sealed class SchrodingerCatKiller : RoleBase, IKiller, IAdditionalWinner,
     {
         logger.Info($"AssignCatKiller cat:{cat?.name} =>SchrodingerCatKiller({team}) by {ownerRole}");
 
-        RoleTypes roleTypes;
+        // 役職と陣営の数え方を替えてから、猫と全員の見え方を規則どおりに送る (同じ陣営のキルを持つ人どうしはインポスターに見える)
+        cat.RpcSetCustomRole(CustomRoles.SchrodingerCatKiller);
+        PlayerState.GetByPlayerId(cat.PlayerId).SetCountType(countType);
+        RoleView.ApplyBasisChange(cat);
+
         foreach (var pc in Main.AllPlayerControls.Where(x => x != null && !x.Data.Disconnected))
         {
-            var sameTeam = pc.GetRoleClass() is ISchrodingerCatOwner killer && killer.SchrodingerCatChangeTo == team;
-            //シュレ猫視点
-            roleTypes = RoleTypes.Scientist;
-            if (pc.PlayerId == cat.PlayerId) roleTypes = RoleTypes.Impostor;
-            else if (!pc.IsAlive()) roleTypes = RoleTypes.CrewmateGhost;
-            else if (sameTeam) roleTypes = RoleTypes.Impostor;
-            else if (pc.GetCustomRole().GetRoleTypes() == RoleTypes.Noisemaker) roleTypes = RoleTypes.Noisemaker;
-
-            if (cat.PlayerId == PlayerControl.LocalPlayer.PlayerId) pc.SetRoleEx(roleTypes);
-            else pc.RpcSetRoleDesync(roleTypes, cat.GetClientId());
-
             if (pc.PlayerId == cat.PlayerId) continue;
-
-            //他クルー視点
-            roleTypes = RoleTypes.Scientist;
-            if (sameTeam) roleTypes = RoleTypes.Impostor;
-            else if (team == TeamType.Impostor &&
-                     pc.GetCustomRole().GetRoleInfo()?.IsDesyncImpostor != true) roleTypes = RoleTypes.Impostor;
-
-            if (pc.PlayerId == PlayerControl.LocalPlayer.PlayerId) cat.SetRoleEx(roleTypes);
-            else cat.RpcSetRoleDesync(roleTypes, pc.GetClientId());
-
-            if (sameTeam)
+            if (pc.GetRoleClass() is ISchrodingerCatOwner killer && killer.SchrodingerCatChangeTo == team)
             {
                 NameColorManager.Add(cat.PlayerId, pc.PlayerId, Utils.GetRoleColorCode(ownerRole));
                 NameColorManager.Add(pc.PlayerId, cat.PlayerId, Utils.GetRoleColorCode(ownerRole));
             }
         }
-        cat.RpcSetCustomRole(CustomRoles.SchrodingerCatKiller);
-        PlayerState.GetByPlayerId(cat.PlayerId).SetCountType(countType);
 
         var catRole = (SchrodingerCatKiller)cat.GetRoleClass();
         catRole.Team = team;

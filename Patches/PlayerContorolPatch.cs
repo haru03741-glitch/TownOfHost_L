@@ -77,22 +77,27 @@ class CheckMurderPatch
         bool killerIsViper = killer.Is(RoleTypes.Viper);
         if (killerIsViper)
         {
+            // 2 秒後に、見せる前の見え方へ戻す (続けてキルして Viper を見せている間なら Impostor)
+            var before = new Dictionary<byte, RoleTypes>();
             foreach (var seer in Main.AllPlayerControls)
             {
                 if (seer.PlayerId == killer.PlayerId) continue;
                 if (seer.GetClientId() == -1) continue;
+                var was = RoleView.Living(killer, seer);
+                before[seer.PlayerId] = was == RoleTypes.Viper ? RoleTypes.Impostor : was;
                 killer.RpcSetRoleDesync(RoleTypes.Viper, seer.GetClientId());
             }
 
             var capKiller = killer;
             _ = new LateTask(() =>
             {
-                if (capKiller == null) return;
+                // 戻す前に死んでいたら送らない (幽霊の役職を生きた役職で上書きしない)
+                if (capKiller == null || !capKiller.IsAlive()) return;
                 foreach (var seer in Main.AllPlayerControls)
                 {
                     if (seer.PlayerId == capKiller.PlayerId) continue;
                     if (seer.GetClientId() == -1) continue;
-                    capKiller.RpcSetRoleDesync(RoleTypes.Impostor, seer.GetClientId());
+                    capKiller.RpcSetRoleDesync(before.TryGetValue(seer.PlayerId, out var back) ? back : RoleTypes.Impostor, seer.GetClientId());
                 }
             }, 2f, "RevertViperVisualReveal");
         }
@@ -869,21 +874,10 @@ class PlayerControlSetRolePatch
         bool isGhostConversion = roleType is RoleTypes.CrewmateGhost or RoleTypes.ImpostorGhost;
         if (isGhostConversion)
         {
-            var targetIsKiller = target.GetRoleClass() is IKiller;
             var ghostRoles = new Dictionary<PlayerControl, RoleTypes>();
             foreach (var seer in Main.AllPlayerControls)
             {
-                var self = seer.PlayerId == target.PlayerId;
-                var seerIsKiller = seer.GetRoleClass() is IKiller;
-
-                if ((self && targetIsKiller) || (!seerIsKiller && target.Is(CustomRoleTypes.Impostor)))
-                {
-                    ghostRoles[seer] = RoleTypes.ImpostorGhost;
-                }
-                else
-                {
-                    ghostRoles[seer] = RoleTypes.CrewmateGhost;
-                }
+                ghostRoles[seer] = RoleView.Ghost(target, seer);
                 if (Pirate.TargetSetGhostAndTask(target)) ghostRoles[seer] = RoleTypes.CrewmateGhost;
             }
             if (ghostRoles.All(kvp => kvp.Value == RoleTypes.CrewmateGhost))

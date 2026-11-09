@@ -169,6 +169,7 @@ static partial class ExtendedPlayerControl
         //player: 名前の変更対象
 
         if (player == null) return;
+        RoleView.RecordByClientId(clientId, player, role);
         if (AmongUsClient.Instance.ClientId == clientId)
         {
             // ホスト自身への役職設定: 非ホスト向け RPC と同様に canOverrideRole = true を使う
@@ -185,6 +186,7 @@ static partial class ExtendedPlayerControl
     public static void RpcSetRoleNormal(this PlayerControl player, RoleTypes role, bool canOverrideRole = false)
     {
         if (player == null) return;
+        RoleView.RecordForAll(player, role);
         // Apply locally first (host & clients) so state updates immediately
         if (AmongUsClient.Instance?.AmClient == true)
         {
@@ -654,6 +656,7 @@ static partial class ExtendedPlayerControl
     {
         bool ghostRole = RoleManager.IsGhostRole(role);
         if (!player.Data || GameManager.Instance == null || !GameManager.Instance) return;
+        RoleView.Record(PlayerControl.LocalPlayer, player, role);
 
         DestroyableSingleton<RoleManager>.Instance.SetRole(player, role);
         player.Data.Role.SpawnTaskHeader(player);

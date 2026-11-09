@@ -424,10 +424,10 @@ public static partial class MeetingHudPatch
                         // 霊界（死亡済み）プレイヤーにはSetRoleしない
                         if (PlayerState.GetByPlayerId(pc.PlayerId).IsDead) continue;
 
-                        var baseRole = roleInfo?.BaseRoleType?.Invoke() ?? RoleTypes.Crewmate;
+                        // 会議の前の見え方 (役職の能力で変えた物も含む) に戻す。覚えていなければ規則どおり
+                        var baseRole = RoleView.Living(pc, pc);
                         if (roleInfo?.IsDesyncImpostor == true)
                         {
-                            // Desync role: send Impostor to self, Crewmate to all other clients
                             pc.RpcSetRoleDesync(baseRole, pc.GetClientId());
                             foreach (var viewer in Main.AllPlayerControls)
                             {
@@ -435,7 +435,7 @@ public static partial class MeetingHudPatch
                                 int viewerClientId = viewer.GetClientId();
                                 if (viewerClientId == -1) continue;
                                 if (viewer.PlayerId == PlayerControl.LocalPlayer.PlayerId) continue;
-                                pc.RpcSetRoleDesync(RoleTypes.Crewmate, viewerClientId);
+                                pc.RpcSetRoleDesync(RoleView.Living(pc, viewer), viewerClientId);
                             }
                             continue;
                         }

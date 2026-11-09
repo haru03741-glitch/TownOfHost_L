@@ -149,45 +149,12 @@ public static class HamoPlayerExtensions
         Utils.NotifyRoles(ForceLoop: true);
     }
 
-    static void SendRole(PlayerControl target, RoleTypes type, PlayerControl viewer)
-    {
-        if (viewer.PlayerId == PlayerControl.LocalPlayer.PlayerId) target.StartCoroutine(target.CoSetRole(type, true));
-        else target.RpcSetRoleDesync(type, viewer.GetClientId());
-    }
-    static bool IsRealImpostor(PlayerControl pc)
-        => pc.GetCustomRole().IsImpostor() && !(pc.GetCustomRole().GetRoleInfo()?.IsDesyncImpostor ?? false);
-
-    /// <summary>役職が変わった人の本編の役職を、見る人ごとに配り直す</summary>
+    /// <summary>役職が変わった人の本編の役職を、見る人ごとに配り直す (規則は Modules.RoleView)</summary>
     public static void SetVanillaRole(PlayerControl player, CustomRoles role)
     {
         if (player == null || !player.IsAlive()) return;
-        var info = role.GetRoleInfo();
-        var desync = info?.IsDesyncImpostor ?? false;
-        var baseType = role.GetRoleTypes();
-        var selfType = desync ? RoleTypes.Impostor : baseType;
-        var selfImpostor = IsRealImpostor(player);
-        foreach (var pc in Main.AllPlayerControls.Where(x => x != null && !x.Data.Disconnected))
-        {
-            if (pc.PlayerId == player.PlayerId)
-            {
-                SendRole(player, selfType, player);
-                continue;
-            }
-            // 変わった人から見た相手
-            RoleTypes seen;
-            if (!pc.IsAlive()) seen = RoleTypes.CrewmateGhost;
-            else if (desync) seen = pc.GetCustomRole().GetRoleInfo()?.CountType == info.CountType && info.CountType != CountTypes.Crew ? RoleTypes.Impostor : RoleTypes.Scientist;
-            else if (selfImpostor && IsRealImpostor(pc)) seen = pc.GetCustomRole().GetRoleTypes();
-            else seen = selfImpostor ? RoleTypes.Crewmate : pc.GetCustomRole().GetRoleTypes() is RoleTypes.Impostor or RoleTypes.Shapeshifter or RoleTypes.Phantom ? RoleTypes.Impostor : RoleTypes.Crewmate;
-            SendRole(pc, seen, player);
-
-            // 相手から見た変わった人
-            RoleTypes look;
-            if (desync) look = RoleTypes.Scientist;
-            else if (selfImpostor) look = IsRealImpostor(pc) ? baseType : RoleTypes.Crewmate;
-            else look = baseType;
-            SendRole(player, look, pc);
-        }
+        // デシンクの役職は、本人の画面ではインポスターにする (基底が変身・消失でも)
+        Modules.RoleView.ApplyBasisChange(player, role.GetRoleInfo()?.IsDesyncImpostor == true ? RoleTypes.Impostor : null);
     }
 
     // ===== 占い =====

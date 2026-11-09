@@ -137,29 +137,9 @@ namespace TownOfHostL.Roles.Neutral
             canSidekickCount--;
 
             Logger.Info($"Create JSidekick:{sidekick.name} ({sidekick.GetCustomRole()}=>{CustomRoles.JSidekick})", "Jackal");
-            RoleTypes roleTypes;
-            foreach (var pc in Main.AllPlayerControls.Where(x => x != null && !x.Data.Disconnected))
-            {
-                //サイドキック視点
-                roleTypes = RoleTypes.Scientist;
-                if (pc.PlayerId == sidekick.PlayerId) roleTypes = RoleTypes.Impostor;
-                else if (!pc.IsAlive()) roleTypes = RoleTypes.CrewmateGhost;
-                else if (pc.GetCustomRole().GetRoleInfo()?.CountType == CountTypes.Jackal) roleTypes = RoleTypes.Impostor;
-                else if (pc.GetCustomRole().GetRoleTypes() == RoleTypes.Noisemaker) roleTypes = RoleTypes.Noisemaker;
-
-                if (sidekick.PlayerId == PlayerControl.LocalPlayer.PlayerId) pc.StartCoroutine(pc.CoSetRole(roleTypes, true));
-                else pc.RpcSetRoleDesync(roleTypes, sidekick.GetClientId());
-
-                if (pc.PlayerId == sidekick.PlayerId) continue;
-
-                //他クルー視点
-                roleTypes = RoleTypes.Scientist;
-                if (pc.GetCustomRole().GetRoleInfo()?.CountType == CountTypes.Jackal) roleTypes = RoleTypes.Impostor;
-
-                if (pc.PlayerId == PlayerControl.LocalPlayer.PlayerId) sidekick.StartCoroutine(sidekick.CoSetRole(roleTypes, true));
-                else sidekick.RpcSetRoleDesync(roleTypes, pc.GetClientId());
-            }
+            // 役職を替えてから、サイドキックと全員の見え方を規則どおりに送る (ジャッカルの陣営どうしはインポスターに見える)
             sidekick.RpcSetCustomRole(CustomRoles.JSidekick);
+            RoleView.ApplyBasisChange(sidekick);
 
             //サイドキック⇔ジャッカル色表示
             NameColorManager.Add(jackal.PlayerId, sidekick.PlayerId, jackal.GetRoleColorCode());

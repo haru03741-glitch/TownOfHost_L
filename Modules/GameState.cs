@@ -82,6 +82,8 @@ public partial class PlayerState
             MainRoleList.Clear();
         }
         MainRoleList.Add(role);
+        // 前の役職での見え方は使わない (替えた側が送り直せば、また覚える)
+        if (AmongUsClient.Instance && AmongUsClient.Instance.AmHost) Modules.RoleView.Forget(PlayerId);
 
         CountType = CustomRoleManager.GetRoleInfo(role) is SimpleRoleInfo roleInfo ?
             roleInfo.CountType :
