@@ -18,9 +18,14 @@ public sealed class Madmate : RoleBase
             introSound: () => GetIntroSound(RoleTypes.Impostor),
             flags: RoleFlags.FakeTasksLabel
         );
-    /// <summary>タスクで目覚めるマッドメイト系の短い説明: タスクが終わるまではマッドメイトの「Before」の説明</summary>
+    /// <summary>タスクで目覚めるマッドメイト系の短い説明: タスクが終わるまではマッドメイトの「Before」の説明。
+    /// タスクを持たない設定 (マッドゲッサーなど) では終わる時が来ないので、初めからマッドメイトの説明にする</summary>
     public static string TaskMadmateRoleKey(PlayerControl player, bool infoLong)
-        => infoLong ? null : (player.GetPlayerTaskState().IsTaskFinished ? "Madmate" : "BeforeMadmate");
+    {
+        if (infoLong) return null;
+        if (player.GetRoleClass() is { } role && role.HasTasks == HasTask.False) return "Madmate";
+        return player.GetPlayerTaskState().IsTaskFinished ? "Madmate" : "BeforeMadmate";
+    }
     public Madmate(PlayerControl player)
     : base(
         RoleInfo,
