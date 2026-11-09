@@ -42,4 +42,18 @@ public static class SelectRoles
         reserved.Remove(playerId);
         return candidates.First(pc => pc.PlayerId == playerId);
     }
+
+    /// <summary>
+    /// 役職を渡す人を選ぶ。その役職の予約があればその人、無ければ他の役職を予約していない人から無作為に選ぶ
+    /// (後の周で配るデシンクの役職の予約を、先に配る役職が取らないように)。
+    /// 予約していない人が残っていなければ null (この役職は配らない。人数を超えた役職が配られないのと同じ扱い)
+    /// </summary>
+    public static PlayerControl PickPlayer(CustomRoles role, List<PlayerControl> candidates, IRandom rand)
+    {
+        var picked = TakePlayer(role, candidates);
+        if (picked != null) return picked;
+        if (reserved.Count == 0) return candidates[rand.Next(candidates.Count)];
+        var free = candidates.Where(pc => !reserved.ContainsKey(pc.PlayerId)).ToList();
+        return free.Count > 0 ? free[rand.Next(free.Count)] : null;
+    }
 }
