@@ -94,6 +94,11 @@ namespace TownOfHostL
                 CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Draw);
                 GameManager.Instance.LogicFlow.CheckEndCriteria();
             }
+            // 試合中 (タスクの間) でも自分のチャット欄を出す。客の画面は変えない
+            if (GetKeysDown(KeyCode.Return, KeyCode.C, KeyCode.LeftShift) && HudManager.InstanceExists && HudManager.Instance.Chat && !HudManager.Instance.Chat.IsOpenOrOpening)
+            {
+                HudManager.Instance.Chat.SetVisible(true);
+            }
             //ミーティングを強制終了
             if (GetKeysDown(KeyCode.Return, KeyCode.M, KeyCode.LeftShift) && GameStates.IsMeeting)
             {

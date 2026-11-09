@@ -1054,6 +1054,7 @@ public static partial class Utils
         sb.Append($"\n/lastresult - {GetString("Command.lastresult")}");
         sb.Append($"\n/rename - {GetString("Command.rename")}");
         sb.Append($"\n/now - {GetString("Command.now")}");
+        sb.Append($"\n/id - {GetString("Command.id")}");
         sb.Append($"\n/h now - {GetString("Command.h_now")}");
         sb.Append($"\n/h roles {GetString("Command.h_roles")}");
         sb.Append($"\n/h addons {GetString("Command.h_addons")}");

@@ -1399,6 +1399,7 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "Command.h_modes","<ModeName> - Display Mode Description","<モード名> - モードの説明を表示","<模式名> - 显示模式介绍","<模式名> - 顯示關於該模式的介紹","<ИмяРежима> - Показать описание Режима","<NomedoModo> - Mostrar Nome do Modo"
 "Command.dump","Output Log to Desktop","デスクトップにログを出力","将游戏运行日志输出到桌面","在桌面上建立遊戲輸出日誌","Вывод журнала на Рабочий Стол","Enviar Registro (log) Para Área de Trabalho"
 "Command.h_args","Available Args (Clipped)","使用可能な引数 (略称)","可用参数（简写）","可用的參數(簡稱)","Доступные Аргументы (Ограниченные)","Argumentos Disponíveis (Atalho)"
+"Command.id","Show player IDs","プレイヤーの ID を表示","","","","",""
 "Command.killflashall","Show Kill Flash to All","キルフラッシュを全員に表示","向所有人显示击杀闪光","向所有人顯示擊殺閃光","Показать всем эффект убийства","Mostrar Flash de Morte para Todos"
 
 "CantUse.lastresult","Unable to use /lastresult during a game.","試合中に/lastresultを使用することはできません。","不可以在游戏中使用/lastresult命令","不可以在遊戲中使用/lastresult指令","Нельзя использовать /lastresult во время игры","Impossível usar /lastresult durante um jogo."
@@ -1430,7 +1431,8 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "Message.isButton","The meeting was started by an emergency button.","緊急ボタンにより会議が開かれました。","会议以使用紧急按钮开始."
 "Message.RevengeText","{0} is exiled, and another is died by revenge. \nmurdered：{1}","{0}が追放され、道連れが発生しました。\n{1}が死亡しています。","{0} 被投出，另一人因复仇而死. \n凶杀：{1}"
 "Message.HelpRoleNone","Role descriptions (/r <role>, /h r <role>, /n r <role>) are only available in Japanese.","/r 役職名 (/h r 役職名・/n r 役職名でも可)\nを入力すると、その役職の説明が出ます。",
-"Message.SelectRolesUsage","Usage: /sr <player name> <role> (/sr list to show, /sr clear to clear)","使い方: /sr プレイヤー名 役職 (/sr list で一覧、/sr clear で解除)","","","","",""
+"Message.SelectRolesUsage","Usage: /sr <player ID> <role> (IDs: /id, /sr list to show, /sr clear to clear)","使い方: /sr プレイヤーID 役職 (ID は /id で確認、/sr list で一覧、/sr clear で解除)","","","","",""
+"Message.RoleAmbiguous","Several roles match {0}: {1}","「{0}」に当たる役職が複数あります: {1}","","","","",""
 "Message.SelectRolesLobbyOnly","This command is only available in the lobby.","このコマンドはロビーでのみ使用できます。",
 "Message.SelectRolesNoPlayer","Player not found: {0}","プレイヤーが見つかりません: {0}",
 "Message.SelectRolesNoRole","Role not found: {0}","役職が見つかりません: {0}",
@@ -6030,7 +6032,8 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "VanillaHns.NoRoles","No extra roles are enabled.","有効な追加役職はありません。","","","","",""
 "VanillaHns.YouAre","You are the {0}","あなたは{0}です","","","","",""
 "VanillaHideAndSeekLabel","Vanilla Hide and Seek","本編のかくれんぼ","","","","",""
-"CommandUsage.SelectRoles","<player> <role> | list | clear","名前 役職 | list | clear","","","","",""
+"CommandUsage.SelectRoles","<ID> <role> | list | clear","ID 役職 | list | clear","","","","",""
+"CommandUsage.Start","[seconds | c]","[秒数 | c]","","","","",""
 "CommandUsage.Kick","<ID or name>","ID か名前","","","","",""
 "CommandUsage.Ban","<ID or exact name>","ID か名前 (完全一致)","","","","",""
 "CommandUsage.Rename","<name>","名前","","","","",""

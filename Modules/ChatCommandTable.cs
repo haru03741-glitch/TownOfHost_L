@@ -98,7 +98,15 @@ public static class ChatCommandTable
         new("/log") { Local = Modules.DevCommands.LogCommand },
         new("/dev") { Local = Modules.DevCommands.DevCommand },
         new("/v", "/version") { Local = _ => ShowVersions() },
-        new("/sr", "/selectroles") { Usage = "CommandUsage.SelectRoles", Host = c => ChatCommands.SelectRolesCommand(c.Args) },
+        new("/sr", "/setrole") { Usage = "CommandUsage.SelectRoles", Host = c => ChatCommands.SelectRolesCommand(c.Args) },
+        new("/id", "/ids")
+        {
+            Host = _ => HudManager.Instance.Chat.AddChat(PlayerControl.LocalPlayer, PlayerIdList()),
+            Remote = c => Utils.SendMessageAutoSplit(PlayerIdList(), true, sendTo: c.Player.PlayerId),
+        },
+        new("/start") { Usage = "CommandUsage.Start", Host = StartCommand },
+        new("/end", "/abort") { Host = _ => EndAsDraw() },
+        new("/mt", "/endmeeting") { Host = _ => { if (GameStates.IsMeeting) MeetingHud.Instance.RpcClose(); } },
         new("/kick") { Usage = "CommandUsage.Kick", Host = c => ChatCommands.KickCommand(c.Args, ban: false) },
         new("/ban") { Usage = "CommandUsage.Ban", Host = c => ChatCommands.KickCommand(c.Args, ban: true) },
         new("/win", "/winner")
@@ -218,6 +226,39 @@ public static class ChatCommandTable
         foreach (var kvp in Main.playerVersion.OrderBy(pair => pair.Key))
             versionText += $"{kvp.Key}:{Utils.GetPlayerById(kvp.Key)?.Data?.PlayerName}:{kvp.Value.forkId}/{kvp.Value.version}({kvp.Value.tag})\n";
         if (versionText != "") HudManager.Instance.Chat.AddChat(PlayerControl.LocalPlayer, versionText);
+    }
+
+    /// <summary>「ID: 名前」を ID の順に並べた一覧。/sr /kick /ws などで相手を ID で指すため</summary>
+    private static string PlayerIdList()
+        => string.Join("\n", Main.AllPlayerControls
+            .Where(pc => pc != null && pc.Data != null)
+            .OrderBy(pc => pc.PlayerId)
+            .Select(pc => $"{pc.PlayerId}: {pc.Data.PlayerName}"));
+
+    /// <summary>
+    /// /start: 開始のカウントダウンを始める。/start 秒数 で残りをその秒数 (60 秒まで) に、/start c でカウントダウンを取りやめる (ロビーだけ)
+    /// </summary>
+    private static void StartCommand(ChatCommandContext c)
+    {
+        if (!GameStates.IsLobby || !GameStartManager.InstanceExists) return;
+        var gsm = GameStartManager.Instance;
+        var arg = c.Arg(1).ToLowerInvariant();
+        if (arg is "c" or "cancel")
+        {
+            if (GameStates.IsCountDown) gsm.ResetStartState();
+            return;
+        }
+        if (!GameStates.IsCountDown) gsm.BeginGame();
+        if (GameStates.IsCountDown && float.TryParse(arg, out var sec) && sec >= 0f)
+            gsm.countDownTimer = Math.Min(sec, 60f);
+    }
+
+    /// <summary>/end: 廃村にする (Shift+Enter+L と同じ)</summary>
+    internal static void EndAsDraw()
+    {
+        if (!GameStates.IsInGame || !Main.IsSetRoleFinished) return;
+        CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Draw);
+        GameManager.Instance.LogicFlow.CheckEndCriteria();
     }
 
     private static void ShowMyRole(ChatCommandContext c)

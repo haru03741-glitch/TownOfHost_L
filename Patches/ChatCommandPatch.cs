@@ -243,7 +243,7 @@ namespace TownOfHostL
         }
 
         /// <summary>
-        /// /sr プレイヤー名 役職: 次の試合の役職を予約する (ホスト専用・ロビーだけ)。/sr list で一覧、/sr clear で解除。
+        /// /sr (/setrole) ID 役職: 次の試合の役職を予約する。ID の代わりに名前でもよい (ホスト専用・ロビーだけ)。/sr list で一覧、/sr clear で解除。
         /// 返事はホストの画面にだけ出す (予約した役職を他の人に見せない)。
         /// </summary>
         internal static void SelectRolesCommand(string[] args)
@@ -267,7 +267,7 @@ namespace TownOfHostL
                 var lines = Modules.SelectRoles.Reserved
                     .Select(p => (pc: Utils.GetPlayerById(p.Key), role: p.Value))
                     .Where(p => p.pc != null)
-                    .Select(p => $"{p.pc.Data.PlayerName}: {Utils.ColorString(Utils.GetRoleColor(p.role), Utils.GetRoleName(p.role))}");
+                    .Select(p => $"{p.pc.PlayerId}: {p.pc.Data.PlayerName}: {Utils.ColorString(Utils.GetRoleColor(p.role), Utils.GetRoleName(p.role))}");
                 var text = string.Join('\n', lines);
                 Reply(text == "" ? GetString("Message.SelectRolesNone") : text);
                 return;
@@ -278,19 +278,36 @@ namespace TownOfHostL
                 return;
             }
 
-            var roleArg = args[^1];
-            var nameArg = string.Join(" ", args[1..^1]);
-
-            var target = FindPlayer(nameArg);
-            if (target == null)
+            // 相手は ID が基本 (/id で一覧)。数字でない時だけ、最後の語を役職・その前を名前として探す
+            PlayerControl target;
+            string roleArg;
+            if (byte.TryParse(args[1], out var id))
             {
-                Reply(string.Format(GetString("Message.SelectRolesNoPlayer"), nameArg));
-                return;
+                target = Utils.GetPlayerById(id);
+                roleArg = string.Join(" ", args[2..]);
+                if (target == null)
+                {
+                    Reply(string.Format(GetString("Message.SelectRolesNoPlayer"), args[1]));
+                    return;
+                }
+            }
+            else
+            {
+                roleArg = args[^1];
+                var nameArg = string.Join(" ", args[1..^1]);
+                target = FindPlayer(nameArg);
+                if (target == null)
+                {
+                    Reply(string.Format(GetString("Message.SelectRolesNoPlayer"), nameArg));
+                    return;
+                }
             }
 
-            if (!TryGetRoleByName(roleArg, out var role))
+            if (!TryGetRoleByName(roleArg, out var role, out var candidates))
             {
-                Reply(string.Format(GetString("Message.SelectRolesNoRole"), roleArg));
+                Reply(candidates.Count > 1
+                    ? string.Format(GetString("Message.RoleAmbiguous"), roleArg, RoleCandidates(candidates))
+                    : string.Format(GetString("Message.SelectRolesNoRole"), roleArg));
                 return;
             }
             if (role.IsAddOn() || role.IsSpectator())
@@ -345,38 +362,60 @@ namespace TownOfHostL
             AmongUsClient.Instance.KickPlayer(client.Id, ban);
         }
 
-        public static bool TryGetRoleByName(string input, out CustomRoles role)
+        /// <summary>
+        /// 入力に当たる役職を探す。内部名・短縮名・表示名 (今の言語・日本語・英語) のどれかと完全に一致する物があればそれだけを返し、
+        /// 無ければ表示名か内部名に入力を含む物をすべて返す (「波動砲」→ 波動砲シェリフ・波動砲ジャッカル)
+        /// </summary>
+        public static List<CustomRoles> FindRoles(string input)
         {
             InitRoleCommands();
-            foreach (var r in roleCommands)
-            {
-                if ((int)r.Key < 0) continue;
+            var result = new List<CustomRoles>();
+            input = input?.Trim();
+            if (string.IsNullOrEmpty(input)) return result;
 
-                if (String.Compare(input, r.Key.ToString(), true) == 0 || String.Compare(input, r.Value, true) == 0)
-                {
-                    role = r.Key;
-                    return true;
-                }
+            IEnumerable<string> Names(KeyValuePair<CustomRoles, string> r)
+            {
+                var key = r.Key.ToString();
+                yield return key;
+                yield return r.Value;
+                if (!HasString(key)) yield break;
+                yield return GetString(key);
+                yield return GetString(key, SupportedLangs.Japanese);
+                yield return GetString(key, SupportedLangs.English);
             }
-            role = CustomRoles.NotAssigned;
-            return false;
+            var roles = roleCommands.Where(r => (int)r.Key >= 0).ToList();
+            foreach (var r in roles)
+                if (Names(r).Any(n => String.Compare(input, n, true) == 0)) result.Add(r.Key);
+            if (result.Count > 0) return result;
+            foreach (var r in roles)
+                if (Names(r).Any(n => n != null && n.Contains(input, StringComparison.OrdinalIgnoreCase))) result.Add(r.Key);
+            return result;
+        }
+        /// <summary>当たる役職が 1 つだけの時に true。<paramref name="candidates"/> には当たった物をすべて入れる</summary>
+        public static bool TryGetRoleByName(string input, out CustomRoles role, out List<CustomRoles> candidates)
+        {
+            candidates = FindRoles(input);
+            role = candidates.Count == 1 ? candidates[0] : CustomRoles.NotAssigned;
+            return candidates.Count == 1;
+        }
+        public static bool TryGetRoleByName(string input, out CustomRoles role) => TryGetRoleByName(input, out role, out _);
+
+        /// <summary>候補の役職の名前を色付きで並べる (多すぎる時は先頭だけ)</summary>
+        internal static string RoleCandidates(List<CustomRoles> roles)
+        {
+            const int Max = 15;
+            var text = string.Join(", ", roles.Take(Max).Select(r => Utils.ColorString(Utils.GetRoleColor(r), Utils.GetRoleName(r))));
+            return roles.Count > Max ? text + ", …" : text;
         }
         public static void GetRolesInfo(string role, byte PlayerId = byte.MaxValue)
         {
-            InitRoleCommands();
-
-            foreach (var r in roleCommands)
-            {
-                var roleName = r.Key.ToString();
-                var roleShort = r.Value;
-
-                if (String.Compare(role, roleName, true) == 0 || String.Compare(role, roleShort, true) == 0)
-                {
-                    Utils.ShowRoleInfoLong(r.Key, PlayerId);
-                    return;
-                }
-            }
-            Utils.SendMessageAutoSplit(GetString("Message.HelpRoleNone"), true, sendTo: PlayerId);
+            var found = FindRoles(role);
+            if (found.Count == 1)
+                Utils.ShowRoleInfoLong(found[0], PlayerId);
+            else if (found.Count > 1)
+                Utils.SendMessageAutoSplit(string.Format(GetString("Message.RoleAmbiguous"), role, RoleCandidates(found)), true, sendTo: PlayerId);
+            else
+                Utils.SendMessageAutoSplit(GetString("Message.HelpRoleNone"), true, sendTo: PlayerId);
         }
         private static void InitRoleCommands()
         {
@@ -413,7 +452,7 @@ namespace TownOfHostL
                 // 属性
                 roleCommands.Add((CustomRoles)(-5), $"== {GetString("Addons")} ==");  // 区切り用
                 foreach (var info in TownOfHostL.Roles.AddOns.AddOnList.All)
-                    if (info.ChatCommand != null) roleCommands.Add(info.Role, info.ChatCommand);
+                    roleCommands.TryAdd(info.Role, info.ChatCommand ?? "");  // 短縮名の無い物も表示名で引けるように入れる
 
                 // HAS
                 roleCommands.Add((CustomRoles)(-6), $"== {GetString("HideAndSeek")} ==");  // 区切り用
@@ -427,9 +466,8 @@ namespace TownOfHostL
             var roles = CustomRoleManager.AllRolesInfo.Values.Where(role => role.CustomRoleType == roleType);
             foreach (var role in roles)
             {
-                if (role.ChatCommand is null) continue;
-
-                roleCommands[role.RoleName] = role.ChatCommand;
+                // 短縮名の無い役職も表示名で引けるように入れる
+                roleCommands[role.RoleName] = role.ChatCommand ?? "";
             }
         }
         // 客 1 人あたり、返事は ReplyInterval 秒に 1 回まで。連打の返事が溜まると、同じ宛先への送信が続いて公式サーバーに切られる恐れがある
