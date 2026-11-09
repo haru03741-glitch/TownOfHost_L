@@ -115,14 +115,23 @@ public static class GameEndRules
         }
         if (RoleTeamWins.CheckTeamWin(counts[0], counts[1], counts[2], crew, teams, ref reason)) return true;
         if (killers > 0 || other > 0) sawKillers = true;
-        // キルする側が最初からいない試合 (1 人で試す時など) は、クルーの勝ちで即座に終わらせない
-        else if (sawKillers) //クルー勝利
+        // キルする側が最初からいない試合 (1 人で試す時など) は、クルーの勝ちで即座に終わらせない。
+        // 判定はイントロ中に走らないので、イントロ中に追放・切断で消えた分は配られた役職から見る
+        else if (sawKillers || (sawKillers = WereKillersAssigned())) //クルー勝利
         {
             reason = GameOverReason.CrewmatesByVote;
             CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Crewmate);
             return true;
         }
         return false;
+    }
+
+    /// <summary>死んだ人・抜けた人も含めて、キルする側か独自の陣営の役職が配られていたか</summary>
+    private static bool WereKillersAssigned()
+    {
+        foreach (var faction in KillingFactions)
+            if (Utils.PlayersCount(faction.CountType) > 0) return true;
+        return Utils.PlayersCount(CountTypes.Pavlov) + Utils.PlayersCount(CountTypes.StandMaster) + Utils.PlayersCount(CountTypes.Eater) > 0;
     }
 
     public static bool ByLivingPlayersHideAndSeek(out GameOverReason reason)
