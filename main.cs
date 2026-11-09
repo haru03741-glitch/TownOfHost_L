@@ -58,7 +58,7 @@ public partial class Main : BasePlugin
     // サポートされている最低のAmongUsバージョン
     public static readonly string LowestSupportedVersion = "2026.9.29";
     // このバージョンのみで公開ルームを無効にする場合
-    public static readonly bool IsPublicAvailableOnThisVersion = false;
+    public static readonly bool IsPublicAvailableOnThisVersion = true;
     // プレリリースかどうか
     public static bool IsPrerelease { get; } = true;
     public const string PluginSubVersion = "β";
@@ -81,6 +81,7 @@ public partial class Main : BasePlugin
     public static ConfigEntry<bool> JapaneseRoleName { get; private set; }
     public static ConfigEntry<bool> IsMuteLobbyBGM { get; private set; }
     public static ConfigEntry<bool> SleepAccountMenu { get; private set; }
+    public static ConfigEntry<bool> OnlyTohlLobbies { get; private set; }
     public static ConfigEntry<float> MessageWait { get; private set; }
     public static ConfigEntry<bool> KillFlashAfterDeadByHost { get; private set; }
 
@@ -156,6 +157,8 @@ public partial class Main : BasePlugin
         IsMuteLobbyBGM = Config.Bind("Client Options", "Mute Lobby BGM", false);
         SleepAccountMenu = Config.Bind("Client Options", "Sleep Account Menu", true,
             "Hide the account panel on the main menu until login finishes, so the menu can be used right after start-up.");
+        OnlyTohlLobbies = Config.Bind("Client Options", "Only TOHL Lobbies", true,
+            "Find Game lists only lobbies hosted with TOHL (official servers only). When off, TOHL lobbies are not listed.");
         DebugKeyInput = Config.Bind("Authentication", "Debug Key", "");
 
         Logger = BepInEx.Logging.Logger.CreateLogSource("TOH_L");

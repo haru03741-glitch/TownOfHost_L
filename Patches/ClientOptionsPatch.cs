@@ -13,6 +13,7 @@ namespace TownOfHostL
         private static ClientActionItem DumpLog;
         private static ClientActionItem OpenLogFolder;
         private static ClientActionItem IsMuteLobbyBGM;
+        private static ClientActionItem OnlyTohlLobbies;
 
         public static void Postfix(OptionsMenuBehaviour __instance)
         {
@@ -44,6 +45,10 @@ namespace TownOfHostL
             if (IsMuteLobbyBGM == null || IsMuteLobbyBGM.ToggleButton == null)
             {
                 IsMuteLobbyBGM = ClientOptionItem.Create("IsMuteLobbyBGM", Main.IsMuteLobbyBGM, __instance);
+            }
+            if (OnlyTohlLobbies == null || OnlyTohlLobbies.ToggleButton == null)
+            {
+                OnlyTohlLobbies = ClientOptionItem.Create("OnlyTohlLobbies", Main.OnlyTohlLobbies, __instance);
             }
 
             if (ModUnloaderScreen.Popup == null)

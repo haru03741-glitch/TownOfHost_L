@@ -16,6 +16,22 @@ public static class OfficialServer
             try
             {
                 if (AmongUsClient.Instance == null || AmongUsClient.Instance.NetworkMode != NetworkModes.OnlineGame) return false;
+                return IsOfficialRegion;
+            }
+            catch
+            {
+                return true;
+            }
+        }
+    }
+
+    // 選んでいるリージョンが公式かどうか。まだ接続していない画面 (部屋探しなど) でも使える。
+    public static bool IsOfficialRegion
+    {
+        get
+        {
+            try
+            {
                 var region = ServerManager.Instance?.CurrentRegion;
                 if (region == null) return true;
                 var ping = region.PingServer;
