@@ -798,6 +798,19 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
 
 
+        // 背中側に壁がある時は、その場で壁へ向き直ってもホストに届かないので、動いて向きを決めてからためる
+        if (beam?.Pending == true) return;
+        if (beam != null && beam.WaitForDirection(StartCharge))
+        {
+            UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
+            return;
+        }
+        StartCharge();
+    }
+
+    void StartCharge()
+    {
+        if (!Player.IsAlive() || MeetingHud.Instance != null) return;
         IsFiring = true;
 
 
@@ -1112,6 +1125,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
         if (ShowBeamMark && Player.IsAlive()) ApplyBeamHit();
 
         if (!IsCharging && !IsSuperCharging && !ShowBeamMark) beam?.TrackDirection();
+        beam?.Tick();
         if (IsCharging || IsSuperCharging)
             beam?.Charging(IsSuperCharging ? SuperChargeTime - superChargeTimer : ChargeTime - chargeTimer);
         // ★が客の画面に出るまで (会議明けの待ちなど) は撃たない。見えないビームで倒さないため
@@ -1648,6 +1662,7 @@ public sealed class JackalHadouHo : HamoRoleBase, ILNKiller, IUsePhantomButton, 
 
         if (IsLoaded) return $"{size}<color=#00b4eb>【装填済】ファントムボタン → 超波動砲チャージ！</color>";
 
+        if (beam?.Pending == true) return $"{size}<color=#ff0000>向きを決めています。撃ちたい向きへ動いてください</color>";
         if (!IsCharging && !IsSuperCharging) return $"{size}<color=#ff0000>ファントムボタン → チャージ発射</color>";
 
         if (IsSuperCharging)

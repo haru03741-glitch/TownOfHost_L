@@ -136,6 +136,19 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
         ResetCooldown = false;
         if (IsFiring || ShowBeamMark || !Player.IsAlive() || IsCharging) return;
 
+        // 背中側に壁がある時は、その場で壁へ向き直ってもホストに届かないので、動いて向きを決めてからためる
+        if (beam?.Pending == true) return;
+        if (beam != null && beam.WaitForDirection(StartCharge))
+        {
+            UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
+            return;
+        }
+        StartCharge();
+    }
+
+    void StartCharge()
+    {
+        if (!Player.IsAlive() || MeetingHud.Instance != null) return;
         IsFiring = true;
         IsCharging = true;
         Charging = true;
@@ -209,8 +222,8 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
             UtilsNotifyRoles.NotifyRoles(ForceLoop: true);
         }
 
-        beam?.Tick();
         if (!IsCharging && !ShowBeamMark) beam?.TrackDirection();
+        beam?.Tick();
         if (ShowBeamMark && Player.IsAlive()) ApplyBeamHit();
         if (IsCharging)
         {
@@ -358,6 +371,7 @@ public sealed class HadouHo : HamoRoleBase, IImpostor, IUsePhantomButton
     {
         seen ??= seer;
         if (seen.PlayerId != seer.PlayerId || isForMeeting || !Player.IsAlive()) return "";
+        if (beam?.Pending == true) return $"{(isForHud ? "" : "<size=60%>")}<color=#ff0000>向きを決めています。撃ちたい向きへ動いてください</color>";
         if (!IsCharging) return $"{(isForHud ? "" : "<size=60%>")}<color=#ff0000>ファントムボタン → チャージ発射</color>";
         return $"{(isForHud ? "" : "<size=100%>")}<color=#ff0000>チャージ中... {Mathf.Max(0f, ChargeTime - chargeTimer):F1}s</color>";
     }

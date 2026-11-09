@@ -211,6 +211,19 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
         if (nowcool > 0f) return;
         if (!IsBeamUnlocked) return;
 
+        // 背中側に壁がある時は、その場で壁へ向き直ってもホストに届かないので、動いて向きを決めてからためる
+        if (beam?.Pending == true) return;
+        if (beam != null && beam.WaitForDirection(StartCharge))
+        {
+            UtilsNotifyRoles.NotifyRoles(OnlyMeName: true, SpecifySeer: Player);
+            return;
+        }
+        StartCharge();
+    }
+
+    void StartCharge()
+    {
+        if (!Player.IsAlive() || MeetingHud.Instance != null) return;
         IsFiring = true;
         IsCharging = true;
         chargeTimer = 0f;
@@ -293,6 +306,7 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
 
         if (ShowBeamMark && Player.IsAlive()) ApplyBeamHit();
         if (!IsCharging && !ShowBeamMark) beam?.TrackDirection();
+        beam?.Tick();
         if (IsCharging)
         {
             chargeTimer += Time.fixedDeltaTime;
@@ -441,6 +455,8 @@ public sealed class SheriffHadouHo : HamoRoleBase, IUsePhantomButton
             return $"{size}<color=#f8cd46>ペット → 波動砲モードへ{cdText}</color>";
         }
 
+        if (beam?.Pending == true)
+            return $"{size}<color=#ff0000>向きを決めています。撃ちたい向きへ動いてください</color>";
         if (IsCharging)
             return $"{size}<color=#ff0000>チャージ中... {Mathf.Max(0f, ChargeTime - chargeTimer):F1}s</color>";
 

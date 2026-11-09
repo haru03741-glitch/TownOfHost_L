@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using UnityEngine;
 using Cno = TownOfHostL.Core.CustomNetObject;
@@ -44,6 +45,11 @@ public sealed class HadouHoBeam
     // いちばん短い入力は 1 フレーム 0.03〜0.04 を 3〜4 フレーム続けて動く (合わせて 0.09〜0.15)。
     private const float MinStep = 0.02f, TurnDistance = 0.06f;
     private const int TurnFrames = 2;
+    // ボタンを押した時、背中側のこの距離に壁や物があれば、向きを決める段を挟む。その段の長さ
+    private const float WallProbe = 0.15f;
+    // 壁の向きが背中側からどれだけずれていても数えるか (内積。0.5 = 60 度まで)
+    private const float BackDot = 0.5f;
+    private const float DirectionCheckTime = 1f;
     // 1 フレームでこれより動いたら、歩きではなく飛び (ベント・テレポート) として向きに数えない
     private const float JumpDistance = 1.5f;
 
@@ -60,6 +66,11 @@ public sealed class HadouHoBeam
     private float extremeX;
     private Vector2 lastPos;
     private int reverseFrames;
+    private Action pendingStart;
+    private float pendingUntil;
+
+    /// <summary>向きを決める段の途中 (ボタンは押されたが、まだためていない)。</summary>
+    public bool Pending => pendingStart != null;
     private bool tracking;
 
     /// <summary>撃つ向き。ため始めに固定される。</summary>
@@ -110,6 +121,40 @@ public sealed class HadouHoBeam
         reverseFrames = 0;
     }
 
+    /// <summary>
+    /// ボタンを押した時に呼ぶ。背中側に壁や物が接していれば、その場でそちらへ向き直ってもホストへ届かない
+    /// (位置が動かない) ので、<see cref="DirectionCheckTime"/> 秒は動けるまま向きを決めさせ、その後で <paramref name="startCharge"/> を呼ぶ。
+    /// 待たせた時は true。false ならすぐためてよい。
+    /// </summary>
+    public bool WaitForDirection(Action startCharge)
+    {
+        if (owner == null || !BackToWall()) return false;
+        pendingStart = startCharge;
+        pendingUntil = Time.realtimeSinceStartup + DirectionCheckTime;
+        return true;
+    }
+
+    // 背中側に、プレイヤーを止める物 (プレイヤーの層がぶつかる層の、すり抜けない当たり判定) が接しているか。
+    // 足元の円の少し外までにある物のうち、一番近い点が背中側にある物だけを数える (床の縁に沿って滑っている時の上下の壁は数えない)。
+    // 線 1 本では斜めの壁や足元から外れた物を拾えず、円を滑らせる調べ方 (CircleCast) はもう接している壁を数えない
+    private bool BackToWall()
+    {
+        var self = owner.Collider;
+        if (self == null) return false;
+        float radius = self is CircleCollider2D circle ? circle.radius * Mathf.Abs(self.transform.lossyScale.x) : 0.2f;
+        var back = facingLeft ? Vector2.right : Vector2.left;
+        var center = owner.GetTruePosition();
+        int mask = Physics2D.GetLayerCollisionMask(self.gameObject.layer);
+        foreach (var hit in Physics2D.OverlapCircleAll(center, radius + WallProbe, mask))
+        {
+            if (hit == null || hit.isTrigger || hit == self || hit.GetComponentInParent<PlayerControl>()) continue;
+            var toWall = hit.ClosestPoint(center) - center;
+            if (toWall.sqrMagnitude < 1e-6f) continue;
+            if (Vector2.Dot(toWall.normalized, back) >= BackDot) return true;
+        }
+        return false;
+    }
+
     /// <summary>ためを始める。<see cref="FacingLeft"/> の側にゲートを出し、撃ち終わるまで向きを変えない。</summary>
     public void BeginCharge(int warningSize)
     {
@@ -149,15 +194,25 @@ public sealed class HadouHoBeam
 
     public void End()
     {
+        pendingStart = null;
         gate?.Despawn();
         line?.Despawn();
         gate = line = null;
         hiddenGate = hiddenLine = 0;
     }
 
-    /// <summary>ホストの毎 fixed update で呼ぶ。自前の演出で描く人 (ホストを含む) の画面からは CNO を隠す。</summary>
+    /// <summary>
+    /// ホストの毎 fixed update で呼ぶ。向きを決める段が終わったらためを始め、
+    /// 自前の演出で描く人 (ホストを含む) の画面からは CNO を隠す。
+    /// </summary>
     public void Tick()
     {
+        if (pendingStart != null && Time.realtimeSinceStartup >= pendingUntil)
+        {
+            var start = pendingStart;
+            pendingStart = null;
+            start();
+        }
         if (!drawnByClientEffects || !ClientEffects.NovaOn) return;
         Hide(gate, ref hiddenGate);
         Hide(line, ref hiddenLine);
