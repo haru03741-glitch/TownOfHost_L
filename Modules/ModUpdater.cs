@@ -33,8 +33,10 @@ namespace TownOfHostL
             // 問い合わせはメインスレッドで待たず、終わったらメニューの LateUpdate でボタンへ反映する
             if (!isChecked && checkTask == null)
             {
-                bool beta = Main.BetaBuildURL.Value != "";
-                checkTask = Task.Run(() => CheckRelease(beta));
+                // 設定と本編の値はメインスレッドで読んでから渡す (問い合わせはスレッドプールで動く)
+                string betaUrl = Main.BetaBuildURL.Value;
+                var platform = Constants.GetPlatformType();
+                checkTask = Task.Run(() => CheckRelease(betaUrl, platform));
             }
             if (checkTask == null) ShowUpdateButton();
         }
@@ -54,9 +56,10 @@ namespace TownOfHostL
             button.Button.gameObject.SetActive(hasUpdate);
             button.Button.transform.Find("FontPlacer/Text_TMP").GetComponent<TMPro.TMP_Text>().SetText($"<size=7><color=#00bfff>TownOfHost</color>_<color=#ffff00>L\n★ UPDATE ★</color>\n[ <color=#73e673>{latestTitle}</color> ]</size>");
         }
-        public static async Task<bool> CheckRelease(bool beta = false)
+        public static async Task<bool> CheckRelease(string betaUrl, Platforms platform)
         {
-            string url = beta ? Main.BetaBuildURL.Value : URL + "/releases/latest";
+            bool beta = betaUrl != "";
+            string url = beta ? betaUrl : URL + "/releases/latest";
             try
             {
                 string result;
@@ -86,12 +89,12 @@ namespace TownOfHostL
                     JArray assets = data["assets"].Cast<JArray>();
                     for (int i = 0; i < assets.Count; i++)
                     {
-                        if (assets[i]["name"].ToString() == "TownOfHost_L-Steam.dll" && Constants.GetPlatformType() == Platforms.StandaloneSteamPC)
+                        if (assets[i]["name"].ToString() == "TownOfHost_L-Steam.dll" && platform == Platforms.StandaloneSteamPC)
                         {
                             downloadUrl = assets[i]["browser_download_url"].ToString();
                             break;
                         }
-                        if (assets[i]["name"].ToString() == "TownOfHost_L-Epic.dll" && Constants.GetPlatformType() == Platforms.StandaloneEpicPC)
+                        if (assets[i]["name"].ToString() == "TownOfHost_L-Epic.dll" && platform == Platforms.StandaloneEpicPC)
                         {
                             downloadUrl = assets[i]["browser_download_url"].ToString();
                             break;
