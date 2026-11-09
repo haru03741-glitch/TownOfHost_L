@@ -655,17 +655,6 @@ public sealed class Evolver : HamoRoleBase, IImpostor, IUsePhantomButton
         Player.RpcShapeshift(Player, true);
 
 
-
-        var sender = CustomRpcSender.Create("EvolverEvolveShape");
-
-        sender.AutoStartRpc(Player.NetId, (byte)RpcCalls.Shapeshift).Write(dummy).Write(true).EndRpc();
-
-        sender.AutoStartRpc(Player.NetId, (byte)RpcCalls.Shapeshift).Write(Player).Write(true).EndRpc();
-
-        sender.EndMessage();
-
-        sender.SendMessage();
-
     }
 
 

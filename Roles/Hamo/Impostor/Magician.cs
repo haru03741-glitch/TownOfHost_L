@@ -384,11 +384,12 @@ public sealed class Magician : HamoRoleBase, IImpostor, IUsePhantomButton
 
                 var position = target.transform.position;
 
-                target.RpcSnapToForced(new Vector2(9999f, 9999f));
+                // 飛ばしと戻しは対で送る (予算で戻しだけ落ちると、マップの外に取り残される)
+                target.RpcSnapTo(new Vector2(9999f, 9999f), force: true);
 
                 target.RpcMurderPlayer(target, true);
 
-                _ = new LateTask(() => target.RpcSnapToForced(position), 0.5f);
+                _ = new LateTask(() => target.RpcSnapTo(position, force: true), 0.5f);
 
             }
 

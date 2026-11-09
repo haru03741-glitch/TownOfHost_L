@@ -46,6 +46,14 @@ public static class SnapToBudget
         return false;
     }
 
+    // 財布に reserve 本以上残っているか。途中の見た目だけの TP を、他の TP や仕上げの TP のために控える時に使う
+    public static bool HasHeadroom(float reserve)
+    {
+        if (!OfficialServer.IsActive) return true;
+        Refill(Time.realtimeSinceStartup);
+        return tokens >= reserve;
+    }
+
     // ホストが送った SnapTo を 1 本数える。止められない送信もここで払うので、財布は借りになることがある。
     public static void Record()
     {

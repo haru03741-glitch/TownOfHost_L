@@ -102,6 +102,8 @@ class Penguin : HamoRoleBase, IImpostor
         SendRPC();
         movecount = 0;
         oldpos = Player.GetTruePosition();
+        lastTpPos = new(float.MaxValue, float.MaxValue);
+        nextTpAt = 0f;
         target.GetPlayerState().CanMove = false;
         target.MarkDirtySettings();
     }
@@ -198,10 +200,13 @@ class Penguin : HamoRoleBase, IImpostor
         if (AbductVictim != null)
         {
             stopCount = false;
-            state = 0;
+            nextTpAt = 0f;
         }
     }
-    static int state = 0;
+    // 連れ回しの TP は 0.2 秒以上あけ、前に送った位置から 0.3 以上動いた時だけ送る (止まっている間も送り続けると SnapTo の予算が尽きる)
+    const float TpInterval = 0.2f, TpMinMove = 0.3f;
+    float nextTpAt;
+    Vector2 lastTpPos = new(float.MaxValue, float.MaxValue);
     public override void OnFixedUpdate(PlayerControl player)
     {
         if (!AmongUsClient.Instance.AmHost) return;
@@ -256,11 +261,11 @@ class Penguin : HamoRoleBase, IImpostor
             // はしごの上にいるプレイヤーにはSnapToRPCが効かずホストだけ挙動が変わるため，一律でテレポートを行わない
             else if (!AbductVictim.MyPhysics.Animations.IsPlayingAnyLadderAnimation())
             {
-                int div = 3;
-                state++;
-                if (state % div == 0)
+                var position = (Vector2)Player.transform.position;
+                if (Time.time >= nextTpAt && Vector2.Distance(position, lastTpPos) >= TpMinMove)
                 {
-                    var position = Player.transform.position;
+                    nextTpAt = Time.time + TpInterval;
+                    lastTpPos = position;
                     movecount += Vector2.Distance(position, oldpos);
                     oldpos = position;
                     if (Player.PlayerId != 0)

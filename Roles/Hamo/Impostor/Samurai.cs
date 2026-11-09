@@ -138,7 +138,8 @@ public sealed class Samurai : HamoRoleBase, IImpostor, IUsePhantomButton
     {
         if (!Player.IsAlive()) return;
 
-        Player.RpcSnapToForced(origin);
+        // 戻しは予算で取りやめない (取りやめると斬った先に取り残される)
+        Player.RpcSnapTo(origin, force: true);
         _ = new LateTask(() =>
         {
             if (!Player.IsAlive()) return;

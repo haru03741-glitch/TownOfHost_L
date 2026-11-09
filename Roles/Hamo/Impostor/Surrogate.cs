@@ -112,8 +112,10 @@ public static class SurrogateSystem
 
         Vector2 ownerPos = owner.GetTruePosition();
         Vector2 proxyPos = proxy.GetTruePosition();
-        owner.RpcSnapToForced(proxyPos);
-        proxy.RpcSnapToForced(ownerPos);
+        // 入れ替えは 2 本で 1 組。片方だけ予算で落ちると 2 人が重なる
+        if (!TownOfHostL.Modules.Net.SnapToBudget.CanSend()) return false;
+        owner.RpcSnapTo(proxyPos, force: true);
+        proxy.RpcSnapTo(ownerPos, force: true);
         UtilsNotifyRoles.NotifyRoles();
         return true;
     }

@@ -646,7 +646,7 @@ public sealed class StandMaster : HamoRoleBase, ILNKiller, IUsePhantomButton
 
 
 
-        if (standReturnPos.HasValue) stand.RpcSnapToForced(standReturnPos.Value);
+        if (standReturnPos.HasValue) stand.RpcSnapTo(standReturnPos.Value, force: true);
 
 
 

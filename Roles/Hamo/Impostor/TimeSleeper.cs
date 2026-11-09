@@ -50,6 +50,9 @@ public sealed class TimeSleeper : HamoRoleBase, IImpostor, IUsePhantomButton
     static OptionItem OptionRewindSpeed;
     static float RewindSpeed;
 
+    const float RewindMinGap = 0.5f;
+    // 途中の歩のために使わず残しておく SnapTo の本数 (仕上げの全員分と他の役職の TP)
+    const float RewindReserve = 30f;
     bool isRecording;
     bool isRewinding;
     float recordTimer;
@@ -210,6 +213,15 @@ public sealed class TimeSleeper : HamoRoleBase, IImpostor, IUsePhantomButton
                     if (IsBeamingOrCharging(pc)) continue;
 
                     var targetPos = kvp.Value[rewindIndex];
+                    // 0.1 秒ごとに全員へ送ると SnapTo の予算がすぐ尽き、巻き戻しが途中で崩れて他の役職の TP も落ちる。
+                    // 途中の歩は、今の位置から離れていて予算に余裕がある時だけ送る。最後の 1 歩は記録した位置へ必ず合わせる
+                    float gap = Vector2.Distance(pc.transform.position, targetPos);
+                    if (rewindIndex == 0)
+                    {
+                        if (gap >= 0.05f) pc.RpcSnapTo(targetPos, force: true);
+                        continue;
+                    }
+                    if (gap < RewindMinGap || !TownOfHostL.Modules.Net.SnapToBudget.HasHeadroom(RewindReserve)) continue;
                     pc.RpcSnapToForced(targetPos, SendOption.None);
                 }
 
