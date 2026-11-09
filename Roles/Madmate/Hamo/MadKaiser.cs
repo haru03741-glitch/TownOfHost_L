@@ -1,0 +1,172 @@
+using AmongUs.GameOptions;
+
+
+
+using TownOfHostL.Roles.Core;
+using static TownOfHostL.Translator;
+
+
+
+namespace TownOfHostL.Roles.Madmate;
+
+
+
+// ===== マッドカイザー (MadKaiser) =====
+
+// From: TownOfHost_hamo
+
+// イントロ：皇帝として君臨せよ
+
+// 陣営：マッドメイト / 判定：クルーメイト
+
+//
+
+// 自身をクルーメイトだと勘違いしている(自分視点では特に何も表示されない)マッドメイト。
+
+// クルーメイト視点からは常に「君臨者」という怪しい肩書きとして認識される。
+
+// キルガードなどの耐性は無く、キルされれば普通に死亡する。
+
+// 全体タスク完了率が設定割合(既定80%)に達すると、クルーメイトからの見え方が
+
+// 「マッドカイザー」であるとバレてしまう表示に切り替わる。
+
+public sealed class MadKaiser : RoleBase
+
+{
+
+    // 役職の元: TownOfHost-hamo
+    public static readonly SimpleRoleInfo RoleInfo =
+
+        SimpleRoleInfo.Create(
+            typeof(MadKaiser),
+            player => new MadKaiser(player),
+            CustomRoles.MadKaiser,
+            () => RoleTypes.Crewmate,
+            CustomRoleTypes.Madmate,
+            (int)Options.offsetId.Hamo + 23500,
+            SetupOptionItem,
+            "mk",
+            "#8b0000",
+            introSound: () => GetIntroSound(RoleTypes.Crewmate),
+            countType: CountTypes.Crew
+        );
+
+
+
+    public MadKaiser(PlayerControl player)
+
+    : base(
+
+        RoleInfo,
+
+        player
+
+    )
+
+    {
+        // クルーの陣営の全員の画面で、この役職の名前の欄 (タスクの進みで変わる) を組み直す
+        CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(() => true);
+
+        RequiredTaskPercent = OptionRequiredTaskPercent.GetInt();
+
+    }
+
+
+
+    static OptionItem OptionRequiredTaskPercent;
+
+
+
+    enum OptionName
+
+    {
+
+        MadKaiserRequiredTaskPercent
+
+    }
+
+
+
+    private int RequiredTaskPercent;
+
+
+
+    private static void SetupOptionItem()
+
+    {
+
+        OptionRequiredTaskPercent = IntegerOptionItem.Create(RoleInfo, OptionName.MadKaiserRequiredTaskPercent, new(5, 95, 5), 80, false)
+
+            .SetValueFormat(OptionFormat.Percent);
+
+        RoleAddAddons.Create(RoleInfo, MadMate: true, DefaaultOn: true);
+
+    }
+
+
+
+    public override void ApplyGameOptions(IGameOptions opt) { }
+
+
+
+    // 全体のタスク完了率(0~100)を計算する
+
+    private float GetTaskCompletePercent()
+
+    {
+
+        if (GameData.Instance == null || GameData.Instance.TotalTasks <= 0) return 0f;
+
+        return 100f * GameData.Instance.CompletedTasks / GameData.Instance.TotalTasks;
+
+    }
+
+
+
+    // クルーメイトからの見え方: 通常時は「君臨者」という金色の肩書き(君臨者と同じ表示方式)、
+
+    // タスク完了率が閾値を超えると「マッドカイザー」だとバレる表示に切り替わる。
+
+    // 自分自身から見た場合は何も表示しない(自身をクルーメイトだと勘違いしているため)。
+
+    // ※ 君臨者(King)のOverrideDisplayRoleNameAsSeenと同じ仕組みを使うが、
+
+    //   君臨者特有の「投票で追放されるとクルーを巻き込む」等の能力は一切持たない。表示だけの模倣。
+
+    public override void OverrideDisplayRoleNameAsSeen(PlayerControl seer, bool isMeeting, ref TownOfHostL.Core.RoleNameView view)
+
+    {
+
+        seer ??= Player;
+
+        if (seer == Player) return;
+
+        if (!seer.Is(CustomRoleTypes.Crewmate)) return;
+
+
+
+        view.Enabled = true;
+
+        
+
+        if (GetTaskCompletePercent() >= RequiredTaskPercent)
+
+        {
+
+            view.SetMainRole(RoleInfo.RoleColor, GetString("MadKaiserRevealedTitle"));
+
+        }
+
+        else
+
+        {
+
+            view.SetMainRole(StringHelper.CodeColor("#FFD700"), GetString("MadKaiserDisguiseTitle"));
+
+        }
+
+    }
+
+}
+

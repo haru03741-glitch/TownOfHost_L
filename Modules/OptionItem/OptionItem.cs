@@ -138,7 +138,7 @@ namespace TownOfHostL
             parent.SetChild(i);
         });
         public OptionItem SetChild(OptionItem child) => Do(i => i.Children.Add(child));
-        // hamo の設定の機能
+        // 設定の機能 (見出し・値の表示の差し替え)
         public OptionZeroNotation ZeroNotation { get; protected set; } = OptionZeroNotation.None;
         public Func<string> funcOptionName { get; protected set; }
         public OptionItem SetZeroNotation(OptionZeroNotation value) => Do(i => i.ZeroNotation = value);
@@ -379,7 +379,7 @@ namespace TownOfHostL
         Turns,
         day,
     }
-    /// <summary>値が 0 の時の表示 (hamo)</summary>
+    /// <summary>値が 0 の時の表示</summary>
     public enum OptionZeroNotation
     {
         None,

@@ -130,7 +130,18 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
   - 名前で絵を描く偽の PlayerControl (CustomNetObject)
   - チャットを大きな空白で押し出す処理
 - [TownOfHost-hamo](https://github.com/rar006/TownOfHost-hamo)
-  - 波動砲・シェリフ波動砲・ジャッカル波動砲・ノヴァなど、hamo から移した役職
+  - hamo から移した役職 (役職ごとの元の Mod):
+    - TownOfHost-hamo: 守護者・ナイスハッカー・リピーター・イビルコマンダー・フレーマー・マエストロ・サロゲート・マッドカイザー・アンチヒーロー
+    - [TownOfHost-K](https://github.com/KYMario/TownOfHost-K): アナライザー・ナイスアドナー・ウルトラスター・アンチレポーター・バルーナー・爆弾魔・ドライバー・イビルアドナー・イビルブレンダー・マジシャン・大狼・マッドアベンジャー・妖狐・ジャッカルウルフ
+    - [SuperNewRoles](https://github.com/ykundesu/SuperNewRoles): 天秤・ミーティングシェリフ・賢者・村長・イビルギャンブラー・波動砲・ペンギン・突き落とし師・侍・フリーター・波動砲ジャッカル・弾・陰陽師・式神・パブロフの犬・スペランカー・マグロ
+    - [TownOfHost-Pko](https://github.com/satokazoku/TownOfHost-Pko): ナイスワーカホリック・波動砲シェリフ・ワルキューレ・イビルリンカー・ヘイトキラー・タイムリーパー・スタンドマスター・スタンド
+    - [ExtremeRoles](https://github.com/yukieiji/ExtremeRoles): アサシン・エボルバー・イーター
+    - [Nebula on the Ship](https://github.com/Dolly1016/Nebula): デストロイヤー・オボルス
+    - UchuAddon: ノヴァ
+    - [Revolutionary Host Roles](https://github.com/sansaaaaai/Revolutionary-host-roles): リローダー
+    - [The Other Roles: GM Edition](https://github.com/yukinogatari/TheOtherRoles-GM): ペスト医師
+    - [TheOtherRoles](https://github.com/TheOtherRolesAU/TheOtherRoles): ヴァルチャー
+  - 役職の共通の仕組み (ダブルトリガー・ワンクリックのファントムボタン・部屋のタスク・自投票・演出の送り方など)
 - TownOfNext (KARPED1EM)
   - チャットの入力欄の文字数の上限を広げる方法
 - [TownOfHost-K](https://github.com/KYMario/TownOfHost-K)

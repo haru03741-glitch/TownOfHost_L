@@ -214,28 +214,47 @@ static partial class ExtendedPlayerControl
         }
     }
 
-    public static void SetKillCooldown(this PlayerControl player, float time = -1f, bool ForceProtect = false)
+    /// <summary>
+    /// キルクールを time 秒から始め直す (time が負なら役職のキルクール)。守護の演出 (target、省略で自分) でクールを始め、1 秒後に設定を戻す。
+    /// ForceProtect はキルボタンを使えない時も行う。delay が false なら守護の演出をすぐ送る
+    /// </summary>
+    public static void SetKillCooldown(this PlayerControl player, float time = -1f, bool ForceProtect = false, PlayerControl target = null, bool delay = true)
     {
         if (player == null) return;
         if (!ForceProtect && !player.CanUseKillButton()) return;
 
-        float newCooldown = time >= 0f
-            ? time
-            : (player.GetRoleClass() as IKiller)?.CalculateKillCooldown() ?? Options.DefaultKillCooldown;
+        // ワンクリックのファントムのボタンの、クールの数え直し
+        if (IUsePhantomButton.IPPlayerKillCooldown.ContainsKey(player.PlayerId))
+            IUsePhantomButton.IPPlayerKillCooldown[player.PlayerId] = 0;
+        float newCooldown;
+        if (time >= 0f)
+        {
+            newCooldown = time;
+            if (!ForceProtect && PlayerState.GetByPlayerId(player.PlayerId) is PlayerState state) state.Is10secKillButton = false;
+        }
+        else
+        {
+            player.ResetKillCooldown();
+            newCooldown = Main.AllPlayerKillCooldown[player.PlayerId];
+        }
 
         Main.AllPlayerKillCooldown[player.PlayerId] = newCooldown * 2f;
         player.SyncSettings();
 
-        _ = new LateTask(() =>
+        void Protect()
         {
-            player.RpcProtectedMurderPlayer();
+            if (player == null) return;
+            player.RpcProtectedMurderPlayer(target);
 
             _ = new LateTask(() =>
             {
+                if (player == null) return;
                 player.ResetKillCooldown();
                 player.SyncSettings();
             }, 1f, "SetKillCooldown_Reset");
-        }, 0.2f, "SetKillCooldown_ProtectedMurder");
+        }
+        if (delay) _ = new LateTask(Protect, 0.2f, "SetKillCooldown_ProtectedMurder");
+        else Protect();
     }
     public static void RpcSpecificMurderPlayer(this PlayerControl killer, PlayerControl target = null)
     {
@@ -264,10 +283,19 @@ static partial class ExtendedPlayerControl
         messageWriter.Write(colorId);
         AmongUsClient.Instance.FinishRpcImmediately(messageWriter);
     }
-    public static void RpcResetAbilityCooldown(this PlayerControl target)
+    /// <param name="sync">true なら設定を送ってから少し後に戻す (クールの長さを変えた直後に使う)</param>
+    public static void RpcResetAbilityCooldown(this PlayerControl target, bool sync = false)
     {
         if (target == null || !AmongUsClient.Instance.AmHost)
         {
+            return;
+        }
+        // 試合の勝者が決まった後は送らない
+        if (CustomWinnerHolder.WinnerTeam is not CustomWinner.Default) return;
+        if (sync)
+        {
+            target.SyncSettings();
+            _ = new LateTask(() => target?.RpcResetAbilityCooldown(), 0.2f, "RpcResetAbilityCooldown.Sync");
             return;
         }
         Logger.Info($"アビリティクールダウンのリセット:{target.name}({target.PlayerId})", "RpcResetAbilityCooldown");

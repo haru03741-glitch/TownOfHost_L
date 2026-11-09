@@ -64,25 +64,6 @@ public interface IKiller
         return false;
     }
 
-    // ===== hamo から移植 =====
     /// <summary>キルをしなかった (ガードされた等) 時に呼ばれる</summary>
     public void OnCheckMurderDontKill(MurderInfo info) { }
-    /// <summary>キルボタンの画像を変える (hamo)</summary>
-    public bool OverrideKillButton(out string text)
-    {
-        text = default;
-        return false;
-    }
-    /// <summary>ベントボタンの画像を変える (hamo)</summary>
-    public bool OverrideImpVentButton(out string text)
-    {
-        text = default;
-        return false;
-    }
-    /// <summary>ベントボタンの文字を変える (hamo)</summary>
-    public bool OverrideImpVentButtonText(out string text)
-    {
-        text = default;
-        return false;
-    }
 }

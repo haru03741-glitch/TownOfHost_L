@@ -67,6 +67,17 @@ public abstract class RoleBase : IDisposable
         Player = null;
     }
 #pragma warning restore CA1816
+    /// <summary>
+    /// この役職の中に持たせる別の役職を作る (アサシンが持つ役職など)。中の役職は AllActiveRoles に載せない
+    /// (同じ人の役職は 1 つだけ)。全員の役職へ配るフックは、外の役職の override から中へ回す。
+    /// 壊す時は Dispose ではなく OnDestroy を呼ぶ (Dispose は外の役職の登録も消す)
+    /// </summary>
+    protected RoleBase CreateInnerRole(SimpleRoleInfo roleInfo)
+    {
+        CustomRoleManager.AllActiveRoles.Remove(Player.PlayerId);
+        try { return roleInfo.CreateInstance(Player); }
+        finally { CustomRoleManager.AllActiveRoles[Player.PlayerId] = this; }
+    }
     public bool Is(PlayerControl player)
     {
         return player.PlayerId == Player.PlayerId;
@@ -449,6 +460,80 @@ public abstract class RoleBase : IDisposable
     /// <returns>裁決を成立させるかどうか</returns>
     public virtual bool CallJudgeVote(PlayerControl voter, PlayerControl votefor, ref byte ExilePlayerid) => false;
 
+    // ===== 試合の流れ (ホストのみ) =====
+    /// <summary>試合の途中で役職が付いた時、Add の後に呼ばれる (役職の変更・復活など)</summary>
+    public virtual void OnAddedMidGame() { }
+    /// <summary>イントロが終わって少し後に呼ばれる (全員の役職が出そろった後)</summary>
+    public virtual void OnIntroEnd() { }
+    /// <summary>
+    /// 自分が湧いた時。会議明け (エアシップ以外は追放の演出の締め、エアシップは湧き位置を選んだ時) と、
+    /// 試合の始め (initialState = true) に呼ばれる
+    /// </summary>
+    public virtual void OnSpawn(bool initialState = false) { }
+    /// <summary>誰かが死んだ時 (死に方によらず 1 人 1 回)。OnPlayerDeadOthers と同じ所から全員の役職に呼ぶ</summary>
+    public virtual void OnPlayerDead(PlayerControl player) { }
+    /// <summary>誰かが部屋から抜けた時。全員の役職に呼ぶ</summary>
+    public virtual void OnPlayerLeft(PlayerControl player) { }
+    /// <summary>勝者がほぼ決まった後に呼ばれる。勝者を足したり外したりできる</summary>
+    public virtual void CheckWinner(GameOverReason reason) { }
+
+    // ===== ベント =====
+    /// <summary>ベントのボタンを押せるか (ホストの画面の判定)</summary>
+    public virtual bool CanClickUseVentButton => true;
+    /// <summary>ベントの中で隣のベントへ移れるか。false ならホストが移動の矢印を止める</summary>
+    public virtual bool CanVentMoving(PlayerPhysics physics, int ventId) => true;
+    /// <summary>誰かのベントの操作 (入る・出る・移る) が届いた時。全員の役職に呼ぶ</summary>
+    public virtual void OnVentilationSystemUpdate(PlayerControl user, VentilationSystem.Operation operation, int ventId) { }
+
+    // ===== サボタージュ =====
+    /// <summary>誰かがサボタージュを直そうとした時。全員の役職に呼ぶ</summary>
+    public virtual void OnFixSabotage(PlayerControl player, SystemTypes systemType, byte amount) { }
+    /// <summary>サボタージュが直り切った時。全員の役職に呼ぶ</summary>
+    public virtual void AfterSabotage(SystemTypes systemType) { }
+
+    // ===== タスク =====
+    /// <summary>ホストの画面でタスクを使えるか (ホストがこの役職の時)</summary>
+    public virtual bool CanTask() => Utils.HasTasks(PlayerControl.LocalPlayer.Data, false);
+
+    // ===== 会議 =====
+    /// <summary>会議の始めにチャットへ流す文。空なら流さない</summary>
+    public virtual string MeetingAddMessage() => "";
+    /// <summary>
+    /// 誰かが投票した時に、全員の役職で呼ぶ (CheckVoteAsVoter は投票した本人の役職だけ)。
+    /// どれかが false を返すと、その投票をなかったことにする
+    /// </summary>
+    public virtual bool CheckAnyVote(byte votedForId, PlayerControl voter) => true;
+    /// <summary>
+    /// 投票の集計の後、追放する人を書き換える。全員の役職で呼ぶ。
+    /// true を返すと、同数の時の特殊な決め方 (全員追放など) を使わない
+    /// </summary>
+    public virtual bool VotingResults(ref NetworkedPlayerInfo exiled, ref bool isTie, System.Collections.Generic.Dictionary<byte, int> vote, byte[] mostVotedPlayers, bool clearAndExile) => false;
+    /// <summary>通報 (緊急ボタンも含む) を取り消すか。全員の役職で呼ぶ。true で取り消し、reason に理由を書く</summary>
+    public virtual bool CancelReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target, ref DontReportReason reason) => false;
+    /// <summary>
+    /// 会議明けの配り直しで、本人の画面の本人の役職をこれにする。null なら見え方の表 (Modules.RoleView) のまま
+    /// </summary>
+    public virtual RoleTypes? AfterMeetingRole => null;
+
+    // ===== 見え方 =====
+    /// <summary>占い (役職を調べる能力) で見せる役職。NotAssigned なら本当の役職</summary>
+    public virtual CustomRoles TellResults(PlayerControl seer) => CustomRoles.NotAssigned;
+    /// <summary>この役職の人 (seen) の役職名の横の文字を、seer から見た形に書き換える</summary>
+    public virtual void OverrideProgressTextAsSeen(PlayerControl seer, ref bool enabled, ref string text) { }
+
+    public enum DontReportReason
+    {
+        None,
+        wait,
+        NonReport,
+        Transparent,
+        CantUseButton,
+        Eat,
+        Other,
+        Impostor,
+        Jiangshi,
+    }
+
     protected enum GeneralOption
     {
         Cooldown,
@@ -460,5 +545,16 @@ public abstract class RoleBase : IDisposable
         VentCooldown,
         VentMaxTime,
         TaskTrigger,
+        CanCreateSideKick,
+        Duration,
+        cantaskcount,
+        MeetingMaxTime,
+        PlayShapeAnimate,
+        TaskAwakening,
+        AwakeningTaskcount,
+        AbilityAwakening,
+        OptionCount,
+        EngineerInVentCooldown,
+        CanUseActiveComms,
     }
 }

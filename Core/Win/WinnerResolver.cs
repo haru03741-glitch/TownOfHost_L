@@ -20,7 +20,7 @@ public static class WinnerResolver
     {
         /// <summary>終了判定で決まった、上書き前の勝者</summary>
         public readonly CustomWinner Original;
-        /// <summary>hamo の後から決める勝ち方 (妖狐など) が書き換えることがある</summary>
+        /// <summary>後から決める勝ち方 (妖狐など) が書き換えることがある</summary>
         public GameOverReason Reason;
         /// <summary>単独勝利の上書きが 1 つでも起きたか</summary>
         public bool Overridden;
@@ -33,7 +33,7 @@ public static class WinnerResolver
 
     private static readonly SoloWinTier[] SoloWinTiers = (SoloWinTier[])Enum.GetValues(typeof(SoloWinTier));
 
-    /// <returns>終わり方 (hamo の役職が書き換えた時はその値)</returns>
+    /// <returns>終わり方 (役職が書き換えた時はその値)</returns>
     public static GameOverReason Resolve(GameOverReason reason)
     {
         var ctx = new Context(CustomWinnerHolder.WinnerTeam, reason);
@@ -47,8 +47,8 @@ public static class WinnerResolver
         if (!ctx.Overridden && CustomWinnerHolder.WinnerTeam == ctx.Original && CustomWinnerHolder.WinnerIds.Count == 0)
             AddBaseTeamWinners(ctx.Original);
 
-        // hamo: 単独勝利・乗っ取り (妖狐・マグロ・スペランカー・ゾンビ)
-        HamoGameEnd.LateWin(ref ctx.Reason, ctx.Original);
+        // 単独勝利・乗っ取り (妖狐・マグロ・スペランカー・ゾンビ)
+        RoleTeamWins.LateWin(ref ctx.Reason, ctx.Original);
 
         foreach (var pc in Main.AllPlayerControls) AddAdditionalWinners(pc);
         // 抜けた人の役職も拾うので、部屋にいる人ではなく役職の一覧から回す
@@ -65,9 +65,12 @@ public static class WinnerResolver
             CustomWinnerHolder.CantWinPlayerIds.Add(pc.PlayerId);
         }
 
-        // hamo: 勝利処理がほぼ終わった後の役職ごとの処理
+        // 勝利処理がほぼ終わった後の役職ごとの処理
         foreach (var pc in Main.AllPlayerControls)
-            (pc.GetRoleClass() as HamoRoleBase)?.CheckWinner(ctx.Reason);
+        {
+            try { pc.GetRoleClass()?.CheckWinner(ctx.Reason); }
+            catch (Exception ex) { Logger.Exception(ex, "CheckWinner"); }
+        }
         return ctx.Reason;
     }
 

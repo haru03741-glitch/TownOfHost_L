@@ -373,7 +373,7 @@ public sealed class SchrodingerCat : RoleBase, IAdditionalWinner, IDeathReasonSe
         /// </summary>
         Ogre,
         /// <summary>
-        /// パブロフ陣営に所属する状態 (hamo)
+        /// パブロフ陣営に所属する状態
         /// </summary>
         Pavlov,
     }

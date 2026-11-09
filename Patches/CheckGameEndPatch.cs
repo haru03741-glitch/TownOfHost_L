@@ -54,7 +54,7 @@ namespace TownOfHostL
 
             //ゲーム終了判定
             predicate.Check(out var reason);
-            HamoGameEnd.TakeOver(ref reason);
+            RoleTeamWins.TakeOver(ref reason);
             lastReason = reason;
 
             if (CustomWinnerHolder.WinnerTeam == CustomWinner.Default) return false;

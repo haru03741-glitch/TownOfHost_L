@@ -52,7 +52,7 @@ public static partial class CustomRoleManager
         PlayerControl appearanceKiller, PlayerControl appearanceTarget,
         bool killerMyselfInvoke = false)
         => OnCheckMurder(attemptKiller, attemptTarget, appearanceKiller, appearanceTarget, killerMyselfInvoke, false, 1, CustomDeathReason.Kill);
-    /// <summary>hamo の形のキルチェック。force はキラーのキルチェックを飛ばす、DontRoleAbility は相手の能力を使わせない</summary>
+    /// <summary>キルの力・ガードの力を見るキルチェック。force はキラーのキルチェックを飛ばす、DontRoleAbility は相手の能力を使わせない</summary>
     public static bool OnCheckMurder(
         PlayerControl attemptKiller, PlayerControl attemptTarget,
         PlayerControl appearanceKiller, PlayerControl appearanceTarget,
@@ -65,7 +65,7 @@ public static partial class CustomRoleManager
             Logger.Info($"Apperance:{appearanceKiller.GetNameWithRole()} => {appearanceTarget.GetNameWithRole()}", "CheckMurder");
 
         var info = new MurderInfo(attemptKiller, attemptTarget, appearanceKiller, appearanceTarget, DontRoleAbility, Killpower, 0, deathReason);
-        var hamoGuardian = false;
+        var guardianGuarded = false;
 
         appearanceKiller.ResetKillCooldown();
 
@@ -99,28 +99,28 @@ public static partial class CustomRoleManager
                         return false;
                     }
                 }
-                // 守護者 (hamo) のガード
-                if (info.KillPower > info.GuardPower && TownOfHostL.Roles.Hamo.Crewmate.Guardian.FindGuardianFor(attemptTarget.PlayerId) != null)
+                // 守護者 のガード
+                if (info.KillPower > info.GuardPower && TownOfHostL.Roles.Crewmate.Guardian.FindGuardianFor(attemptTarget.PlayerId) != null)
                 {
                     info.GuardPower = 1;
-                    hamoGuardian = true;
+                    guardianGuarded = true;
                 }
             }
-            // キラーのキルチェック処理実行 (hamo のダブルトリガーを先に見る)
-            if (!HamoDoubleTrigger.OnCheckMurderAsKiller(info) && !killerMyselfInvoke)
+            // キラーのキルチェック処理実行 (IDoubleTrigger の役職は 1 回押しと 2 回押しを先に振り分ける)
+            if (!DoubleTrigger.OnCheckMurderAsKiller(info) && !killerMyselfInvoke)
             {
                 killer.OnCheckMurderAsKiller(info);
             }
-            // hamo のガードの力によるガード
+            // ガードの力によるガード
             if (info.KillPower <= info.GuardPower && killer.IsKiller)
             {
                 info.IsGuard = true;
                 info.CanKill = false;
-                if (hamoGuardian)
+                if (guardianGuarded)
                 {
-                    var guardian = TownOfHostL.Roles.Hamo.Crewmate.Guardian.FindGuardianFor(attemptTarget.PlayerId);
+                    var guardian = TownOfHostL.Roles.Crewmate.Guardian.FindGuardianFor(attemptTarget.PlayerId);
                     guardian?.Sacrifice(attemptTarget);
-                    UtilsGameLog.AddGameLog("Guardian", UtilsName.GetPlayerColor(attemptTarget) + ":  " + string.Format(Translator.GetString("GuardMaster.Guard"), UtilsName.GetPlayerColor(attemptKiller, true)));
+                    Utils.AddGameLog("Guardian", attemptTarget.ColoredName() + ":  " + string.Format(Translator.GetString("GuardMaster.Guard"), attemptKiller.ColoredName()));
                 }
                 attemptKiller.RpcProtectedMurderPlayer(attemptTarget);
                 Utils.NotifyRoles();
@@ -310,8 +310,8 @@ public static partial class CustomRoleManager
         {
             var roleClass = roleInfo.CreateInstance(player);
             roleClass.Add();
-            // hamo: 途中で役職が変わった時・自投票・部屋タスク
-            if (Main.introDestroyed && GameStates.IsInGame && roleClass is HamoRoleBase hamoRole) hamoRole.ChengeRoleAdd();
+            // 試合の途中で付いた役職・自投票・部屋タスク
+            if (Main.introDestroyed && GameStates.IsInGame && roleClass != null) roleClass.OnAddedMidGame();
             if (roleClass is TownOfHostL.Roles.Core.Interfaces.ISelfVoter selfVoter) selfVoter.AddSelfVoter(player);
             if (roleClass is TownOfHostL.Roles.Core.Interfaces.IRoomTasker roomTasker) roomTasker.AddRoomTaker(player.PlayerId);
         }
@@ -436,6 +436,8 @@ public static partial class CustomRoleManager
     /// 誰かが生き返った時 (Modules.Revive)。ホストだけで呼ぶ。OnPlayerDeadOthers で「一度きり」の旗を立てた側が戻すのに使う
     /// </summary>
     public static HashSet<Action<byte>> OnPlayerRevivedOthers = new();
+    /// <summary>誰かがベントに入った時 (ホスト)。戻り値は今は使わない (追い出す時は登録した側で RpcBootFromVent を送る)</summary>
+    public static HashSet<Func<PlayerPhysics, int, bool>> OnEnterVentOthers = new();
     /// <summary>
     /// 投票で追放された人の後処理 (OnExileWrapUp の後の SetDead) の間だけ、その人の PlayerId。それ以外は byte.MaxValue。
     /// 追放を OnExileWrapUp で扱う役職が、知らせの側で同じ死を 2 度扱わないために見る (死因が Vote でも、全員追放や処刑は追放の後処理を通らない)
@@ -451,12 +453,26 @@ public static partial class CustomRoleManager
     }
     public static void NotifyPlayerDead(byte playerId, CustomDeathReason reason)
     {
-        if (OnPlayerDeadOthers.Count == 0) return;
         // 中で役職が変わって登録が外れても回せるよう、写しを回す
         foreach (var onDead in OnPlayerDeadOthers.ToArray())
         {
             try { onDead(playerId, reason); }
             catch (Exception ex) { Logger.Exception(ex, "OnPlayerDeadOthers"); }
+        }
+        if (!GameStates.IsInGame || Utils.GetPlayerById(playerId) is not PlayerControl player) return;
+        foreach (var role in AllActiveRoles.Values.ToArray())
+        {
+            try { role.OnPlayerDead(player); }
+            catch (Exception ex) { Logger.Exception(ex, "OnPlayerDead"); }
+        }
+    }
+    /// <summary>試合中に誰かが部屋から抜けた時 (ホストのみ)。全員の役職の OnPlayerLeft を呼ぶ</summary>
+    public static void NotifyPlayerLeft(PlayerControl player)
+    {
+        foreach (var role in AllActiveRoles.Values.ToArray())
+        {
+            try { role.OnPlayerLeft(player); }
+            catch (Exception ex) { Logger.Exception(ex, "OnPlayerLeft"); }
         }
     }
     public static void NotifyPlayerRevived(byte playerId)
@@ -543,7 +559,7 @@ public class MurderInfo
     ///会議中キルの場合
     /// </summary>
     public bool IsMeeting => GameStates.IsMeeting;
-    // hamo のキルの力・ガードの力
+    // キルの力・ガードの力
     public bool IsGuard = false;
     public int KillPower = 1;
     public int GuardPower = 0;
@@ -732,7 +748,7 @@ public enum CustomRoles
     ChainShifter,
     Vendetta,
 
-    // hamo から移植
+    // TownOfHost-hamo から移植
     Evilgambler, Samurai, HadouHo, Pusher, HateKiller, Framer, Surrogate, Maestro, TimeSleeper, Bomber,
     EvilLinker, Tairou, EvilBlender, Ballooner, AntiReporter, EvilAddoer, Driver, Assassin, EvilCommander,
     Magician, Evolver, Destroyer, Nova, Reloader,
@@ -813,7 +829,7 @@ public enum CustomRoles
     //dummy
     DummyNext = 10000,
 
-    // hamo の役職から名前だけ参照される、TOH_L に無い役職 (配られない)
+    // 役職から名前だけ参照される、配られない役職
     HamoOnlyStart = 20000,
     Alien, AlienHijack, Amanojaku, Amnesia, Amnesiac, Autocrat, ConnectSaver, CountKiller, DoppelGanger, Elector,
     EvilSatellite, GrimReaper, Guesser, JackalAlien, JackalMafia, Jackaldoll, Jumbo, King, LastNeutral, Limiter,

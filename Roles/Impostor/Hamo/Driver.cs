@@ -1,0 +1,115 @@
+using AmongUs.GameOptions;
+
+using TownOfHostL.Roles.Core;
+using TownOfHostL.Roles.Core.Interfaces;
+using TownOfHostL.Roles.Madmate;
+using static TownOfHostL.Translator;
+
+namespace TownOfHostL.Roles.Impostor;
+
+public sealed class Driver : RoleBase, IImpostor, IKillFlashSeeable, IDeathReasonSeeable
+{
+    // 役職の元: TownOfHost_K (TownOfHost-hamo 経由)
+    public static readonly SimpleRoleInfo RoleInfo =
+        SimpleRoleInfo.Create(
+            typeof(Driver),
+            player => new Driver(player),
+            CustomRoles.Driver,
+            () => RoleTypes.Impostor,
+            CustomRoleTypes.Impostor,
+            (int)Options.offsetId.Hamo + 76400,
+            SetupOptionItems,
+            "dr",
+            assignInfo: new RoleAssignInfo(CustomRoles.Driver, CustomRoleTypes.Impostor)
+            {
+                AssignCountRule = new(1, 1, 1),
+                AssignUnitRoles = new CustomRoles[2] { CustomRoles.Driver, CustomRoles.Braid }
+            }
+        );
+    public Driver(PlayerControl player)
+    : base(
+        RoleInfo,
+        player
+    )
+    {
+        KillCooldown = OptionKillCooldown.GetFloat();
+    }
+    public static OptionItem OptionKillCooldown;
+    public static OptionItem OptionBraidKillCooldown;
+    public static OptionItem OptionGiveKillFlash;
+    public static OptionItem OptionGiveKillFlashtaskTrigger;
+    public static OptionItem OptionGiveKnowDeathreason;
+    public static OptionItem OptionGiveKnowDeathreasontaskTrigger;
+    public static OptionItem OptionGiveGuard;
+    public static OptionItem OptionGiveGuardtaskTrigger;
+    public static OptionItem OptionGiveWatchVotes;
+    public static OptionItem OptionGiveWatchVotestaskTrigger;
+    public static OptionItem OptionBraidCanSeeDriver;
+    public static OptionItem OptionDriverCanSeeBraid;
+    public static OptionItem OptionBraidCanUseVent;
+    enum OptionName
+    {
+        KillCooldown,
+        BraidKillCooldown,
+        GiveKillFlash,
+        GiveKnowDeathreason,
+        GiveGuard,
+        GiveWatchVotes,
+        BraidCanSeeDriver, DriverTaskTrigger,
+        BraidCanVent,
+        DriverCanSeeBraid
+    }
+    public static float BraidKillCooldown;
+    public static float KillCooldown;
+    public static bool HasGuard;
+    public static void SetupOptionItems()
+    {
+        OptionDriverCanSeeBraid = BooleanOptionItem.Create(RoleInfo, OptionName.DriverCanSeeBraid, false, false);
+        OptionKillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.KillCooldown, new(0f, 180f, 0.5f), 30f, false)
+                .SetValueFormat(OptionFormat.Seconds);
+        OptionBraidKillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.BraidKillCooldown, new(0f, 180f, 0.5f), 15f, false)
+                .SetValueFormat(OptionFormat.Seconds);
+        OptionGiveKillFlash = BooleanOptionItem.Create(RoleInfo, OptionName.GiveKillFlash, false, false);
+        OptionGiveKillFlashtaskTrigger = IntegerOptionItem.Create(RoleInfo, OptionName.DriverTaskTrigger, new(1, 297, 1), 5, false, OptionGiveKillFlash);
+        OptionGiveKnowDeathreason = BooleanOptionItem.Create(RoleInfo, OptionName.GiveKnowDeathreason, false, false);
+        OptionGiveKnowDeathreasontaskTrigger = IntegerOptionItem.Create(RoleInfo, OptionName.DriverTaskTrigger, new(1, 297, 1), 5, false, OptionGiveKnowDeathreason);
+        OptionGiveWatchVotes = BooleanOptionItem.Create(RoleInfo, OptionName.GiveWatchVotes, false, false);
+        OptionGiveWatchVotestaskTrigger = IntegerOptionItem.Create(RoleInfo, OptionName.DriverTaskTrigger, new(1, 297, 1), 5, false, OptionGiveWatchVotes);
+        OptionGiveGuard = BooleanOptionItem.Create(RoleInfo, OptionName.GiveGuard, false, false);
+        OptionGiveGuardtaskTrigger = IntegerOptionItem.Create(RoleInfo, OptionName.DriverTaskTrigger, new(1, 297, 1), 5, false, OptionGiveGuard);
+        ObjectOptionitem.Create(RoleInfo, "BraidSetting", true, null).SetOptionName(() => "Braid Setting");
+        OptionBraidCanSeeDriver = BooleanOptionItem.Create(RoleInfo, OptionName.BraidCanSeeDriver, false, false);
+        OptionBraidCanUseVent = BooleanOptionItem.Create(RoleInfo, OptionName.BraidCanVent, true, false);
+        Braid.Tasks = Options.OverrideTasksData.Create(RoleInfo, CustomRoles.Braid);
+    }
+
+    public bool? CheckKillFlash(MurderInfo info) => Braid.DriverseeKillFlash;
+    public bool CheckSeeDeathReason(PlayerControl seen) => Braid.Driverseedeathreason;
+    public override void ApplyGameOptions(IGameOptions opt)
+    {
+        //匿名投票
+        opt.SetBool(BoolOptionNames.AnonymousVotes, !Braid.DriverseeVote);
+    }
+    public float CalculateKillCooldown() => Braid.TaskFin ? BraidKillCooldown : KillCooldown;
+    public override bool OnCheckMurderAsTarget(MurderInfo info)
+    {
+        if (Braid.GivedGuard && HasGuard)
+        {
+            HasGuard = false;
+            (var killer, var target) = info.AttemptTuple;
+            // 直接キル出来る役職チェック
+
+            if (Player.IsAlive())
+                if (!NameColorManager.TryGetData(killer, target, out var value) || value != RoleInfo.RoleColorCode)
+                {
+                    NameColorManager.Add(killer.PlayerId, target.PlayerId);
+                }
+            killer.RpcProtectedMurderPlayer(target);
+            target.RpcProtectedMurderPlayer(target);
+            info.GuardPower = 1;
+            Utils.AddGameLog($"Driver", Player.ColoredName() + ":  " + string.Format(GetString("GuardMaster.Guard"), killer.ColoredName()));
+            Utils.NotifyRoles();
+        }
+        return true;
+    }
+}

@@ -57,12 +57,12 @@ public class MeetingVoteManager
         vote.DoVote(exiled, 1);
         allVotes[voter] = vote;
         byte antiCompId = isAntiComp ? voter : byte.MaxValue;
-        HamoHooks.InClearAndExile = true;
+        RoleHooks.InClearAndExile = true;
         try { EndMeeting(false, antiCompId); }
-        finally { HamoHooks.InClearAndExile = false; }
+        finally { RoleHooks.InClearAndExile = false; }
     }
     /// <summary>
-    /// 今までの投票をすべて消し，複数人が同じ相手へ 1 票ずつ投じた状態で会議を終える (hamo)
+    /// 今までの投票をすべて消し，複数人が同じ相手へ 1 票ずつ投じた状態で会議を終える
     /// </summary>
     public void ClearAndExiles(byte[] voters, byte exiled)
     {
@@ -74,20 +74,20 @@ public class MeetingVoteManager
             vote.DoVote(exiled, 1);
             allVotes[voter] = vote;
         }
-        HamoHooks.InClearAndExile = true;
+        RoleHooks.InClearAndExile = true;
         try { EndMeeting(false); }
-        finally { HamoHooks.InClearAndExile = false; }
+        finally { RoleHooks.InClearAndExile = false; }
     }
-    /// <summary>投票を全部消して会議を終える (hamo)</summary>
+    /// <summary>投票を全部消して会議を終える</summary>
     public void ClearAndEndMeeting()
     {
         logger.Info("削除して会議を終了します");
         ClearVotes();
-        HamoHooks.InClearAndExile = true;
+        RoleHooks.InClearAndExile = true;
         try { EndMeeting(false); }
-        finally { HamoHooks.InClearAndExile = false; }
+        finally { RoleHooks.InClearAndExile = false; }
     }
-    /// <summary>会議の結果として出す文 (hamo の役職が書き換える)</summary>
+    /// <summary>会議の結果として出す文 (役職が書き換える)</summary>
     public static string Voteresult = "";
     /// <summary>
     /// 投票を行います．投票者が既に投票している場合は票を上書きします
@@ -468,8 +468,8 @@ public class MeetingVoteManager
                 Exiled = MadNimrod.VoteChange(Exiled);
             }
 
-            // hamo の役職による投票結果の書き換え (どれかが true なら同数時の特殊モードを使わない)
-            var skipVoteMode = HamoHooks.VotingResults(ref Exiled, ref IsTie, votedCounts, mostVotedPlayers);
+            // 役職による投票結果の書き換え (どれかが true なら同数時の特殊モードを使わない)
+            var skipVoteMode = RoleHooks.VotingResults(ref Exiled, ref IsTie, votedCounts, mostVotedPlayers);
 
             // 同数投票時の特殊モード
             if (IsTie && Options.VoteMode.GetBool() && !skipVoteMode)
@@ -502,7 +502,7 @@ public class MeetingVoteManager
     public const byte NoVote = 254;
 
     /// <summary>
-    /// 会議中に killtargetid を死なせ，その人への投票を取り消す (hamo の会議中キル)
+    /// 会議中に killtargetid を死なせ，その人への投票を取り消す (会議中キル)
     /// </summary>
     public static void ResetVoteManager(byte killtargetid)
     {

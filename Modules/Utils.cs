@@ -392,8 +392,8 @@ public static partial class Utils
         string text = GetProgressText(seen.PlayerId, comms);
 
         seer.GetRoleClass()?.OverrideProgressTextAsSeer(seen, ref enabled, ref text);
-        // hamo: 見られる側による変更
-        (seen.GetRoleClass() as TownOfHostL.Roles.Core.HamoRoleBase)?.OverrideProgressTextAsSeen(seer, ref enabled, ref text);
+        // 見られる側による変更
+        seen.GetRoleClass()?.OverrideProgressTextAsSeen(seer, ref enabled, ref text);
         if (ModeCatalog.IsCatchCat && seer == seen)
         {
             text += CatchCat.Common.GetMark(seer);
@@ -1438,10 +1438,6 @@ public static partial class Utils
 
             //RealNameを取得 なければ現在の名前をRealNamesに書き込む
             string SeerRealName = seer.GetRealName(isForMeeting);
-            // hamo: 名前を一時的に書き換える役職 (波動砲のためなど)
-            string hamoSelfName = ""; bool hamoSelfNoMarker = false;
-            var hamoSelfTemp = (seer.GetRoleClass() as TownOfHostL.Roles.Core.HamoRoleBase)?.GetTemporaryName(ref hamoSelfName, ref hamoSelfNoMarker, isForMeeting, seer) ?? false;
-            if (hamoSelfTemp) SeerRealName = hamoSelfName;
 
             if (!isForMeeting && (ModeCatalog.IsCatchCat || (MeetingStates.FirstMeeting && Options.ChangeNameToRoleInfo.GetBool())))
                 SeerRealName = seer.GetRoleInfo();
@@ -1479,11 +1475,11 @@ public static partial class Utils
                 !seer.Is(CustomRoleTypes.Impostor) &&
                 !keepsOwnNameInSyncColor)
             {
-                SelfName.Append($"{ColorString(Color.white, SeerRealName)}{(hamoSelfTemp && hamoSelfNoMarker ? "" : $"{SelfDeathReason}{SelfMark}")}");
+                SelfName.Append($"{ColorString(Color.white, SeerRealName)}{SelfDeathReason}{SelfMark}");
             }
             else if (selfNameOriginal)
             {
-                SelfName.Append($"{ColorString(SelfNameColor, SeerRealName)}{(hamoSelfTemp && hamoSelfNoMarker ? "" : $"{SelfDeathReason}{SelfMark}")}");
+                SelfName.Append($"{ColorString(SelfNameColor, SeerRealName)}{SelfDeathReason}{SelfMark}");
             }
 
             if (SelfSuffix.Length != 0)
@@ -1508,7 +1504,7 @@ public static partial class Utils
             seer.RpcSetNamePrivate(name, true, force: NoCache);
 
             //seerが死んでいる場合など、必要なときのみ第二ループを実行する
-            if (everyoneNeedsSeenNames || HamoHooks.NeedsOtherNameLoop(seer) || TownOfHostL.Core.NameParts.NeedsSeenNames(seer))
+            if (everyoneNeedsSeenNames || TownOfHostL.Core.NameParts.NeedsSeenNames(seer))
             {
                 foreach (var target in Main.AllPlayerControls)
                 {
@@ -1548,14 +1544,8 @@ public static partial class Utils
                     if (TownOfHostL.Core.NameParts.HideSeenName(isForMeeting))
                         TargetPlayerName = $"<size=0%>{TargetPlayerName}</size>";
 
-                    // hamo: 名前を一時的に書き換える役職
-                    string hamoName = ""; bool hamoNoMarker = false;
-                    var hamoTemp = (target.GetRoleClass() as TownOfHostL.Roles.Core.HamoRoleBase)?.GetTemporaryName(ref hamoName, ref hamoNoMarker, isForMeeting, seer, target) ?? false;
-
                     //全てのテキストを合成します。
-                    string TargetName = hamoTemp
-                        ? $"{TargetRoleText}{hamoName}{(hamoNoMarker ? "" : $"{TargetDeathReason}{TargetMark}{TargetSuffix}")}"
-                        : $"{TargetRoleText}{TargetPlayerName}{TargetDeathReason}{TargetMark}{TargetSuffix}";
+                    string TargetName = $"{TargetRoleText}{TargetPlayerName}{TargetDeathReason}{TargetMark}{TargetSuffix}";
 
                     // バニラ視点にMOD名/Versionを記載
                     TargetName = MeetingDisplayText.AddTextForVanilla(target, TargetName, TargetSuffix.ToString(), TargetRoleText, isForMeeting);
@@ -1580,6 +1570,13 @@ public static partial class Utils
     }
     public static void AfterMeetingTasks()
     {
+        // マッドマジックの変身の期限は、その日の会議が終わる時に見る (日を進める前)
+        var endOfDay = MeetingStates.Day;
+        if (MeetingStates.TryEndDay() && AmongUsClient.Instance.AmHost)
+        {
+            try { Roles.Madmate.MadMagic.AfterMeeting(endOfDay); }
+            catch (Exception ex) { Logger.Exception(ex, "MadMagic.AfterMeeting"); }
+        }
         foreach (var pc in Main.AllAlivePlayerControls)
         {
             var state = PlayerState.GetByPlayerId(pc.PlayerId);

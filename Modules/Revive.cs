@@ -83,8 +83,8 @@ public static class Revive
     {
         if (!IsSettling) return false;
         // 役職の能力で確認なしに開く会議の旗は、預かった通報と一緒に預かる (立てたままにすると次の通報が素通りする)
-        bool force = ReportDeadBodyPatch.HamoForceReport;
-        ReportDeadBodyPatch.HamoForceReport = false;
+        bool force = ReportDeadBodyPatch.ForceReport;
+        ReportDeadBodyPatch.ForceReport = false;
         if (!hasHeldReport)
         {
             heldReporter = reporter;
@@ -115,7 +115,7 @@ public static class Revive
         // (自分自身を対象にする会議は、生きているので外さない)
         if (target != null && target.PlayerId != reporter.PlayerId && (target.Disconnected || !(PlayerState.GetByPlayerId(target.PlayerId)?.IsDead ?? false))) return;
         Logger.Info($"預かった通報を通す: {reporter.GetNameWithRole()}", "Revive");
-        ReportDeadBodyPatch.HamoForceReport = force;
+        ReportDeadBodyPatch.ForceReport = force;
         reporter.ReportDeadBody(target);
     }
 

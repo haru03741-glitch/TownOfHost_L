@@ -229,14 +229,14 @@ namespace TownOfHostL
                 case CustomRPC.SyncPsychicResult:
                     CustomRoleManager.DispatchRpc(reader, rpcType);
                     break;
-                // hamo から移植
+                // TownOfHost-hamo から移植
                 case CustomRPC.ClientEffect:
                     TownOfHostL.Modules.ClientEffects.Receive(reader);
                     break;
                 case CustomRPC.SyncAssassinState:
                     {
                         byte assassinId = reader.ReadByte();
-                        if (CustomRoleManager.GetByPlayerId(assassinId) is TownOfHostL.Roles.Hamo.Impostor.Assassin assassinRole)
+                        if (CustomRoleManager.GetByPlayerId(assassinId) is TownOfHostL.Roles.Impostor.Assassin assassinRole)
                             assassinRole.ReceiveStateRPC(reader);
                     }
                     break;
@@ -244,7 +244,7 @@ namespace TownOfHostL
                     {
                         byte playerid = reader.ReadByte();
                         if (playerid == PlayerControl.LocalPlayer.PlayerId && (CustomRoles)reader.ReadPackedInt32() is CustomRoles.EvilBlender)
-                            TownOfHostL.Roles.Hamo.Impostor.EvilBlender.ReceivePublickRpc(reader);
+                            TownOfHostL.Roles.Impostor.EvilBlender.ReceivePublickRpc(reader);
                     }
                     break;
                 default:
@@ -255,6 +255,14 @@ namespace TownOfHostL
     }
     static partial class RPC
     {
+        /// <summary>役職の公開情報を送る。書いた後 FinishRpcImmediately する</summary>
+        public static MessageWriter RpcPublicRoleSync(byte playerid, CustomRoles role)
+        {
+            var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.PublicRoleSync, SendOption.None, -1);
+            writer.Write(playerid);
+            writer.WritePacked((int)role);
+            return writer;
+        }
         //SyncCustomSettingsRPC Sender
         public static void SyncCustomSettingsRPC()
         {

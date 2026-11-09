@@ -527,7 +527,7 @@ class SelectRolesPatch
             if (info.AssignAtRandom) AssignCustomSubRolesDuplicatable(info.Role, allPlayersbySub);
         }
 
-        // hamo: 役職ごとに付ける属性
+        // 役職ごとに付ける属性
         RoleAddAddons.GrantAll();
 
         foreach (var pair in PlayerState.AllPlayerStates)
@@ -543,7 +543,7 @@ class SelectRolesPatch
             HudManager.Instance.SetHudActive(true);
             pc.ResetKillCooldown();
 
-            // DirectAssign-Addon (属性の設定を持たない役職 (hamo のマッドメイトなど) は付けない)
+            // DirectAssign-Addon (属性の設定を持たない役職 (一部のマッドメイトなど) は付けない)
             var mainRole = pc.GetCustomRole();
             if (mainRole.IsAddAddOn()
                 && ((Options.AddOnBuffAssign.TryGetValue(mainRole, out var buffAssign) && buffAssign.GetBool())

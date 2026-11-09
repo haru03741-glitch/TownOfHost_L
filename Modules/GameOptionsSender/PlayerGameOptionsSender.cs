@@ -155,8 +155,6 @@ namespace TownOfHostL.Modules
             }
 
             AURoleOptions.PlayerSpeedMod = Mathf.Clamp(PlayerSpeed.Get(player.PlayerId), Main.MinSpeed, 3f);
-            // hamo: 動けない状態 (ペンギンに捕まった等)
-            if (state.CanMove is false) AURoleOptions.PlayerSpeedMod = Main.MinSpeed;
 
             state.taskState.hasTasks = Utils.HasTasks(player.Data, false);
             if (!Options.GhostCantSeeOtherVotes.GetBool() && player.Data.IsDead)

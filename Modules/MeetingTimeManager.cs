@@ -16,6 +16,13 @@ namespace TownOfHostL.Modules
         private static int DefaultDiscussionTime;
         private static int DefaultVotingTime;
 
+        /// <summary>話し合いを飛ばして、投票の時間だけにする (天秤の会議)</summary>
+        public static void VotingOnly(int time)
+        {
+            DiscussionTime = 0;
+            VotingTime = time;
+        }
+
         [GameModuleInitializer]
         public static void Init()
         {

@@ -14,7 +14,7 @@ namespace TownOfHostL
             canUse = couldUse = false;
             //こいつをfalseでreturnしても、タスク(サボ含む)以外の使用可能な物は使えるまま(ボタンなど)
             return __instance.AllowImpostor || (Utils.HasTasks(PlayerControl.LocalPlayer.Data, false)
-                && ((PlayerControl.LocalPlayer.GetRoleClass() as HamoRoleBase)?.CanTask() ?? true));
+                && (PlayerControl.LocalPlayer.GetRoleClass()?.CanTask() ?? true));
         }
     }
     [HarmonyPatch(typeof(EmergencyMinigame), nameof(EmergencyMinigame.Update))]
@@ -40,8 +40,8 @@ namespace TownOfHostL
             // カスタムロールを元にベントを使えるか判定
             // エンジニアベースの役職は常にtrue
             couldUse = playerControl.CanUseImpostorVentButton() || (pc.Role.Role == RoleTypes.Engineer && pc.Role.CanUse(__instance.Cast<IUsable>()));
-            // hamo: ベントのボタンを押せない役職
-            if ((playerControl.GetRoleClass() as HamoRoleBase)?.CanClickUseVentButton == false) couldUse = false;
+            // ベントのボタンを押せない役職
+            if (playerControl.GetRoleClass()?.CanClickUseVentButton == false) couldUse = false;
 
             canUse = couldUse;
             // カスタムロールが使えなかったら使用不可

@@ -37,7 +37,7 @@ namespace TownOfHostL
                         Utils.SyncAllSettings();
 
                         if (Main.NormalOptions.MapId != 4) return; //マップがエアシップじゃなかったらreturn
-                        TownOfHostL.Roles.Hamo.HamoHookPatches.OnAirshipSpawn(player);
+                        RoleHooks.OnAirshipSpawn(player);
                         player.RpcResetAbilityCooldown();
                         if (Options.FixFirstKillCooldown.GetBool() && MeetingStates.FirstMeeting)
                             player.SetKillCooldown(Main.AllPlayerKillCooldown[player.PlayerId]);

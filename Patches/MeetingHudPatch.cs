@@ -43,14 +43,14 @@ public static partial class MeetingHudPatch
                 Logger.Info($"{voter.GetNameWithRole()} は投票しない", nameof(CastVotePatch));
                 return false;
             }
-            // hamo: 全員の役職に投票を見せる (天秤などは他の人の投票も止める)
-            if (!HamoHooks.CheckVoteAsVoter(srcPlayerId, suspectPlayerId, voter))
+            // 全員の役職に投票を見せる (天秤などは他の人の投票も止める)
+            if (!RoleHooks.CheckAnyVote(srcPlayerId, suspectPlayerId, voter))
             {
                 __instance.RpcClearVote(voter.PlayerId);
                 Logger.Info($"{voter.GetNameWithRole()} は投票しない！ => {suspectPlayerId}", nameof(CastVotePatch));
                 return false;
             }
-            // hamo: 自分に投票して能力を使う役職
+            // 自分に投票して能力を使う役職
             if (voter.GetRoleClass() is TownOfHostL.Roles.Core.Interfaces.ISelfVoter selfVoter && selfVoter.CanUseVoted())
             {
                 MeetingVoteManager.Instance?.SetVote(srcPlayerId, suspectPlayerId, isoverride: false);

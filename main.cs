@@ -265,7 +265,7 @@ public enum CustomDeathReason
     Telekinesis,
     IgnitionBombed,
 
-    // hamo から移植
+    // TownOfHost-hamo から移植
     Counter,
     Infected,
     Grim,
@@ -320,7 +320,7 @@ public enum CustomWinner
 
     HASTroll = CustomRoles.HASTroll,
 
-    // hamo から移植
+    // TownOfHost-hamo から移植
     Pavlov = CustomRoles.PavlovDog,
     StandMaster = CustomRoles.StandMaster,
     Eater = CustomRoles.Eater,

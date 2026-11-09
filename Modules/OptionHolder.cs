@@ -472,7 +472,7 @@ public static partial class Options
         #endregion
 
         TextOptionItem.Create("Head.RoleAssign", TabGroup.ModMainSettings).SetColor(Palette.LightBlue);
-        // ここから hamo の共通設定までは機能の設定 (設定一覧の「機能」の欄に出す)
+        // ここから役職の共通設定までは機能の設定 (設定一覧の「機能」の欄に出す)
         OptionItem.CreatingFeatures = true;
         RoleAssigningAlgorithm = StringOptionItem.Create("RoleAssigningAlgorithm", RoleAssigningAlgorithms, 0, TabGroup.ModMainSettings, true)
             .RegisterUpdateValueEvent((object obj, OptionItem.UpdateValueEventArgs args) => IRandom.SetInstanceById(args.CurrentValue))
@@ -892,8 +892,8 @@ public static partial class Options
         CheatLobbyKill = StringOptionItem.Create("CheatLobbyKill", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, true).SetParent(AntiCheat)
             .SetGameMode(CustomGameMode.All);
 
-        // hamo から移植した役職の共通設定
-        LoadHamoOptions();
+        // 役職の共通設定
+        LoadRoleCommonOptions();
         OptionItem.CreatingFeatures = false;
 
         DebugModeManager.SetupCustomOption();
@@ -1081,7 +1081,7 @@ public static partial class Options
 
             return new OverrideTasksData(roleInfo.Tab, setRole, option, addRoleName);
         }
-        /// <summary>hamo 形式 (rolename: 別名の役職, tasks: 初期値)</summary>
+        /// <summary>別名の役職の形式 (rolename: 別名の役職, tasks: 初期値)</summary>
         public static OverrideTasksData Create(SimpleRoleInfo roleInfo, CustomRoles rolename, (bool defo, int common, int Long, int Short)? tasks = null, OptionItem parent = null)
         {
             var setRole = rolename == CustomRoles.NotAssigned ? roleInfo.RoleName : rolename;
@@ -1121,5 +1121,8 @@ public static partial class Options
         NeuFox = 51800,
         NeuTOH = 52000,
         NeuY = 60000,
+
+        // TownOfHost-hamo から移した役職。hamo の番号をそのまま足す (陣営ごとの並びは hamo の番号の順)
+        Hamo = 3000000,
     }
 }

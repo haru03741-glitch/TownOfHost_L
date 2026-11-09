@@ -61,7 +61,7 @@ public static class GameEndRules
 
     private static readonly int[] factionCounts = new int[KillingFactions.Length];
 
-    /// <summary>この試合でキルする側 (キル陣営・hamo の独自陣営) が 1 人でも生きていたことがあるか</summary>
+    /// <summary>この試合でキルする側 (キル陣営・独自の陣営) が 1 人でも生きていたことがあるか</summary>
     private static bool sawKillers;
 
     /// <summary>試合の始めに呼ぶ (終了判定を入れ替える時)。</summary>
@@ -72,8 +72,8 @@ public static class GameEndRules
         reason = GameOverReason.ImpostorsByKill;
         if (Options.NoGameEndByCount.GetBool()) return false;
 
-        // hamo: アサシンがマーリンを当てている間は終わらない
-        if (TownOfHostL.Roles.Hamo.Impostor.Assassin.assassin?.NowState is TownOfHostL.Roles.Hamo.Impostor.Assassin.AssassinMeeting.Collected) return false;
+        // アサシンがマーリンを当てている間は終わらない
+        if (TownOfHostL.Roles.Impostor.Assassin.assassin?.NowState is TownOfHostL.Roles.Impostor.Assassin.AssassinMeeting.Collected) return false;
 
         var factions = KillingFactions;
         // 毎フレーム呼ばれるので、数を入れる配列は使い回す
@@ -84,14 +84,14 @@ public static class GameEndRules
             counts[i] = Utils.AlivePlayersCount(factions[i].CountType);
             killers += counts[i];
         }
-        // hamo: 妖狐はクルーとして数える
+        // 妖狐はクルーとして数える
         var crew = Utils.AlivePlayersCount(CountTypes.Crew) + Utils.AlivePlayersCount(CountTypes.Fox);
-        // hamo: インポスター・ジャッカル・クルーとして数える役職と、独自に数える陣営 (パブロフ・スタンド・イーター)
+        // インポスター・ジャッカル・クルーとして数える役職と、独自に数える陣営 (パブロフ・スタンド・イーター)
         int imp = counts[0], jackal = counts[1];
-        var hamo = HamoGameEnd.Count(ref imp, ref jackal, ref crew);
+        var teams = RoleTeamWins.Count(ref imp, ref jackal, ref crew);
         killers += imp - counts[0] + jackal - counts[1];
         counts[0] = imp; counts[1] = jackal;
-        int other = hamo.Pavlov + hamo.StandMaster + hamo.Eater;
+        int other = teams.Pavlov + teams.StandMaster + teams.Eater;
 
         if (killers == 0 && crew == 0 && other == 0) //全滅
         {
@@ -113,7 +113,7 @@ public static class GameEndRules
             foreach (var role in faction.AdditionalWinnerRoles) CustomWinnerHolder.AdditionalWinnerRoles.Add(role);
             return true;
         }
-        if (HamoGameEnd.CheckTeamWin(counts[0], counts[1], counts[2], crew, hamo, ref reason)) return true;
+        if (RoleTeamWins.CheckTeamWin(counts[0], counts[1], counts[2], crew, teams, ref reason)) return true;
         if (killers > 0 || other > 0) sawKillers = true;
         // キルする側が最初からいない試合 (1 人で試す時など) は、クルーの勝ちで即座に終わらせない
         else if (sawKillers) //クルー勝利
@@ -150,7 +150,7 @@ public static class GameEndRules
     public static bool ByTask(out GameOverReason reason)
     {
         reason = GameOverReason.ImpostorsByKill;
-        if (Options.NoGameEndByTask.GetBool() || TaskState.InitialTotalTasks == 0 || TownOfHostL.Roles.Hamo.Neutral.Fox.BlockTaskWin()) return false;
+        if (Options.NoGameEndByTask.GetBool() || TaskState.InitialTotalTasks == 0 || TownOfHostL.Roles.Neutral.Fox.BlockTaskWin()) return false;
         // タスク勝利の無効化: 1 = 常に、2 = 生きているクルーがいない時だけ (幽霊のタスクだけで勝たせない)
         switch (Options.DisableTaskWin.GetValue())
         {

@@ -438,9 +438,9 @@ public static class PlayerControlCheckVanishPatch
          * 　　ホストは仕様上キルクールは強制されないが、バニラの仕様に合わせセットする
          * ・canResetAbilityCooldown : アビリティクールダウンをリセットするか設定する
          *****************************/
-        // hamo: ファントムのボタンをワンクリックで使う役職
-        if (role is IUsePhantomButton hamoPb && hamoPb.UseOneclickButton)
-            return TownOfHostL.Roles.Hamo.HamoHookPatches.CheckVanish(phantom, hamoPb);
+        // ファントムのボタンをワンクリックで使う役職
+        if (role is IUsePhantomButton phantomButton && phantomButton.UseOneclickButton)
+            return PhantomButton.CheckVanish(phantom, phantomButton);
 
         float killCooldown = 10.0f;
         bool canResetAbilityCooldown = false;
@@ -568,10 +568,10 @@ partial class ReportDeadBodyPatch
         if (target != null && !SpecialMeeting && Revive.WasRevived(target.PlayerId) && !(PlayerState.GetByPlayerId(target.PlayerId)?.IsDead ?? true)) return false;
         // 復活の SetRole が落ち着く前に会議を開くと、本編の客の会議の画面が壊れる。1 件だけ預かり、落ち着いてから通す
         if (AmongUsClient.Instance.AmHost && Revive.HoldReport(__instance, target)) return false;
-        // hamo: 役職の能力で確認なしに会議を開く
-        if (HamoForceReport)
+        // 役職の能力で確認なしに会議を開く
+        if (ForceReport)
         {
-            HamoForceReport = false;
+            ForceReport = false;
             goto confirmed;
         }
         if (SpecialMeeting) return true;
@@ -639,13 +639,13 @@ partial class ReportDeadBodyPatch
             }
         }
 
-        // hamo: 役職による通報の取り消し
-        if (HamoCancelReport(__instance, target)) return false;
-        // hamo: 残りの緊急ボタンの数
+        // 役職による通報の取り消し
+        if (RoleCancelsReport(__instance, target)) return false;
+        // 残りの緊急ボタンの数
         if (target == null)
         {
-            var hamoState = PlayerState.GetByPlayerId(__instance.PlayerId);
-            if (hamoState != null && hamoState.NumberOfRemainingButtons > 0) hamoState.NumberOfRemainingButtons--;
+            var buttonState = PlayerState.GetByPlayerId(__instance.PlayerId);
+            if (buttonState != null && buttonState.NumberOfRemainingButtons > 0) buttonState.NumberOfRemainingButtons--;
         }
 
     //=============================================
@@ -770,10 +770,14 @@ class CoEnterVentPatch
     {
         var user = physics.myPlayer;
         if (user == null) return;
-        // hamo: 誰かがベントに入った時の処理・今いるベントの記録
-        VentilationSystemUpdateSystemPatch.NowVentId[user.PlayerId] = (byte)id;
-        foreach (var vent in CustomRoleManager.OnEnterVentOthers) vent(physics, id);
-        TownOfHostL.Roles.Hamo.HamoHookPatches.OnEnterVent(physics, id);
+        // 誰かがベントに入った時の処理・今いるベントの記録
+        RoleHooks.NowVentId[user.PlayerId] = (byte)id;
+        foreach (var vent in CustomRoleManager.OnEnterVentOthers.ToArray())
+        {
+            try { vent(physics, id); }
+            catch (System.Exception ex) { Logger.Exception(ex, "OnEnterVentOthers"); }
+        }
+        RoleHooks.OnEnterVent(physics, id);
 
         bool roleAllowsVent = user.GetRoleClass()?.OnEnterVent(physics, id) ?? false;
         bool ventTaskAllows = VentEnterTask.OnEnterVent(physics, id);

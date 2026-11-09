@@ -286,4 +286,19 @@ public static partial class MeetingStates
     public static bool IsExistDeadBody => DeadBodies.Length > 0;
     public static bool MeetingCalled = false;
     public static bool FirstMeeting = true;
+    /// <summary>今が何日目か。試合の始めが 1 日目で、会議が終わるたびに 1 つ進む (ホストのみ)</summary>
+    public static int Day { get; private set; } = 1;
+    static bool dayEnded;
+    [Attributes.GameModuleInitializer]
+    public static void InitDay() { Day = 1; dayEnded = false; }
+    /// <summary>会議の始めに呼ぶ (その日の終わりの処理をまた受け付ける)</summary>
+    public static void BeginMeeting() => dayEnded = false;
+    /// <summary>その日の会議の終わり。会議の後の処理は 1 回の会議で 2 度呼ばれるので、最初の 1 回だけ true を返して日を進める</summary>
+    public static bool TryEndDay()
+    {
+        if (dayEnded) return false;
+        dayEnded = true;
+        Day++;
+        return true;
+    }
 }
