@@ -61,6 +61,9 @@ namespace TownOfHostL.Roles
         private static Dictionary<CustomRoleTypes, RandomAssignOptions> RandomAssignOptionsCollection = new(CustomRolesHelper.AllRoleTypes.Length);
         private static Dictionary<CustomRoleTypes, int> AssignCount = new(CustomRolesHelper.AllRoleTypes.Length);
         private static List<CustomRoles> AssignRoleList = new(CustomRolesHelper.AllRoles.Length);
+        // 試合の途中で付く属性 (ワークホース・ラストインポスターなど) の、この試合で出すと決まった分。
+        // 開始時に配らないよう AssignRoleList には入れず、IsPresent・GetRealCount の数にだけ足す
+        private static List<CustomRoles> LaterAddOnList = new();
         public static void SetupOptionItem()
         {
             OptionAssignMode = StringOptionItem.Create("AssignMode", AssignModeSelections, 0, TabGroup.ModMainSettings, false)
@@ -110,6 +113,7 @@ namespace TownOfHostL.Roles
         {
             AssignCount.Clear();
             AssignRoleList.Clear();
+            LaterAddOnList.Clear();
 
             switch (AssignMode)
             {
@@ -127,6 +131,7 @@ namespace TownOfHostL.Roles
             AssignRoleList.Sort();
             Logger.Info($"{string.Join(", ", AssignCount)}", "AssignCount");
             Logger.Info($"{string.Join(", ", AssignRoleList)}", "AssignRoleList");
+            if (LaterAddOnList.Count > 0) Logger.Info($"{string.Join(", ", LaterAddOnList)}", "LaterAddOnList");
         }
         ///<summary>
         ///役職の固定アサイン抽選
@@ -294,15 +299,14 @@ namespace TownOfHostL.Roles
         {
             foreach (var subRole in CustomRolesHelper.AllAddOnRoles)
             {
-                if (subRole.IsFirstWriteAddOn()) continue;
-
                 var chance = subRole.GetChance();
                 var count = subRole.GetAssignCount();
                 if (chance == 0 || count == 0) continue;
+                var target = subRole.IsFirstWriteAddOn() ? LaterAddOnList : AssignRoleList;
                 var rnd = IRandom.Instance;
                 for (var i = 0; i < count; i++) 
                     if (rnd.Next(100) < chance)
-                        AssignRoleList.AddRange(subRole.GetAssignUnitRolesArray());
+                        target.AddRange(subRole.GetAssignUnitRolesArray());
             }
         }
         private static List<CustomRoles> GetCandidateRoleList(int availableRate)
@@ -352,8 +356,8 @@ namespace TownOfHostL.Roles
                 CustomRoles.Lovers => new CustomRoles[2] { CustomRoles.Lovers, CustomRoles.Lovers },
                 _ => new CustomRoles[1] { role },
             };
-        public static bool IsPresent(this CustomRoles role) => AssignRoleList.Any(x => x == role);
-        public static int GetRealCount(this CustomRoles role) => AssignRoleList.Count(x => x == role);
+        public static bool IsPresent(this CustomRoles role) => AssignRoleList.Any(x => x == role) || LaterAddOnList.Any(x => x == role);
+        public static int GetRealCount(this CustomRoles role) => AssignRoleList.Count(x => x == role) + LaterAddOnList.Count(x => x == role);
         public static List<CustomRoles> GetAssignRoleList() => new(AssignRoleList);
     }
     public class RoleAssignInfo
