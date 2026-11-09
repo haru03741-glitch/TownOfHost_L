@@ -113,9 +113,21 @@ public sealed class Executioner : RoleBase, IAdditionalWinner
         byte targetId = reader.ReadByte();
         TargetId = targetId;
     }
+    // 死んだ時に外したターゲット (生き返った時に戻す)
+    private byte targetBeforeDeath = byte.MaxValue;
     public override void OnMurderPlayerAsTarget(MurderInfo _)
     {
+        if (TargetId != byte.MaxValue) targetBeforeDeath = TargetId;
         TargetId = byte.MaxValue;
+        SendRPC();
+    }
+    /// <summary>生き返ったら、死ぬ前のターゲットがまだ生きていれば狙い直す</summary>
+    public override void OnRevived()
+    {
+        var target = Utils.GetPlayerById(targetBeforeDeath);
+        targetBeforeDeath = byte.MaxValue;
+        if (TargetId != byte.MaxValue || target == null || !target.IsAlive()) return;
+        TargetId = target.PlayerId;
         SendRPC();
     }
     /// <summary>ターゲットが追放以外で死んだら役職が変わる (追放された時は OnExileWrapUp で勝ちになる)</summary>

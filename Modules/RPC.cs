@@ -323,20 +323,23 @@ namespace TownOfHostL
             );
         }
 
-        public static void SendDeathReason(byte playerId, CustomDeathReason deathReason)
+        public static void SendDeathReason(byte playerId, CustomDeathReason deathReason, bool isDead = true)
         {
             MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.SetDeathReason, Hazel.SendOption.Reliable, -1);
             writer.Write(playerId);
             writer.Write((int)deathReason);
+            writer.Write(isDead);
             AmongUsClient.Instance.FinishRpcImmediately(writer);
         }
         public static void GetDeathReason(MessageReader reader)
         {
             var playerId = reader.ReadByte();
             var deathReason = (CustomDeathReason)reader.ReadInt32();
+            bool isDead = reader.ReadBoolean();
             var state = PlayerState.GetByPlayerId(playerId);
             state.DeathReason = deathReason;
-            state.IsDead = true;
+            state.IsDead = isDead;
+            if (!isDead) state.RealKiller = (System.DateTime.MinValue, byte.MaxValue);
         }
 
         public static void EndGame(MessageReader reader)

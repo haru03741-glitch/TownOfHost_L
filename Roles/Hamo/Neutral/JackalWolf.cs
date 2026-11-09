@@ -320,6 +320,7 @@ public sealed class JackalWolf : HamoRoleBase, ILNKiller, IUsePhantomButton, IDo
     }
 
     public override void OnMurderPlayerAsTarget(MurderInfo info) => AddRole?.OnMurderPlayerAsTarget(info);
+    public override void OnRevived() => AddRole?.OnRevived();
 
     public override void OnShapeshift(PlayerControl target) => AddRole?.OnShapeshift(target);
 

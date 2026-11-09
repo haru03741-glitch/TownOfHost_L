@@ -43,6 +43,12 @@ public static class Lovers
         if (!playersList.Contains(lover))
             playersList.Add(lover);
         CustomRoleManager.OnPlayerDeadOthers.Add(OnPlayerDead);
+        CustomRoleManager.OnPlayerRevivedOthers.Add(OnPlayerRevived);
+    }
+    /// <summary>恋人が全員生き返ったら、また後を追うようにする</summary>
+    private static void OnPlayerRevived(byte playerId)
+    {
+        if (playersList.Count > 0 && playersList.TrueForAll(p => p != null && p.IsAlive())) isLoversDead = false;
     }
     /// <summary>恋人が死んだら (死に方によらず) 相方が後を追う。会議中なら会議の後に死ぬ</summary>
     private static void OnPlayerDead(byte playerId, CustomDeathReason _)

@@ -335,6 +335,26 @@ public sealed class CustomNetObject
 
     // ---- 2. 客ごとの可視化 ----
 
+    /// <summary>
+    /// 可視化で CNO の PlayerId を一時的に差し替える先の ID (target の客へ送る分)。
+    /// 自分の画面で死んでいる客 (生き返った人は自分の画面では幽霊のまま) に、その客自身の ID で送ると、
+    /// 客の手元で CNO のプレイヤーの情報の待ちが終わらず、30 秒で客が切れる (Timeout while waiting for other player data。
+    /// 2026-11-09 実機で確認。生きている別の人の ID なら切れない)。Roles/Hamo の CNO も同じ手順なのでこれを使う
+    /// </summary>
+    public static byte VisibilityIdFor(PlayerControl target)
+    {
+        if (!SeenAsDead(target)) return target.PlayerId;
+        foreach (var p in Players.All)
+        {
+            if (!p || p.PlayerId >= MinPlayerId || SeenAsDead(p) || p.Data.Disconnected) continue;
+            return p.PlayerId;
+        }
+        return target.PlayerId;
+    }
+
+    private static bool SeenAsDead(PlayerControl p)
+        => p.Data == null || p.Data.IsDead || Modules.Revive.WasRevived(p.PlayerId);
+
     private void SendVisibility(float now)
     {
         HideFromHostList();
@@ -352,7 +372,7 @@ public sealed class CustomNetObject
                 stream.WritePacked(target.OwnerId);
                 stream.StartMessage(1);
                 stream.WritePacked(pc.NetId);
-                stream.Write(target.PlayerId);
+                stream.Write(VisibilityIdFor(target));
                 stream.EndMessage();
                 stream.StartMessage(2);
                 stream.WritePacked(pc.NetId);

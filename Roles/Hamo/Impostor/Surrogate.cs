@@ -26,6 +26,12 @@ public static class SurrogateSystem
         FollowingDeathProcessed.Clear();
     }
 
+    /// <summary>持ち主が生き返ったら、また死んだ時に代わりの人が後を追うようにする</summary>
+    public static void OnOwnerRevived(byte ownerId)
+    {
+        if (OwnerToProxy.TryGetValue(ownerId, out var proxyId)) FollowingDeathProcessed.Remove(proxyId);
+    }
+
     public static bool TryGetProxy(byte ownerId, out PlayerControl proxy)
     {
         proxy = null;
@@ -250,6 +256,9 @@ public sealed class Surrogate : HamoRoleBase, IImpostor, IKiller, IUsePhantomBut
 
     public override void OnMurderPlayerAsTarget(MurderInfo info)
         => SurrogateSystem.CheckOwnerDeath(Player);
+
+    public override void OnRevived()
+        => SurrogateSystem.OnOwnerRevived(Player.PlayerId);
 
     public override void OnFixedUpdate(PlayerControl player)
         => SurrogateSystem.CheckOwnerDeath(Player);

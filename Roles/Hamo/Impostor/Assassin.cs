@@ -435,6 +435,7 @@ public sealed class Assassin : HamoRoleBase, IImpostor, IUsePhantomButton, IDoub
     public override void ApplyGameOptions(IGameOptions opt) => AddRole?.ApplyGameOptions(opt);
     public override bool OnCheckMurderAsTarget(MurderInfo info) => AddRole?.OnCheckMurderAsTarget(info) ?? true;
     public override void OnMurderPlayerAsTarget(MurderInfo info) => AddRole?.OnMurderPlayerAsTarget(info);
+    public override void OnRevived() => AddRole?.OnRevived();
     public override void OnShapeshift(PlayerControl target) => AddRole?.OnShapeshift(target);
     public override bool CheckShapeshift(PlayerControl target, ref bool shouldAnimate) => (AddRole as HamoRoleBase)?.CheckShapeshift(target, ref shouldAnimate) ?? true;
     public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target) => AddRole?.OnReportDeadBody(reporter, target);

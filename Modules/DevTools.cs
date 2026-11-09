@@ -193,8 +193,19 @@ public static class DevCommands
                 Logger.Info(BuildStateDump(), "DevState", escapeCRLF: false);
                 Reply(c, "今の状態をログ (タグ DevState) に書きました");
                 break;
+            case "revive":
+                {
+                    if (!byte.TryParse(c.Arg(2), out var reviveId) || Utils.GetPlayerById(reviveId) == null)
+                    {
+                        Reply(c, "/dev revive <PlayerId> : 死んだ人を生き返らせる (ID は /dev state で見る)");
+                        break;
+                    }
+                    Revive.Request(reviveId);
+                    Reply(c, $"{reviveId} の復活を予約しました (安全な時に行います)");
+                    break;
+                }
             default:
-                Reply(c, "/dev state : 全員の役職・生死・タスク・位置などをログへ書く");
+                Reply(c, "/dev state : 全員の役職・生死・タスク・位置などをログへ書く\n/dev revive <PlayerId> : 死んだ人を生き返らせる");
                 break;
         }
     }

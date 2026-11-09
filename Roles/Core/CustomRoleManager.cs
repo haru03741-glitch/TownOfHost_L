@@ -291,6 +291,7 @@ public static partial class CustomRoleManager
         EveryoneNeedsSeenNamesOthers.Clear();
         KillGuardsOthers.Clear();
         OnPlayerDeadOthers.Clear();
+        OnPlayerRevivedOthers.Clear();
         CheckMurderInfos.Clear();
         OnMurderPlayerOthers.Clear();
         OnFixedUpdateOthers.Clear();
@@ -432,6 +433,10 @@ public static partial class CustomRoleManager
     /// </summary>
     public static HashSet<Action<byte, CustomDeathReason>> OnPlayerDeadOthers = new();
     /// <summary>
+    /// 誰かが生き返った時 (Modules.Revive)。ホストだけで呼ぶ。OnPlayerDeadOthers で「一度きり」の旗を立てた側が戻すのに使う
+    /// </summary>
+    public static HashSet<Action<byte>> OnPlayerRevivedOthers = new();
+    /// <summary>
     /// 投票で追放された人の後処理 (OnExileWrapUp の後の SetDead) の間だけ、その人の PlayerId。それ以外は byte.MaxValue。
     /// 追放を OnExileWrapUp で扱う役職が、知らせの側で同じ死を 2 度扱わないために見る (死因が Vote でも、全員追放や処刑は追放の後処理を通らない)
     /// </summary>
@@ -452,6 +457,15 @@ public static partial class CustomRoleManager
         {
             try { onDead(playerId, reason); }
             catch (Exception ex) { Logger.Exception(ex, "OnPlayerDeadOthers"); }
+        }
+    }
+    public static void NotifyPlayerRevived(byte playerId)
+    {
+        if (OnPlayerRevivedOthers.Count == 0) return;
+        foreach (var onRevived in OnPlayerRevivedOthers.ToArray())
+        {
+            try { onRevived(playerId); }
+            catch (Exception ex) { Logger.Exception(ex, "OnPlayerRevivedOthers"); }
         }
     }
     private static bool TryKillGuards(MurderInfo info)
@@ -481,6 +495,7 @@ public static partial class CustomRoleManager
         EveryoneNeedsSeenNamesOthers.Clear();
         KillGuardsOthers.Clear();
         OnPlayerDeadOthers.Clear();
+        OnPlayerRevivedOthers.Clear();
         CheckMurderInfos.Clear();
         OnMurderPlayerOthers.Clear();
         OnFixedUpdateOthers.Clear();

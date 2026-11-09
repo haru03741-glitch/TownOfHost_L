@@ -11,12 +11,11 @@ public static class DeadBodyEraser
 {
     private static readonly HashSet<byte> noBodyTargets = new();
     private static readonly HashSet<byte> erasedBodies = new();
-    private static readonly Dictionary<byte, TextDummy> covers = new();
+    private static readonly Dictionary<byte, Core.CustomNetObject> covers = new();
 
-    private const int CoverColumns = 4;
-    private const int CoverRows = 3;
-    private const int CoverSize = 125;
-    private const string CoverPrefix = "<line-height=1em><mspace=1em><alpha=#00>";
+    private const int CoverColumns = 6;
+    private const int CoverRows = 6;
+    private const string CoverPrefix = "<size=70%><line-height=97%><cspace=0.16em>";
 
     [GameModuleInitializer]
     public static void Init()
@@ -82,6 +81,34 @@ public static class DeadBodyEraser
         Logger.Info($"{playerId} の死体を消しました", "DeadBodyEraser");
     }
 
+    /// <summary>
+    /// 生き返った人の残った死体をホストの手元で消し、死体の真ん中を返す (無ければ null)。客の画面は CoverLeftover で覆う。
+    /// その人がまた死んだ時の新しい死体は消さない (erasedBodies に入れない)・ペットも外さない
+    /// </summary>
+    public static Vector2? HideLeftover(byte playerId)
+    {
+        // 前に消された死体の印を外す (また死んだ時の新しい死体を拾えるように)。消された死体は非アクティブなので下では拾わない
+        erasedBodies.Remove(playerId);
+        Vector2? pos = null;
+        foreach (var b in Object.FindObjectsOfType<DeadBody>())
+        {
+            if (b == null || b.ParentId != playerId) continue;
+            pos ??= BodyCenter(b);
+            b.gameObject.SetActive(false);
+        }
+        if (pos.HasValue) Logger.Info($"{playerId} の残った死体を隠しました", "DeadBodyEraser");
+        return pos;
+    }
+
+    /// <summary>客の画面に残る死体を床の色で覆う (会議の通報で外れる)</summary>
+    public static void CoverLeftover(byte playerId, Vector2 pos)
+    {
+        if (!AmongUsClient.Instance.AmHost) return;
+        // 同じ人の前の覆い (復活してまた死んで、また復活した時など) は外して、今の死体の所に作り直す
+        if (covers.Remove(playerId, out var old)) old?.Despawn();
+        Cover(playerId, pos);
+    }
+
     public static void HideLocal(byte playerId)
     {
         erasedBodies.Add(playerId);
@@ -114,27 +141,26 @@ public static class DeadBodyEraser
         if (!AmongUsClient.Instance.AmHost || covers.ContainsKey(playerId)) return;
         if (!(Options.ErasedBodyCover?.GetBool() ?? true)) return;
         var color = FloorColorSampler.Sample(pos);
-        var dummy = new TextDummy { HiddenForHost = true };
-        dummy.Show(CoverArt(ColorUtility.ToHtmlStringRGB(color)));
-        dummy.MoveTo(pos);
-        covers[playerId] = dummy;
+        var cover = Core.CustomNetObject.Create(CoverArt(ColorUtility.ToHtmlStringRGB(color)), pos);
+        if (cover != null) covers[playerId] = cover;
     }
 
+    // 絵の大きさは、体を覆う実績のあるポータルの絵 (VanillaHnsPortalMaker) の字の大きさに合わせ、横たわった死体の幅まで広げる
     private static string CoverArt(string hex)
     {
-        var row = string.Concat(Enumerable.Repeat("■", CoverColumns));
-        var sb = new System.Text.StringBuilder($"<size={CoverSize}%>{CoverPrefix}");
+        var row = string.Concat(Enumerable.Repeat("W", CoverColumns));
+        var sb = new System.Text.StringBuilder(CoverPrefix);
         for (var r = 0; r < CoverRows; r++)
         {
             sb.Append($"<alpha=#FF><mark=#{hex}FF><alpha=#00>").Append(row).Append("</mark>");
             if (r < CoverRows - 1) sb.Append('\n');
         }
-        return sb.Append("</size>").ToString();
+        return sb.ToString();
     }
 
     public static void OnReportDeadBody()
     {
-        foreach (var dummy in covers.Values) dummy?.Remove();
+        foreach (var cover in covers.Values) cover?.Despawn();
         covers.Clear();
     }
 

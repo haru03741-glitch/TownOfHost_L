@@ -82,6 +82,14 @@ public static class TargetDeadArrow
         return arrows.Length == 0 ? string.Empty : Utils.ColorString(Palette.CrewmateBlue, arrows);
     }
 
+    /// <summary>その人の死体を矢印の対象から外す (生き返った人の残った死体)</summary>
+    public static void RemoveBodiesOf(byte parentId)
+    {
+        DeadBodyList.RemoveWhere(b => b == null || b.ParentId == parentId);
+        foreach (var key in TargetArrows.Keys.Where(k => k.To == null || k.To.ParentId == parentId).ToArray())
+            TargetArrows.Remove(key);
+    }
+
     public static void OnStartMeeting()
     {
         DeadBodyList.Clear();

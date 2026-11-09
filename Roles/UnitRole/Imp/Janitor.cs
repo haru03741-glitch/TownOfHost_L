@@ -36,6 +36,19 @@ public sealed class Janitor : RoleBase, IImpostor
         JanitorCanKill = OptionJanitorCanKill.GetBool();
         JanitorKillCooldown = OptionJanitorKillCooldown.GetFloat();
         CustomRoleManager.OnPlayerDeadOthers.Add(OnPlayerDead);
+        CustomRoleManager.OnPlayerRevivedOthers.Add(OnPlayerRevived);
+    }
+    /// <summary>ジャニターが生き返ったら後追いの旗を戻し、ゴッドファーザーが生き返ったら掃除に戻す</summary>
+    private static void OnPlayerRevived(byte playerId)
+    {
+        if (janitor == null) return;
+        if (playerId == janitor.PlayerId) isSuiside = false;
+        else if (godfather != null && playerId == godfather.PlayerId && canNormalKill)
+        {
+            canNormalKill = false;
+            janitor.ResetKillCooldown();
+            janitor.SetKillCooldown();
+        }
     }
     /// <summary>ゴッドファーザーが死んだら (死に方によらず) 後を追うかを見る。会議中なら会議の後に死ぬ</summary>
     private static void OnPlayerDead(byte playerId, CustomDeathReason _)

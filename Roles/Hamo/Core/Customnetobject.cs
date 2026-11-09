@@ -317,7 +317,8 @@ public class CustomNetObject
 
                 writer.StartMessage(1);
                 writer.WritePacked(capturedPC.NetId);
-                writer.Write(pc.PlayerId);
+                // 死んでいる客には生きている別の人の ID で送る (自分の ID だと 30 秒で客が切れる)
+                writer.Write(TownOfHostL.Core.CustomNetObject.VisibilityIdFor(pc));
                 writer.EndMessage();
 
                 sender.StartRpc(capturedPC.NetId, RpcCalls.MurderPlayer)

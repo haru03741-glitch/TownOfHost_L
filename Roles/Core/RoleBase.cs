@@ -201,6 +201,12 @@ public abstract class RoleBase : IDisposable
     { }
 
     /// <summary>
+    /// 自分が復活した時 (ホストのみ)。役職のインスタンスは死ぬ前の物がそのまま使われるので、
+    /// 「一度きり」の旗やタイマーを持つ役職は、ここで戻す
+    /// </summary>
+    public virtual void OnRevived() { }
+
+    /// <summary>
     /// <para>ベントに入ったときに呼ばれる関数</para>
     /// <para>キャンセル可</para>
     /// </summary>

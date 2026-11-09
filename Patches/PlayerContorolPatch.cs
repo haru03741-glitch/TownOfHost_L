@@ -564,6 +564,10 @@ partial class ReportDeadBodyPatch
         SpecialMeeting = reporter?.PlayerId == ReportTarget?.PlayerId;
         if (GameStates.IsMeeting) return false;
         Logger.Info($"{__instance.GetNameWithRole()} => {target?.Object?.GetNameWithRole() ?? "null"}", "ReportDeadBody");
+        // 生き返った人の死体 (本編の死体は消せずに残る) は通報できない
+        if (target != null && !SpecialMeeting && Revive.WasRevived(target.PlayerId) && !(PlayerState.GetByPlayerId(target.PlayerId)?.IsDead ?? true)) return false;
+        // 復活の SetRole が落ち着く前に会議を開くと、本編の客の会議の画面が壊れる。1 件だけ預かり、落ち着いてから通す
+        if (AmongUsClient.Instance.AmHost && Revive.HoldReport(__instance, target)) return false;
         // hamo: 役職の能力で確認なしに会議を開く
         if (HamoForceReport)
         {
@@ -682,6 +686,8 @@ partial class ReportDeadBodyPatch
         Main.ShowChangeMainRole.Clear();
 
         MeetingTimeManager.OnReportDeadBody();
+        // 会議で死体は全部片付くので、死体の覆いも外す
+        DeadBodyEraser.OnReportDeadBody();
 
         Utils.NotifyRoles(isForMeeting: true, NoCache: true);
 

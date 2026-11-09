@@ -122,6 +122,16 @@ public partial class PlayerState
         }
     }
     /// <summary>
+    /// 死んだ状態を戻す (復活は Modules.Revive から呼ぶ)。死んだ時に終えたことにしたホストのタスクは戻さない
+    /// </summary>
+    public void SetAlive()
+    {
+        IsDead = false;
+        DeathReason = CustomDeathReason.etc;
+        RealKiller = (DateTime.MinValue, byte.MaxValue);
+        if (AmongUsClient.Instance.AmHost) RPC.SendDeathReason(PlayerId, DeathReason, isDead: false);
+    }
+    /// <summary>
     /// ホストの死後のタスク免除。残りのタスクを終えたことにする (タスクの合計からは外さない)。
     /// 死に方 (キル・追放・はしご・自爆など) によらず、死んだ所で 1 度効かせる
     /// </summary>
