@@ -112,7 +112,7 @@ public static class RoleView
 
     private static bool IsDead(PlayerControl pc) => PlayerState.GetByPlayerId(pc.PlayerId)?.IsDead ?? !pc.IsAlive();
 
-    private static bool IsKillerRole(RoleTypes role)
+    public static bool IsKillerRole(RoleTypes role)
         => role is RoleTypes.Impostor or RoleTypes.Shapeshifter or RoleTypes.Phantom or RoleTypes.Viper;
 
     private static bool Teammates(PlayerControl a, PlayerControl b)

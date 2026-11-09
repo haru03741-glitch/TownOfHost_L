@@ -536,7 +536,8 @@ public sealed class StandMaster : HamoRoleBase, ILNKiller, IUsePhantomButton
 
         target.RpcSetCustomRoleHamo(CustomRoles.Stand, log: null);
 
-        target.RpcSetRole(RoleTypes.Crewmate);
+        // 見え方の表に残す (会議明けの配り直しで、この見え方へ戻す)
+        target.RpcSetRoleNormal(RoleTypes.Crewmate);
 
 
 

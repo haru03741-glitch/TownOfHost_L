@@ -78,6 +78,17 @@ public static partial class AntiBlackout
         };
     }
 
+    /// <summary>seer の画面に、dummies の外の生きたキル役 (自分も含む) が見えているか (見え方は RoleView)</summary>
+    private static bool SeesOtherKiller(PlayerControl seer, List<PlayerControl> dummies)
+    {
+        foreach (var target in Main.AllAlivePlayerControls)
+        {
+            if (target.PlayerId == ExiledPlayerId || dummies.Contains(target)) continue;
+            if (RoleView.IsKillerRole(RoleView.Living(target, seer))) return true;
+        }
+        return false;
+    }
+
     // 会議の後、本編のクライアントは追放の演出の締めで「生存インポスター ≥ 生存クルー」なら試合が終わるとみなし、
     // ホストの試合終了を待って暗転する。fillCrew のときは各クライアントの見え方で生存クルーが足りなければ、
     // 足りない数だけ死者を生きたクルーに見せ、演出の後で幽霊に戻す (RevertFilledCrew)。
@@ -110,6 +121,10 @@ public static partial class AntiBlackout
         {
             if (pc.PlayerId == PlayerControl.LocalPlayer.PlayerId) continue;
             if (pc.IsAlive() && pc.GetCustomRole().GetRoleInfo()?.IsDesyncImpostor == true) continue;
+            // 身代わりのインポスターの外に、生きたキル役が既に見えている画面 (役職の能力でキル役になった本人・その仲間) には身代わりを足さない。
+            // 足すとその画面の生存インポスターが増え、追放の演出の締めで試合が終わったとみなして暗転する (2026-11-09 実機で確認)。
+            // 死者を幽霊のクルーにする分は送る (会議中は全員を生きているとして送るので、死んだキル役の ImpostorGhost も生存インポスターに数えられる)
+            bool noDummies = SeesOtherKiller(pc, list);
 
             var clientId = pc.GetClientId();
             if (clientId == -1) continue;
@@ -120,6 +135,7 @@ public static partial class AntiBlackout
 
             foreach (var dummy in list)
             {
+                if (noDummies) break;
                 if (isKiller && dummy.PlayerId == pc.PlayerId) continue;
                 sender.StartRpc(dummy.NetId, RpcCalls.SetRole)
                     .Write((ushort)dummy.GetCustomRole().GetRoleTypes())
@@ -131,6 +147,9 @@ public static partial class AntiBlackout
             if (fillCrew)
             {
                 filledCrew.Remove(clientId);
+            }
+            if (fillCrew && !noDummies)
+            {
                 int aliveCrew = Main.AllAlivePlayerControls.Count(x => x.PlayerId != ExiledPlayerId && !list.Contains(x));
                 lacking = list.Count + 1 - aliveCrew;
             }
