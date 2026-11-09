@@ -41,9 +41,10 @@ public sealed class CustomNetObject
 {
     private const string Tag = "CNO";
     private const string SpriteNamePrefix = "<size=14><br></size>";
-    // 本物のプレイヤーは 0〜14。CNO は 200〜254 を回して使う (本編は同じ ID を消してすぐ出すと 2 回目を無視する)
+    // 本物のプレイヤーは 0〜14。CNO は 200〜253 を回して使う (本編は同じ ID を消してすぐ出すと 2 回目を無視する)。
+    // 254 は Roles/Hamo の CNO (TextDummy) がいつも使うので、重ねない
     public const byte MinPlayerId = 200;
-    private const byte MaxPlayerId = 254;
+    private const byte MaxPlayerId = 253;
     /// <summary>本編の色の番号 (Palette.PlayerColors)。</summary>
     public const byte ColorBlack = 6, ColorPurple = 8;
     // spawn 前の置き場 (誰にも見えない所)
@@ -91,6 +92,14 @@ public sealed class CustomNetObject
     /// <summary>客の画面に出し終えた。</summary>
     public bool IsLive => state == State.Live;
     public bool IsGone => state == State.Gone;
+    /// <summary>
+    /// 絵の名前を載せたホストの PlayerInfo を書き出している間だけ真。PlayerInfo の送信を書き換えるパッチ
+    /// (送る間だけ本当の名前に戻す物など) は、この間は手を出さない。
+    /// </summary>
+    public static bool SerializingSprite { get; private set; }
+
+    /// <summary>spawn した後の netId。spawn する前と消した後は 0。</summary>
+    public uint NetId => pc ? pc.NetId : 0u;
 
     private CustomNetObject(string sprite, Vector2 position, byte bodyColorId)
     {
@@ -189,11 +198,12 @@ public sealed class CustomNetObject
 
     private static void Update()
     {
+        float now = Time.realtimeSinceStartup;
+        // CNO が 1 体も無い会議でも数えておく (会議の後に作った CNO を、明けて 10 秒の間に出さないため)
+        if (GameSession.Current != null && (MeetingHud.Instance || ExileController.Instance)) lastMeetingAt = now;
         if (all.Count == 0) return;
         var client = AmongUsClient.Instance;
         if (!client || !client.AmHost || GameSession.Current == null || !PlayerControl.LocalPlayer) return;
-        float now = Time.realtimeSinceStartup;
-        if (MeetingHud.Instance || ExileController.Instance) lastMeetingAt = now;
 
         bool spawning = false;
         // Tick の中で消えると all から抜けるので、後ろから回す
@@ -385,7 +395,15 @@ public sealed class CustomNetObject
             outfit.HatId = outfit.SkinId = outfit.PetId = outfit.VisorId = "";
             w.StartMessage(1);
             w.WritePacked(lp.Data.NetId);
-            lp.Data.Serialize(w, false);
+            SerializingSprite = true;
+            try
+            {
+                lp.Data.Serialize(w, false);
+            }
+            finally
+            {
+                SerializingSprite = false;
+            }
             w.EndMessage();
             try
             {
