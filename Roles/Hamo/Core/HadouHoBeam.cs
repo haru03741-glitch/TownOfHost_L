@@ -69,6 +69,10 @@ public sealed class HadouHoBeam
     private float extremeX;
     private Vector2 lastPos;
     private int reverseFrames;
+    // 撃っている間のビームの揺れ (End K not と同じ: 速さの違う 2 本の sin を足して上下に揺らす。送るのは CNO の間引きで 10Hz)
+    private const float ShakePerThickness = 0.12f * 0.2f;
+    private bool firing;
+    private float shakeOffset, shakeAmp;
     private Action pendingStart;
     private float pendingUntil;
 
@@ -204,11 +208,23 @@ public sealed class HadouHoBeam
     {
         if (gate == null || line == null || owner == null) return;
         line.ChangeSprite(Padded($"<color={colorHex}FF>{Row}</color>", Row, size));
+        firing = true;
+        shakeOffset = UnityEngine.Random.Range(0f, 100f);
+        shakeAmp = ShakePerThickness * size / 30f;
+    }
+
+    private void Shake()
+    {
+        if (!firing || line == null || line.IsGone || owner == null) return;
+        float t = Time.time + shakeOffset;
+        float wave = Mathf.Sin(t * 47f) * 0.7f + Mathf.Sin(t * 113f + 1.3f) * 0.3f;
+        line.MoveTo(LinePosition() + Vector2.up * (wave * shakeAmp));
     }
 
     public void End()
     {
         pendingStart = null;
+        firing = false;
         gate?.Despawn();
         line?.Despawn();
         gate = line = null;
@@ -227,6 +243,7 @@ public sealed class HadouHoBeam
             pendingStart = null;
             start();
         }
+        Shake();
         if (!drawnByClientEffects || !ClientEffects.NovaOn) return;
         Hide(gate, ref hiddenGate);
         Hide(line, ref hiddenLine);
