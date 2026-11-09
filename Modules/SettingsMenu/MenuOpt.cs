@@ -26,8 +26,8 @@ public class MenuOpt
     protected MenuOpt(OptionItem item) { Item = item; }
 
     public virtual string Key => Item.Key;
-    // 名前 (役職名などは色付き)
-    public virtual string Label => Item.GetName();
+    // 名前 (役職名などは色付き)。暗い色は地の上で読める明るさまで上げる
+    public virtual string Label => Utils.ColorString(Readable(NameColor), Item.GetName(disableColor: true));
     public virtual string PlainLabel => Item.GetName(disableColor: true).RemoveHtmlTags();
     public virtual int Index => Item.CurrentValue;
     public virtual int DefaultIndex => Item.DefaultValue;
@@ -56,6 +56,22 @@ public class MenuOpt
 
     // 名前の色 (見出しの帯の色にも使う)
     public virtual Color NameColor => Item.NameColor;
+
+    // 行の地 (いちばん明るい縞) の上で、字とのコントラスト比が 4.5 以上になるまで白へ寄せる
+    private const float MinLuminance = 0.39f;
+
+    public static Color Readable(Color c)
+    {
+        for (int i = 0; i < 10 && Luminance(c) < MinLuminance; i++)
+            c = Color.Lerp(c, Color.white, 0.15f);
+        return c;
+    }
+
+    private static float Luminance(Color c)
+    {
+        static float Lin(float v) => v <= 0.04045f ? v / 12.92f : Mathf.Pow((v + 0.055f) / 1.055f, 2.4f);
+        return 0.2126f * Lin(c.r) + 0.7152f * Lin(c.g) + 0.0722f * Lin(c.b);
+    }
 
     // 画面に出すか: 今のモードで出す項目で、親が全部 ON の時
     public virtual bool Shown => IsEnabled(Item);

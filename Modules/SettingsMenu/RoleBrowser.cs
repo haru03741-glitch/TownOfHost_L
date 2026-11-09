@@ -802,7 +802,7 @@ internal sealed class RoleBrowser
             int indent = Math.Max(0, opt.Depth - (e.IsRole ? 1 : 0));
             if (opt.IsText)
             {
-                rows.Add(new Label(opt.Label, OptEditor.NarrowFont) { Bold = true, Width = rowW - indent * 0.2f, Color = opt.NameColor == Color.white ? SubText : opt.NameColor, Align = Align.Start });
+                rows.Add(new Label(opt.Label, OptEditor.NarrowFont) { Bold = true, Width = rowW - indent * 0.2f, Color = opt.NameColor == Color.white ? SubText : MenuOpt.Readable(opt.NameColor), Align = Align.Start });
                 continue;
             }
             bool inCore = opt == e.Chance || opt == e.Count;
@@ -869,18 +869,20 @@ internal sealed class RoleBrowser
             rows.Add(new Stack(true, _resetBtn, _undoBtn) { Gap = 0.1f, Align = Align.Start });
         }
         _editor.Watch(e.Opts);
+        float rowW = W - 0.3f;
+        int k = 0;
         foreach (var opt in e.Opts)
         {
             if (!opt.Shown) continue;
             int indent = Math.Max(0, opt.Depth - (e.IsRole ? 1 : 0));
             if (opt.IsText)
             {
-                rows.Add(new Label(opt.Label, OptEditor.FontSize) { Bold = true, Width = W - 0.4f, Color = opt.NameColor == Color.white ? SubText : opt.NameColor, Align = Align.Start });
+                rows.Add(new Label(opt.Label, OptEditor.FontSize) { Bold = true, Width = W - 0.4f, Color = opt.NameColor == Color.white ? SubText : MenuOpt.Readable(opt.NameColor), Align = Align.Start });
+                k = 0;
                 continue;
             }
-            var r = _editor.Row(opt, edit, indent * 0.3f);
-            r.Align = Align.Start;
-            rows.Add(r);
+            var r = _editor.Row(opt, edit, indent * 0.3f, null, rowW - OptEditor.PlatePad * 2f);
+            rows.Add(OptEditor.Plated(r, rowW, k++));
         }
         _editor.Refresh();
 
@@ -892,19 +894,19 @@ internal sealed class RoleBrowser
 
     private static string Join(string a, string b) => $"{a} › {b}";
 
-    // 役職でない設定のまとまり (見出し・色・項目): 本編のゲーム設定・Mod 設定・役職の区分の共通の設定
+    // 役職でない設定のまとまり (見出し・色・項目): ゲームの頁・全般の頁・役職の区分の共通の設定
     private static IEnumerable<(string title, Color color, IEnumerable<MenuOpt> opts)> PlainGroups()
     {
         if (VanillaGame.All.Count == 0) VanillaGame.Rebuild();
         string game = Tr("MenuCat.Game");
         var gameColor = GameSettingMenuPatch.CatColor(null);
-        foreach (var sec in VanillaGame.All)
-            yield return (Join(game, sec.Title), gameColor, sec.Opts);
+        foreach (var g in SettingsPages.GameGroups())
+            yield return (Join(game, g.Title), g.Color == Color.white ? gameColor : g.Color, g.Opts);
 
-        string mod = Tr("MenuCat.ModMainSettings");
-        var modColor = GameSettingMenuPatch.CatColor(TabGroup.ModMainSettings);
-        foreach (var g in SettingsPages.ModGroups())
-            yield return (Join(mod, g.Title), g.Color == Color.white ? modColor : g.Color, g.Opts);
+        string general = Tr("MenuCat.ModMainSettings");
+        var generalColor = GameSettingMenuPatch.CatColor(TabGroup.ModMainSettings);
+        foreach (var g in SettingsPages.GeneralGroups())
+            yield return (Join(general, g.Title), g.Color == Color.white ? generalColor : g.Color, g.Opts);
 
         foreach (var tab in RoleCatalog.Tabs)
         {
@@ -912,6 +914,16 @@ internal sealed class RoleBrowser
             foreach (var e in RoleCatalog.Of(tab))
                 if (!e.IsRole) yield return (Join(cat, e.Title), e.Color, e.Opts);
         }
+    }
+
+    // 検索の結果の行の名前: 語に当たった所だけ色を付ける (名前全体を塗ると、どの行も同じ色になって目印にならない)。
+    // 名前に当たらず、見出しや内部の名前で当たった行は、ふだんの名前のまま
+    private static readonly string HighlightHex = "#" + ColorUtility.ToHtmlStringRGB(Highlight);
+
+    private string MarkedLabel(MenuOpt opt)
+    {
+        string marked = SettingsSearch.Mark(opt.PlainLabel, _tokens, HighlightHex);
+        return marked == null ? null : Utils.ColorString(MenuOpt.Readable(opt.NameColor), marked);
     }
 
     private Widget SearchPage()
@@ -934,12 +946,11 @@ internal sealed class RoleBrowser
                 if (rows == null)
                 {
                     rows = new Stack(false) { Gap = 0.06f, Width = colW, Align = Align.Start };
-                    rows.Add(new Label(title, 1.7f) { Color = color, Bold = true, Width = colW - 0.1f, Align = Align.Start });
+                    rows.Add(new Label(title, 1.7f) { Color = MenuOpt.Readable(color), Bold = true, Width = colW - 0.1f, Align = Align.Start });
                 }
                 watch.Add(opt);
-                var r = _editor.Row(opt, edit, 0.25f + opt.Depth * 0.2f, SettingsSearch.AnyIn(_tokens, hay) ? Highlight : Color.white);
-                r.Align = Align.Start;
-                rows.Add(r);
+                var r = _editor.Row(opt, edit, 0.25f + opt.Depth * 0.2f, null, colW - OptEditor.PlatePad * 2f, MarkedLabel(opt));
+                rows.Add(OptEditor.Plated(r, colW, rows.Children.Count - 1));
                 HitCount++;
             }
             if (rows != null) col.Add(rows);
@@ -962,14 +973,17 @@ internal sealed class RoleBrowser
                 watch.AddRange(e.Opts);
                 // 役職の名前に当たった時はその設定を全部、そうでなければ当たった設定だけ
                 bool nameHit = SettingsSearch.AnyIn(_tokens, nameHay);
+                // 役職の設定の行は、カードの下に一段下げた地で並べる
+                const float under = 0.2f;
+                float subW = colW - under;
+                int k = 0;
                 foreach (var opt in e.Opts)
                 {
                     if (opt.IsText || !opt.Shown) continue;
                     bool hit = SettingsSearch.AnyIn(_tokens, SettingsSearch.Haystack(opt));
                     if (!nameHit && !hit) continue;
-                    var r = _editor.Row(opt, edit, 0.4f + Math.Max(0, opt.Depth - 1) * 0.2f, hit ? Highlight : Color.white);
-                    r.Align = Align.Start;
-                    col.Add(r);
+                    var r = _editor.Row(opt, edit, 0.2f + Math.Max(0, opt.Depth - 1) * 0.2f, null, subW - OptEditor.PlatePad * 2f, hit ? MarkedLabel(opt) : null);
+                    col.Add(new Stack(true, new Spacer(under, 0.1f), OptEditor.Plated(r, subW, k++)) { Gap = 0f, Align = Align.Start });
                 }
             }
         }

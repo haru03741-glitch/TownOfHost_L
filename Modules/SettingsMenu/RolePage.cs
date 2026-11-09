@@ -9,7 +9,7 @@ namespace TownOfHostL.SettingsUI;
 // 頁の置き場は本編の画面 (GameOptionsMenu) 1 枚。左の列で区分を選ぶと、同じ置き場に別の区分を出す。
 internal static class RolePage
 {
-    // 頁の置き場と大きさ (Mod 設定・ゲームの頁と同じ)
+    // 頁の置き場と大きさ (全般・ゲームの頁と同じ)
     private static readonly Vector3 Center = new(4.41f, -2.2f, -6f);
     private const float W = 6.3f, H = 4.15f;
     // 絞り込みの札 (2 枚) を左の列の下に置くのに掛かる高さ (画面の座標)

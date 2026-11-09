@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace TownOfHostL.SettingsUI;
 
-// 設定画面の「ゲーム」「Mod 設定」の頁。真ん中 = (上の段) + 節の見出しと行のスクロール欄・右 = 頁の見出しと節の目次・戻すボタン。
+// 設定画面の「ゲーム」「全般」の頁。真ん中 = (上の段) + 節の見出しと行のスクロール欄・右 = 頁の見出しと節の目次・戻すボタン。
 // 行は OptEditor の行 (名前の右の点で初期値から変えた項目が分かる)。
 internal sealed class SectionPage
 {
@@ -23,7 +23,7 @@ internal sealed class SectionPage
     private const float W = 6.3f, H = 4.15f;
     private static readonly float ListW = (float)Math.Round(W * 0.65f, 2), SideW = W - ListW - 0.15f;
     internal static float RowW => ListW - 0.24f;
-    private const float HeadH = 0.4f, BarH = 0.4f, RowPad = 0.08f;
+    private const float HeadH = 0.4f, BarH = 0.4f, RowPad = OptEditor.PlatePad;
     // 色の決まっていない節の見出しの色 (順に回す)
     private static readonly Color[] HeadPalette =
     {
@@ -172,13 +172,10 @@ internal sealed class SectionPage
                 {
                     // 親のある見出し (設定の途中の小見出し): 字だけ
                     var tc = opt.NameColor;
-                    r = new Label(opt.Label, OptEditor.NarrowFont) { Bold = true, Width = rowW - RowPad * 2f - opt.Depth * 0.2f, Color = tc == Color.white ? SubText : tc };
+                    r = new Label(opt.Label, OptEditor.NarrowFont) { Bold = true, Width = rowW - RowPad * 2f - opt.Depth * 0.2f, Color = tc == Color.white ? SubText : MenuOpt.Readable(tc) };
                 }
                 else r = _editor.NarrowRow(opt, edit, rowW - RowPad * 2f, opt.Depth * 0.2f);
-                r.Align = Align.Start;
-                var plate = new Plate(r) { Width = rowW, Padding = new Vector2(RowPad, 0.025f), Align = Align.Start };
-                if (k++ % 2 == 1) plate.Color = new Color(0.16f, 0.17f, 0.2f, 1f);
-                rows.Add(plate);
+                rows.Add(OptEditor.Plated(r, rowW, k++));
             }
             _entries.Add(e);
         }

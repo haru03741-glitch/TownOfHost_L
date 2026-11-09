@@ -1304,7 +1304,7 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "Complete-","Complete","コンプリート",
 
 "## 設定メニュー説明"
-"MenuDescriptionText.ModMainSettings","Edit individual settings for the mod.","MODの各設定を編集する。",
+"MenuDescriptionText.ModMainSettings","Edit what is shown in names and after the game, who can join, and other room-wide settings.","名前や試合の後の表示、参加の制限など、部屋の全体に掛かる設定を編集する。","编辑名字与对局后的显示、加入限制等房间整体的设置。","編輯名字與對局後的顯示、加入限制等房間整體的設定。","Настройки отображения имён и итогов, ограничения входа и другие общие настройки комнаты.","Edite o que aparece nos nomes e após a partida, quem pode entrar e outras configurações gerais da sala.","Edite o que aparece nos nomes e após a partida, quem pode entrar e outras definições gerais da sala."
 "MenuDescriptionText.ImpostorRoles","Edit impostor role settings for your game lobby.","インポスター役職の設定を編集する。",
 "MenuDescriptionText.MadmateRoles","Edit madmate role settings for your game lobby.","マッド役職の設定を編集する。",
 "MenuDescriptionText.CrewmateRoles","Edit crewmate role settings for your game lobby.","クルー役職の設定を編集する。",
@@ -1312,7 +1312,7 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "MenuDescriptionText.UnitRoles","Edit unit role settings for your game lobby.","ユニット役職の設定を編集する。",
 "MenuDescriptionText.Addons","Edit add-on settings for your game lobby.","属性の設定を編集する。",
 "MenuCat.Game","Game","ゲーム","游戏","遊戲","Игра","Jogo","Jogo"
-"MenuCat.ModMainSettings","Mod Setup","MOD 設定","模组设置","模組設定","Настройки мода","Config. do Mod","Config. do Mod"
+"MenuCat.ModMainSettings","General","全般","通用","一般","Общие","Geral","Geral"
 "MenuCat.ImpostorRoles","Impostors","インポスター","内鬼","偽裝者","Предатели","Impostores","Impostores"
 "MenuCat.MadmateRoles","Madmates","マッドメイト","叛徒","叛徒","Безумцы","Madmates","Madmates"
 "MenuCat.CrewmateRoles","Crewmates","クルーメイト","船员","船員","Экипаж","Tripulantes","Tripulantes"
@@ -1371,7 +1371,7 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "SettingCode.CouldntMake","Couldn't make the code: {0}","コードを作れませんでした: {0}","无法生成代码：{0}","無法產生代碼：{0}","Не удалось создать код: {0}","Não foi possível gerar o código: {0}","Não foi possível gerar o código: {0}"
 "SettingCode.NotACode","The copied text is not a settings code","コピーした文字列は設定のコードではありません","复制的文字不是设置代码","複製的文字不是設定代碼","Скопированный текст не является кодом настроек","O texto copiado não é um código de configurações","O texto copiado não é um código de definições"
 "SettingCode.Loaded","Loaded the settings code ({0} settings changed)","設定のコードを読み込みました ({0} 項目が変わりました)","已读取设置代码（{0} 项设置已更改）","已讀取設定代碼（{0} 項設定已變更）","Код настроек загружен (изменено: {0})","Código carregado ({0} configurações alteradas)","Código carregado ({0} definições alteradas)"
-"GameSettingHelpText.Page","・Double-click a value:\n  type a number\n・Shift + ± :\n  change 5 steps at a time\n・Hover the ? mark:\n  show the explanation","・値の欄をダブルクリック:\n　数を打ち込む\n・Shift+±:\n　5倍幅で変更\n・「?」に合わせる:\n　詳しい説明を表示",
+"GameSettingHelpText.Page","・Double-click a value: type it\n・Shift + ±: 5 steps at once\n・Hover ?: details","・値をダブルクリック: 数を入力\n・Shift+±: 5 倍の幅で変える\n・「?」に合わせる: 詳しい説明",
 "GameSettingHelpText","","・オプション名クリック:\n　詳細説明を表示\n・左Shift+±クリック:\n　5倍幅で変更",
 "PresetChangedWarning","","もしプリセットや各オプションの値を変更しても表示が更新されない場合は、一度設定画面を開き直してください。",
 

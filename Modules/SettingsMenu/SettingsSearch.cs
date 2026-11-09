@@ -22,17 +22,52 @@ public static class SettingsSearch
 
     public static string Normalize(string s) => Normalize(s, true);
 
-    private static string Normalize(string s, bool foldKana)
+    private static string Normalize(string s, bool foldKana) => Normalize(s, foldKana, null);
+
+    // map を渡すと、そろえた字ごとに元の字の位置を入れる (当たった所に元の字で色を付けるため)
+    private static string Normalize(string s, bool foldKana, List<int> map)
     {
         if (string.IsNullOrEmpty(s)) return "";
         var sb = new StringBuilder(s.Length);
-        foreach (char c0 in s)
+        for (int i = 0; i < s.Length; i++)
         {
-            char c = c0;
+            char c = s[i];
             if (c >= '！' && c <= '～') c = (char)(c - 0xFEE0);   // 全角英数記号 → 半角
             else if (foldKana && c >= 'ァ' && c <= 'ヶ') c = (char)(c - 0x60); // カタカナ → ひらがな
             if (c == ' ' || c == '　' || c == '・' || c == '･' || c == '\t') continue;
             sb.Append(char.ToLowerInvariant(c));
+            map?.Add(i);
+        }
+        return sb.ToString();
+    }
+
+    // 名前の中で検索の語に当たった所だけに色と下線を付けた字。どこにも当たらなければ null
+    public static string Mark(string plain, string[] tokens, string color)
+    {
+        if (string.IsNullOrEmpty(plain) || tokens.Length == 0) return null;
+        var hit = new bool[plain.Length];
+        bool any = false;
+        var map = new List<int>(plain.Length);
+        foreach (bool fold in new[] { true, false })
+        {
+            map.Clear();
+            string n = Normalize(plain, fold, map);
+            foreach (var t in tokens)
+            {
+                for (int at = n.IndexOf(t, StringComparison.Ordinal); at >= 0; at = n.IndexOf(t, at + t.Length, StringComparison.Ordinal))
+                {
+                    for (int k = at; k < at + t.Length; k++) hit[map[k]] = true;
+                    any = true;
+                }
+            }
+        }
+        if (!any) return null;
+        var sb = new StringBuilder(plain.Length + 32);
+        for (int i = 0; i < plain.Length; i++)
+        {
+            if (hit[i] && (i == 0 || !hit[i - 1])) sb.Append("<color=").Append(color).Append("><u>");
+            sb.Append(plain[i]);
+            if (hit[i] && (i == plain.Length - 1 || !hit[i + 1])) sb.Append("</u></color>");
         }
         return sb.ToString();
     }

@@ -9,16 +9,17 @@ using UnityEngine;
 
 namespace TownOfHostL.SettingsUI;
 
-// 設定画面の「ゲーム」(本編のゲーム設定) と「Mod 設定」(TOHL の全般の設定) の頁
+// 設定画面の「ゲーム」(本編の設定と TOHL のゲームのルール) と「全般」(TOHL の表示・参加の制限など) の頁。
+// 本編の設定か TOHL の設定かでは分けず、話題で分ける
 internal static class SettingsPages
 {
-    public static readonly SectionPage Mod = new("modpage", () => Translator.GetString("MenuCat.ModMainSettings"),
-        GameSettingMenuPatch.CatColor(TabGroup.ModMainSettings), ModGroups);
+    public static readonly SectionPage General = new("generalpage", () => Translator.GetString("MenuCat.ModMainSettings"),
+        GameSettingMenuPatch.CatColor(TabGroup.ModMainSettings), GeneralGroups);
 
     public static readonly SectionPage Game = new("gamepage", () => Translator.GetString("MenuCat.Game"),
         GameSettingMenuPatch.CatColor(null), GameGroups, MapTop, VanillaGame.Rebuild, TopKey) { HeroSub = MapName };
 
-    public static bool AnyBuilt => Mod.Built || Game.Built || RolePage.Built;
+    public static bool AnyBuilt => General.Built || Game.Built || RolePage.Built;
 
     // ゲームの頁を作った本編の画面 (マップの絵を借りる)
     public static GameOptionsMenu GameTab;
@@ -28,7 +29,7 @@ internal static class SettingsPages
     {
         OptEditor.EndInput(false);
         GameTab = null;
-        Mod.Forget();
+        General.Forget();
         Game.Forget();
         RolePage.Forget();
         PresetPage.Forget();
@@ -39,7 +40,7 @@ internal static class SettingsPages
 
     public static void RefreshMarks()
     {
-        Mod.RefreshMarks();
+        General.RefreshMarks();
         Game.RefreshMarks();
     }
 
@@ -54,7 +55,7 @@ internal static class SettingsPages
     // 役職の頁 (RoleBrowser) の行で値を変えた後: 役職の頁以外の頁
     public static void RefreshOtherPages()
     {
-        Mod.RefreshFromOutside();
+        General.RefreshFromOutside();
         Game.RefreshFromOutside();
     }
 
@@ -93,11 +94,15 @@ internal static class SettingsPages
         if (item is PresetOptionItem) GameSettingMenuPatch.NotifyPresetChanged();
     }
 
-    // ---- Mod 設定: 節 = 見出し (TextOptionItem か IsHeader の設定) から次の見出しまで ----
+    // ---- TOHL の設定 (TabGroup.ModMainSettings) の節: 見出し (TextOptionItem か IsHeader の設定) から次の見出しまで ----
 
-    internal static List<SectionPage.Group> ModGroups()
+    // 「全般」の頁に置く節の見出し。ここに無い節は「ゲーム」の頁に置く
+    private static readonly HashSet<string> GeneralHeads = new() { "Head.System", "Head.Participation" };
+
+    // 節と、その見出しの設定 (見出しより前の設定の節は null)
+    internal static List<(SectionPage.Group group, OptionItem head)> TohlSections()
     {
-        var list = new List<SectionPage.Group>();
+        var list = new List<(SectionPage.Group, OptionItem)>();
         SectionPage.Group cur = null;
         foreach (var option in OptionItem.AllOptions)
         {
@@ -106,16 +111,26 @@ internal static class SettingsPages
             if (section || option.IsHeader)
             {
                 cur = new SectionPage.Group { Title = SectionTitle(option), Color = option.NameColor };
-                list.Add(cur);
+                list.Add((cur, option));
                 if (section) continue;
             }
             if (cur == null)
             {
                 cur = new SectionPage.Group { Title = Translator.GetString("MenuCat.ModMainSettings") };
-                list.Add(cur);
+                list.Add((cur, null));
             }
             cur.Opts.Add(MenuOpt.Of(option));
         }
+        return list;
+    }
+
+    private static bool IsGeneral(OptionItem head) => head != null && GeneralHeads.Contains(head.Name);
+
+    internal static List<SectionPage.Group> GeneralGroups()
+    {
+        var list = new List<SectionPage.Group>();
+        foreach (var (g, head) in TohlSections())
+            if (IsGeneral(head)) list.Add(g);
         return list;
     }
 
@@ -127,17 +142,26 @@ internal static class SettingsPages
         return option.IsHeaderName.RemoveHtmlTags();
     }
 
-    // ---- ゲーム: 本編の設定の節の並びのまま ----
+    // ---- ゲーム: ゲームモードの節 → 本編の設定の節 (本編の並びのまま) → TOHL のゲームのルールの節 ----
 
-    private static List<SectionPage.Group> GameGroups()
+    internal static List<SectionPage.Group> GameGroups()
     {
         var list = new List<SectionPage.Group>();
+        var tohl = TohlSections();
+        var rest = new List<SectionPage.Group>();
+        foreach (var (g, head) in tohl)
+        {
+            if (IsGeneral(head)) continue;
+            if (head == Options.GameMode) list.Add(g);
+            else rest.Add(g);
+        }
         foreach (var sec in VanillaGame.All)
         {
             var g = new SectionPage.Group { Title = sec.Title };
             g.Opts.AddRange(sec.Opts);
             if (g.Opts.Count > 0) list.Add(g);
         }
+        list.AddRange(rest);
         return list;
     }
 

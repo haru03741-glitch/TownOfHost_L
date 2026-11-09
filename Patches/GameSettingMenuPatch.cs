@@ -1,6 +1,6 @@
 // Based on https://github.com/haru03741-glitch/More-Roles-Plus src/Options/SettingsMenu.cs (GPL-3.0),
 // which is based on https://github.com/waffle-ful/Aeterna-End-K-not Patches/GameOptionsMenuPatch.cs (GPL-3.0)
-// 画面の枠は本編の大きさのまま。左の列 1 本 (ゲーム / Mod 設定 / 区分ごと) と板の上の検索欄で、全部の設定へ行く
+// 画面の枠は本編の大きさのまま。左の列 1 本 (ゲーム / 全般 / 区分ごと) と板の上の検索欄で、全部の設定へ行く
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,7 +53,7 @@ public class GameSettingMenuPatch
             menu.MenuDescriptionText.text += PresetChangedWarning;
     }
 
-    // 頁の置き場にする画面 (本編のゲーム設定の画面の複製)。Mod 設定の頁と、役職の区分・検索の結果の頁 (RoleBrowser 1 つ) で 1 枚ずつ
+    // 頁の置き場にする画面 (本編のゲーム設定の画面の複製)。全般の頁と、役職の区分・検索の結果の頁 (RoleBrowser 1 つ) で 1 枚ずつ
     static GameOptionsMenu ModTab;
     static GameOptionsMenu RoleHost;
     static GameOptionsMenu PresetHost;
@@ -405,10 +405,14 @@ public class GameSettingMenuPatch
         SearchBox = SettingsSearchBox.Create(buttonParent, searchPos, SearchBoxWidth, SearchBoxHeight,
             Translator.GetString("MenuSearch.Hint"), OnSearchChanged);
 
-        // 左の列: ゲーム (本編) と TOHL の区分。本編のかくれんぼでは、出す設定が 1 つも無い区分は出さない
+        // 左の列: ゲームと、全般・役職の区分。本編のかくれんぼでは、出す設定が 1 つも無い区分は出さない
+        // (ModMainSettings の設定は、全般の頁に置く節の物だけを数える。残りはゲームの頁に出る)
         Cats.Clear();
+        var generalOpts = TownOfHostL.Core.VanillaHideAndSeek.IsSuspended
+            ? SettingsUI.SettingsPages.GeneralGroups().SelectMany(g => g.Opts).Select(o => o.Item).ToHashSet()
+            : null;
         var groups = EnumHelper.GetAllValues<TabGroup>()
-            .Where(tab => !(TownOfHostL.Core.VanillaHideAndSeek.IsSuspended && !OptionItem.AllOptions.Any(o => o.Tab == tab && ModeCatalog.IsShown(o))))
+            .Where(tab => generalOpts == null || OptionItem.AllOptions.Any(o => o.Tab == tab && ModeCatalog.IsShown(o) && (tab != TabGroup.ModMainSettings || generalOpts.Contains(o))))
             .ToList();
         int catCount = 2 + groups.Count;
         float fit = catCount > CatFitCount ? (CatFitCount - 1f) / (catCount - 1f) : 1f;
@@ -420,7 +424,7 @@ public class GameSettingMenuPatch
         PlaceDescription(__instance);
         HighlightCat(ModGameOptionsMenu.TabIndex == ModGameOptionsMenu.SearchTab ? -1 : ModGameOptionsMenu.TabIndex);
 
-        // 頁の置き場にする画面を作る (ゲーム設定の画面の複製)。Mod 設定用と、役職の区分・検索の結果用
+        // 頁の置き場にする画面を作る (ゲーム設定の画面の複製)。全般の頁用と、役職の区分・検索の結果用
         ModTab = Object.Instantiate(templateGameOptionsMenu, __instance.GameSettingsTab.transform.parent);
         ModTab.name = GameSettingMenuTab.Mod_MainSettings.ToString();
         ModTab.gameObject.SetActive(false);
@@ -435,6 +439,15 @@ public class GameSettingMenuPatch
     {
         // 左の列は Start で作る。コントローラーで選べるのはその列だけにする
         __instance.ControllerSelectable = new();
+    }
+
+    // ゲームの頁: 本編の ChangeTab が説明の字を本編の文に書き戻すので、その後に頁の操作の案内を付けて書き直す
+    [HarmonyPatch(nameof(GameSettingMenu.ChangeTab)), HarmonyPostfix]
+    public static void ChangeTabPostfix(GameSettingMenu __instance, int tabNum, [HarmonyArgument(1)] bool previewOnly)
+    {
+        if (previewOnly || ModGameOptionsMenu.IsModTab(tabNum) || !TranslationController.Instance) return;
+        SetDescription(__instance, TranslationController.Instance.GetString(StringNames.GameSettingsDescription)
+            + "\n\n" + Translator.GetString("GameSettingHelpText.Page"));
     }
 
     [HarmonyPatch(nameof(GameSettingMenu.ChangeTab)), HarmonyPrefix]
@@ -464,9 +477,6 @@ public class GameSettingMenuPatch
         if (!previewOnly)
         {
             __instance.transform.FindChild("What Is This?").gameObject.SetActive(false);
-            if (!ModGameOptionsMenu.IsModTab(tabNum))
-                SetDescription(__instance, TranslationController.Instance.GetString(StringNames.GameSettingsDescription)
-                    + "\n\n" + Translator.GetString("GameSettingHelpText.Page"));
             // 検索の結果の行など、頁の外で変えた値を頁へ写す
             SettingsUI.SettingsPages.RefreshFromOutside();
         }

@@ -28,7 +28,9 @@ internal sealed class OptEditor
     // 項目の名前の右の小さい点 (初期値から変えた項目・値の字は白のまま)
     internal static readonly string ChangedMark = $"<size=60%> <color=#{ColorUtility.ToHtmlStringRGB(ChangeDot.Color)}>●</color></size>";
 
-    private static string NameText(MenuOpt opt) => opt.Changed ? opt.Label + ChangedMark : opt.Label;
+    private static string NameText(MenuOpt opt, string label = null) => (label ?? opt.Label) + (opt.Changed ? ChangedMark : "");
+    // 名前の字を差し替えた行 (検索で当たった所に色を付けた名前)。名前の部品 → 字
+    private readonly Dictionary<Label, string> _labels = new();
     private readonly List<MenuOpt> _watched = new();
     private bool[] _shown;
     private readonly Action _onShownChanged;
@@ -57,7 +59,11 @@ internal sealed class OptEditor
         for (int i = 0; i < _watched.Count; i++) _shown[i] = _watched[i].Shown;
     }
 
-    public void Clear() => _rows.Clear();
+    public void Clear()
+    {
+        _rows.Clear();
+        _labels.Clear();
+    }
 
     // 値を 1 つ動かす。Shift を押している時は 5 倍幅 (端で止まる)
     public static void Step(MenuOpt opt, int delta)
@@ -139,13 +145,20 @@ internal sealed class OptEditor
         return row;
     }
 
-    public Widget Row(MenuOpt opt, bool editable, float indent = 0f, Color? nameColor = null)
+    // 行の幅 (字下げ・? のボタン無し)。名前・「:」・- 値 +・「初期値」と、その間の 5 つの隙間
+    private const float RowW = NameW + 0.2f + StepW * 2f + ValueW + ResetW + 0.08f * 5f;
+
+    // width = 行に使える幅 (0 = 名前の欄を NameW のまま)。渡した時は名前の欄を縮めて、字下げしても幅に収める
+    // label = 名前の字の差し替え (null = opt.Label)
+    public Widget Row(MenuOpt opt, bool editable, float indent = 0f, Color? nameColor = null, float width = 0f, string label = null)
     {
         opt.Sync();
         editable &= !opt.Fixed;
         var info = InfoButton(opt);
         float nameW = NameW - indent - (info != null ? InfoW + 0.08f : 0f);
-        var name = new Label(NameText(opt), FontSize) { Width = nameW, Bold = true, Color = nameColor ?? Color.white };
+        if (width > 0f) nameW -= RowW - width + (indent > 0f ? 0.08f : 0f);
+        var name = new Label(NameText(opt, label), FontSize) { Width = nameW, Bold = true, Color = nameColor ?? Color.white };
+        if (label != null) _labels[name] = label;
         var colon = new Label(":", FontSize) { Width = 0.2f, TextAlign = TextAlignmentOptions.Center };
         var row = new Stack(true) { Gap = 0.08f, Align = Align.Start };
         if (indent > 0f) row.Add(new Spacer(indent, 0.1f));
@@ -188,6 +201,17 @@ internal sealed class OptEditor
     }
 
     private const float InfoW = 0.3f;
+
+    // 行の地: 角の丸い板で包み、1 行おきに少し明るくする (k = 節の中で何行目か)
+    public const float PlatePad = 0.08f;
+    // 地と縞の明るさ: 板の黒 (15) と地、地と縞の差をそれぞれコントラスト比 1.3 ほどに (淡いと暗い画面で縞が消える)
+    private static readonly Color PlateColor = new(0.16f, 0.17f, 0.2f, 1f), StripeColor = new(0.23f, 0.24f, 0.28f, 1f);
+
+    public static Widget Plated(Widget row, float width, int k)
+    {
+        row.Align = Align.Start;
+        return new Plate(row) { Width = width, Padding = new Vector2(PlatePad, 0.025f), Align = Align.Start, Color = k % 2 == 1 ? StripeColor : PlateColor };
+    }
 
     // 数値の値の欄: すばやく 2 回押すと字を打ち込む欄になる (Enter か欄の外を押すと決める・Esc でやめる)。
     // 打った数は範囲の中のいちばん近い、± で選べる値に寄せる (全角・単位付きでもよい)
@@ -364,7 +388,7 @@ internal sealed class OptEditor
             bool changed = opt.Changed;
             reset?.SetColor(changed ? ChangedColor : Dim);
             var nt = name.Built;
-            string ns = NameText(opt);
+            string ns = NameText(opt, _labels.TryGetValue(name, out var lb) ? lb : null);
             if (nt && ns != name.Content) { name.Content = ns; nt.text = ns; }
             if (toggle is Switch sw)
             {

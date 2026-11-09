@@ -1,4 +1,4 @@
-// 設定画面の頁 (Mod 設定・役職・ゲーム) の置き場になる本編の画面 (GameOptionsMenu) の初期化。
+// 設定画面の頁 (全般・役職・ゲーム) の置き場になる本編の画面 (GameOptionsMenu) の初期化。
 // 頁そのものは https://github.com/haru03741-glitch/More-Roles-Plus src/Options/SettingsMenu.cs (GPL-3.0) を参考にしている
 // (その元は https://github.com/waffle-ful/Aeterna-End-K-not Patches/GameOptionsMenuPatch.cs (GPL-3.0))
 using System;
@@ -58,12 +58,12 @@ public static class GameOptionsMenuPatch
         maskArea.localScale = new Vector3(6.6f, 5f, 0.56f);
 
         if (!ModGameOptionsMenu.IsModTab(ModGameOptionsMenu.TabIndex)) return true;
-        // Mod 設定と役職・検索の結果は行を並べず、自前の頁にする (この画面は頁の置き場)
+        // 全般と役職・検索の結果は行を並べず、自前の頁にする (この画面は頁の置き場)
         try
         {
             if (GameSettingMenuPatch.IsPresetHost(__instance)) SettingsUI.PresetPage.Build(__instance);
             else if (GameSettingMenuPatch.IsRoleHost(__instance)) SettingsUI.RolePage.Build(__instance);
-            else if (GameSettingMenuPatch.IsModTabMenu(__instance)) SettingsUI.SettingsPages.Mod.Build(__instance);
+            else if (GameSettingMenuPatch.IsModTabMenu(__instance)) SettingsUI.SettingsPages.General.Build(__instance);
             else return true;
         }
         catch (Exception e) { Logger.Exception(e, "GameOptionsMenuPatch.Page"); }
