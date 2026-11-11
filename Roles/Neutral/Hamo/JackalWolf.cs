@@ -378,7 +378,7 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
 
     public override void CheckWinner(GameOverReason reason) => AddRole?.CheckWinner(reason);
     public override void OnPlayerDead(PlayerControl player) => AddRole?.OnPlayerDead(player);
-    public override void OnPlayerLeft(PlayerControl player) => AddRole?.OnPlayerLeft(player);
+    public override void OnPlayerLeft(byte playerId) => AddRole?.OnPlayerLeft(playerId);
     public override void OnAddedMidGame() => AddRole?.OnAddedMidGame();
     public override void OnFixSabotage(PlayerControl player, SystemTypes systemType, byte amount) => AddRole?.OnFixSabotage(player, systemType, amount);
     public override void OnVentilationSystemUpdate(PlayerControl user, VentilationSystem.Operation operation, int ventId) => AddRole?.OnVentilationSystemUpdate(user, operation, ventId);

@@ -900,13 +900,11 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter
 
 
 
-    public override void OnPlayerLeft(PlayerControl player)
+    public override void OnPlayerLeft(byte playerId)
 
     {
 
-        if (player == null) return;
-
-        if (player.PlayerId == NextShikigamiCandidate)
+        if (playerId == NextShikigamiCandidate)
 
         {
 
@@ -918,9 +916,9 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter
 
         }
 
-        ShikigamiIds.Remove(player.PlayerId);
+        ShikigamiIds.Remove(playerId);
 
-        TargetArrow.Remove(Player.PlayerId, player.PlayerId);
+        TargetArrow.Remove(Player.PlayerId, playerId);
 
     }
 
@@ -1556,15 +1554,13 @@ public sealed class Shikigami : RoleBase, IUsePhantomButton, IKillFlashSeeable
 
 
 
-    public override void OnPlayerLeft(PlayerControl player)
+    public override void OnPlayerLeft(byte playerId)
 
     {
 
-        if (player == null) return;
+        if (playerId == OwnerId) { TargetArrow.Remove(Player.PlayerId, OwnerId); NameColorManager.Remove(Player.PlayerId, OwnerId); OwnerId = byte.MaxValue; }
 
-        if (player.PlayerId == OwnerId) { TargetArrow.Remove(Player.PlayerId, OwnerId); NameColorManager.Remove(Player.PlayerId, OwnerId); OwnerId = byte.MaxValue; }
-
-        RemoveDeadBodyArrow(player.PlayerId);
+        RemoveDeadBodyArrow(playerId);
 
     }
 

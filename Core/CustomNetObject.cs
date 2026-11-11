@@ -40,9 +40,9 @@ namespace TownOfHostL.Core;
 public sealed class CustomNetObject
 {
     private const string Tag = "CNO";
-    private const string SpriteNamePrefix = "<size=14><br></size>";
-    // 本物のプレイヤーは 0〜14。CNO は 200〜253 を回して使う (本編は同じ ID を消してすぐ出すと 2 回目を無視する)。
-    // 254 は Roles/Hamo の CNO (TextDummy) がいつも使うので、重ねない
+    /// <summary>絵の前に付ける改行。名前の位置を測る時は、絵の前にこれを付けて測る。</summary>
+    public const string SpriteNamePrefix = "<size=14><br></size>";
+    // 本物のプレイヤーは 0〜14。CNO は 200〜253 を回して使う (本編は同じ ID を消してすぐ出すと 2 回目を無視する)
     public const byte MinPlayerId = 200;
     private const byte MaxPlayerId = 253;
     /// <summary>本編の色の番号 (Palette.PlayerColors)。</summary>
@@ -78,6 +78,8 @@ public sealed class CustomNetObject
     private static float nextSpritePacketAt;
     // 会議中 (追放の演出を含む) は見た目の包みを送らない。名前を戻す側の PlayerInfo が会議中は送られず、絵の名前がホストに残るため
     private static bool inMeeting;
+    // まとめて同じ絵に変える CNO (ChangeSpriteAll)。1 つの包みで送る
+    private static List<CustomNetObject> pendingGroup;
 
     private State state = State.Waiting;
     private PlayerControl pc;
@@ -87,6 +89,8 @@ public sealed class CustomNetObject
     private bool moved;
     private float lastSnapAt = float.NegativeInfinity;
     private float settleAt = float.PositiveInfinity;
+    // この人の画面にだけ出す (ほかの客へは出し終えてから消す)。null なら全員
+    private byte? onlyVisibleTo;
 
     public Vector2 Position { get; private set; }
     public string Sprite { get; private set; }
@@ -102,6 +106,9 @@ public sealed class CustomNetObject
 
     /// <summary>spawn した後の netId。spawn する前と消した後は 0。</summary>
     public uint NetId => pc ? pc.NetId : 0u;
+
+    /// <summary>spawn した直後 (<see cref="NetId"/> が決まった時) に 1 回呼ぶ。MOD の客へ netId を渡す演出に使う。</summary>
+    public Action<CustomNetObject> Spawned { get; set; }
 
     private CustomNetObject(string sprite, Vector2 position, byte bodyColorId)
     {
@@ -125,6 +132,17 @@ public sealed class CustomNetObject
     /// <summary>この PlayerControl は CNO か。客から来た操作の対象を確かめるのに使う。</summary>
     public static bool Is(PlayerControl pc) => pc && pc.PlayerId >= MinPlayerId;
 
+    /// <summary>
+    /// この人の画面にだけ出す。出す前に呼ぶ。ほかの客には、可視化と見た目を送り終えてから消す電文を送る
+    /// (可視化の前に止めると、客の手元で CNO のプレイヤーの情報の待ちが終わらず、30 秒で切れる)。
+    /// ホストが見る人でなければ、ホストの手元では隠す。
+    /// </summary>
+    public void ShowOnlyTo(byte playerId)
+    {
+        if (state != State.Waiting) Log.Warn(Tag, "ShowOnlyTo は出す前に呼ぶ");
+        onlyVisibleTo = playerId;
+    }
+
     public void MoveTo(Vector2 position)
     {
         if (state == State.Gone) return;
@@ -142,6 +160,37 @@ public sealed class CustomNetObject
         if (state == State.Live) pendingSprite = sprite;
     }
 
+    /// <summary>
+    /// いくつかの CNO を同じ絵に変える。出し終えた物は、ホストの外見を 1 回書き換えて全部を変身させる 1 つの包みで送る
+    /// (1 体ずつ送ると、包みの間隔のぶん全部が変わるまで時間がかかる)。まだ出していない物は、出す時の絵が変わる。
+    /// 体の色は先頭の物の色で送るので、体の色が同じ物だけを渡す。
+    /// </summary>
+    public static void ChangeSpriteAll(IEnumerable<CustomNetObject> objs, string sprite)
+    {
+        sprite = ClampSprite(sprite);
+        var live = new List<CustomNetObject>();
+        foreach (var obj in objs)
+        {
+            if (obj == null || obj.state == State.Gone) continue;
+            // まとめに入る物だけ 1 体ずつの送りを取り消す (同じ絵でまだ送っていない物は、そのまま送らせる)
+            if (obj.state == State.Live && obj.Sprite != sprite)
+            {
+                obj.pendingSprite = null;
+                live.Add(obj);
+            }
+            obj.Sprite = sprite;
+        }
+        if (live.Count == 0) return;
+        if (pendingGroup != null)
+        {
+            pendingGroup.RemoveAll(live.Contains);
+            // 前のまとめがまだ送られていなければ、残りは 1 体ずつの送り方へ回す
+            foreach (var o in pendingGroup) if (o.state == State.Live) o.pendingSprite = o.Sprite;
+            pendingGroup = null;
+        }
+        pendingGroup = live;
+    }
+
     public void Despawn() => Despawn(sendToServer: true);
 
     private void Despawn(bool sendToServer)
@@ -150,6 +199,7 @@ public sealed class CustomNetObject
         var was = state;
         state = State.Gone;
         all.Remove(this);
+        pendingGroup?.Remove(this);
         if (was == State.Waiting) return;
         try
         {
@@ -191,6 +241,7 @@ public sealed class CustomNetObject
         all.Clear();
         usedIds.Clear();
         nextId = MaxPlayerId;
+        pendingGroup = null;
         introEndedAt = null;
         lastMeetingAt = float.NegativeInfinity;
         nextSpawnAt = nextSpritePacketAt = 0f;
@@ -207,6 +258,18 @@ public sealed class CustomNetObject
         if (all.Count == 0) return;
         var client = AmongUsClient.Instance;
         if (!client || !client.AmHost || GameSession.Current == null || !PlayerControl.LocalPlayer) return;
+
+        if (pendingGroup != null && now >= nextSpritePacketAt && !inMeeting)
+        {
+            var group = pendingGroup;
+            pendingGroup = null;
+            group.RemoveAll(o => o.state != State.Live || !o.pc);
+            if (group.Count > 0)
+            {
+                try { SendSprite(now, group[0].Sprite, group[0].bodyColorId, group, first: null); }
+                catch (Exception ex) { Log.Exception(Tag, ex); }
+            }
+        }
 
         bool spawning = false;
         // Tick の中で消えると all から抜けるので、後ろから回す
@@ -246,13 +309,13 @@ public sealed class CustomNetObject
                 else if (state == State.Visible)
                 {
                     if (now < nextSpritePacketAt || inMeeting) return;
-                    SendSprite(now);
+                    SendSprite(now, Sprite, bodyColorId, new[] { this }, first: this);
                 }
                 else Resnap(now);
                 return;
             case State.Live:
                 if (!pc) { Despawn(); return; }
-                if (pendingSprite != null && now >= nextSpritePacketAt && !inMeeting) { SendSprite(now); pendingSprite = null; }
+                if (pendingSprite != null && now >= nextSpritePacketAt && !inMeeting) { pendingSprite = null; SendSprite(now, Sprite, bodyColorId, new[] { this }, first: null); }
                 UpdatePosition(now);
                 return;
         }
@@ -310,6 +373,11 @@ public sealed class CustomNetObject
         state = State.Spawned;
         stepAt = now + VisibilityDelay;
         Log.Info(Tag, $"出した netId={pc.NetId} id={playerId} at ({Position.x:F2}, {Position.y:F2})");
+        if (Spawned != null)
+        {
+            try { Spawned(this); }
+            catch (Exception ex) { Log.Exception(Tag, ex); }
+        }
     }
 
     // ホストの一覧に入っていると、TOHL も本編もプレイヤーとして扱ってしまう
@@ -339,7 +407,7 @@ public sealed class CustomNetObject
     /// 可視化で CNO の PlayerId を一時的に差し替える先の ID (target の客へ送る分)。
     /// 自分の画面で死んでいる客 (生き返った人は自分の画面では幽霊のまま) に、その客自身の ID で送ると、
     /// 客の手元で CNO のプレイヤーの情報の待ちが終わらず、30 秒で客が切れる (Timeout while waiting for other player data。
-    /// 2026-11-09 実機で確認。生きている別の人の ID なら切れない)。Roles/Hamo の CNO も同じ手順なのでこれを使う
+    /// 2026-11-09 実機で確認。生きている別の人の ID なら切れない)。
     /// </summary>
     public static byte VisibilityIdFor(PlayerControl target)
     {
@@ -399,8 +467,9 @@ public sealed class CustomNetObject
 
     // ---- 3. 見た目 ----
 
-    // ホストの外見を一瞬だけ絵の名前と体の色に書き換えて Data を送り、CNO をホストに変身させてから外見を戻す (1 つの包みで)
-    private void SendSprite(float now)
+    // ホストの外見を一瞬だけ絵の名前と体の色に書き換えて Data を送り、CNO (targets) をホストに変身させてから外見を戻す (1 つの包みで)。
+    // first は初めて見た目を送る CNO (その位置も同じ包みで送る)
+    private static void SendSprite(float now, string sprite, byte bodyColor, IReadOnlyList<CustomNetObject> targets, CustomNetObject first)
     {
         var client = AmongUsClient.Instance;
         var lp = PlayerControl.LocalPlayer;
@@ -413,8 +482,8 @@ public sealed class CustomNetObject
         {
             w.StartMessage(5);
             w.Write(client.GameId);
-            outfit.PlayerName = SpriteNamePrefix + Sprite;
-            outfit.ColorId = bodyColorId;
+            outfit.PlayerName = SpriteNamePrefix + sprite;
+            outfit.ColorId = bodyColor;
             outfit.HatId = outfit.SkinId = outfit.PetId = outfit.VisorId = "";
             w.StartMessage(1);
             w.WritePacked(lp.Data.NetId);
@@ -428,20 +497,23 @@ public sealed class CustomNetObject
                 SerializingSprite = false;
             }
             w.EndMessage();
-            try
+            foreach (var obj in targets)
             {
-                pc.Shapeshift(lp, false);
+                try
+                {
+                    obj.pc.Shapeshift(lp, false);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn(Tag, $"手元の変身: {ex.Message}");
+                }
+                w.StartMessage(2);
+                w.WritePacked(obj.pc.NetId);
+                w.Write((byte)RpcCalls.Shapeshift);
+                w.WriteNetObject(lp);
+                w.Write(false);
+                w.EndMessage();
             }
-            catch (Exception ex)
-            {
-                Log.Warn(Tag, $"手元の変身: {ex.Message}");
-            }
-            w.StartMessage(2);
-            w.WritePacked(pc.NetId);
-            w.Write((byte)RpcCalls.Shapeshift);
-            w.WriteNetObject(lp);
-            w.Write(false);
-            w.EndMessage();
         }
         finally
         {
@@ -456,15 +528,15 @@ public sealed class CustomNetObject
         w.WritePacked(lp.Data.NetId);
         lp.Data.Serialize(w, false);
         w.EndMessage();
-        bool firstSprite = state == State.Visible;
-        if (firstSprite)
+        if (first != null)
         {
-            pc.NetTransform.SnapTo(Position);
+            var nt = first.pc.NetTransform;
+            nt.SnapTo(first.Position);
             w.StartMessage(2);
-            w.WritePacked(pc.NetTransform.NetId);
+            w.WritePacked(nt.NetId);
             w.Write((byte)RpcCalls.SnapTo);
-            NetHelpers.WriteVector2(Position, w);
-            w.Write(pc.NetTransform.lastSequenceId);
+            NetHelpers.WriteVector2(first.Position, w);
+            w.Write(nt.lastSequenceId);
             w.EndMessage();
         }
         w.EndMessage();
@@ -472,20 +544,20 @@ public sealed class CustomNetObject
         nextSpritePacketAt = now + SpritePacketGap;
         if (w.Length > MaxPacketBytes)
         {
-            // 分割されると順番が崩れて、ホストの外見が絵のまま残りうる。送らずに捨てる (ホストの名前が長すぎる)
-            Log.Error(Tag, $"見た目の包みが長すぎるので送りません ({w.Length} バイト)");
+            // 分割されると順番が崩れて、ホストの外見が絵のまま残りうる。送らずに捨てる (ホストの名前が長すぎる・まとめた数が多すぎる)
+            Log.Error(Tag, $"見た目の包みが長すぎるので送りません ({w.Length} バイト・{targets.Count} 体)");
             w.Recycle();
-            if (firstSprite) { state = State.Sprited; stepAt = now + ResnapDelay; }
+            if (first != null) { first.state = State.Sprited; first.stepAt = now + ResnapDelay; }
             return;
         }
-        Log.Info(Tag, $"見た目 netId={pc.NetId} {w.Length} バイト");
+        Log.Info(Tag, $"見た目 {targets.Count} 体 netId={targets[0].pc.NetId} {w.Length} バイト");
         client.SendOrDisconnect(w);
         w.Recycle();
-        if (firstSprite)
+        if (first != null)
         {
             SnapToBudget.Record();
-            state = State.Sprited;
-            stepAt = now + ResnapDelay;
+            first.state = State.Sprited;
+            first.stepAt = now + ResnapDelay;
         }
     }
 
@@ -496,6 +568,36 @@ public sealed class CustomNetObject
         SendSnap(now, SendOption.Reliable);
         moved = false;
         state = State.Live;
+        if (onlyVisibleTo is byte viewer) HideFromOthers(viewer);
+    }
+
+    // 見る人以外の客へ、その客にだけ CNO を消す電文を送る。ホストが見る人でなければ手元で隠す
+    private void HideFromOthers(byte viewer)
+    {
+        var client = AmongUsClient.Instance;
+        if (PlayerControl.LocalPlayer.PlayerId != viewer)
+        {
+            pc.Visible = false;
+            if (pc.cosmetics.nameText) pc.cosmetics.nameText.gameObject.SetActive(false);
+        }
+        int hidden = 0;
+        foreach (var target in Players.All)
+        {
+            if (!target || target.AmOwner || target.PlayerId >= MinPlayerId || target.PlayerId == viewer) continue;
+            if (target.Data == null || target.Data.Disconnected) continue;
+            var w = MessageWriter.Get(SendOption.Reliable);
+            w.StartMessage(6);
+            w.Write(client.GameId);
+            w.WritePacked(target.OwnerId);
+            w.StartMessage(5);
+            w.WritePacked(pc.NetId);
+            w.EndMessage();
+            w.EndMessage();
+            client.SendOrDisconnect(w);
+            w.Recycle();
+            hidden++;
+        }
+        Log.Info(Tag, $"見る人だけに netId={pc.NetId} 見る人={viewer} 隠した客={hidden}");
     }
 
     private void UpdatePosition(float now)

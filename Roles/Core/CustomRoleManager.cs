@@ -467,11 +467,11 @@ public static partial class CustomRoleManager
         }
     }
     /// <summary>試合中に誰かが部屋から抜けた時 (ホストのみ)。全員の役職の OnPlayerLeft を呼ぶ</summary>
-    public static void NotifyPlayerLeft(PlayerControl player)
+    public static void NotifyPlayerLeft(byte playerId)
     {
         foreach (var role in AllActiveRoles.Values.ToArray())
         {
-            try { role.OnPlayerLeft(player); }
+            try { role.OnPlayerLeft(playerId); }
             catch (Exception ex) { Logger.Exception(ex, "OnPlayerLeft"); }
         }
     }

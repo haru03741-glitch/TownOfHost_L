@@ -502,98 +502,33 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
 
 
     public override void AfterMeetingTasks()
-
     {
-
         if (!AmongUsClient.Instance.AmHost) return;
 
-
-
+        // 組がそろった物だけ、全員に見えるポータルに出し直す (置いた本人にだけ見せていた CNO は、ほかの客の手元から消してあるので作り直す)。
+        // もう全員に見えている組と、片方だけの組は、CNO が会議をまたいで残るのでそのままにする
         for (int i = 0; i < linkPairs.Count; i++)
-
         {
-
             var pair = linkPairs[i];
-
+            if (pair.Activated || pair.DummyA == null || pair.DummyB == null) continue;
             int idx = i;
-
-
-
-            if (pair.DummyA != null && pair.DummyB != null)
-
+            var colorId = pair.ColorId;
+            var owner = Player;
+            var oldA = pair.DummyA;
+            var oldB = pair.DummyB;
+            _ = new LateTask(() =>
             {
-
-                var posA = pair.DummyA.Position;
-
-                var posB = pair.DummyB.Position;
-
-                var colorId = pair.ColorId;
-
-                var owner = Player;
-
-                var oldA = pair.DummyA;
-
-                var oldB = pair.DummyB;
-
-
-
-                _ = new LateTask(() =>
-
-                {
-
-                    try { oldA?.Despawn(); } catch { }
-
-                    pair.DummyA = new EvilLinkerDummy(posA, owner, colorId, activated: true);
-
-                }, idx * 0.6f + 1.0f, $"EvilLinker.ActivateA.{idx}");
-
-
-
-                _ = new LateTask(() =>
-
-                {
-
-                    try { oldB?.Despawn(); } catch { }
-
-                    pair.DummyB = new EvilLinkerDummy(posB, owner, colorId, activated: true);
-
-                    pair.Activated = true;
-
-                    pair.InRangeA.Clear();
-
-                    pair.InRangeB.Clear();
-
-                }, idx * 0.6f + 1.4f, $"EvilLinker.ActivateB.{idx}");
-
-            }
-
-            else if (pair.DummyA != null && pair.DummyB == null)
-
-            {
-
-                var posA = pair.DummyA.Position;
-
-                var owner = Player;
-
-                var oldA = pair.DummyA;
-
-
-
-                _ = new LateTask(() =>
-
-                {
-
-                    try { oldA?.Despawn(); } catch { }
-
-                    pair.DummyA = new EvilLinkerDummy(posA, owner, PendingColor, activated: false);
-
-                }, idx * 0.6f + 1.0f, $"EvilLinker.ReactivatePending.{idx}");
-
-            }
-
+                // 待つ間に本人が死んだり組が消えたりしたら作らない
+                if (!linkPairs.Contains(pair) || owner == null || !owner.IsAlive()) return;
+                oldA.Despawn();
+                oldB.Despawn();
+                pair.DummyA = new EvilLinkerDummy(oldA.Position, owner, colorId, activated: true);
+                pair.DummyB = new EvilLinkerDummy(oldB.Position, owner, colorId, activated: true);
+                pair.Activated = true;
+                pair.InRangeA.Clear();
+                pair.InRangeB.Clear();
+            }, idx * 0.6f + 1.0f, $"EvilLinker.Activate.{idx}");
         }
-
-
 
         cooldownTimer = PlaceCooldown;
 
@@ -762,105 +697,36 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton
 
 
 
-public sealed class EvilLinkerDummy : CustomNetObject
-
+// イビルリンカーのポータル。CNO の名前の絵で、組の色の扉を描く (体は同じ色で扉の下に隠れる)。
+// 組がそろうまでは置いた本人の画面にだけ出す。
+// 扉の形は Endless Host Roles (Gurge44, GPL-3.0) の CustomNetObject.Portal から (Gurge44/EndlessHostRoles@97aa6333)
+public sealed class EvilLinkerDummy
 {
+    readonly TownOfHostL.Core.CustomNetObject cno;
 
-    readonly PlayerControl _owner;
-
-    readonly int _colorId;
-
-    readonly Vector2 _pos;
-
-    public bool Activated { get; private set; }
-
-
+    public Vector2 Position { get; }
+    public bool Activated { get; }
 
     public EvilLinkerDummy(Vector2 position, PlayerControl owner, int colorId, bool activated)
-
     {
-
-        _owner = owner;
-
-        _colorId = colorId;
-
-        _pos = position;
-
+        Position = position;
         Activated = activated;
-
-        CreateNetObject(position);
-
+        cno = TownOfHostL.Core.CustomNetObject.Create(PortalSprite(colorId), position, (byte)colorId);
+        if (cno == null) Logger.Warn($"ポータルの CNO を作れませんでした (試合の外) {position}", "EvilLinker");
+        else if (!activated && owner != null) cno.ShowOnlyTo(owner.PlayerId);
     }
 
+    public void Despawn() => cno?.Despawn();
 
-
-    protected override void OnCreated()
-
+    static string PortalSprite(int colorId)
     {
-
-        if (PlayerControl == null) return;
-
-
-
-        var hostPlayer = PlayerControl.LocalPlayer;
-
-        byte hostColor = (byte)(hostPlayer?.Data?.DefaultOutfit.ColorId ?? 0);
-
-
-
-        PlayerControl.RpcSetColor((byte)_colorId);
-
-        if (hostPlayer != null)
-
-            hostPlayer.RpcSetColor(hostColor);
-
-        PlayerControl.RawSetColor((byte)_colorId);
-
-
-
-        SetName("ポータル");
-
-        SnapToPosition(_pos);
-
-
-
-        if (!Activated)
-
-        {
-
-            foreach (var pc in Main.AllPlayerControls)
-
-            {
-
-                if (pc.notRealPlayer) continue;
-
-                if (pc.PlayerId != _owner.PlayerId)
-
-                    Hide(pc);
-
-            }
-
-        }
-
-
-
-        var capturedDummy = PlayerControl;
-
-        _ = new LateTask(() =>
-
-        {
-
-            if (capturedDummy != null)
-
-                capturedDummy.RawSetColor((byte)_colorId);
-
-        }, 0.15f, "EvilLinker.ApplyDummyColor");
-
+        var colors = Palette.PlayerColors;
+        var shadows = Palette.ShadowColors;
+        int i = colorId >= 0 && colorId < colors.Length ? colorId : 7;
+        var frame = "#" + ColorUtility.ToHtmlStringRGB(shadows[i]);
+        var door = "#" + ColorUtility.ToHtmlStringRGB(colors[i]);
+        string edge = $"<mark={frame}>WWWW</mark>";
+        string mid = $"<mark={frame}>W</mark><mark={door}>WW</mark><mark={frame}>W</mark>";
+        return $"<size=70%><line-height=97%><cspace=0.16em>{edge}\n{mid}\n{mid}\n{mid}\n{mid}\n{edge}";
     }
-
-
-
-    public override void OnMeeting() { }
-
 }
-

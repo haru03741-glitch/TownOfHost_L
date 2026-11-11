@@ -89,10 +89,10 @@ namespace TownOfHostL.Modules
                 }
             }
         }
-        public static void RemoveSender(PlayerControl player)
+        public static void RemoveSender(byte playerId)
         {
             var sender = AllSenders.OfType<PlayerGameOptionsSender>()
-            .FirstOrDefault(sender => sender.player.PlayerId == player.PlayerId);
+            .FirstOrDefault(sender => sender.player != null && sender.player.PlayerId == playerId);
             if (sender == null) return;
             sender.player = null;
             AllSenders.Remove(sender);

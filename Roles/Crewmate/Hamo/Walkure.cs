@@ -317,9 +317,9 @@ public sealed class Walkure : RoleBase, ISelfVoter, IKiller
             TriggerDeathPenalty();
     }
 
-    public override void OnPlayerLeft(PlayerControl player)
+    public override void OnPlayerLeft(byte playerId)
     {
-        if (player != Player) return;
+        if (playerId != Player.PlayerId) return;
         if (AmongUsClient.Instance.AmHost && isExiled && !deathPenaltyDone)
             _ = new LateTask(TriggerDeathPenalty, 20f, "WalkureExiledLeft");
         isDead = true;

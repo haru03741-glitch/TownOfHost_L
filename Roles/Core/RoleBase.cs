@@ -472,8 +472,8 @@ public abstract class RoleBase : IDisposable
     public virtual void OnSpawn(bool initialState = false) { }
     /// <summary>誰かが死んだ時 (死に方によらず 1 人 1 回)。OnPlayerDeadOthers と同じ所から全員の役職に呼ぶ</summary>
     public virtual void OnPlayerDead(PlayerControl player) { }
-    /// <summary>誰かが部屋から抜けた時。全員の役職に呼ぶ</summary>
-    public virtual void OnPlayerLeft(PlayerControl player) { }
+    /// <summary>誰かが部屋から抜けた時。全員の役職に呼ぶ。抜けた人の PlayerControl は外れていることがあるので PlayerId で渡す</summary>
+    public virtual void OnPlayerLeft(byte playerId) { }
     /// <summary>勝者がほぼ決まった後に呼ばれる。勝者を足したり外したりできる</summary>
     public virtual void CheckWinner(GameOverReason reason) { }
 

@@ -367,11 +367,11 @@ public sealed class EvilBlender : RoleBase, IImpostor, IUsePhantomButton
 
     }
 
-    public override void OnPlayerLeft(PlayerControl player)
+    public override void OnPlayerLeft(byte playerId)
 
     {
 
-        if (player.PlayerId == Player.PlayerId && UseingId == player.PlayerId)
+        if (playerId == Player.PlayerId && UseingId == playerId)
 
         {
 

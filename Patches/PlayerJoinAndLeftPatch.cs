@@ -27,6 +27,7 @@ namespace TownOfHostL
 
                 Logger.Info($"{__instance?.GameId}に参加 (公式サーバー: {Modules.Net.OfficialServer.IsActive})", "OnGameJoined");
                 Main.playerVersion = new Dictionary<byte, PlayerVersion>();
+                OnPlayerLeftPatch.ResetHandled();
                 try { RPC.RpcVersionCheck(); } catch { }
                 try { if (SoundManager.Instance != null) SoundManager.Instance.ChangeAmbienceVolume(DataManager.Settings.Audio.AmbienceVolume); } catch { }
 
@@ -126,6 +127,25 @@ namespace TownOfHostL
     [HarmonyPatch(typeof(AmongUsClient), nameof(AmongUsClient.OnPlayerLeft))]
     class OnPlayerLeftPatch
     {
+        // 試合開始の読み込み待ちで本編が客を ClientTimeout で切ると、同じ接続の OnPlayerLeft が 2 回来る。
+        // 2 回目は Character が外れた後なので、処理済みの接続は飛ばす。接続 ID は部屋の中で使い回されない。
+        static readonly HashSet<int> handledClientIds = new();
+
+        public static void ResetHandled() => handledClientIds.Clear();
+
+        /// <summary>抜けた接続の PlayerId。Character が外れていても GameData の ClientId から引く。見つからなければ null。</summary>
+        static byte? ResolvePlayerId(ClientData data)
+        {
+            if (data.Character != null) return data.Character.PlayerId;
+            var gameData = GameData.Instance;
+            if (gameData == null) return null;
+            foreach (var info in gameData.AllPlayers)
+            {
+                if (info != null && info.ClientId == data.Id) return info.PlayerId;
+            }
+            return null;
+        }
+
         static void Prefix([HarmonyArgument(0)] ClientData data)
         {
             try
@@ -144,37 +164,48 @@ namespace TownOfHostL
             bool isFailure = false;
             try
             {
-                if (data == null || data.Character == null)
+                if (data == null)
                 {
                     isFailure = true;
-                    Logger.Warn("退出者のPlayerInfoがnull", nameof(OnPlayerLeftPatch));
+                    Logger.Warn("退出者の接続情報がnull", nameof(OnPlayerLeftPatch));
+                }
+                else if (!handledClientIds.Add(data.Id))
+                {
+                    Logger.Info($"{data.PlayerName}(ClientID:{data.Id})の切断は処理済み(理由:{reason})", "Session");
+                }
+                else if (ResolvePlayerId(data) is not byte playerId)
+                {
+                    // ロビーで、キャラクターが割り当たる前に抜けた接続。記録する状態が無い
+                    if (AmongUsClient.Instance.IsGameStarted) isFailure = true;
+                    Logger.Warn($"退出者のプレイヤーが見つからない(ClientID:{data.Id})", nameof(OnPlayerLeftPatch));
                 }
                 else
                 {
                     // 試合の開始からイントロまでの間 (IsInGame がまだ false) に抜けた人も、試合中の離脱として扱う
                     if ((GameStates.IsInGame || AmongUsClient.Instance.IsGameStarted)
-                        && PlayerState.GetByPlayerId(data.Character.PlayerId) is PlayerState state)
+                        && PlayerState.GetByPlayerId(playerId) is PlayerState state)
                     {
-                        if (data.Character.Is(CustomRoles.Lovers) && !data.Character.Data.IsDead)
+                        var wasAlive = !state.IsDead;
+                        if (wasAlive && state.SubRoles.Contains(CustomRoles.Lovers))
                         {
                             foreach (var lovers in Lovers.playersList.ToArray())
                             {
                                 Lovers.playersList.Remove(lovers);
-                                PlayerState.GetByPlayerId(lovers.PlayerId).RemoveSubRole(CustomRoles.Lovers);
+                                PlayerState.GetByPlayerId(lovers.PlayerId)?.RemoveSubRole(CustomRoles.Lovers);
                             }
                         }
-                        var wasAlive = !state.IsDead;
                         if (state.DeathReason == CustomDeathReason.etc) //死因が設定されていなかったら
                         {
                             state.DeathReason = CustomDeathReason.Disconnected;
                             state.SetDead();
                         }
-                        AntiBlackout.OnDisconnect(data.Character.Data);
-                        PlayerGameOptionsSender.RemoveSender(data.Character);
+                        if (GameData.Instance != null && GameData.Instance.GetPlayerById(playerId) is NetworkedPlayerInfo info)
+                            AntiBlackout.OnDisconnect(info);
+                        PlayerGameOptionsSender.RemoveSender(playerId);
                         if (wasAlive) Modules.AutoAbort.OnAliveDisconnected();
-                        if (AmongUsClient.Instance.AmHost && GameStates.IsInGame) CustomRoleManager.NotifyPlayerLeft(data.Character);
+                        if (AmongUsClient.Instance.AmHost && GameStates.IsInGame) CustomRoleManager.NotifyPlayerLeft(playerId);
                     }
-                    Main.playerVersion.Remove(data.Character.PlayerId);
+                    Main.playerVersion.Remove(playerId);
                     Logger.Info($"{data.PlayerName}(ClientID:{data.Id})が切断(理由:{reason}, ping:{AmongUsClient.Instance.Ping})", "Session");
                 }
             }

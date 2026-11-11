@@ -123,11 +123,6 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
     // 0 番は照準、残りはビームの絵を貼るダミー
     private readonly List<NovaBeamTile> tiles = new();
     private bool tilesSpawned;
-    // ダミーを出すのは、タスクが始まって少したってから(1ターン目の会議などと重なると、会議の開始で暗転することがあった)
-    private const float TileSpawnDelay = 4f;
-    private float tileSpawnAt = -1f;
-    // 残りのダミーは、照準のダミーで大きさを測り終えてから、必要な数だけ出す(測れない時は少し待ってから)
-    private float restSpawnAt = -1f;
 
     private static void SetupOptionItem()
     {
@@ -260,20 +255,12 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
             return;
         }
         // ビーム用のダミーは、出すのに時間がかかるので、最初に作って見えない所へ置いておく
+        // (出すのは CNO の側で 1 体ずつ、イントロ明けと会議明けの待ちの後)
         if (!tilesSpawned && GameStates.IsInTask && !ClientEffects.SkipNovaDummies)
         {
-            if (tileSpawnAt < 0f) tileSpawnAt = Time.time + TileSpawnDelay;
-            if (Time.time < tileSpawnAt) return;
             tilesSpawned = true;
             NovaBeamTile.SetupPixel(beamSize);
-            tiles.Add(new NovaBeamTile());
-            restSpawnAt = Time.time + 2f;
-        }
-        // ダミーを一度にたくさん出すと、MOD を入れていない人がまとめて落ちていたので、なめらかなビームなら 4 体くらいで済ませる
-        if (tilesSpawned && restSpawnAt >= 0f && (NovaBeamTile.Measured || Time.time >= restSpawnAt))
-        {
-            restSpawnAt = -1f;
-            for (var i = tiles.Count; i < TileCount(); i++) tiles.Add(new NovaBeamTile());
+            for (var i = 0; i < TileCount(); i++) tiles.Add(new NovaBeamTile());
         }
         // チャージ中・発射待ちに梯子などへ乗ったら、取り消す
         if ((charging || waiting) && OnLadder())
@@ -357,6 +344,7 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
         nextAlarmAt = 0f;
         SetSpeed(Main.MinSpeed);
         ShowGuide(NovaBeamTile.Style.Locked);
+        if (NovaBeamTile.Smooth && tiles.Count > 1) NovaBeamTile.ShowBeamAll(tiles.Skip(1), NovaBeamTile.BarName(angle), true);
         SendRpc();
         Utils.NotifyRoles(SpecifySeer: Player);
         if (fireDelay <= 0f) Fire();
@@ -451,11 +439,10 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
         count = Mathf.Min(count, tiles.Count - 1);
         var first = BeamStart + bar * 0.5f;
         var last = Mathf.Max(first, reach - bar * 0.5f);
-        var art = NovaBeamTile.BarName(angle);
+        NovaBeamTile.ShowBeamAll(tiles.Skip(1).Take(count), NovaBeamTile.BarName(angle), true);
         for (var i = 0; i < count; i++)
         {
             var t = count == 1 ? first : Mathf.Lerp(first, last, i / (float)(count - 1));
-            tiles[i + 1].ShowBeam(art, true);
             tiles[i + 1].MoveTo(anchor + dir * t);
         }
         for (var i = count + 1; i < tiles.Count; i++) tiles[i].Park();
@@ -499,8 +486,6 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
         if (charging || waiting || beaming) Stop();
         RemoveTiles();
         tilesSpawned = false;
-        tileSpawnAt = -1f;
-        restSpawnAt = -1f;
     }
 
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
@@ -542,7 +527,8 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
 
 // ノヴァのビームの絵を貼るダミー(0 番は照準の★)。使わない時は、マップの外へ置いておく。
 // 文字そのものは透明にして、後ろの塗り(mark)だけでマス目を塗る(文字だと黒いふちが付いて、つなぎ目が見えてしまうため)。
-public sealed class NovaBeamTile : CustomNetObject
+// CNO (Core.CustomNetObject) の名前の絵で描く。なめらかなビームの棒はどれも同じ絵なので、まとめて 1 つの包みで送る。
+public sealed class NovaBeamTile
 {
     public enum Style { Hidden, Guide, Locked, Beam }
 
@@ -553,6 +539,8 @@ public sealed class NovaBeamTile : CustomNetObject
     private const string TilePrefix = "<line-height=1em><mspace=1em><alpha=#00>";
     // 塗りの濃さは、mark を始めた時の文字の濃さまでしか出ないので、mark の前だけ文字を不透明に戻す
     private const string MarkOpen = "<alpha=#FF><mark=" + BeamColor + "><alpha=#00>";
+    // 体の色 (ビームの水色に近いシアン)。客の画面では絵の下に体が見える
+    private const byte BodyColor = 10;
 
     private static readonly Vector2 ParkPos = new(50f, 50f);
 
@@ -561,18 +549,17 @@ public sealed class NovaBeamTile : CustomNetObject
     private static int sizePercent = 125;
     // 文字 1 文字(1em)が、100% の時にワールドでどれくらいの長さか。ホストの画面で測って決める(測れない時の目安)
     private static float emAt100 = 0.25f;
-    // 名前の文字は体の上に出るので、絵の真ん中が体からどれだけずれているか(これも測って決める)
-    private static Vector2 tileOffset = new(0f, 0.6f);
-    private static Vector2 guideOffset = new(0f, 0.6f);
+    // 絵の真ん中が CNO の位置からどれだけずれているか。ホストの手元では文字の形を測れない (名前の欄に置いても範囲が変わらない) ので、
+    // 本編の客の画面に CNO を 1 体置いて測った値 (2026-11-10 実機)。照準の 500% の★は CNO の位置が真ん中、
+    // ビームの太さ 1.25 の棒は真ん中が 0.86 下 (棒の文字のずれはフォントの数値から足すので、ここはそれを引いた分)
+    private static Vector2 tileOffset = new(0f, 0.07f);
+    private static Vector2 guideOffset = Vector2.zero;
     private static bool measured;
 
     public static float TileWorldSize => pixel * Grid;
 
-    private bool created;
-    private bool removed;
+    private readonly TownOfHostL.Core.CustomNetObject cno;
     private Style style = Style.Hidden;
-    private string shownName;
-    private string beamArt;
     private bool beamSmooth;
 
     // ===== なめらかなビーム用 =====
@@ -583,11 +570,10 @@ public sealed class NovaBeamTile : CustomNetObject
     private static int barSize = 100;
     private static Vector2 barShift;
     private static float setupBeamSize = 1.25f;
-    // 実際の画面(録画)で測った補正。棒は計算より 1.4 倍くらい長く見え、0.15 くらい下に出ていた
-    private const float BarLengthFix = 1.4f;
+    // 実際の画面で測った補正。棒は計算より 1.14 倍くらい長く見え、0.15 くらい下に出ていた (長さは 2026-11-10 実機で 3.23)
+    private const float BarLengthFix = 1.14f;
     private const float BarRaise = 0.15f;
     public static bool Smooth => smoothFont != null;
-    public static bool Measured => measured;
     public static float BarLength { get; private set; } = 1f;
 
     public static string BarName(float angle)
@@ -638,16 +624,21 @@ public sealed class NovaBeamTile : CustomNetObject
         }
         Logger.Info("ふちの無いフォントが見つからないので、ビームはマス目で描きます", "Nova");
     }
-    private Vector2 wanted = ParkPos;
 
-    public NovaBeamTile() => CreateNetObject(ParkPos);
+    public NovaBeamTile()
+    {
+        cno = TownOfHostL.Core.CustomNetObject.Create("", ParkPos, BodyColor);
+        // MOD を入れている人とホストは自前の演出でビームを描くので、CNO は隠す
+        if (cno != null) cno.Spawned = c => { if (ClientEffects.NovaOn) ClientEffects.HideDummy(c.NetId); };
+    }
 
-    // ビームの太さに合わせて、1 マスの大きさを決める
+    // ビームの太さに合わせて、1 マスの大きさを決め、ホストの画面で文字の大きさを測る
     public static void SetupPixel(float beamSize)
     {
         setupBeamSize = beamSize;
         pixel = Mathf.Max(0.12f, beamSize / 4f);
         sizePercent = Mathf.Clamp(Mathf.RoundToInt(pixel / emAt100 * 100f), 20, 2000);
+        if (!measured) Measure();
     }
 
     // 照準は、波動砲の足元の星と同じ★。向きを決めた後は赤くなる
@@ -656,56 +647,24 @@ public sealed class NovaBeamTile : CustomNetObject
         ? "<size=500%><color=#FF2040>★</color></size>"
         : $"<size=500%><color={color}>★</color></size>";
 
-    protected override void OnCreated()
-    {
-        if (removed) { Despawn(); return; }
-        created = true;
-        SetAppearance(colorId: 0, skinId: "", hatId: "", petId: "", visorId: "");
-        if (!measured) Measure();
-        if (ClientEffects.NovaOn) ClientEffects.HideDummy(PlayerControl.NetId);
-        SetName("");
-        shownName = "";
-        SnapToPosition(wanted);
-        Apply();
-        _ = new LateTask(HideBody, 0.3f, "NovaBeamTile.HideBody");
-    }
-
-    // ホストの画面で、実際に文字を置いて大きさとずれを測る(どの人の画面でも同じ文字なので、ここで測れば全員に合う)
-    private void Measure()
+    // 文字の大きさは、ホストの名前の文字で測る (並べた時の幅は、文字の形を作らなくても出る)
+    private static void Measure()
     {
         try
         {
-            var text = PlayerControl.cosmetics.nameText;
-            if (text == null) return;
-            var scale = Mathf.Abs(text.transform.lossyScale.x);
+            var source = PlayerControl.LocalPlayer?.cosmetics?.nameText;
+            if (source == null) return;
+            var scale = Mathf.Abs(source.transform.lossyScale.x);
             var row = string.Concat(Enumerable.Repeat(Cell, Grid));
-            var width = text.GetPreferredValues($"{TilePrefix}{row}").x * scale;
+            var width = source.GetPreferredValues($"{TilePrefix}{row}").x * scale;
             if (width > 0.01f) emAt100 = width / Grid;
             sizePercent = Mathf.Clamp(Mathf.RoundToInt(pixel / emAt100 * 100f), 20, 2000);
             pixel = emAt100 * sizePercent / 100f;
-
-            var block = new StringBuilder($"<size={sizePercent}%>{TilePrefix}");
-            for (var r = 0; r < Grid; r++) block.Append(row).Append(r < Grid - 1 ? "\n" : "");
-            tileOffset = CenterOf(text, block.Append("</size>").ToString());
-            guideOffset = CenterOf(text, GuideName(false, GuideColor));
             measured = true;
             FindSmoothFont();
-            Logger.Info($"ビームのマス目: 1em={emAt100:F3} 1マス={pixel:F3} 文字={sizePercent}% ずれ={tileOffset} 照準のずれ={guideOffset}", "Nova");
+            Logger.Info($"ビームのマス目: 1em={emAt100:F3} 1マス={pixel:F3} 文字={sizePercent}%", "Nova");
         }
         catch (System.Exception e) { Logger.Warn($"ビームの大きさを測れませんでした: {e.Message}", "Nova"); }
-        finally
-        {
-            try { PlayerControl.cosmetics.nameText.text = ""; } catch { }
-        }
-    }
-
-    private Vector2 CenterOf(TMPro.TextMeshPro text, string value)
-    {
-        text.text = value;
-        // 文字が見えていない時でも、大きさを計算させる
-        text.ForceMeshUpdate(true, true);
-        var center = text.transform.TransformPoint(text.textBounds.center);
-        return (Vector2)center - (Vector2)PlayerControl.transform.position;
     }
 
     // マス目の絵を作る。マスの真ん中がビームの帯の中にあれば塗る。何も塗らない絵は null
@@ -738,75 +697,51 @@ public sealed class NovaBeamTile : CustomNetObject
         return any ? sb.Append("</size>").ToString() : null;
     }
 
-    // ホストの画面では、ダミーの体が見えてしまうので、名前の文字以外を消す
-    private void HideBody()
-    {
-        if (PlayerControl == null) return;
-        try
-        {
-            foreach (var r in PlayerControl.GetComponentsInChildren<SpriteRenderer>(true)) r.enabled = false;
-            PlayerControl.cosmetics.colorBlindText.color = Color.clear;
-        }
-        catch { }
-    }
-
     public void SetStyle(Style next)
     {
         style = next;
-        if (created && !removed) Apply();
+        var name = next switch
+        {
+            Style.Guide => GuideName(false, GuideColor),
+            Style.Locked => GuideName(true, GuideColor),
+            _ => null,
+        };
+        if (name != null) cno?.ChangeSprite(name);
     }
 
+    // マス目のビーム (1 枚ずつ違う絵)
     public void ShowBeam(string art, bool smooth = false)
     {
         beamSmooth = smooth;
         style = Style.Beam;
-        beamArt = art;
-        if (created && !removed) Apply();
+        cno?.ChangeSprite(art ?? "");
     }
 
-    private void Apply()
+    // なめらかなビームの棒 (どれも同じ絵) をまとめて変える
+    public static void ShowBeamAll(IEnumerable<NovaBeamTile> tiles, string art, bool smooth)
     {
-        var name = style switch
-        {
-            Style.Guide => GuideName(false, GuideColor),
-            Style.Locked => GuideName(true, GuideColor),
-            Style.Beam => beamArt ?? "",
-            _ => "",
-        };
-        if (name == shownName) return;
-        shownName = name;
-        SetName(name);
-        HideBody();
+        var list = tiles.ToList();
+        foreach (var t in list) { t.beamSmooth = smooth; t.style = Style.Beam; }
+        TownOfHostL.Core.CustomNetObject.ChangeSpriteAll(list.Where(t => t.cno != null).Select(t => t.cno), art ?? "");
     }
 
     // 絵の真ん中が、point に来るように置く
     public void MoveTo(Vector2 point)
     {
+        if (cno == null) return;
         var offset = style != Style.Beam ? guideOffset : beamSmooth ? tileOffset + barShift : tileOffset;
-        wanted = point - offset;
-        if (!created || removed) return;
-        if (Vector2.Distance(Position, wanted) < 0.01f) return;
-        SnapToPosition(wanted);
+        var wanted = point - offset;
+        if (Vector2.Distance(cno.Position, wanted) < 0.01f) return;
+        cno.MoveTo(wanted);
     }
 
+    // マップの外へ置く (絵はそのまま。次に使う時に変える)
     public void Park()
     {
         style = Style.Hidden;
-        wanted = ParkPos;
-        if (!created || removed) return;
-        Apply();
-        // もう外にある時は送らない(通信を減らす)
-        if (Vector2.Distance(Position, ParkPos) < 0.02f) return;
-        SnapToPosition(ParkPos);
+        if (cno == null || Vector2.Distance(cno.Position, ParkPos) < 0.02f) return;
+        cno.MoveTo(ParkPos);
     }
 
-    public void Remove()
-    {
-        if (removed) return;
-        removed = true;
-        if (created) Despawn();
-    }
-
-    // 会議では消さずに、マップの外へ戻すだけ(作り直すと時間がかかるため)
-    public override void OnMeeting() => Park();
+    public void Remove() => cno?.Despawn();
 }

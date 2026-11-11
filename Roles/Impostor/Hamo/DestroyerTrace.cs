@@ -4,35 +4,32 @@ using TownOfHostL.Modules;
 
 namespace TownOfHostL.Roles.Impostor;
 
-// デストロイヤーがつぶした場所に残す痕跡。ヴァンパイアの血痕と同じく、ダミーの名前欄に印を出す
-// (MOD を入れている人には床の血だまりを描いて、ダミーの印は隠す)
-public sealed class DestroyerTrace : CustomNetObject
+// デストロイヤーがつぶした場所に残す痕跡。CNO の名前の絵で、血の飛び散りと印を出す
+// (体は暗い赤で絵の下に重なる)。MOD を入れている人には床の血だまりを描いて、CNO は隠す
+public sealed class DestroyerTrace
 {
-    private readonly Vector2 _spawnPos;
+    private const byte BodyColor = 12; // マルーン (血の色)
+    private readonly TownOfHostL.Core.CustomNetObject cno;
     private int _turnsLeft;
 
     public bool IsAlive { get; private set; } = true;
 
     public DestroyerTrace(Vector2 spawnPos, int turns)
     {
-        _spawnPos = spawnPos;
         _turnsLeft = turns;
-        CreateNetObject(_spawnPos);
-    }
-
-    protected override void OnCreated()
-    {
-        SetAppearance(colorId: 6, skinId: "", hatId: "", petId: "", visorId: "");
-        SetName("<size=170%><color=#5c0000>✷</color></size>\n<size=60%><color=#8b0000>" + Translator.GetString("DestroyerTraceMark") + "</color></size>");
-        SnapToPosition(_spawnPos);
-        try { if (PlayerControl != null) ClientEffects.BloodStain(PlayerControl.NetId, _spawnPos); } catch { }
-        Logger.Info($"DestroyerTrace: OnCreated position={_spawnPos} turns={_turnsLeft}", "Destroyer");
+        var sprite = "<size=420%><color=#5c0000>●</color></size>\n<size=60%><color=#b00000>" + Translator.GetString("DestroyerTraceMark") + "</color></size>";
+        cno = TownOfHostL.Core.CustomNetObject.Create(sprite, spawnPos, BodyColor);
+        if (cno == null) { IsAlive = false; return; }
+        cno.Spawned = c => ClientEffects.BloodStain(c.NetId, spawnPos);
+        Logger.Info($"DestroyerTrace: position={spawnPos} turns={_turnsLeft}", "Destroyer");
     }
 
     // 1 ターン経過。消えたら true
     public bool PassTurn()
     {
         if (!IsAlive) return true;
+        // 出す途中で CNO が消えた (例外など) 時は、痕跡も消えた扱いにする
+        if (cno.IsGone) { IsAlive = false; return true; }
         if (--_turnsLeft > 0) return false;
         Remove();
         return true;
@@ -42,6 +39,6 @@ public sealed class DestroyerTrace : CustomNetObject
     {
         if (!IsAlive) return;
         IsAlive = false;
-        Despawn();
+        cno?.Despawn();
     }
 }
