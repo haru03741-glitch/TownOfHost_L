@@ -45,8 +45,8 @@ public static partial class Utils
     }
     /// <summary>役職の色を付けた役職名</summary>
     public static string GetRoleColorAndName(CustomRoles role) => role < 0 ? "" : ColorString(GetRoleColor(role), GetString($"{role}"));
-    /// <summary>試合の記録をログへ書く (type はログの見出し)</summary>
-    public static void AddGameLog(string type, string text) => Logger.Info(text.RemoveHtmlTags(), string.IsNullOrEmpty(type) ? "GameLog" : $"GameLog.{type}");
+    /// <summary>試合の記録 (/l で見られるゲームログ) に 1 件足す。type はログの見出し</summary>
+    public static void AddGameLog(string type, string text) => Modules.GameLog.Add(type, text);
     /// <summary>ヴァイパーにキルされた死体が溶けるまでの秒数 (本編の設定)</summary>
     public static float ViperDissolveTime
     {

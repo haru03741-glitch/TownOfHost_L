@@ -102,6 +102,7 @@ public static class RoleHooks
     {
         if (!AmongUsClient.Instance.AmHost) return;
         if (Main.SabotageType is SystemTypes.Hallway) return;
+        if (Main.IsActiveSabotage) GameLog.OnSabotageFixed(Main.SabotageType);
         Main.IsActiveSabotage = false;
         Main.SabotageActivetimer = 0;
         ForEachRole(r => r.AfterSabotage(Main.SabotageType), "AfterSabotage");
@@ -243,6 +244,7 @@ static class SabotageStartHookPatch
     public static void Postfix([HarmonyArgument(0)] PlayerControl player, byte __state, bool __runOriginal)
     {
         if (!__runOriginal || !AmongUsClient.Instance.AmHost || player == null) return;
+        if (!Main.IsActiveSabotage) GameLog.OnSabotage(player, (SystemTypes)__state);
         Main.SabotageType = (SystemTypes)__state;
         Main.IsActiveSabotage = true;
         Main.LastSab = player.PlayerId;

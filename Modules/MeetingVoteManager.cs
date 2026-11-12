@@ -176,6 +176,7 @@ public class MeetingVoteManager
 
         var logName = exiled == null ? (result.IsTie ? "同数" : "スキップ") : exiled.Object?.GetNameWithRole() ?? exiled.PlayerName;
         logger.Info($"追放者: {logName} で会議を終了します");
+        GameLog.OnVoteResult(exiled, result.IsTie);
 
         var states = new List<MeetingHud.VoterState>();
         foreach (var voteArea in meetingHud.playerStates)
@@ -198,6 +199,7 @@ public class MeetingVoteManager
             }
         }
 
+        MeetingExtras.OnVotes(states);
         if (exiled != null) AntiBlackout.ExiledPlayerId = exiled.PlayerId;
         Logger.Info($"ExiledPlayerIdSet exiled: {exiled?.name}", "AntiBlackout");
         // SetIsDead は MeetingHud.OnDestroy (会議終了ログの直後) で呼ばれるため、

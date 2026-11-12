@@ -115,6 +115,9 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
   - チャットの荒らし対策 (禁止語・開始の催促)・耳打ち
   - チャットのコマンドの補完と貼り付け
   - 見せたくない書き込みを大きな空白で押し出し、会話を送り直す方法
+  - 結果画面から自動でロビーへ戻る秒読み
+  - 放置の警告の猶予・結果の選択・足止め中の人を除く条件
+  - スマホのプレイヤーのキック
 - [More Roles Plus](https://github.com/haru03741-glitch/More-Roles-Plus)
   - ロビーで本編のモード (通常 / かくれんぼ) を、GameManager を出し直して切り替える手順
   - 設定画面の検索欄と検索の結果のタブ、左の列の区分の字の作り
@@ -142,6 +145,11 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
     - [The Other Roles: GM Edition](https://github.com/yukinogatari/TheOtherRoles-GM): ペスト医師
     - [TheOtherRoles](https://github.com/TheOtherRolesAU/TheOtherRoles): ヴァルチャー
   - 役職の共通の仕組み (ダブルトリガー・ワンクリックのファントムボタン・部屋のタスク・自投票・演出の送り方など)
+  - 日ごとのゲームの記録の形
+  - 放置の検出の流れ
+  - 結果画面からロビーへ戻る時の再試行と、自動スタートで人数と外見が落ち着くのを待つ条件
+  - 入室の確認 (フレンド以外・初期名・キック後の入り直し) と、前の試合の人の再入室の検知
+  - 投票の残り時間の知らせと MVP の発表
 - TownOfNext (KARPED1EM)
   - チャットの入力欄の文字数の上限を広げる方法
 - [TownOfHost-K](https://github.com/KYMario/TownOfHost-K)

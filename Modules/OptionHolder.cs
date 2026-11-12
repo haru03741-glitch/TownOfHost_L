@@ -837,6 +837,10 @@ public static partial class Options
         VoiceReader.SetupCustomOption();
         // 生存者の切断で自動廃村
         Modules.AutoAbort.SetupCustomOption();
+        Modules.AutoProgress.SetupCustomOption();
+        Modules.AfkDetector.SetupCustomOption();
+        Modules.JoinGuard.SetupCustomOption();
+        Modules.MeetingExtras.SetupCustomOption();
         // 耳打ち・荒らしの書き込みのキック
         Modules.Whisper.SetupCustomOption();
         Modules.ChatGuard.SetupCustomOption();

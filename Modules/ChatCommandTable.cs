@@ -109,6 +109,9 @@ public static class ChatCommandTable
         new("/mt", "/endmeeting") { Host = _ => { if (GameStates.IsMeeting) MeetingHud.Instance.RpcClose(); } },
         new("/kick") { Usage = "CommandUsage.Kick", Host = c => ChatCommands.KickCommand(c.Args, ban: false) },
         new("/ban") { Usage = "CommandUsage.Ban", Host = c => ChatCommands.KickCommand(c.Args, ban: true) },
+        // 前の試合に居た人の再入室: 見つけた人を一括キック / このロビーだけ許す
+        new("/kp", "/kickprevious") { Host = _ => Modules.JoinGuard.KickDetected() },
+        new("/aj", "/allowjoin") { Host = _ => Modules.JoinGuard.AllowThisLobby() },
         new("/offhat") { Usage = "CommandUsage.OffSkin", Host = c => SkinControle.ClearCommand(c, true, false, false, false) },
         new("/offskin") { Usage = "CommandUsage.OffSkin", Host = c => SkinControle.ClearCommand(c, false, true, false, false) },
         new("/offvisor") { Usage = "CommandUsage.OffSkin", Host = c => SkinControle.ClearCommand(c, false, false, true, false) },

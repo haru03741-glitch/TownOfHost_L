@@ -115,6 +115,7 @@ namespace TownOfHostL
                 }
                 BanManager.CheckBanPlayer(client);
                 BanManager.CheckDenyNamePlayer(client);
+                JoinGuard.OnPlayerJoined(client);
                 try { RPC.RpcVersionCheck(); } catch { }
             }
             catch (Exception ex)
@@ -194,6 +195,7 @@ namespace TownOfHostL
                                 PlayerState.GetByPlayerId(lovers.PlayerId)?.RemoveSubRole(CustomRoles.Lovers);
                             }
                         }
+                        if (wasAlive) GameLog.OnDisconnected(playerId);
                         if (state.DeathReason == CustomDeathReason.etc) //死因が設定されていなかったら
                         {
                             state.DeathReason = CustomDeathReason.Disconnected;
@@ -206,6 +208,7 @@ namespace TownOfHostL
                         if (AmongUsClient.Instance.AmHost && GameStates.IsInGame) CustomRoleManager.NotifyPlayerLeft(playerId);
                     }
                     Main.playerVersion.Remove(playerId);
+                    AfkDetector.OnPlayerLeft(playerId);
                     Logger.Info($"{data.PlayerName}(ClientID:{data.Id})が切断(理由:{reason}, ping:{AmongUsClient.Instance.Ping})", "Session");
                 }
             }

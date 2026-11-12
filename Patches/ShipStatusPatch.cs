@@ -111,6 +111,7 @@ namespace TownOfHostL
         {
             MeetingStates.ReportTarget = target;
             MeetingStates.DeadBodies = UnityEngine.Object.FindObjectsOfType<DeadBody>();
+            if (AmongUsClient.Instance.AmHost) Modules.GameLog.OnMeetingStart(reporter?.Data, target);
         }
     }
     [HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.Begin))]

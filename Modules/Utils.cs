@@ -1574,6 +1574,7 @@ public static partial class Utils
         var endOfDay = MeetingStates.Day;
         if (MeetingStates.TryEndDay() && AmongUsClient.Instance.AmHost)
         {
+            GameLog.OnNewDay();
             try { Roles.Madmate.MadMagic.AfterMeeting(endOfDay); }
             catch (Exception ex) { Logger.Exception(ex, "MadMagic.AfterMeeting"); }
         }
