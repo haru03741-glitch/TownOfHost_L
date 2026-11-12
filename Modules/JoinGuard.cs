@@ -171,6 +171,18 @@ public static class JoinGuard
         Kick(client, "Message.KickedByPreviousGame");
     }
 
+    /// <summary>見つけた前の試合の人 (接続 ID と名前)。操作盤の表示用</summary>
+    public static IReadOnlyDictionary<int, string> Detected => detected;
+    /// <summary>このロビーでは前の試合の人も入れるか</summary>
+    public static bool AllowedThisLobby => allowThisLobby;
+
+    /// <summary>見つけた 1 人をキックする</summary>
+    public static void KickDetected(int clientId)
+    {
+        if (!detected.Remove(clientId) || AmongUsClient.Instance.GetClient(clientId) == null) return;
+        AmongUsClient.Instance.KickPlayer(clientId, false);
+    }
+
     /// <summary>/kp: 見つけた人をまとめてキック</summary>
     public static void KickDetected()
     {

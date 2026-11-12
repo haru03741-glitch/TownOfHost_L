@@ -233,6 +233,8 @@ public partial class Main : BasePlugin
 
         // かくれんぼの間に休ませる仕組みと delegate 型のキャッシュは、TOHL の Harmony を外しても残る別の Harmony に置く
         TownOfHostL.Core.VanillaHideAndSeek.Init(this);
+        // ホストの操作盤 (左下のボタンから開く)
+        AddComponent<TownOfHostL.Modules.HostPanel>();
         TownOfHostL.Core.Modes.PatchBundleSet.Init(Harmony);
         TownOfHostL.Core.Modes.PatchBundleSet.Apply(TownOfHostL.Core.Modes.ModeCatalog.Standard.LiveBundles);
         Application.quitting += new Action(Utils.SaveNowLog);

@@ -138,6 +138,10 @@ public static class AfkDetector
         }
     }
 
+    /// <summary>その人が動いていない秒数 (数えていなければ 0)。操作盤の表示用</summary>
+    public static float StillSeconds(byte playerId)
+        => tracks.TryGetValue(playerId, out var t) ? Time.time - t.StillSince : 0f;
+
     /// <summary>退出した人の記録を消す (同じ PlayerId で別の人が入った時に引き継がない)</summary>
     public static void OnPlayerLeft(byte playerId) => tracks.Remove(playerId);
 
