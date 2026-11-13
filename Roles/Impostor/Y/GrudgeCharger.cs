@@ -135,7 +135,8 @@ public sealed class GrudgeCharger : RoleBase, IImpostor
             }
 
             killThisTurn = true;
-            Player.MarkDirtySettings();
+            // 印だけ立てると、送る時には killThisTurn が戻っているので、ここで送る
+            Player.SyncSettings();
             Player.RpcResetAbilityCooldown();
             killThisTurn = false;
         }

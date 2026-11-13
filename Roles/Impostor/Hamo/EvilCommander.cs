@@ -70,7 +70,8 @@ public sealed class EvilCommander : RoleBase, IImpostor, IUsePhantomButton
 
     public override void OnSpawn(bool initialState = false)
     {
-        remainingUses = OptionAbilityUseLimit.GetInt();
+        // 回数は試合の始めだけ入れる (会議明けにも呼ばれるので、毎回入れると回数が戻る)
+        if (initialState) remainingUses = OptionAbilityUseLimit.GetInt();
         Player.RpcResetAbilityCooldown(sync: true);
     }
 

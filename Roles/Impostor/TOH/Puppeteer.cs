@@ -137,8 +137,8 @@ public sealed class Puppeteer : RoleBase, IImpostor
         //seenが省略の場合seer
         seen ??= seer;
 
-        if (!(Puppets.ContainsValue(this) &&
-            Puppets.ContainsKey(seen.PlayerId))) return "";
+        // 自分の人形だけに付ける (パペッティアが 2 人いても、相手の人形には付けない)
+        if (!Puppets.TryGetValue(seen.PlayerId, out var owner) || owner != this) return "";
 
         return Utils.ColorString(RoleInfo.RoleColor, "◆");
     }

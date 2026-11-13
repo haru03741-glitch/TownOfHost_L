@@ -153,6 +153,8 @@ public sealed class Charger : RoleBase, IImpostor
                     killLimit--;
                     minDistance.target.SetRealKiller(Player);
                     killCooldown = chargeKillCooldown;
+                    // 同じターンの 2 人目からは、設定を送り直してもチャージのクールのまま
+                    killThisTurn = true;
                     Logger.Info($"{Player.GetNameWithRole()} : 残り{killLimit}発", "Charger");
                     Utils.NotifyRoles(SpecifySeer: Player);
                 }

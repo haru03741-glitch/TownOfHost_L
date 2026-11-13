@@ -175,6 +175,8 @@ class Penguin : RoleBase, IImpostor
         if (AbductVictim != null && AbductTimer <= 0f)
         {
             Player.RpcMurderPlayer(AbductVictim);
+            // 下の会議でのキルでもう一度キルしない
+            RemoveVictim();
         }
         if (MeetingKill)
         {

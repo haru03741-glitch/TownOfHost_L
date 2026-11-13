@@ -156,6 +156,9 @@ public sealed class EvilTracker : RoleBase, IImpostor, IKillFlashSeeable, ISidek
     }
     private void SetTarget(byte targetId)
     {
+        // 前のターゲットの矢印は外す (仲間のインポスターへの矢印は残す)
+        if (TargetId != byte.MaxValue && TargetId != targetId && !ImpostorsId.Contains(TargetId))
+            TargetArrow.Remove(Player.PlayerId, TargetId);
         TargetId = targetId;
         if (CurrentTargetMode != TargetMode.Always)
         {

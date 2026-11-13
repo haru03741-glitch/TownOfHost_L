@@ -103,6 +103,8 @@ namespace TownOfHostL.Roles.Impostor
         private void KillBitten(PlayerControl target, bool isButton = false)
         {
             var vampire = Player;
+            // 噛まれた人が抜けた時は何もしない (null のまま下へ進むと、毎フレーム例外になる)
+            if (target == null) return;
             if (target.IsAlive())
             {
 

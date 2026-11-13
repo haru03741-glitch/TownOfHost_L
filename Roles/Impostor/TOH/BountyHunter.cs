@@ -84,9 +84,10 @@ public sealed class BountyHunter : RoleBase, IImpostor
 
         byte targetId = reader.ReadByte();
 
+        if (ShowTargetArrow && Target != null) TargetArrow.Remove(Player.PlayerId, Target.PlayerId);
         Target = Utils.GetPlayerById(targetId);
         if (ShowTargetArrow) TargetArrow.Add(Player.PlayerId, targetId);
-        Logger.Info($"{Player.GetNameWithRole()}のターゲットを{Target.GetNameWithRole()}に変更", "BountyHunter");
+        Logger.Info($"{Player.GetNameWithRole()}のターゲットを{Target?.GetNameWithRole() ?? targetId.ToString()}に変更", "BountyHunter");
     }
     //public static void SetKillCooldown(byte id, float amount) => Main.AllPlayerKillCooldown[id] = amount;
     public override void ApplyGameOptions(IGameOptions opt) => AURoleOptions.ShapeshifterCooldown = TargetChangeTime;
@@ -171,6 +172,8 @@ public sealed class BountyHunter : RoleBase, IImpostor
         var rand = IRandom.Instance;
         var target = cTargets[rand.Next(0, cTargets.Count)];
         var targetId = target.PlayerId;
+        // 前のターゲットの矢印は外す (残すと、使わない矢印を試合の終わりまで回し続ける)
+        if (ShowTargetArrow && Target != null) TargetArrow.Remove(playerId, Target.PlayerId);
         Target = target;
         if (ShowTargetArrow) TargetArrow.Add(playerId, targetId);
         Logger.Info($"{Player.GetNameWithRole()}のターゲットを{Target.GetNameWithRole()}に変更", "BountyHunter");

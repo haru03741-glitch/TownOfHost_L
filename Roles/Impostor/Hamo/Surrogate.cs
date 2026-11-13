@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
 using UnityEngine;
+using TownOfHostL.Attributes;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
 using TownOfHostL.Roles.Madmate;
@@ -19,6 +20,8 @@ public static class SurrogateSystem
     private static readonly Dictionary<byte, byte> ProxyToOwner = new();
     private static readonly HashSet<byte> FollowingDeathProcessed = new();
 
+    // 試合ごとに空にする (残すと、次の試合で同じ番号の人がプロキシを作れず、前の試合の組で入れ替えや後追いが動く)
+    [GameModuleInitializer]
     public static void Init()
     {
         OwnerToProxy.Clear();

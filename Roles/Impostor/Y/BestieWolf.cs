@@ -78,7 +78,8 @@ public sealed class BestieWolf : RoleBase, IImpostor
 
     private static float KillCooldownSeveral;
     private static float KillCooldownSingle;
-    private static CustomRoles[] grantAddonRole = { CustomRoles.NotAssigned, CustomRoles.NotAssigned, CustomRoles.NotAssigned, CustomRoles.NotAssigned, CustomRoles.NotAssigned };
+    // 1 人ずつ持つ (static だと 2 人目の抽選が 1 人目の分を上書きする)
+    private CustomRoles[] grantAddonRole = { CustomRoles.NotAssigned, CustomRoles.NotAssigned, CustomRoles.NotAssigned, CustomRoles.NotAssigned, CustomRoles.NotAssigned };
 
     public static PlayerControl EnableKillFlash = null;
     int killCount = 0;
@@ -135,6 +136,8 @@ public sealed class BestieWolf : RoleBase, IImpostor
 
         if (Main.AliveImpostorCount >= 2)
         {
+            // 付ける属性は 5 つまで。6 回目からは付けない (配列の外を引くと、キルの後処理が止まる)
+            if (killCount >= grantAddonRole.Length) return;
             foreach(var imp in Main.AllAlivePlayerControls.Where(pc=>pc.Is(CustomRoleTypes.Impostor)))
             {
                 if (imp == Player) continue;//自身ではない

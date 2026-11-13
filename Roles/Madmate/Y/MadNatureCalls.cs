@@ -31,6 +31,8 @@ public sealed class MadNatureCalls : RoleBase
     }
     public override bool OnEnterVent(PlayerPhysics physics, int ventId)
     {
+        // エアシップのラウンジのトイレのドア (79〜82) なので、ほかのマップでは送らない
+        if ((MapNames)Main.NormalOptions.MapId != MapNames.Airship) return true;
         ShipStatus.Instance.RpcUpdateSystem(SystemTypes.Doors, 79);
         ShipStatus.Instance.RpcUpdateSystem(SystemTypes.Doors, 80);
         ShipStatus.Instance.RpcUpdateSystem(SystemTypes.Doors, 81);

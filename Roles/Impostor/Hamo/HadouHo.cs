@@ -53,7 +53,6 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
     bool HasHit;
     bool BeamFacingLeft;
     bool IsDead;
-    int PlayerColor;
     bool IsFiring = false;
     bool spawnCooldownStarted = false;
     bool _prevCharging;
@@ -90,7 +89,6 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
 
     public override void Add()
     {
-        PlayerColor = Player.Data.DefaultOutfit.ColorId;
         spawnCooldownStarted = false;
         // MOD を入れている人とホストは ClientEffects の演出でためとビームを見るので、CNO を隠す
         beam = new HadouHoBeam(Player, drawnByClientEffects: true);
@@ -109,7 +107,6 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
             if (AmongUsClient.Instance.AmHost)
             {
                 Player.SyncSettings();
-                Player.RpcSetColor((byte)PlayerColor);
             }
             IsCharging = false;
             Charging = false;
@@ -167,8 +164,13 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         SendRpc();
     }
 
+    /// <summary>撃つたび・状態を戻すたびに進める。会議で戻した後に、前の発射の後処理 (当たらなかった時の自爆など) を走らせない</summary>
+    int fireGeneration;
+
     private void ResetState()
     {
+        // 撃っている途中の後処理 (LateTask) を捨てる
+        fireGeneration++;
         TownOfHostL.Modules.ClientEffects.ChargeStop(Player);
         IsCharging = false;
         ShowBeamMark = false;
@@ -180,7 +182,6 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         _prevBeamMark = false;
         TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(HadouHo));
         Player.MarkDirtySettings();
-        Player.RpcSetColor((byte)PlayerColor);
         beam?.End();
     }
 
@@ -251,8 +252,10 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         SendRpc();
         ApplyBeamHit();
 
+        var generation = ++fireGeneration;
         _ = new LateTask(() =>
         {
+            if (generation != fireGeneration) return;
             if (IsDead || !Player.IsAlive())
             {
                 Charging = false;
@@ -260,7 +263,6 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
                 beam?.End(); IsFiring = false;
                 TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(HadouHo));
                 Player.MarkDirtySettings();
-                Player.RpcSetColor((byte)PlayerColor);
                 Utils.NotifyRoles(); SendRpc(); return;
             }
             Charging = false;
@@ -271,12 +273,10 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
 
             if (!HasHit && SelfDestructOnMiss)
             {
-                Player.RpcSetColor((byte)PlayerColor);
                 TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(HadouHo)); Player.MarkDirtySettings();
                 PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = CustomDeathReason.Suicide;
                 Player.RpcMurderPlayerV2(Player); IsFiring = false; return;
             }
-            Player.RpcSetColor((byte)PlayerColor);
             TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(HadouHo)); Player.MarkDirtySettings();
             _ = new LateTask(() =>
             {

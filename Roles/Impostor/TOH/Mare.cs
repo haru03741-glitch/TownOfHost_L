@@ -104,7 +104,7 @@ public sealed class Mare : RoleBase, IImpostor
             _ = new LateTask(() =>
             {
                 //まだ停電が直っていなければキル可能モードに
-                if (Utils.IsActive(SystemTypes.Electrical))
+                if (GameStates.IsInTask && Utils.IsActive(SystemTypes.Electrical))
                 {
                     ActivateKill(true);
                 }
