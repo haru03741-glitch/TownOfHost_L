@@ -96,7 +96,8 @@ public sealed class Lighter : RoleBase
             //視野差 = 最大視野 - デフォルト視野     例:(1.25 - 0.25)/100=> 1.00
             float viewBetween = (MaxVision * 100 - Main.DefaultCrewmateVision * 100) / 100;
             //例:1.00 * 25 / 100 => 0.25(上昇値)
-            CurrentVision += viewBetween * progressRate / 100;
+            // 進捗率はそれまでの分を含むので、足さずに既定の視野からの値にする (足すと最大視野を超える)
+            CurrentVision = System.Math.Min(MaxVision, Main.DefaultCrewmateVision + viewBetween * progressRate / 100);
             Logger.Info("viewBetween :" + viewBetween.ToString() + "*" + " progressRate:" + progressRate.ToString() + "%", "Lighter");
             Logger.Info("タスク進捗率で視野変更 タスク:" + MyTaskState.CompletedTasksCount + "/" + MyTaskState.AllTasksCount + " セットする視野:" + CurrentVision.ToString(), "Lighter");
         }

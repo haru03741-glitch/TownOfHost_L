@@ -35,7 +35,8 @@ public sealed class Elder : RoleBase
     private static OptionItem OptionTimeMoveMeeting;
     private bool IsUseGuard;
     private static bool DiaInLife;
-    private static float Lifetime;
+    // 1 人ずつ持つ (static だと長老が 2 人いる時に倍の速さで減る)
+    private float Lifetime;
     private static bool TimeMoveMeeting;
 
     enum OptionName

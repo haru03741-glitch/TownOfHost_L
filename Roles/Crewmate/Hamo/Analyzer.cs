@@ -229,7 +229,7 @@ public sealed class Analyzer : RoleBase
 
         if (send == "") return;
 
-        _ = new LateTask(() => Utils.SendMessage(send, Player.PlayerId, $"<{RoleInfo.RoleColorCode}>{GetString("Analyzer_MeetingTitle")}</color>"), 5, "Analyzer_Send");
+        // 会議の始めの知らせに積むだけにする (5 秒後にも直接送ると、同じ文が 2 回出る)
         RoleHooks.MeetingStartMessages.Add((Player.PlayerId, send, $"<{RoleInfo.RoleColorCode}>{GetString("Analyzer_MeetingTitle")}</color>"));
     }
     void ResetVent()

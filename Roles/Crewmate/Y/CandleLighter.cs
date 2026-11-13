@@ -51,7 +51,8 @@ public sealed class CandleLighter : RoleBase
     private static int CountStartTime;
     private static bool TimeMoveMeeting;
 
-    private static float UpdateTime;
+    // 1 人ずつ持つ (static だと 2 人目に視界の送り直しが来ない)
+    private float UpdateTime;
     float ElapsedTime;
     float lastSyncedVision = -1f;
 

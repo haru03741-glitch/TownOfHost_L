@@ -42,7 +42,6 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton
         _prevCharging = false;
         _prevBeamMark = false;
         BeamFacingLeft = false;
-        PlayerColor = 0;
         beamMode = false;
         nowcool = Cooldown;
         LastCooltime = (int)Cooldown;
@@ -72,7 +71,6 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton
     bool _prevBeamMark;
     HadouHoBeam beam;
     bool BeamFacingLeft;
-    int PlayerColor;
     bool beamMode;
     float nowcool;
     int LastCooltime;
@@ -116,7 +114,6 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton
     public override void Add()
     {
         CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
-        PlayerColor = Player.Data.DefaultOutfit.ColorId;
         BeamColorModeValue = OptionBeamColorMode.GetValue();
         BeamUnlockTaskCount = OptionBeamUnlockTask.GetInt();
         SelfDestructOnMiss = OptionSelfDestructOnMiss.GetBool();
@@ -239,8 +236,13 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton
         SendRpc();
     }
 
+    /// <summary>撃つたび・状態を戻すたびに進める。会議で戻した後に、前の発射の後処理 (当たらなかった時の自爆など) を走らせない</summary>
+    int fireGeneration;
+
     void ResetBeamState()
     {
+        // 撃っている途中の後処理 (LateTask) を捨てる
+        fireGeneration++;
         IsCharging = false;
         ShowBeamMark = false;
         IsFiring = false;
@@ -274,7 +276,6 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton
         if (!Player.IsAlive() && (IsCharging || ShowBeamMark))
         {
             ResetBeamState();
-            Player.RpcSetColor((byte)PlayerColor);
             Utils.NotifyRoles(); SendRpc();
             return;
         }
@@ -337,15 +338,16 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton
         SendRpc();
         ApplyBeamHit();
 
+        var generation = ++fireGeneration;
         _ = new LateTask(() =>
         {
+            if (generation != fireGeneration) return;
             if (!Player.IsAlive())
             {
                 ShowBeamMark = false; _prevBeamMark = false;
                 beam?.End(); IsFiring = false;
                 TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(SheriffHadouHo));
                 Player.MarkDirtySettings();
-                Player.RpcSetColor((byte)PlayerColor);
                 Utils.NotifyRoles(); SendRpc(); return;
             }
 
@@ -356,7 +358,6 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton
 
             if (!HasHit && SelfDestructOnMiss)
             {
-                Player.RpcSetColor((byte)PlayerColor);
                 TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(SheriffHadouHo));
                 Player.MarkDirtySettings();
                 PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = CustomDeathReason.Suicide;
@@ -367,7 +368,6 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton
                 return;
             }
 
-            Player.RpcSetColor((byte)PlayerColor);
             TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(SheriffHadouHo));
             Player.MarkDirtySettings();
             nowcool = Cooldown;

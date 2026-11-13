@@ -111,6 +111,8 @@ public sealed class Psychic : RoleBase
 
         if (VentSelect.OnFixedUpdate(Player, out var selectedId))
         {
+            // 確認できる回数 (PsychicMaxCheckRole) を 1 つ使う
+            if (DivinationLeftCount > 0) DivinationLeftCount--;
             player.MarkDirtySettings();
             Utils.NotifyRoles(SpecifySeer: Player);
 

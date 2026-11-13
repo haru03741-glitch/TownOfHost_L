@@ -90,8 +90,10 @@ public sealed class LoyalDoggy : RoleBase
             }
             else
             {
-                Master = Main.AllAlivePlayerControls.ElementAtOrDefault(IRandom.Instance.Next(0, Main.AllAlivePlayerControls.Count()));
-                Logger.Info($"マスターはランダムで選択({Player.GetNameWithRole()}) master:{Master.GetNameWithRole()}", "LoyalDoggy");
+                // 自分は主人にしない
+                var candidates = Main.AllAlivePlayerControls.Where(pc => pc != Player).ToArray();
+                Master = candidates.Length == 0 ? null : candidates[IRandom.Instance.Next(candidates.Length)];
+                Logger.Info($"マスターはランダムで選択({Player.GetNameWithRole()}) master:{Master?.GetNameWithRole()}", "LoyalDoggy");
             }
             numVotes = 0;//投票を見えなくする
             masterDecision = true;

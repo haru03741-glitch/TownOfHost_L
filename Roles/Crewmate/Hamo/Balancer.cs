@@ -165,9 +165,10 @@ public sealed class Balancer : RoleBase, ISelfVoter
 
             {
 
-                Utils.GetPlayerById(Target1).RpcSetName(Main.AllPlayerNames[Target1]);
+                // 抜けた人は戻さない (null のまま呼ぶと、ここで後始末が止まる)
+                Utils.GetPlayerById(Target1)?.RpcSetName(Main.AllPlayerNames[Target1]);
 
-                Utils.GetPlayerById(Target2).RpcSetName(Main.AllPlayerNames[Target2]);
+                Utils.GetPlayerById(Target2)?.RpcSetName(Main.AllPlayerNames[Target2]);
 
             }
 

@@ -89,6 +89,8 @@ public sealed class UltraStar : RoleBase, IKiller, ISchrodingerCatOwner
     }
 
     float colorchange;
+    private static readonly int[] RainbowColors = { 8, 1, 10, 2, 11, 14, 5, 4, 17, 0, 3, 13, 7, 15, 6, 12, 9, 16 };
+    private int lastSentColor = -1;
 
     int PlayerColor;
 
@@ -135,47 +137,20 @@ public sealed class UltraStar : RoleBase, IKiller, ISchrodingerCatOwner
         if (!AmongUsClient.Instance.AmHost || GameStates.Intro || !GameStates.IsInTask || !player.IsAlive() || GameStates.CalledMeeting || GameStates.ExiledAnimate || !MyState.HasSpawned) return;
 
         {//参考→https://github.com/Yumenopai/TownOfHost_Y/releases/tag/v514.20.3
-
-            colorchange %= 18;
-
-            if (colorchange is >= 0 and < 1) player.RpcSetColor(8);
-
-            else if (colorchange is >= 1 and < 2) player.RpcSetColor(1);
-
-            else if (colorchange is >= 2 and < 3) player.RpcSetColor(10);
-
-            else if (colorchange is >= 3 and < 4) player.RpcSetColor(2);
-
-            else if (colorchange is >= 4 and < 5) player.RpcSetColor(11);
-
-            else if (colorchange is >= 5 and < 6) player.RpcSetColor(14);
-
-            else if (colorchange is >= 6 and < 7) player.RpcSetColor(5);
-
-            else if (colorchange is >= 7 and < 8) player.RpcSetColor(4);
-
-            else if (colorchange is >= 8 and < 9) player.RpcSetColor(17);
-
-            else if (colorchange is >= 9 and < 10) player.RpcSetColor(0);
-
-            else if (colorchange is >= 10 and < 11) player.RpcSetColor(3);
-
-            else if (colorchange is >= 11 and < 12) player.RpcSetColor(13);
-
-            else if (colorchange is >= 12 and < 13) player.RpcSetColor(7);
-
-            else if (colorchange is >= 13 and < 14) player.RpcSetColor(15);
-
-            else if (colorchange is >= 14 and < 15) player.RpcSetColor(6);
-
-            else if (colorchange is >= 15 and < 16) player.RpcSetColor(12);
-
-            else if (colorchange is >= 16 and < 17) player.RpcSetColor(9);
-
-            else if (colorchange is >= 17 and < 18) player.RpcSetColor(16);
-
-            colorchange += Time.fixedDeltaTime * 1.5f;
-
+            // カモフラ中は送らない (送るとカモフラの色を上書きする)。明けたらすぐ送り直す
+            if (Camouflage.IsCamouflage) lastSentColor = -1;
+            else
+            {
+                colorchange %= RainbowColors.Length;
+                // 色が変わった時だけ送る (毎フレーム送ると同種 Reliable の連射で公式鯖に切断される)
+                int color = RainbowColors[(int)colorchange];
+                if (color != lastSentColor)
+                {
+                    lastSentColor = color;
+                    player.RpcSetColor((byte)color);
+                }
+                colorchange += Time.fixedDeltaTime * 1.5f;
+            }
         }
 
         if (cankill)

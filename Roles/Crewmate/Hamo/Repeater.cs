@@ -94,6 +94,12 @@ public sealed class Repeater : RoleBase, ISelfVoter
 
         if (CheckSelfVoteMode(Player, votedForId, out var status))
         {
+            // 同じ会議で 2 回自投票しても、回数は 1 回分だけ使う (2 回目は票を取り消すだけ)
+            if (status is VoteStatus.Self && isArmedThisMeeting)
+            {
+                SetMode(Player, false);
+                return false;
+            }
             if (status is VoteStatus.Self)
             {
                 isArmedThisMeeting = true;

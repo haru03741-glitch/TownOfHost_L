@@ -79,7 +79,8 @@ public sealed class Bakery : RoleBase, ISoloWinner
         var targetId = reader.ReadByte();
         if (targetId != byte.MaxValue)
         {
-            PoisonPlayer.PlayerId = targetId;
+            // 受けた ID の人を指す (前は PoisonPlayer の PlayerId を書き換えていて、null だと例外・そうでなければ本物の PlayerId を壊していた)
+            PoisonPlayer = Utils.GetPlayerById(targetId);
         }
         else
         {
@@ -224,6 +225,8 @@ public sealed class Bakery : RoleBase, ISoloWinner
                     if (p.Is(CustomRoles.Bakery)) continue;
                     targetList.Add(p);
                 }
+                // 候補がいない時 (パン屋のほかに生きている人がいない) は何もしない
+                if (targetList.Count == 0) return;
                 var TargetPlayer = targetList[rand.Next(targetList.Count)];
                 panMessage = string.Format(GetString("PanAlive24"), TargetPlayer.GetRealName(Options.GetNameChangeModes() == NameChange.Crew));
             }
@@ -236,6 +239,8 @@ public sealed class Bakery : RoleBase, ISoloWinner
                     if (p.Is(CustomRoles.Bakery)) continue;
                     targetList.Add(p);
                 }
+                // 候補がいない時 (パン屋のほかに生きている人がいない) は何もしない
+                if (targetList.Count == 0) return;
                 var TargetPlayer = targetList[rand.Next(targetList.Count)];
                 panMessage = string.Format(GetString("PanAlive25"), TargetPlayer.GetRealName(Options.GetNameChangeModes() == NameChange.Crew));
             }
@@ -274,6 +279,7 @@ public sealed class Bakery : RoleBase, ISoloWinner
             if (Main.AfterMeetingDeathPlayers.ContainsKey(pc.PlayerId)) continue;
             targetList.Add(pc);
         }
+        if (targetList.Count == 0) return;
         var PoisonedSelectPlayer = targetList[rand.Next(targetList.Count)];
         PoisonPlayer = PoisonedSelectPlayer;
         if (AmongUsClient.Instance.AmHost) SendRPC(PoisonPlayer.PlayerId);

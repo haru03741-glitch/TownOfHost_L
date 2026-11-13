@@ -203,8 +203,8 @@ public sealed class NiceHacker : RoleBase
         _ = new LateTask(() =>
         {
             if (!GameStates.IsInGame) return;
+            // 会議の始めの知らせは消化済みの時刻なので、ここで直接送るだけにする (積むと次の会議でもう一度出る)
             Utils.SendMessage(text, playerId, title);
-            RoleHooks.MeetingStartMessages.Add((playerId, text, title));
         }, 4f, "NiceHacker Admin Message");
     }
 
