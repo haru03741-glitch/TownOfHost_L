@@ -29,6 +29,8 @@ public sealed class AntiAdminer : RoleBase, IImpostor
     )
     {
         CanCheckCamera = OptionCanCheckCamera.GetBool();
+        // 前の試合の見張りの印を持ち越さない
+        IsAdminWatch = IsVitalWatch = IsDoorLogWatch = IsCameraWatch = false;
     }
 
     private static OptionItem OptionCanCheckCamera;

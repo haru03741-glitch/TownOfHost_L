@@ -157,8 +157,6 @@ public sealed class Sniper : RoleBase, IImpostor
             var target_dir = target_pos.normalized;
             //内積を取る
             var target_dot = Vector3.Dot(dir, target_dir);
-            Log.Info("Sniper", $"{target?.Data?.PlayerName}:pos={target_pos} dir={target_dir}");
-            Log.Info("Sniper", $"  Dot={target_dot}");
 
             //ある程度正確なら登録
             if (target_dot < 0.995) continue;
@@ -168,7 +166,6 @@ public sealed class Sniper : RoleBase, IImpostor
                 //射線との誤差確認
                 //単位ベクトルとの外積をとれば大きさ=誤差になる。
                 var err = Vector3.Cross(dir, target_pos).magnitude;
-                Log.Info("Sniper", $"  err={err}");
                 if (err < 0.5)
                 {
                     //ある程度正確なら登録
@@ -179,7 +176,6 @@ public sealed class Sniper : RoleBase, IImpostor
             {
                 //近い順に判定する
                 var err = target_pos.magnitude;
-                Log.Info("Sniper", $"  err={err}");
                 targets.Add(target, err);
             }
         }
@@ -279,6 +275,7 @@ public sealed class Sniper : RoleBase, IImpostor
             //エイム終了
             IsAim = false;
             AimTime = 0f;
+            lastAimMarkVisible = false;
             return;
         }
 
@@ -291,9 +288,19 @@ public sealed class Sniper : RoleBase, IImpostor
         else
         {
             AimTime += Time.fixedDeltaTime;
+        }
+        // 印 (◎) の出る・消えるが変わった時だけ名前を組み直す (止まっている間ずっと組み直すと重い)
+        var visible = IsAimMarkVisible();
+        if (visible != lastAimMarkVisible)
+        {
+            lastAimMarkVisible = visible;
             Utils.NotifyRoles(SpecifySeer: Player);
         }
     }
+    bool lastAimMarkVisible;
+    /// <summary>エイムアシストの印を出すか。止まって 0.5 秒を過ぎ (1 回だけの設定なら 1 秒まで)、狙える人がいる間</summary>
+    bool IsAimMarkVisible()
+        => AimAssist && 0.5f < AimTime && (!AimAssistOneshot || AimTime < 1.0f) && GetSnipeTargets().Count > 0;
     public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
     {
         MeetingReset = true;
@@ -310,13 +317,8 @@ public sealed class Sniper : RoleBase, IImpostor
         if (AimAssist)
         {
             //エイムアシスト中のスナイパー
-            if (0.5f < AimTime && (!AimAssistOneshot || AimTime < 1.0f))
-            {
-                if (GetSnipeTargets().Count > 0)
-                {
-                    return $"<size=200%>{Utils.ColorString(Palette.ImpostorRed, "◎")}</size>";
-                }
-            }
+            if (IsAimMarkVisible())
+                return $"<size=200%>{Utils.ColorString(Palette.ImpostorRed, "◎")}</size>";
         }
         return "";
     }
