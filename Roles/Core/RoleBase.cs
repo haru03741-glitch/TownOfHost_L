@@ -272,6 +272,8 @@ public abstract class RoleBase : IDisposable
 
     /// <summary>停電・通信妨害を直せない (ドジ属性と同じ)。属性のドジは PlayerTraits.IsClumsy が別に見る</summary>
     public virtual bool IsClumsy => false;
+    /// <summary>人数による終了判定で、生きている間この人を自分の陣営 (CountType) に数えるか</summary>
+    public virtual bool CountsForGameEnd => true;
     /// <summary>アドミン・カメラ・バイタルなどの情報機器を使えない (情報弱者属性と同じ)</summary>
     public virtual bool IsInfoPoor => false;
     /// <summary>投票で追放された時に誰かを道連れにする</summary>

@@ -296,6 +296,9 @@ public static partial class CustomRoleManager
         OnMurderPlayerOthers.Clear();
         OnFixedUpdateOthers.Clear();
         OnEnterVentOthers.Clear();
+        GameEndCountAdjustersOthers.Clear();
+        GameEndByCountHoldersOthers.Clear();
+        TaskWinBlockersOthers.Clear();
     }
     public static void CreateInstance()
     {
@@ -438,6 +441,15 @@ public static partial class CustomRoleManager
     public static HashSet<Action<byte>> OnPlayerRevivedOthers = new();
     /// <summary>誰かがベントに入った時 (ホスト)。戻り値は今は使わない (追い出す時は登録した側で RpcBootFromVent を送る)</summary>
     public static HashSet<Func<PlayerPhysics, int, bool>> OnEnterVentOthers = new();
+    /// <summary>
+    /// 人数による終了判定で、陣営ごとの数を動かす (ジャッカルが全滅してもたまをジャッカル側に数える・死んだアサシンの会議待ちなど)。
+    /// 同じ役職が何人いても 1 回だけ効くよう、static メソッドで登録する
+    /// </summary>
+    public static HashSet<Action<TownOfHostL.Core.Win.GameEndCounts>> GameEndCountAdjustersOthers = new();
+    /// <summary>true の間は人数による終了判定をしない (アサシンがマーリンを当てている間など)。捕まえる物の無いラムダか static メソッドで登録する</summary>
+    public static HashSet<Func<bool>> GameEndByCountHoldersOthers = new();
+    /// <summary>true の間はタスクでの勝利をしない (妖狐の設定など)。捕まえる物の無いラムダか static メソッドで登録する</summary>
+    public static HashSet<Func<bool>> TaskWinBlockersOthers = new();
     /// <summary>
     /// 投票で追放された人の後処理 (OnExileWrapUp の後の SetDead) の間だけ、その人の PlayerId。それ以外は byte.MaxValue。
     /// 追放を OnExileWrapUp で扱う役職が、知らせの側で同じ死を 2 度扱わないために見る (死因が Vote でも、全員追放や処刑は追放の後処理を通らない)

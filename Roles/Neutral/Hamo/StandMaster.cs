@@ -12,6 +12,8 @@ using UnityEngine;
 
 using TownOfHostL;
 
+using TownOfHostL.Core.Win;
+
 using TownOfHostL.Roles.Core;
 
 using TownOfHostL.Roles.Core.Interfaces;
@@ -52,7 +54,11 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
                 AssignCountRule = new(1, 1, 1)
 
-            }
+            },
+            // スタンドマスター本人が生きている時だけ人数で勝つ。勝つのはスタンドマスターとスタンドの全員
+            killingFaction: new(CountTypes.StandMaster, CustomWinner.StandMaster, 400,
+                canWin: () => Main.AllAlivePlayerControls.Any(p => p.Is(CustomRoles.StandMaster)),
+                addWinners: AddTeamWinners)
         );
 
 
@@ -112,6 +118,13 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
     public static float KillCooldown_;
 
     public static bool EnableKillAbility;
+    /// <summary>キル能力 ON の間だけ、本人もスタンドの陣営として数える</summary>
+    public override bool CountsForGameEnd => EnableKillAbility;
+    private static void AddTeamWinners()
+    {
+        foreach (var pc in Main.AllPlayerControls)
+            if (pc.Is(CustomRoles.StandMaster) || pc.Is(CustomRoles.Stand)) CustomWinnerHolder.WinnerIds.Add(pc.PlayerId);
+    }
 
     public static bool StandImpostorVision;
 

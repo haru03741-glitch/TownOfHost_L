@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
+using TownOfHostL.Core.Win;
 using TownOfHostL.Modules;
 using TownOfHostL.Patches;
 using TownOfHostL.Roles.Core;
@@ -31,7 +32,8 @@ public sealed class Fox : RoleBase, ISystemTypeUpdateHook, IRoomTasker
             assignInfo: new RoleAssignInfo(CustomRoles.Fox, CustomRoleTypes.Neutral)
             {
                 AssignCountRule = new(1, 1, 1)
-            }
+            },
+            winTakeOvers: [new(WinTakeOverStage.AfterSoloWins, 100, (ref GameOverReason reason, CustomWinner _) => SFoxCheckWin(ref reason))]
         );
     public Fox(PlayerControl player)
     : base(
@@ -41,6 +43,7 @@ public sealed class Fox : RoleBase, ISystemTypeUpdateHook, IRoomTasker
     )
     {
         CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(AnyShown);
+        CustomRoleManager.TaskWinBlockersOthers.Add(BlockTaskWin);
         Maxmeter = OptionMeterCount.GetFloat();
         MeterDistance = OptionDistance.GetFloat();
         OnlySeekiller = OptionOnlySeeKiller.GetBool();
@@ -250,7 +253,7 @@ public sealed class Fox : RoleBase, ISystemTypeUpdateHook, IRoomTasker
     bool ISystemTypeUpdateHook.UpdateHudOverrideSystem(HudOverrideSystemType hudOverrideSystem, byte amount) => false;
     #endregion
     #region win
-    public static bool SFoxCheckWin(ref GameOverReason reason)
+    private static bool SFoxCheckWin(ref GameOverReason reason)
     {
         foreach (var pc in Main.AllPlayerControls.Where(pc => pc.Is(CustomRoles.Fox)))
         {
@@ -294,7 +297,7 @@ public sealed class Fox : RoleBase, ISystemTypeUpdateHook, IRoomTasker
         }
         return false;
     }
-    public static bool BlockTaskWin()
+    private static bool BlockTaskWin()
     {
         foreach (var pc in Main.AllPlayerControls.Where(pc => pc.Is(CustomRoles.Fox)))
         {

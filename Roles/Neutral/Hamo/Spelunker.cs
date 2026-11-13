@@ -1,5 +1,7 @@
 using AmongUs.GameOptions;
 
+using TownOfHostL.Core.Win;
+
 using TownOfHostL.Roles.Core;
 
 using TownOfHostL.Roles.Core.Interfaces;
@@ -28,7 +30,8 @@ public sealed class Spelunker : RoleBase, ISystemTypeUpdateHook
             (int)Options.offsetId.Hamo + 54400,
             SetupOptionItem,
             "sp",
-            "#f8cd46"
+            "#f8cd46",
+            winTakeOvers: [new(WinTakeOverStage.AfterSoloWins, 300, (ref GameOverReason reason, CustomWinner _) => CheckWin(ref reason))]
         );
 
 
@@ -181,7 +184,7 @@ public sealed class Spelunker : RoleBase, ISystemTypeUpdateHook
 
 
 
-    public static bool CheckWin(ref GameOverReason reason)
+    private static bool CheckWin(ref GameOverReason reason)
 
     {
 

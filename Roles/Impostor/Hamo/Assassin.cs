@@ -4,6 +4,7 @@ using System.Linq;
 using AmongUs.GameOptions;
 using HarmonyLib;
 using Hazel;
+using TownOfHostL.Core.Win;
 using TownOfHostL.Modules;
 using TownOfHostL.Patches;
 using TownOfHostL.Roles.Core;
@@ -45,6 +46,20 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
         NowUse = false;
         GuessId = byte.MaxValue;
         cancallmeetingkill = OptionCanCallMeetingKill.GetBool();
+        CustomRoleManager.GameEndCountAdjustersOthers.Add(CountWaitingAssassins);
+        CustomRoleManager.GameEndByCountHoldersOthers.Add(IsMerlinCollected);
+    }
+    /// <summary>マーリンを当てている間は人数で終わらない</summary>
+    private static bool IsMerlinCollected() => assassin?.NowState is AssassinMeeting.Collected;
+    /// <summary>死んだアサシンの会議を待っている間は、インポスターが残っているものとして数える</summary>
+    private static void CountWaitingAssassins(GameEndCounts counts)
+    {
+        foreach (var pc in Main.AllPlayerControls)
+        {
+            if (pc.GetRoleClass() is Assassin a && !pc.IsAlive()
+                && a.NowState is AssassinMeeting.WaitMeeting or AssassinMeeting.CallMetting or AssassinMeeting.Guessing)
+                counts[CountTypes.Impostor]++;
+        }
     }
     byte GuessId;
     public static bool NowUse;

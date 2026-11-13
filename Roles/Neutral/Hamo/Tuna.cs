@@ -1,5 +1,6 @@
 using AmongUs.GameOptions;
 using UnityEngine;
+using TownOfHostL.Core.Win;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
 using static TownOfHostL.Translator;
@@ -19,7 +20,8 @@ public sealed class Tuna : RoleBase
             (int)Options.offsetId.Hamo + 55100,
             SetupOptionItem,
             "tn",
-            "#8cffff"
+            "#8cffff",
+            winTakeOvers: [new(WinTakeOverStage.AfterSoloWins, 200, (ref GameOverReason reason, CustomWinner _) => CheckWin(ref reason))]
         );
 
     public Tuna(PlayerControl player)
@@ -148,7 +150,7 @@ public sealed class Tuna : RoleBase
         spawnTimer = 0f;
     }
 
-    public static bool CheckWin(ref GameOverReason reason)
+    private static bool CheckWin(ref GameOverReason reason)
     {
         foreach (var pc in Main.AllPlayerControls)
         {

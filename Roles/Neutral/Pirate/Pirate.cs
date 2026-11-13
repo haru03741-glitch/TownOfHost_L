@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using TownOfHostL.Core.Win;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
 
@@ -26,7 +27,9 @@ public sealed class Pirate : RoleBase, IKiller
             {
                 AssignCountRule = new(1, 1, 1)
             },
-            flags: RoleFlags.FixedCount | RoleFlags.DirectKill | RoleFlags.NeutralKiller
+            flags: RoleFlags.FixedCount | RoleFlags.DirectKill | RoleFlags.NeutralKiller,
+            killingFaction: new(CountTypes.Pirate, CustomWinner.Pirate, 200,
+                [CustomRoles.Pirate, CustomRoles.Gang], [CustomRoles.Gang])
         );
     public Pirate(PlayerControl player)
     : base(

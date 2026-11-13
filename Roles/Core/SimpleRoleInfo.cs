@@ -4,6 +4,7 @@ using UnityEngine;
 using AmongUs.GameOptions;
 using Hazel;
 
+using TownOfHostL.Core.Win;
 using static TownOfHostL.Options;
 
 namespace TownOfHostL.Roles.Core;
@@ -56,6 +57,10 @@ public partial class SimpleRoleInfo
     public Func<PlayerControl, (bool hasCommonTasks, int numLong, int numShort)?> TaskCount { get; private set; }
     /// <summary>短いタスクを掃除 (VentCleaning) だけにし、共通タスクを配らない</summary>
     public bool OnlyVentCleaningTask { get; private set; }
+    /// <summary>この役職の陣営 (CountType) が人数で勝つ条件。同じ CountType の役職のうち 1 つだけが宣言する</summary>
+    public KillingFaction KillingFaction { get; private set; }
+    /// <summary>勝者が決まった後に勝ちを乗っ取る・単独で勝つ処理 (WinTakeOvers が段と順に呼ぶ)</summary>
+    public WinTakeOver[] WinTakeOvers { get; private set; }
 
     private SimpleRoleInfo(
         Type classType,
@@ -138,7 +143,9 @@ public partial class SimpleRoleInfo
         bool? introAsCrewmate = null,
         Action<MessageReader> publicRpcReceiver = null,
         Func<PlayerControl, (bool hasCommonTasks, int numLong, int numShort)?> taskCount = null,
-        bool onlyVentCleaningTask = false
+        bool onlyVentCleaningTask = false,
+        KillingFaction killingFaction = null,
+        WinTakeOver[] winTakeOvers = null
     )
     {
         countType ??= customRoleType == CustomRoleTypes.Impostor ? CountTypes.Impostor : CountTypes.Crew;
@@ -169,6 +176,8 @@ public partial class SimpleRoleInfo
         info.PublicRpcReceiver = publicRpcReceiver;
         info.TaskCount = taskCount;
         info.OnlyVentCleaningTask = onlyVentCleaningTask;
+        info.KillingFaction = killingFaction;
+        info.WinTakeOvers = winTakeOvers;
         return info;
     }
     public static SimpleRoleInfo CreateForVanilla(

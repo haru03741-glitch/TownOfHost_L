@@ -2,6 +2,7 @@ using System.Linq;
 using System.Collections.Generic;
 using AmongUs.GameOptions;
 
+using TownOfHostL.Core.Win;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
 using TownOfHostL.Modules;
@@ -30,7 +31,9 @@ namespace TownOfHostL.Roles.Neutral
                     AssignCountRule = new(1, 1, 1)
                 },
                 flags: RoleFlags.FixedCount | RoleFlags.DontSelectLoyalty | RoleFlags.AddAddOn | RoleFlags.NeutralKiller | RoleFlags.CountedAsKiller,
-                introTeam: CustomRoles.Jackal
+                introTeam: CustomRoles.Jackal,
+                killingFaction: new(CountTypes.Jackal, CustomWinner.Jackal, 100,
+                    [CustomRoles.JackalHadouHo, CustomRoles.JackalWolf, CustomRoles.Tama, CustomRoles.Jackal, CustomRoles.JClient, CustomRoles.JSidekick])
             );
         public Jackal(PlayerControl player)
         : base(

@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 
 using TownOfHostL.Roles.AddOns.Common;
@@ -28,38 +30,66 @@ public sealed class GameEndRuleSet
     public static readonly GameEndRuleSet HideAndSeek = new(GameEndRules.ByLivingPlayersHideAndSeek, GameEndRules.ByTask);
 }
 
-/// <summary>キルで人数を減らして勝つ陣営。生き残りがこの陣営だけになり、クルーの数が並んだら勝つ。</summary>
+/// <summary>
+/// キルで人数を減らして勝つ陣営。生き残りのキルする側がこの陣営だけになり、クルー側の数が並んだら勝つ。
+/// インポスターはここで持ち、他の陣営は役職が SimpleRoleInfo で宣言する (同じ CountTypes は 1 つだけ)。
+/// </summary>
 public sealed class KillingFaction
 {
     public readonly CountTypes CountType;
     public readonly CustomWinner Winner;
+    /// <summary>判定の順。人数が同じでも小さい陣営が先に勝つ。今の順: インポスター 0・ジャッカル 100・海賊 200・パブロフ 300・スタンド 400</summary>
+    public readonly int Order;
     /// <summary>勝った時に、役職ごと勝者にする役職</summary>
     public readonly CustomRoles[] WinnerRoles;
     /// <summary>結果画面で追加勝利として並べる役職</summary>
     public readonly CustomRoles[] AdditionalWinnerRoles;
+    /// <summary>人数の条件に加えて勝てるか (null なら人数だけ)</summary>
+    public readonly Func<bool> CanWin;
+    /// <summary>勝った時に、役職ごとでなく人を勝者に入れる (null なら無し)</summary>
+    public readonly Action AddWinners;
 
-    public KillingFaction(CountTypes countType, CustomWinner winner, CustomRoles[] winnerRoles = null, CustomRoles[] additionalWinnerRoles = null)
+    public KillingFaction(CountTypes countType, CustomWinner winner, int order,
+        CustomRoles[] winnerRoles = null, CustomRoles[] additionalWinnerRoles = null,
+        Func<bool> canWin = null, Action addWinners = null)
     {
         CountType = countType;
         Winner = winner;
+        Order = order;
         WinnerRoles = winnerRoles ?? [];
         AdditionalWinnerRoles = additionalWinnerRoles ?? [];
+        CanWin = canWin;
+        AddWinners = addWinners;
     }
 }
 
 public static class GameEndRules
 {
-    /// <summary>並びは判定の順。人数が同じでも前の陣営が先に勝つ。</summary>
-    public static readonly KillingFaction[] KillingFactions =
-    [
-        new(CountTypes.Impostor, CustomWinner.Impostor),
-        new(CountTypes.Jackal, CustomWinner.Jackal,
-            [CustomRoles.JackalHadouHo, CustomRoles.JackalWolf, CustomRoles.Tama, CustomRoles.Jackal, CustomRoles.JClient, CustomRoles.JSidekick]),
-        new(CountTypes.Pirate, CustomWinner.Pirate,
-            [CustomRoles.Pirate, CustomRoles.Gang], [CustomRoles.Gang]),
-    ];
+    private static readonly KillingFaction ImpostorFaction = new(CountTypes.Impostor, CustomWinner.Impostor, 0);
 
-    private static readonly int[] factionCounts = new int[KillingFactions.Length];
+    private static KillingFaction[] killingFactions;
+    /// <summary>判定の順に並べた陣営。役職の登録は起動時に揃うので、最初に使う時に 1 回だけ組む (static 初期化から役職を引かない)</summary>
+    private static KillingFaction[] KillingFactions => killingFactions ??= BuildKillingFactions();
+
+    private static KillingFaction[] BuildKillingFactions()
+    {
+        var list = new List<KillingFaction> { ImpostorFaction };
+        foreach (var info in CustomRoleManager.AllRolesInfo.Values)
+        {
+            if (info.KillingFaction is not { } faction) continue;
+            if (list.Exists(f => f.CountType == faction.CountType))
+            {
+                Logger.Error($"{faction.CountType} の陣営が 2 つ宣言されています ({info.RoleName})", "GameEndRules");
+                continue;
+            }
+            list.Add(faction);
+        }
+        list.Sort((a, b) => a.Order.CompareTo(b.Order));
+        return list.ToArray();
+    }
+
+    /// <summary>毎フレーム呼ばれるので、数を入れる箱は使い回す</summary>
+    private static readonly GameEndCounts counts = new();
 
     /// <summary>この試合でキルする側 (キル陣営・独自の陣営) が 1 人でも生きていたことがあるか</summary>
     private static bool sawKillers;
@@ -67,33 +97,33 @@ public static class GameEndRules
     /// <summary>試合の始めに呼ぶ (終了判定を入れ替える時)。</summary>
     public static void ResetForNewGame() => sawKillers = false;
 
+    /// <summary>生きている人を陣営ごとに数え、役職の補正を通す</summary>
+    private static void CountAlive(GameEndCounts c)
+    {
+        c.Clear();
+        foreach (var pc in Main.AllAlivePlayerControls)
+        {
+            if (pc.GetRoleClass() is { CountsForGameEnd: false }) continue;
+            c[pc.GetCountTypes()]++;
+        }
+        foreach (var adjust in CustomRoleManager.GameEndCountAdjustersOthers) adjust(c);
+    }
+
     public static bool ByLivingPlayers(out GameOverReason reason)
     {
         reason = GameOverReason.ImpostorsByKill;
         if (Options.NoGameEndByCount.GetBool()) return false;
 
-        // アサシンがマーリンを当てている間は終わらない
-        if (TownOfHostL.Roles.Impostor.Assassin.assassin?.NowState is TownOfHostL.Roles.Impostor.Assassin.AssassinMeeting.Collected) return false;
+        // アサシンがマーリンを当てている間などは終わらない
+        foreach (var hold in CustomRoleManager.GameEndByCountHoldersOthers)
+            if (hold()) return false;
 
-        var factions = KillingFactions;
-        // 毎フレーム呼ばれるので、数を入れる配列は使い回す
-        var counts = factionCounts;
-        var killers = 0;
-        for (var i = 0; i < factions.Length; i++)
-        {
-            counts[i] = Utils.AlivePlayersCount(factions[i].CountType);
-            killers += counts[i];
-        }
-        // 妖狐はクルーとして数える
-        var crew = Utils.AlivePlayersCount(CountTypes.Crew) + Utils.AlivePlayersCount(CountTypes.Fox);
-        // インポスター・ジャッカル・クルーとして数える役職と、独自に数える陣営 (パブロフ・スタンド・イーター)
-        int imp = counts[0], jackal = counts[1];
-        var teams = RoleTeamWins.Count(ref imp, ref jackal, ref crew);
-        killers += imp - counts[0] + jackal - counts[1];
-        counts[0] = imp; counts[1] = jackal;
-        int other = teams.Pavlov + teams.StandMaster + teams.Eater;
+        var c = counts;
+        CountAlive(c);
+        var killers = c.KillerSide;
+        var crew = c.CrewSide;
 
-        if (killers == 0 && crew == 0 && other == 0) //全滅
+        if (killers == 0 && crew == 0) //全滅
         {
             CustomWinnerHolder.ResetAndSetWinner(CustomWinner.None);
             return true;
@@ -103,18 +133,19 @@ public static class GameEndRules
             CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Lovers);
             return true;
         }
-        for (var i = 0; i < factions.Length; i++)
+        foreach (var faction in KillingFactions)
         {
-            // 他のキル陣営が全滅していて、クルーの数がこの陣営以下
-            if (killers - counts[i] != 0 || other != 0 || crew > counts[i]) continue;
-            var faction = factions[i];
+            // 他のキルする側が全滅していて、クルー側の数がこの陣営以下
+            var mine = c[faction.CountType];
+            if (killers != mine || crew > mine) continue;
+            if (faction.CanWin != null && !faction.CanWin()) continue;
             CustomWinnerHolder.ResetAndSetWinner(faction.Winner);
             foreach (var role in faction.WinnerRoles) CustomWinnerHolder.WinnerRoles.Add(role);
             foreach (var role in faction.AdditionalWinnerRoles) CustomWinnerHolder.AdditionalWinnerRoles.Add(role);
+            faction.AddWinners?.Invoke();
             return true;
         }
-        if (RoleTeamWins.CheckTeamWin(counts[0], counts[1], counts[2], crew, teams, ref reason)) return true;
-        if (killers > 0 || other > 0) sawKillers = true;
+        if (killers > 0) sawKillers = true;
         // キルする側が最初からいない試合 (1 人で試す時など) は、クルーの勝ちで即座に終わらせない。
         // 判定はイントロ中に走らないので、イントロ中に追放・切断で消えた分は配られた役職から見る
         else if (sawKillers || (sawKillers = WereKillersAssigned())) //クルー勝利
@@ -129,9 +160,9 @@ public static class GameEndRules
     /// <summary>死んだ人・抜けた人も含めて、キルする側か独自の陣営の役職が配られていたか</summary>
     private static bool WereKillersAssigned()
     {
-        foreach (var faction in KillingFactions)
-            if (Utils.PlayersCount(faction.CountType) > 0) return true;
-        return Utils.PlayersCount(CountTypes.Pavlov) + Utils.PlayersCount(CountTypes.StandMaster) + Utils.PlayersCount(CountTypes.Eater) > 0;
+        foreach (var state in PlayerState.AllPlayerStates.Values)
+            if (GameEndCounts.IsKillerSide(state.CountType)) return true;
+        return false;
     }
 
     public static bool ByLivingPlayersHideAndSeek(out GameOverReason reason)
@@ -159,7 +190,10 @@ public static class GameEndRules
     public static bool ByTask(out GameOverReason reason)
     {
         reason = GameOverReason.ImpostorsByKill;
-        if (Options.NoGameEndByTask.GetBool() || TaskState.InitialTotalTasks == 0 || TownOfHostL.Roles.Neutral.Fox.BlockTaskWin()) return false;
+        if (Options.NoGameEndByTask.GetBool() || TaskState.InitialTotalTasks == 0) return false;
+        // 妖狐の「クルーのタスク完了で終わらない」など
+        foreach (var block in CustomRoleManager.TaskWinBlockersOthers)
+            if (block()) return false;
         // タスク勝利の無効化: 1 = 常に、2 = 生きているクルーがいない時だけ (幽霊のタスクだけで勝たせない)
         switch (Options.DisableTaskWin.GetValue())
         {

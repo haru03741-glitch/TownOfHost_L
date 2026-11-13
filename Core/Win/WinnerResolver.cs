@@ -47,8 +47,8 @@ public static class WinnerResolver
         if (!ctx.Overridden && CustomWinnerHolder.WinnerTeam == ctx.Original && CustomWinnerHolder.WinnerIds.Count == 0)
             AddBaseTeamWinners(ctx.Original);
 
-        // 単独勝利・乗っ取り (妖狐・マグロ・スペランカー・ゾンビ)
-        RoleTeamWins.LateWin(ref ctx.Reason, ctx.Original);
+        // 役職が宣言した単独勝利・乗っ取り (WinTakeOverStage.AfterSoloWins)
+        WinTakeOvers.RunAfterSoloWins(ref ctx.Reason, ctx.Original);
 
         foreach (var pc in Main.AllPlayerControls) AddAdditionalWinners(pc);
         // 抜けた人の役職も拾うので、部屋にいる人ではなく役職の一覧から回す

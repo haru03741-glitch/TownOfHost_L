@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
 using TownOfHostL.Attributes;
+using TownOfHostL.Core.Win;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
 using TownOfHostL.Roles.Impostor;
@@ -22,7 +23,12 @@ public sealed class Zombie : RoleBase
             SetupOptionItem,
             "zb",
             "#6f8f4d",
-            countType: CountTypes.Crew
+            countType: CountTypes.Crew,
+            winTakeOvers:
+            [
+                new(WinTakeOverStage.OnGameEnd, 100, TryTakeOverCrewWin),
+                new(WinTakeOverStage.AfterSoloWins, 400, TryTakeOverCrewWin),
+            ]
         );
 
     static OptionItem OptionCanVent;
@@ -128,7 +134,7 @@ public sealed class Zombie : RoleBase
         return false;
     }
 
-    public static bool TryTakeOverCrewWin(ref GameOverReason reason, CustomWinner winner)
+    private static bool TryTakeOverCrewWin(ref GameOverReason reason, CustomWinner winner)
     {
         TryProcessPendingInfections();
 

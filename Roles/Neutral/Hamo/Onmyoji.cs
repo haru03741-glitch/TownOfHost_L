@@ -10,6 +10,8 @@ using UnityEngine;
 
 
 
+using TownOfHostL.Core.Win;
+
 using TownOfHostL.Roles.Core;
 
 using TownOfHostL.Roles.Core.Interfaces;
@@ -51,7 +53,8 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter
             "oy",
             "#9b59b6",
             isDesyncImpostor: true,
-            countType: CountTypes.None
+            countType: CountTypes.None,
+            winTakeOvers: [new(WinTakeOverStage.OnGameEnd, 200, (ref GameOverReason reason, CustomWinner _) => TryTakeOverCrewWin(ref reason))]
         );
 
 
@@ -938,7 +941,7 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter
 
 
 
-    public static bool TryTakeOverCrewWin(ref GameOverReason reason)
+    private static bool TryTakeOverCrewWin(ref GameOverReason reason)
 
     {
 

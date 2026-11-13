@@ -1,8 +1,11 @@
+using System.Linq;
 using AmongUs.GameOptions;
 
 using Hazel;
 
 using TownOfHostL.Modules;
+
+using TownOfHostL.Core.Win;
 
 using TownOfHostL.Roles.Core;
 
@@ -1742,6 +1745,16 @@ public sealed class Tama : RoleBase, IKiller
 
     }
 
+    /// <summary>ジャッカルの組が全滅していても、ジャッカル系の役職が配られていてたまが生きていれば、ジャッカル側に 1 人数える (何人いても 1 人)</summary>
+    private static void AdjustGameEndCounts(GameEndCounts counts)
+    {
+        if (counts[CountTypes.Jackal] != 0) return;
+        if (!Main.AllPlayerControls.Any(p => p.Is(CustomRoles.Jackal) || p.Is(CustomRoles.JackalHadouHo) || p.Is(CustomRoles.JackalWolf))) return;
+        if (!Main.AllAlivePlayerControls.Any(p => p.Is(CustomRoles.Tama))) return;
+        counts[CountTypes.Jackal]++;
+        counts[CountTypes.Crew]--;
+    }
+
 
 
     public Tama(PlayerControl player)
@@ -1751,6 +1764,7 @@ public sealed class Tama : RoleBase, IKiller
     {
         // 仲間 (ジャッカルの陣営) の画面にたまの役職名を出す。見る側の役職は他人の名前を組み直さないことがある
         CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(() => true);
+        CustomRoleManager.GameEndCountAdjustersOthers.Add(AdjustGameEndCounts);
 
         OwnerId = byte.MaxValue;
 

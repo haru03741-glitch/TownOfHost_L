@@ -3,6 +3,7 @@ using System.Linq;
 using AmongUs.GameOptions;
 using Hazel;
 using UnityEngine;
+using TownOfHostL.Core.Win;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
 using static TownOfHostL.Main;
@@ -30,7 +31,10 @@ public sealed class PavlovDog : PavlovDogBase
             {
                 AssignCountRule = new(1, 1, 1),
                 AssignUnitRoles = [CustomRoles.PavlovOwner]
-            }
+            },
+            // 犬が 1 匹も生きていなければ人数で勝たない
+            killingFaction: new(CountTypes.Pavlov, CustomWinner.Pavlov, 300,
+                [CustomRoles.PavlovDog, CustomRoles.PavlovOwner, CustomRoles.PavlovDogImprint], canWin: HasAliveDog)
         );
 
     public PavlovDog(PlayerControl player)
@@ -197,6 +201,8 @@ public sealed class PavlovOwner : RoleBase, IKiller, IAdditionalWinner, ISchrodi
 
     int RemainingImprintCount;
     bool LastCanImprintState;
+    /// <summary>犬がいない間は、刷り込み回数が残っている時だけパブロフ陣営として数える</summary>
+    public override bool CountsForGameEnd => HasRemainingImprintCount() || PavlovDog.HasAliveDog();
 
     public SchrodingerCat.TeamType SchrodingerCatChangeTo => SchrodingerCat.TeamType.Pavlov;
     public bool HasRemainingImprintCount() => RemainingImprintCount > 0;
