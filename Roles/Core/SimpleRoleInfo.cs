@@ -61,6 +61,8 @@ public partial class SimpleRoleInfo
     public KillingFaction KillingFaction { get; private set; }
     /// <summary>勝者が決まった後に勝ちを乗っ取る・単独で勝つ処理 (WinTakeOvers が段と順に呼ぶ)</summary>
     public WinTakeOver[] WinTakeOvers { get; private set; }
+    /// <summary>ロビーで、この役職が有効な時に出す警告の翻訳キー。出さない時は null を返す (毎フレーム呼ばれるので軽く)</summary>
+    public Func<string> LobbyWarning { get; private set; }
 
     private SimpleRoleInfo(
         Type classType,
@@ -145,7 +147,8 @@ public partial class SimpleRoleInfo
         Func<PlayerControl, (bool hasCommonTasks, int numLong, int numShort)?> taskCount = null,
         bool onlyVentCleaningTask = false,
         KillingFaction killingFaction = null,
-        WinTakeOver[] winTakeOvers = null
+        WinTakeOver[] winTakeOvers = null,
+        Func<string> lobbyWarning = null
     )
     {
         countType ??= customRoleType == CustomRoleTypes.Impostor ? CountTypes.Impostor : CountTypes.Crew;
@@ -178,6 +181,7 @@ public partial class SimpleRoleInfo
         info.OnlyVentCleaningTask = onlyVentCleaningTask;
         info.KillingFaction = killingFaction;
         info.WinTakeOvers = winTakeOvers;
+        info.LobbyWarning = lobbyWarning;
         return info;
     }
     public static SimpleRoleInfo CreateForVanilla(

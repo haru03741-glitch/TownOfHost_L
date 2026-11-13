@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using HarmonyLib;
 using TMPro;
@@ -26,6 +27,8 @@ namespace TownOfHostL
         class PingTrackerUpdatePatch
         {
             static StringBuilder sb = new();
+            /// <summary>ロビーの警告を宣言した役職。役職の登録は起動時に揃うので、最初に使う時に 1 回だけ組む</summary>
+            static SimpleRoleInfo[] rolesWithLobbyWarning;
             static void Postfix(PingTracker __instance)
             {
                 __instance.text.alignment = TextAlignmentOptions.TopRight;
@@ -46,8 +49,13 @@ namespace TownOfHostL
 
                 if (GameStates.IsLobby)
                 {
-                    if (ModeCatalog.IsHideAndSeekWithStandardRoles && !CustomRoles.Sheriff.IsEnable() && !CustomRoles.SerialKiller.IsEnable() && CustomRoles.Egoist.IsEnable())
-                        sb.Append($"\r\n").Append(Utils.ColorString(Color.red, GetString("Warning.EgoistCannotWin")));
+                    // 役職が宣言したロビーの警告 (SimpleRoleInfo.LobbyWarning)
+                    rolesWithLobbyWarning ??= CustomRoleManager.AllRolesInfo.Values.Where(info => info.LobbyWarning != null).ToArray();
+                    foreach (var info in rolesWithLobbyWarning)
+                    {
+                        if (!info.RoleName.IsEnable() || info.LobbyWarning() is not { } key) continue;
+                        sb.Append("\r\n").Append(Utils.ColorString(Color.red, GetString(key)));
+                    }
                 }
 
                 __instance.text.text += sb.ToString();

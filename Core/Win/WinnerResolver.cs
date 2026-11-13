@@ -3,7 +3,6 @@ using System;
 using TownOfHostL.Roles.AddOns;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
-using TownOfHostL.Roles.Neutral;
 
 namespace TownOfHostL.Core.Win;
 
@@ -38,14 +37,14 @@ public static class WinnerResolver
     {
         var ctx = new Context(CustomWinnerHolder.WinnerTeam, reason);
 
-        AddBaseTeamWinners(ctx.Original);
+        AddBaseTeamWinners(ctx);
         if (ctx.Original is CustomWinner.Draw or CustomWinner.None) return ctx.Reason;
 
         foreach (var tier in SoloWinTiers) ApplySoloWins(ctx, tier);
 
         // 上書きが無く、勝者のチームはそのままで、誰も入っていない時だけ詰め直す
         if (!ctx.Overridden && CustomWinnerHolder.WinnerTeam == ctx.Original && CustomWinnerHolder.WinnerIds.Count == 0)
-            AddBaseTeamWinners(ctx.Original);
+            AddBaseTeamWinners(ctx);
 
         // 役職が宣言した単独勝利・乗っ取り (WinTakeOverStage.AfterSoloWins)
         WinTakeOvers.RunAfterSoloWins(ref ctx.Reason, ctx.Original);
@@ -75,8 +74,11 @@ public static class WinnerResolver
     }
 
     /// <summary>クルー勝利・インポスター勝利の時に、その陣営の人を勝者に入れる。</summary>
-    private static void AddBaseTeamWinners(CustomWinner team)
+    private static void AddBaseTeamWinners(Context ctx)
     {
+        var team = ctx.Original;
+        // 役職が宣言した乗っ取り (WinTakeOverStage.BaseTeamWin)。奪った時は勝者がその役職に置き換わっている
+        if (team is CustomWinner.Crewmate or CustomWinner.Impostor && WinTakeOvers.RunBaseTeamWin(ref ctx.Reason, team)) return;
         switch (team)
         {
             case CustomWinner.Crewmate:
@@ -88,8 +90,6 @@ public static class WinnerResolver
                 }
                 break;
             case CustomWinner.Impostor:
-                // エゴイストが勝つ時は、CheckWin の中で勝者がエゴイストに置き換わる
-                if (Egoist.CheckWin()) break;
                 foreach (var pc in Main.AllPlayerControls)
                 {
                     if ((pc.Is(CustomRoleTypes.Impostor) || pc.Is(CustomRoleTypes.Madmate)) && PlayerTraits.WinsWithBaseTeam(pc))
