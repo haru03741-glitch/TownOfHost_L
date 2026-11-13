@@ -105,7 +105,7 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
   - 設定の検索の一致判定 (More Roles Plus 経由)
   - 波動砲のためとビームを偽の PlayerControl の名前で描く方法
 - [Endless Host Roles](https://github.com/Gurge44/EndlessHostRoles)
-  - 配布物に入れる Unity Doorstop と、pietro による修正版 Il2CppInterop
+  - 配布物に入れる Unity Doorstop
   - 他のプレイヤーの外見を、PlayerInfo の送信と本人への変身解除で着せ替える方式
   - 会議の後の暗転を防ぐため、生存クルーが足りない時に死者を見た目だけ生き返らせる方法
   - 名前で絵を描く偽の PlayerControl (CustomNetObject) と、それを公式サーバーで通す形 (空の spawn・開始と会議明けの待ち)
@@ -138,13 +138,12 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
   - チャットを大きな空白で押し出す処理
 - [TownOfHost-hamo](https://github.com/rar006/TownOfHost-hamo)
   - hamo から移した役職 (役職ごとの元の Mod):
-    - TownOfHost-hamo: 守護者・ナイスハッカー・リピーター・イビルコマンダー・フレーマー・マエストロ・サロゲート・マッドカイザー・アンチヒーロー
-    - [TownOfHost-K](https://github.com/KYMario/TownOfHost-K): アナライザー・ナイスアドナー・ウルトラスター・アンチレポーター・バルーナー・爆弾魔・ドライバー・イビルアドナー・イビルブレンダー・マジシャン・大狼・マッドアベンジャー・妖狐・ジャッカルウルフ
+    - TownOfHost-hamo: 守護者・ナイスハッカー・リピーター・イビルコマンダー・フレーマー・マエストロ・サロゲート・マッドカイザー・アンチヒーロー・マッドマジック
+    - [TownOfHost-K](https://github.com/KYMario/TownOfHost-K): アナライザー・ナイスアドナー・ウルトラスター・アンチレポーター・バルーナー・爆弾魔・ドライバー・イビルアドナー・イビルブレンダー・マジシャン・大狼・マッドアベンジャー・妖狐・ジャッカルウルフ・ブレイド・カメレオン
     - [SuperNewRoles](https://github.com/ykundesu/SuperNewRoles): 天秤・ミーティングシェリフ・賢者・村長・イビルギャンブラー・波動砲・ペンギン・突き落とし師・侍・フリーター・波動砲ジャッカル・弾・陰陽師・式神・パブロフの犬・スペランカー・マグロ
-    - [TownOfHost-Pko](https://github.com/satokazoku/TownOfHost-Pko): ナイスワーカホリック・波動砲シェリフ・ワルキューレ・イビルリンカー・ヘイトキラー・タイムリーパー・スタンドマスター・スタンド
-    - [ExtremeRoles](https://github.com/yukieiji/ExtremeRoles): アサシン・エボルバー・イーター
-    - [Nebula on the Ship](https://github.com/Dolly1016/Nebula): デストロイヤー・オボルス
-    - UchuAddon: ノヴァ
+    - [TownOfHost-Pko](https://github.com/satokazoku/TownOfHost-Pko): ナイスワーカホリック・波動砲シェリフ・ワルキューレ・イビルリンカー・ヘイトキラー・タイムリーパー・スタンドマスター・スタンド・ゾンビ
+    - [ExtremeRoles](https://github.com/yukieiji/ExtremeRoles): アサシン・マーリン・エボルバー・イーター
+    - [Nebula on the Ship](https://github.com/Dolly1016/Nebula-Public): デストロイヤー
     - [Revolutionary Host Roles](https://github.com/sansaaaaai/Revolutionary-host-roles): リローダー
     - [The Other Roles: GM Edition](https://github.com/yukinogatari/TheOtherRoles-GM): ペスト医師
     - [TheOtherRoles](https://github.com/TheOtherRolesAU/TheOtherRoles): ヴァルチャー
@@ -170,8 +169,14 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
 - [TownOfHost-K](https://github.com/KYMario/TownOfHost-K)
   - プレイヤー情報 (NetworkedPlayerInfo) の同期
   - YouTube ライブのコメントの読み取り (配信のチャット欄のページから鍵と続きの値を取る方法・End K not 経由で参照)
-- [template-unity](https://github.com/vpmedia/template-unity) (MIT)
-  - 乱数のメルセンヌ・ツイスタ
+- [Town Of Host For E](https://github.com/AsumuAkaguma/TownOfHost_ForE)
+  - YouTube ライブのコメントの読み取り (TownOfHost-K が参考にした元)
+- [Unity Doorstop (Pietrodjaowjao 版)](https://github.com/Pietrodjaowjao/UnityDoorstop) (LGPL-2.1・元は [NeighTools/UnityDoorstop](https://github.com/NeighTools/UnityDoorstop))
+  - 配布物に入れる Unity Doorstop (Endless Host Roles の配布物から取った)
+- [Il2CppInterop (Pietrodjaowjao 版)](https://github.com/Pietrodjaowjao/Il2CppInterop) (LGPL-3.0・元は [BepInEx/Il2CppInterop](https://github.com/BepInEx/Il2CppInterop))
+  - 配布物に入れる Il2CppInterop (フィールドの書き込みを write barrier に通す版。`tools/Il2CppInterop/il2cppinterop.patch` を当ててソースから作る)
+- [Mersenne Twister](http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/emt.html) (松本眞・西村拓士、BSD-3-Clause)
+  - 乱数のメルセンヌ・ツイスタ (著作権表示と許諾文は `Modules/Random/MersenneTwister.cs` の先頭)
 - (Skeld.net)
   - エスカレーショナー/Escalation Gamemode・シンクロカラーモード/twin,50-50,clone Gamemode
 - 中国語翻訳: fivefirex・ZeMingOH233

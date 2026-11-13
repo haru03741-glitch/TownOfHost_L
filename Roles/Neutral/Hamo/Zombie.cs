@@ -12,6 +12,7 @@ namespace TownOfHostL.Roles.Neutral;
 
 public sealed class Zombie : RoleBase
 {
+    // 役職の元: TownOfHost-Pko (TownOfHost-hamo 経由)
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
             typeof(Zombie),

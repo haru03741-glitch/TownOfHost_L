@@ -12,6 +12,7 @@ namespace TownOfHostL.Roles.Madmate;
 public sealed class MadMagic : RoleBase, IKillFlashSeeable, IDeathReasonSeeable, ISelfVoter
 {
     public override bool NeedsSeenNames => canSeeDeathReason;
+    // 役職の元: TownOfHost-hamo
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
             typeof(MadMagic),

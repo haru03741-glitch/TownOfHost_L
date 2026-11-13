@@ -9,6 +9,7 @@ namespace TownOfHostL.Roles.Madmate;
 public sealed class Braid : RoleBase, IKillFlashSeeable, IDeathReasonSeeable
 {
     public override bool NeedsSeenNames => canSeeDeathReason || BraidCanSeeDriver;
+    // 役職の元: TownOfHost-K (TownOfHost-hamo 経由)
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
             typeof(Braid),

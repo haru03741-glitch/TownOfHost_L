@@ -241,8 +241,8 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         SendBeamDirection(BeamFacingLeft);
         TownOfHostL.Modules.ClientEffects.ChargeStop(Player);
         var beamFrom = Player.GetTruePosition() + (BeamFacingLeft ? Vector2.left : Vector2.right) * 0.5f;
-        TownOfHostL.Modules.ClientEffects.NovaBeam(Player, beamFrom, BeamFacingLeft ? 180f : 0f, TownOfHostL.Modules.ClientEffects.MapReach(beamFrom, BeamFacingLeft ? Vector2.left : Vector2.right), 2.2f, BeamTime);
-        TownOfHostL.Modules.ClientEffects.Sound(TownOfHostL.Modules.ClientEffects.SoundKind.NovaFire);
+        TownOfHostL.Modules.ClientEffects.Beam(Player, beamFrom, BeamFacingLeft ? 180f : 0f, TownOfHostL.Modules.ClientEffects.MapReach(beamFrom, BeamFacingLeft ? Vector2.left : Vector2.right), 2.2f, BeamTime);
+        TownOfHostL.Modules.ClientEffects.Sound(TownOfHostL.Modules.ClientEffects.SoundKind.BeamFire);
         beam?.Fire("#FF6600", HadouHoBeam.NormalSize);
         Utils.AllPlayerKillFlash();
         IsCharging = false; chargeTimer = 0f; HasHit = false; ShowBeamMark = true;

@@ -10,7 +10,7 @@ public static partial class Options
     public static OptionItem ErasedBodyRemovePet;
     public static OptionItem ErasedBodyCover;
     public static OptionItem ClientEffects;
-    public static OptionItem ClientEffectsNova;
+    public static OptionItem ClientEffectsBeam;
     public static OptionItem ClientEffectsSlugger;
     public static OptionItem ClientEffectsSound;
     public static OptionItem ClientEffectsVolume;
@@ -54,7 +54,7 @@ public static partial class Options
         ClientEffects = BooleanOptionItem.Create("ClientEffects", true, TabGroup.ModMainSettings, false)
             .SetColorcode("#7fefff")
             .SetHeader(true);
-        ClientEffectsNova = BooleanOptionItem.Create("ClientEffectsNova", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
+        ClientEffectsBeam = BooleanOptionItem.Create("ClientEffectsBeam", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
         ClientEffectsSlugger = BooleanOptionItem.Create("ClientEffectsSlugger", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
         ClientEffectsSound = BooleanOptionItem.Create("ClientEffectsSound", true, TabGroup.ModMainSettings, false).SetParent(ClientEffects);
         ClientEffectsVolume = IntegerOptionItem.Create("ClientEffectsVolume", new(10, 100, 10), 80, TabGroup.ModMainSettings, false)

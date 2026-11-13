@@ -10,6 +10,7 @@ namespace TownOfHostL.Roles.Crewmate;
 
 public sealed class Merlin : RoleBase, IRoomTasker
 {
+    // 役職の元: ExtremeRoles (TownOfHost-K・TownOfHost-hamo 経由)
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
             typeof(Merlin),

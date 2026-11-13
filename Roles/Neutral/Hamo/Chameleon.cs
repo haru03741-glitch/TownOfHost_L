@@ -10,6 +10,7 @@ namespace TownOfHostL.Roles.Neutral;
 
 public sealed class Chameleon : RoleBase, IAdditionalWinner
 {
+    // 役職の元: TownOfHost-K (TownOfHost-hamo 経由)
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
             typeof(Chameleon),

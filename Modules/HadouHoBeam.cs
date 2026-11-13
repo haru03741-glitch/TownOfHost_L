@@ -177,7 +177,7 @@ public sealed class HadouHoBeam
         tracking = false;
         if (owner == null) return;
         // 全員が自前の演出で描くなら、CNO は要らない
-        if (drawnByClientEffects && ClientEffects.SkipNovaDummies) return;
+        if (drawnByClientEffects && ClientEffects.SkipBeamDummies) return;
         this.warningSize = warningSize;
         warned = false;
         chargeStartedAt = Time.realtimeSinceStartup;
@@ -244,7 +244,7 @@ public sealed class HadouHoBeam
             start();
         }
         Shake();
-        if (!drawnByClientEffects || !ClientEffects.NovaOn) return;
+        if (!drawnByClientEffects || !ClientEffects.BeamOn) return;
         Hide(gate, ref hiddenGate);
         Hide(line, ref hiddenLine);
     }

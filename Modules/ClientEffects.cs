@@ -11,11 +11,13 @@ namespace TownOfHostL.Modules;
 // 通信は MOD を入れている人にだけ送る(MOD の無い人には何も届かないので、通信が増えない)
 public static class ClientEffects
 {
-    public enum Kind : byte { HideDummy, NovaGuide, NovaBeam, NovaClear, Sound, SluggerHit, MeetingCutIn, Death, Shake, Charge, ChargeStop, MeetingKill, SeerSoul, Jumbo, Teleport, GuessUi, Bind, BloodStain }
-    public enum SoundKind : byte { NovaCharge, NovaAlarm, NovaFire, SluggerHit, Heartbeat, MeetingSting, Boom, Gunshot, Flame, Sparkle, Chime, Swing, Push, Rocket, Footstep, Soul, ChargeLoop, SniperEquip, SniperShot, Clank }
+    // 番号は電文に乗るので詰めずに残す (1 と 3 は使っていない)
+    public enum Kind : byte { HideDummy = 0, Beam = 2, Sound = 4, SluggerHit, MeetingCutIn, Death, Shake, Charge, ChargeStop, MeetingKill, SeerSoul, Jumbo, Teleport, GuessUi, Bind, BloodStain }
+    // 番号は音の乱数の種に使うので、詰めずに残す (0 と 1 は使っていない)
+    public enum SoundKind : byte { BeamFire = 2, SluggerHit, Heartbeat, MeetingSting, Boom, Gunshot, Flame, Sparkle, Chime, Swing, Push, Rocket, Footstep, Soul, ChargeLoop, SniperEquip, SniperShot, Clank }
     public enum DeathFx : byte { None, Explosion, Sniped, Flame, Evaporate, Magic, Blood, Fall, Launch, Jaws, Poison, Bubble, Vortex, Squash, Slash, Backfire, Heartbreak, Warp }
     static bool On => Options.ClientEffects?.GetBool() == true;
-    public static bool NovaOn => On && Options.ClientEffectsNova.GetBool();
+    public static bool BeamOn => On && Options.ClientEffectsBeam.GetBool();
     public static bool SluggerOn => On && Options.ClientEffectsSlugger.GetBool();
     public static bool SoundOn => On && Options.ClientEffectsSound.GetBool();
     public static bool MeetingOn => On && Options.ClientEffectsMeeting.GetBool();
@@ -25,7 +27,7 @@ public static class ClientEffects
     static float Volume => Mathf.Clamp01((Options.ClientEffectsVolume?.GetInt() ?? 80) / 100f);
 
     // 全員が MOD を入れている時は、MOD の無い人用のダミーを出さなくてよい(通信がかなり減る)
-    public static bool SkipNovaDummies => NovaOn && Options.ClientEffectsSkipDummy.GetBool() && EveryoneHasMod();
+    public static bool SkipBeamDummies => BeamOn && Options.ClientEffectsSkipDummy.GetBool() && EveryoneHasMod();
 
     static readonly HashSet<uint> hiddenDummies = new();
     static readonly Dictionary<uint, List<Renderer>> dummyRenderers = new();
@@ -37,7 +39,6 @@ public static class ClientEffects
     const float DummyRecollectFor = 2f;
     static readonly List<Func<bool>> running = new();
     static readonly List<Func<bool>> runningHud = new();
-    static readonly Dictionary<byte, Guide> guides = new();
     static readonly Dictionary<byte, List<SpriteRenderer>> beams = new();
     static readonly Dictionary<byte, float> lastDeathFx = new();
     static readonly Dictionary<byte, Charging> charges = new();
@@ -107,25 +108,10 @@ public static class ClientEffects
         return true;
     }
 
-    public static void NovaGuide(PlayerControl owner, Vector2 body, float angle, bool locked)
+    public static void Beam(PlayerControl owner, Vector2 from, float angle, float length, float width, float time)
     {
-        if (!CanSend || !NovaOn || owner == null) return;
-        var color = owner.Data.DefaultOutfit.ColorId;
-        Send(Kind.NovaGuide, w =>
-        {
-            w.Write(owner.PlayerId);
-            NetHelpers.WriteVector2(body, w);
-            w.Write(angle);
-            w.Write(locked);
-            w.Write((byte)color);
-        }, SendOption.None);
-        ShowGuide(owner.PlayerId, body, angle, locked, color);
-    }
-
-    public static void NovaBeam(PlayerControl owner, Vector2 from, float angle, float length, float width, float time)
-    {
-        if (!CanSend || !NovaOn || owner == null) return;
-        Send(Kind.NovaBeam, w =>
+        if (!CanSend || !BeamOn || owner == null) return;
+        Send(Kind.Beam, w =>
         {
             w.Write(owner.PlayerId);
             NetHelpers.WriteVector2(from, w);
@@ -136,13 +122,6 @@ public static class ClientEffects
         });
         ShowBeam(owner.PlayerId, from, angle, length, width, time);
         Shake(0.6f, 0.5f);
-    }
-
-    public static void NovaClear(PlayerControl owner)
-    {
-        if (!CanSend || !NovaOn || owner == null) return;
-        Send(Kind.NovaClear, w => w.Write(owner.PlayerId));
-        Clear(owner.PlayerId);
     }
 
     public static void Sound(SoundKind sound, Vector2? at = null)
@@ -485,17 +464,7 @@ public static class ClientEffects
                     }
                     nextHideAt = 0f;
                     break;
-                case Kind.NovaGuide:
-                    {
-                        var id = reader.ReadByte();
-                        var body = NetHelpers.ReadVector2(reader);
-                        var angle = reader.ReadSingle();
-                        var locked = reader.ReadBoolean();
-                        var color = reader.ReadByte();
-                        ShowGuide(id, body, angle, locked, color);
-                        break;
-                    }
-                case Kind.NovaBeam:
+                case Kind.Beam:
                     {
                         var id = reader.ReadByte();
                         var from = NetHelpers.ReadVector2(reader);
@@ -503,9 +472,6 @@ public static class ClientEffects
                         Shake(0.6f, 0.5f);
                         break;
                     }
-                case Kind.NovaClear:
-                    Clear(reader.ReadByte());
-                    break;
                 case Kind.Sound:
                     {
                         var sound = (SoundKind)reader.ReadByte();
@@ -660,13 +626,13 @@ public static class ClientEffects
         }
         if (!GameStates.IsInGame)
         {
-            if (running.Count > 0 || runningHud.Count > 0 || guides.Count > 0 || beams.Count > 0) ClearWorld(true);
+            if (running.Count > 0 || runningHud.Count > 0 || beams.Count > 0) ClearWorld(true);
             return;
         }
         if (MeetingHud.Instance != null || GameStates.Intro) quietUntil = Time.time + 4f;
         if (MeetingHud.Instance != null)
         {
-            if (running.Count > 0 || guides.Count > 0 || beams.Count > 0) ClearWorld(false);
+            if (running.Count > 0 || beams.Count > 0) ClearWorld(false);
         }
         else
         {
@@ -689,7 +655,6 @@ public static class ClientEffects
 
     static void ClearWorld(bool hudToo)
     {
-        foreach (var id in new List<byte>(guides.Keys)) Clear(id);
         foreach (var id in new List<byte>(beams.Keys)) Clear(id);
         running.Clear();
         foreach (var c in charges.Values) { c.dead = true; StopChargeSound(c); }
@@ -823,75 +788,10 @@ public static class ClientEffects
         });
     }
 
-    // ===== ノヴァ =====
-
-    // 照準: 体から向きへ流れる点線と、その先で回る輪と星。向きを決めると赤くなって速く点滅する
-    sealed class Guide
-    {
-        public readonly List<SpriteRenderer> parts = new();
-        public Vector2 body;
-        public float angle;
-        public bool locked;
-        public Color color;
-        public bool dead;
-    }
-
-    const int GuideDots = 6;
-
-    static void ShowGuide(byte id, Vector2 body, float angle, bool locked, int colorId)
-    {
-        if (!guides.TryGetValue(id, out var g))
-        {
-            g = new Guide();
-            for (var i = 0; i < GuideDots; i++) g.parts.Add(Make(Circle, Color.white));
-            g.parts.Add(Make(Ring, Color.white));
-            g.parts.Add(Make(Star, Color.white));
-            guides[id] = g;
-            var started = Time.time;
-            running.Add(() =>
-            {
-                if (g.dead) return false;
-                var t = Time.time - started;
-                var dir = Dir(g.angle);
-                var tint = g.locked ? new Color(1f, 0.15f, 0.25f) : g.color;
-                for (var i = 0; i < GuideDots; i++)
-                {
-                    var k = (i + 1f) / (GuideDots + 1);
-                    var flow = Mathf.Repeat(t * (g.locked ? 3f : 1.2f) - k, 1f);
-                    var dot = g.parts[i];
-                    Set(dot, g.body + dir * (0.4f + 1.6f * k));
-                    dot.transform.localScale = Vector3.one * Mathf.Lerp(0.08f, 0.16f, flow);
-                    dot.color = A(tint, Mathf.Lerp(0.35f, 0.9f, flow));
-                }
-                var at = g.body + dir * 2.3f;
-                var pulse = g.locked ? Mathf.Abs(Mathf.Sin(t * 14f)) : 0.5f + 0.5f * Mathf.Sin(t * 4f);
-                var reticle = g.parts[GuideDots];
-                Set(reticle, at);
-                reticle.transform.localScale = Vector3.one * Mathf.Lerp(0.55f, 0.7f, pulse);
-                reticle.transform.rotation = Quaternion.Euler(0f, 0f, t * (g.locked ? 360f : 90f));
-                reticle.color = A(tint, Mathf.Lerp(0.6f, 1f, pulse));
-                var core = g.parts[GuideDots + 1];
-                Set(core, at, -0.01f);
-                core.transform.localScale = Vector3.one * Mathf.Lerp(0.3f, 0.42f, pulse);
-                core.transform.rotation = Quaternion.Euler(0f, 0f, -t * 60f);
-                core.color = Color.Lerp(tint, Color.white, 0.5f);
-                return true;
-            });
-        }
-        g.body = body;
-        g.angle = angle;
-        g.locked = locked;
-        g.color = Palette.PlayerColors[Mathf.Clamp(colorId, 0, Palette.PlayerColors.Length - 1)];
-    }
+    // ===== ビーム (波動砲) =====
 
     static void Clear(byte id)
     {
-        if (guides.TryGetValue(id, out var g))
-        {
-            g.dead = true;
-            foreach (var p in g.parts) Release(p);
-            guides.Remove(id);
-        }
         if (beams.TryGetValue(id, out var list))
         {
             foreach (var p in list) Release(p);
@@ -2038,7 +1938,7 @@ public static class ClientEffects
                 var from = PlayerControl.LocalPlayer.GetTruePosition();
                 var d = Vector2.Distance(from, at.Value);
                 volume *= Mathf.Clamp01(1.2f - d / (sound == SoundKind.SniperShot ? 35f : 10f));
-                if (d > 0.3f && sound is not (SoundKind.NovaCharge or SoundKind.NovaAlarm or SoundKind.NovaFire or SoundKind.ChargeLoop)
+                if (d > 0.3f && sound is not (SoundKind.BeamFire or SoundKind.ChargeLoop)
                     && PhysicsHelpers.AnyNonTriggersBetween(from, (at.Value - from) / d, d, Constants.ShipOnlyMask))
                     volume *= 0.3f;
             }
@@ -2056,9 +1956,7 @@ public static class ClientEffects
     {
         var length = sound switch
         {
-            SoundKind.NovaCharge => 1.3f,
-            SoundKind.NovaAlarm => 0.24f,
-            SoundKind.NovaFire => 1.5f,
+            SoundKind.BeamFire => 1.5f,
             SoundKind.Heartbeat => 0.6f,
             SoundKind.MeetingSting => 1.6f,
             SoundKind.Boom => 1.4f,
@@ -2089,16 +1987,6 @@ public static class ClientEffects
             float s;
             switch (sound)
             {
-                case SoundKind.NovaCharge:
-                    {
-                        var f = Mathf.Lerp(180f, 980f, k * k);
-                        p1 += f / Rate;
-                        p2 += f * 1.5f / Rate;
-                        var env = Mathf.Clamp01(t / 0.08f) * Mathf.Clamp01((length - t) / 0.15f);
-                        var wobble = 0.75f + 0.25f * Sin(t * Mathf.Lerp(12f, 40f, k));
-                        s = (Sin(p1) * 0.6f + Sin(p2) * 0.25f) * env * wobble * 0.5f;
-                        break;
-                    }
                 case SoundKind.SniperEquip:
                     {
                         // ボルトを引いて戻す、金属の 2 回のカチャッ
@@ -2147,15 +2035,7 @@ public static class ClientEffects
                         s = (Sin(p1) * 0.45f + Sin(p2) * 0.3f + Sin(p3) * 0.15f + Sin(p4) * 0.06f) * buzz * 0.45f;
                         break;
                     }
-                case SoundKind.NovaAlarm:
-                    {
-                        p1 += (t < length * 0.5f ? 1480f : 1110f) / Rate;
-                        var tri = Mathf.PingPong(p1 * 2f, 1f) * 2f - 1f;
-                        var local = t % (length * 0.5f);
-                        s = tri * Mathf.Clamp01(local / 0.005f) * Mathf.Clamp01((length * 0.5f - local) / 0.02f) * 0.35f;
-                        break;
-                    }
-                case SoundKind.NovaFire:
+                case SoundKind.BeamFire:
                     {
                         p1 += Mathf.Lerp(150f, 38f, Mathf.Sqrt(k)) / Rate;
                         p2 += Mathf.Lerp(2400f, 500f, Mathf.Clamp01(t / 0.18f)) / Rate;

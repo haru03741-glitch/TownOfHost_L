@@ -12,7 +12,7 @@ namespace TownOfHostL.Roles.Impostor;
 
 public sealed class Destroyer : RoleBase, IImpostor
 {
-    // 役職の元: Nebula on the Ship (TownOfHost-hamo 経由)
+    // 役職の元: Nebula on the Ship (Dolly1016/Nebula-Public, GPL-3.0・TownOfHost-hamo 経由)
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
             typeof(Destroyer),
