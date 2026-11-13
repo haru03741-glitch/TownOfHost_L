@@ -29,7 +29,7 @@ namespace TownOfHostL
                         (map == MapNames.Airship && (Options.DisableDevices_Airship?.GetBool() ?? false)) ||
                         (map == MapNames.Fungle && (Options.DisableDevices_Fungle?.GetBool() ?? false));
 
-                    return byMap || Core.Modes.ModeCatalog.Current.DisablesDevices || IsPoorEnableSafe();
+                    return byMap || Core.Modes.ModeCatalog.Current.DisablesDevices || IsPoorEnableSafe() || Modules.DeviceTimer.IsActive;
                 }
                 catch (Exception ex)
                 {
@@ -120,8 +120,6 @@ namespace TownOfHostL
 
                 try
                 {
-                    if (pc == PlayerControl.LocalPlayer/*pc.IsModClient()*/) continue;
-
                     bool doComms = false;
                     Vector2 PlayerPos = pc.GetTruePosition();
                     bool ignore =
@@ -131,8 +129,13 @@ namespace TownOfHostL
                         ((Options.DisableDevicesIgnoreCrewmates?.GetBool() ?? false) && pc.Is(CustomRoleTypes.Crewmate)) ||
                         ((Options.DisableDevicesIgnoreAfterAnyoneDied?.GetBool() ?? false) && GameStates.AlreadyDied);
 
+                    // 使える時間の上限 (ホストも数える。ホストの画面は DeviceTimer が閉じる)
+                    bool timeUp = !ignore && Modules.DeviceTimer.Track(pc, PlayerPos);
+                    if (pc == PlayerControl.LocalPlayer/*pc.IsModClient()*/) continue;
+
                     if (pc.IsAlive() && !Utils.IsActive(SystemTypes.Comms))
                     {
+                        doComms |= timeUp;
                         switch ((MapNames)Main.NormalOptions.MapId)
                         {
                             case MapNames.Skeld:

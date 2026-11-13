@@ -1011,29 +1011,6 @@ public static partial class Utils
         return sizeTag ? $"<size={sizePer}%>{text}</size>": text;
     }
 
-    public static void ShowHelp()
-    {
-        string formatTag = $"<size=70%><line-height=1.6pic>";
-        StringBuilder sb = new();
-
-        sb.Append(formatTag);
-        sb.Append(GetString("CommandList"));
-        sb.Append($"\n/winner - {GetString("Command.winner")}");
-        sb.Append($"\n/lastresult - {GetString("Command.lastresult")}");
-        sb.Append($"\n/rename - {GetString("Command.rename")}");
-        sb.Append($"\n/now - {GetString("Command.now")}");
-        sb.Append($"\n/id - {GetString("Command.id")}");
-        sb.Append($"\n/h now - {GetString("Command.h_now")}");
-        sb.Append($"\n/h roles {GetString("Command.h_roles")}");
-        sb.Append($"\n/h addons {GetString("Command.h_addons")}");
-        sb.Append($"\n/h modes {GetString("Command.h_modes")}");
-        sb.Append($"\n/dump [game] - {GetString("Command.dump")}");
-        sb.Append($"\n/brackout - {GetString("Command.killflashall")}");
-        sb.Append($"\n\n視界が暗転した参加者が発生した場合は、\nチャットコマンド[/brackout・/bo]か、左Control,K,Lを同時に押下してください");
-
-        SendMessageAutoSplit(sb.ToString(), true);
-    }
-
     private static void SendMessageAutoSplitAndClearSB(byte PlayerId, StringBuilder sb, string title = "", string formatTag = "")
     {
         bool showTitle = title != string.Empty;

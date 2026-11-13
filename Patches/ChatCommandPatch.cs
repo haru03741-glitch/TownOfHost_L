@@ -42,7 +42,8 @@ namespace TownOfHostL
             var canceled = false;
             var cancelVal = "";
             Main.isChatCommand = true;
-            Logger.Info(text, "SendChat");
+            // Webhook の URL には鍵が入っているのでログに残さない
+            Logger.Info(text.Contains("/webhook ", StringComparison.OrdinalIgnoreCase) ? "/webhook ***" : text, "SendChat");
 
             if (StripCmd(ref args)) text = string.Join(" ", args);
 
@@ -63,6 +64,7 @@ namespace TownOfHostL
                 return true;
             }
             if (AmongUsClient.Instance.AmHost && command == null) ChatPushOut.Record(PlayerControl.LocalPlayer, text);
+            if (AmongUsClient.Instance.AmHost && command == null) Modules.LobbyPoll.TryVote(PlayerControl.LocalPlayer, text);
 
             // 自分の画面だけで動くコマンド (ホストでなくても使える)
             var ctx = new ChatCommandContext(args, PlayerControl.LocalPlayer, __instance);
@@ -336,9 +338,14 @@ namespace TownOfHostL
         /// /kick 相手・/ban 相手: 相手は ID の数字か名前 (/ban は名前の完全一致だけ)。BAN は本編の BAN と同じく BanList に残る (ClientPatch の KickPlayer の前置き)。
         /// 返事はホストの画面にだけ出す。
         /// </summary>
-        internal static void KickCommand(string[] args, bool ban)
+        internal static void KickCommand(string[] args, bool ban, PlayerControl by = null)
         {
-            static void Reply(string text) => HudManager.Instance.Chat.AddChat(PlayerControl.LocalPlayer, text);
+            // モデレーターが打った時は本人にも返す
+            void Reply(string text)
+            {
+                HudManager.Instance.Chat.AddChat(PlayerControl.LocalPlayer, text);
+                if (by != null && !by.AmOwner) Utils.SendMessageAutoSplit(text, true, sendTo: by.PlayerId);
+            }
             if (args.Length < 2)
             {
                 Reply(GetString(ban ? "Message.BanUsage" : "Message.KickUsage"));
@@ -350,6 +357,12 @@ namespace TownOfHostL
             if (target == null || target.AmOwner)
             {
                 Reply(string.Format(GetString("Message.SelectRolesNoPlayer"), arg));
+                return;
+            }
+            // モデレーターは自分や他のモデレーターを追い出せない
+            if (by != null && !by.AmOwner && (target == by || Modules.Moderators.Is(target)))
+            {
+                Reply(GetString("Moderator.CannotKickModerator"));
                 return;
             }
             var client = target.GetClient();
@@ -505,6 +518,16 @@ namespace TownOfHostL
             if (pushedOut) ChatPushOut.PushOut();
 
             bool isNimrodMeeting = Nimrod.IsExecutionMeeting() || MadNimrod.IsExecutionMeeting();
+            // モデレーターはホストの一部のコマンドを使える (ホストが選んだ人なので、返事の間隔の制限はかけない)
+            if (command != null && command.ForModerator && command.Host != null && Modules.Moderators.Is(player))
+            {
+                Logger.Info($"モデレーター {player.Data?.PlayerName}: {text}", "Moderator");
+                try { command.Host(new ChatCommandContext(args, player, null)); }
+                catch (Exception ex) { Logger.Exception(ex, "Moderator"); }
+                return;
+            }
+            // ロビーの投票中は、数字だけの発言を票にする
+            if (Modules.LobbyPoll.TryVote(player, text)) return;
             // 返事をしない発言はここで終わる
             if (!isNimrodMeeting && !text.StartsWith("/")) return;
             if (!TryTakeReplySlot(player))
@@ -523,7 +546,13 @@ namespace TownOfHostL
                 }
             }
 
-            if (command?.Remote == null) return;
+            if (command == null) return;
+            if (command.Remote == null) return;
+            if (command.IsRestricted)
+            {
+                Utils.SendMessageAutoSplit(GetString("Message.CommandRestricted"), true, sendTo: player.PlayerId);
+                return;
+            }
             if (pushedOut) Utils.SendMessageAutoSplit(GetString("Message.UseCmdToHide"), true, sendTo: player.PlayerId);
             command.Remote(new ChatCommandContext(args, player, null));
         }

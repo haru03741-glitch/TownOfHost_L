@@ -34,6 +34,7 @@
 		<Compile Remove="tools/**" />
 		<EmbeddedResource Include=".\Resources\*.png" />
 		<EmbeddedResource Include=".\Resources\string.csv" />
+		<EmbeddedResource Include=".\Resources\TOHLWatchdog.ps1" LogicalName="TownOfHostL.Resources.TOHLWatchdog.ps1" />
 	</ItemGroup>
 
 	<ItemGroup>

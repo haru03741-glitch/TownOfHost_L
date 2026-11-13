@@ -14,6 +14,7 @@ namespace TownOfHostL
         private static ClientActionItem OpenLogFolder;
         private static ClientActionItem IsMuteLobbyBGM;
         private static ClientActionItem OnlyTohlLobbies;
+        private static ClientActionItem CrashWatchdog;
 
         public static void Postfix(OptionsMenuBehaviour __instance)
         {
@@ -49,6 +50,10 @@ namespace TownOfHostL
             if (OnlyTohlLobbies == null || OnlyTohlLobbies.ToggleButton == null)
             {
                 OnlyTohlLobbies = ClientOptionItem.Create("OnlyTohlLobbies", Main.OnlyTohlLobbies, __instance);
+            }
+            if (Modules.Watchdog.IsSupported && (CrashWatchdog == null || CrashWatchdog.ToggleButton == null))
+            {
+                CrashWatchdog = ClientOptionItem.Create("CrashWatchdog", Main.CrashWatchdog, __instance);
             }
 
             if (ModUnloaderScreen.Popup == null)

@@ -50,6 +50,9 @@ public static class ModUnloaderScreen
             ClientActionItem.ModOptionsButton.gameObject.SetActive(false);
             Logger.Info("ModをUnloadします", nameof(ModUnloaderScreen));
             TownOfHostL.Core.VanillaHideAndSeek.UnpatchForUnload();
+            TownOfHostL.Modules.Streaming.StreamHub.ShutdownForUnload();
+            // 外した後は番犬を扱えないので、ここで止める
+            TownOfHostL.Modules.Watchdog.OnGameQuit("unload");
             Main.Instance.Unload();
         }));
     }

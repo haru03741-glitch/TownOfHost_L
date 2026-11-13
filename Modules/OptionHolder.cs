@@ -838,12 +838,18 @@ public static partial class Options
         // 生存者の切断で自動廃村
         Modules.AutoAbort.SetupCustomOption();
         Modules.AutoProgress.SetupCustomOption();
+        Modules.AutoRehost.SetupCustomOption();
+        Modules.Streaming.Audience.SetupCustomOption();
         Modules.AfkDetector.SetupCustomOption();
         Modules.JoinGuard.SetupCustomOption();
         Modules.MeetingExtras.SetupCustomOption();
+        Modules.DeviceTimer.SetupCustomOption();
+        Modules.VentLimit.SetupCustomOption();
         // 耳打ち・荒らしの書き込みのキック
         Modules.Whisper.SetupCustomOption();
         Modules.ChatGuard.SetupCustomOption();
+        // 他の人のコマンドを個別に止める
+        ChatCommandTable.SetupCustomOption();
 
         TextOptionItem.Create("Head.GameMode", TabGroup.ModMainSettings).SetColor(Color.yellow).SetGameMode(CustomGameMode.Standard);
         // シンクロカラーモード

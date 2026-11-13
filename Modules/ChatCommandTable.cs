@@ -46,8 +46,25 @@ public sealed class ChatCommand
     public bool Hidden;
     /// <summary>引数の書き方 (翻訳のキー)。チャット欄で名前の後ろに薄く出す</summary>
     public string Usage;
+    /// <summary>モデレーター (Modules/Moderators) が送った時も Host の処理を行う。返事はホストの画面とモデレーター本人へ出る</summary>
+    public bool ForModerator;
+    /// <summary>ホストの設定で、他の人 (Remote) に使わせないようにできる</summary>
+    public bool Restrictable;
+    /// <summary>Restrictable の時の「使わせない」設定</summary>
+    public OptionItem RestrictOption;
     public ChatCommand(params string[] names) => Names = names;
+    /// <summary>他の人がこのコマンドを使えないよう、ホストが止めているか</summary>
+    public bool IsRestricted => RestrictOption != null && RestrictOption.GetBool();
     public string UsageText => Usage == null ? "" : GetString(Usage);
+    /// <summary>/help の一覧に出す説明 (翻訳のキー CmdHelp.名前)</summary>
+    public string HelpText
+    {
+        get
+        {
+            var key = "CmdHelp." + Names[0].TrimStart('/');
+            return Translator.HasString(key) ? GetString(key) : "";
+        }
+    }
 }
 
 /// <summary>チャットコマンドの登録表。名前は大文字小文字を区別しない。</summary>
@@ -57,6 +74,23 @@ public static class ChatCommandTable
     private static readonly Dictionary<string, ChatCommand> byName = BuildMap();
 
     public static ChatCommand Find(string name) => name != null && byName.TryGetValue(name, out var cmd) ? cmd : null;
+
+    /// <summary>他の人のコマンドを個別に止める設定 (見出し 1 つと、Restrictable なコマンド 1 つずつ)</summary>
+    public static void SetupCustomOption()
+    {
+        var head = StringOptionItem.Create("RestrictGuestCommands", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
+            .SetColor(Palette.CrewmateBlue)
+            .SetGameMode(CustomGameMode.All);
+        foreach (var cmd in All)
+        {
+            if (!cmd.Restrictable) continue;
+            var label = string.Join(" ", cmd.Names);
+            cmd.RestrictOption = StringOptionItem.Create("RestrictCommand." + cmd.Names[0].TrimStart('/'), new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
+                .SetParent(head)
+                .SetOptionName(() => string.Format(GetString("RestrictCommand"), label))
+                .SetGameMode(CustomGameMode.All);
+        }
+    }
 
     /// <summary>
     /// 打ちかけの名前 (/ から空白の前まで) に合う、今の自分が使えるコマンド。同じ名前があればそれ、無ければ表の順で前方が一致する最初の名前。
@@ -101,17 +135,30 @@ public static class ChatCommandTable
         new("/sr", "/setrole") { Usage = "CommandUsage.SelectRoles", Host = c => ChatCommands.SelectRolesCommand(c.Args) },
         new("/id", "/ids")
         {
+            Restrictable = true,
             Host = _ => HudManager.Instance.Chat.AddChat(PlayerControl.LocalPlayer, PlayerIdList()),
             Remote = c => Utils.SendMessageAutoSplit(PlayerIdList(), true, sendTo: c.Player.PlayerId),
         },
-        new("/start") { Usage = "CommandUsage.Start", Host = StartCommand },
-        new("/end", "/abort") { Host = _ => EndAsDraw() },
-        new("/mt", "/endmeeting") { Host = _ => { if (GameStates.IsMeeting) MeetingHud.Instance.RpcClose(); } },
-        new("/kick") { Usage = "CommandUsage.Kick", Host = c => ChatCommands.KickCommand(c.Args, ban: false) },
-        new("/ban") { Usage = "CommandUsage.Ban", Host = c => ChatCommands.KickCommand(c.Args, ban: true) },
+        new("/start") { Usage = "CommandUsage.Start", ForModerator = true, Host = StartCommand },
+        new("/end", "/abort") { ForModerator = true, Host = _ => EndAsDraw() },
+        new("/mt", "/endmeeting") { ForModerator = true, Host = _ => { if (GameStates.IsMeeting) MeetingHud.Instance.RpcClose(); } },
+        new("/kick") { Usage = "CommandUsage.Kick", ForModerator = true, Host = c => ChatCommands.KickCommand(c.Args, ban: false, c.Player) },
+        new("/ban") { Usage = "CommandUsage.Ban", ForModerator = true, Host = c => ChatCommands.KickCommand(c.Args, ban: true, c.Player) },
         // 前の試合に居た人の再入室: 見つけた人を一括キック / このロビーだけ許す
-        new("/kp", "/kickprevious") { Host = _ => Modules.JoinGuard.KickDetected() },
-        new("/aj", "/allowjoin") { Host = _ => Modules.JoinGuard.AllowThisLobby() },
+        new("/kp", "/kickprevious") { ForModerator = true, Host = _ => Modules.JoinGuard.KickDetected() },
+        new("/aj", "/allowjoin") { ForModerator = true, Host = _ => Modules.JoinGuard.AllowThisLobby() },
+        // 試合の結果を送る Discord の Webhook (URL・on・off・test)
+        new("/webhook") { Usage = "CommandUsage.Webhook", Local = Modules.DiscordWebhook.Command },
+        // 配信の YouTube のコメントを読む (URL・stop) と、視聴者の干渉の管理
+        new("/yt", "/youtube") { Usage = "CommandUsage.YouTube", Local = Modules.Streaming.Audience.YouTubeCommand },
+        new("/audience") { Usage = "CommandUsage.Audience", Local = Modules.Streaming.Audience.AudienceCommand },
+        new("/mod", "/moderator") { Usage = "CommandUsage.PlayerId", Host = Modules.Moderators.Command },
+        // 設定を名前で探して変える (ロビーだけ)
+        new("/cs", "/changesetting") { Usage = "CommandUsage.ChangeSetting", ForModerator = true, Host = Modules.SettingCommand.Command },
+        // ロビーの投票: 自由な質問 / プリセット / 打ち切り
+        new("/poll") { Usage = "CommandUsage.Poll", ForModerator = true, Host = Modules.LobbyPoll.PollCommand },
+        new("/pv", "/presetvote") { ForModerator = true, Host = c => Modules.LobbyPoll.StartPresetVote(c.Player) },
+        new("/pe", "/pollend") { ForModerator = true, Host = _ => Modules.LobbyPoll.Finish() },
         new("/offhat") { Usage = "CommandUsage.OffSkin", Host = c => SkinControle.ClearCommand(c, true, false, false, false) },
         new("/offskin") { Usage = "CommandUsage.OffSkin", Host = c => SkinControle.ClearCommand(c, false, true, false, false) },
         new("/offvisor") { Usage = "CommandUsage.OffSkin", Host = c => SkinControle.ClearCommand(c, false, false, true, false) },
@@ -123,11 +170,13 @@ public static class ChatCommandTable
         },
         new("/l", "/lastresult")
         {
+            Restrictable = true,
             Host = _ => Utils.ShowLastResult(),
             Remote = c => Utils.ShowLastResult(c.Player.PlayerId),
         },
         new("/kl", "/killlog")
         {
+            Restrictable = true,
             Host = _ => Utils.ShowKillLog(),
             Remote = c => Utils.ShowKillLog(c.Player.PlayerId),
         },
@@ -135,6 +184,7 @@ public static class ChatCommandTable
         new("/rn", "/rename", "/name") { Usage = "CommandUsage.Rename", Host = c => Main.nickName = c.Arg(1) },
         new("/r", "/hr")
         {
+            Restrictable = true,
             Usage = "CommandUsage.Role",
             Host = c => ShowRoleInfo(Words(c), 1, byte.MaxValue, ShowActiveRoles),
             Remote = c => ShowRoleInfo(Words(c), 1, c.Player.PlayerId, ShowActiveRoles),
@@ -149,6 +199,7 @@ public static class ChatCommandTable
         },
         new("/n", "/now")
         {
+            Restrictable = true,
             Usage = "CommandUsage.Now",
             Host = c => ShowNow(c, byte.MaxValue),
             Remote = c => ShowNow(c, c.Player.PlayerId),
@@ -158,11 +209,14 @@ public static class ChatCommandTable
         new("/dis") { Host = ForceDisconnectEnd },
         new("/h", "/help")
         {
+            Restrictable = true,
             Usage = "CommandUsage.Help",
             Host = c => ShowHelp(c, byte.MaxValue, showGeneralHelp: true),
             Remote = c => ShowHelp(c, c.Player.PlayerId, showGeneralHelp: false),
         },
-        new("/m", "/myrole") { Host = ShowMyRole, Remote = ShowMyRole },
+        // 自分の戦績 (ホストの手元に記録した分)
+        new("/me", "/stats") { Restrictable = true, Host = Modules.PlayerStats.Command, Remote = Modules.PlayerStats.Command },
+        new("/m", "/myrole") { Restrictable = true, Host = ShowMyRole, Remote = ShowMyRole },
         // マッドマジックの変身先を選ぶ (会議で自投票した後)
         new("/mm")
         {
@@ -171,6 +225,7 @@ public static class ChatCommandTable
         },
         new("/t", "/template")
         {
+            Restrictable = true,
             Usage = "CommandUsage.Template",
             Host = c =>
             {
@@ -199,10 +254,15 @@ public static class ChatCommandTable
         new("/say")
         {
             Usage = "CommandUsage.Say",
+            ForModerator = true,
             Host = c =>
             {
-                if (c.Args.Length > 1)
-                    Utils.SendMessageAutoSplit(c.Args.Skip(1).Join(delimiter: " "), true, $"<color=#ff0000>{GetString("MessageFromTheHost")}</color>");
+                if (c.Args.Length <= 1) return;
+                // モデレーターが打った時は、その人の名前を題にする
+                var title = c.Player == null || c.Player.AmOwner
+                    ? $"<color=#ff0000>{GetString("MessageFromTheHost")}</color>"
+                    : $"<color=#ffaa00>{string.Format(GetString("MessageFromModerator"), c.Player.Data?.PlayerName)}</color>";
+                Utils.SendMessageAutoSplit(c.Args.Skip(1).Join(delimiter: " "), true, title);
             },
         },
         new("/exile")
@@ -215,14 +275,16 @@ public static class ChatCommandTable
             Usage = "CommandUsage.PlayerId",
             Host = c => { if (c.Args.Length > 1 && int.TryParse(c.Args[1], out int id)) Utils.GetPlayerById(id)?.RpcMurderPlayer(Utils.GetPlayerById(id)); },
         },
-        new("/vo", "/voice") { Host = HostVoice, Remote = RemoteVoice },
+        new("/vo", "/voice") { Restrictable = true, Host = HostVoice, Remote = RemoteVoice },
         new("/killFlash", "/kf")
         {
+            Restrictable = true,
             Host = c => Utils.SetKillFlashAfterDead(c.Player, true),
             Remote = c => Utils.SetKillFlashAfterDead(c.Player),
         },
         new("/ws", "/whisper")
         {
+            Restrictable = true,
             Usage = "CommandUsage.Whisper",
             Hidden = true,
             Host = Modules.Whisper.Command,
@@ -330,9 +392,43 @@ public static class ChatCommandTable
                 Utils.ShowActiveSettingsHelp(sendTo);
                 break;
             default:
-                if (showGeneralHelp) Utils.ShowHelp();
+                ShowCommandList(c.Player, showGeneralHelp);
                 break;
         }
+    }
+
+    /// <summary>
+    /// 打った人が使えるコマンドの一覧を、その人にだけ出す。表から作るので、足したコマンドもそのまま載る。
+    /// ホストは自分の手元で動く物、他の人はホストが止めていない物 (モデレーターはモデレーターの物も) を並べる
+    /// </summary>
+    private static void ShowCommandList(PlayerControl to, bool asHost)
+    {
+        if (to == null) return;
+        var moderator = !asHost && Modules.Moderators.Is(to);
+        var sb = new System.Text.StringBuilder(GetString("CommandList"));
+        void Add(ChatCommand cmd)
+        {
+            sb.Append('\n').Append(cmd.Names[0]);
+            if (cmd.Names.Length > 1) sb.Append(" (").Append(string.Join(" ", cmd.Names.Skip(1))).Append(')');
+            var usage = cmd.UsageText;
+            if (usage != "") sb.Append(' ').Append(usage);
+            var help = cmd.HelpText;
+            if (help != "") sb.Append(" - ").Append(help);
+        }
+        foreach (var cmd in All)
+        {
+            // 開発者だけのコマンドは、開発者にだけ見せる
+            if (cmd.Names[0] is "/dev" or "/log" && !DebugModeManager.AmDebugger) continue;
+            if (asHost ? cmd.Host != null || cmd.Local != null : cmd.Remote != null && !cmd.IsRestricted) Add(cmd);
+        }
+        if (moderator)
+        {
+            sb.Append("\n\n").Append(GetString("CommandList.Moderator"));
+            foreach (var cmd in All)
+                if (cmd.ForModerator && cmd.Host != null && cmd.Remote == null) Add(cmd);
+        }
+        if (asHost) sb.Append("\n\n").Append(GetString("CommandList.HostHint"));
+        Utils.SendMessageAutoSplit(sb.ToString(), true, sendTo: to.PlayerId);
     }
 
     private static void ForceWin(ChatCommandContext c)

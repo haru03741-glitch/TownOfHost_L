@@ -184,6 +184,7 @@ namespace TownOfHostL
                             ErrorText.Instance.NotHostFlag = true;
                             ErrorText.Instance.AddError(ErrorCode.NotHostUnload);
                             TownOfHostL.Core.VanillaHideAndSeek.UnpatchForUnload();
+                            TownOfHostL.Modules.Streaming.StreamHub.ShutdownForUnload();
                             Main.Instance?.Unload();
                         }
                     }
@@ -245,7 +246,8 @@ namespace TownOfHostL
             {
                 try
                 {
-                    SelectRandomMap();
+                    // 配信の視聴者のマップ投票で決めた時 (自動スタートの秒読みの頭で決める) は、ランダムマップで上書きしない
+                    if (!TownOfHostL.Modules.Streaming.MapVote.Decided) SelectRandomMap();
 
                     var invalidColor = Main.AllPlayerControls.Where(p => p.Data.DefaultOutfit.ColorId < 0 || Palette.PlayerColors.Length <= p.Data.DefaultOutfit.ColorId);
                     if (invalidColor.Any())
@@ -267,6 +269,10 @@ namespace TownOfHostL
                     }
 
                     RoleAssignManager.CheckRoleCount();
+
+                    // 配信の視聴者のマップ投票はランダムマップより優先する。止める検査を通った後で決める (止まった時に票だけ消えないように)。設定は下でまとめて送る
+                    TownOfHostL.Modules.Streaming.MapVote.ApplyAtGameStart();
+                    TownOfHostL.Modules.Streaming.MapVote.EndStart();
 
                     if (Main.NormalOptions != null)
                     {
@@ -323,6 +329,8 @@ namespace TownOfHostL
             {
                 try
                 {
+                    // 秒読みを取り消したら、自動スタートで決めたマップの投票の印も外す
+                    TownOfHostL.Modules.Streaming.MapVote.EndStart();
                     if (GameStates.IsCountDown)
                     {
                         if (Main.NormalOptions != null) Main.NormalOptions.KillCooldown = Options.DefaultKillCooldown;

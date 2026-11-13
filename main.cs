@@ -82,6 +82,8 @@ public partial class Main : BasePlugin
     public static ConfigEntry<bool> IsMuteLobbyBGM { get; private set; }
     public static ConfigEntry<bool> SleepAccountMenu { get; private set; }
     public static ConfigEntry<bool> OnlyTohlLobbies { get; private set; }
+    /// <summary>番犬 (Among Us が落ちた・固まった時に起動し直す外の見張り役) を動かすか</summary>
+    public static ConfigEntry<bool> CrashWatchdog { get; private set; }
     public static ConfigEntry<float> MessageWait { get; private set; }
     public static ConfigEntry<bool> KillFlashAfterDeadByHost { get; private set; }
 
@@ -94,6 +96,10 @@ public partial class Main : BasePlugin
     public static ConfigEntry<string> Preset5 { get; private set; }
     //Other Configs
     public static ConfigEntry<string> WebhookURL { get; private set; }
+    /// <summary>試合の結果を WebhookURL へ送るか</summary>
+    public static ConfigEntry<bool> WebhookSendResult { get; private set; }
+    /// <summary>コメントを読む YouTube の配信の URL (止めたら空)</summary>
+    public static ConfigEntry<string> YouTubeStreamUrl { get; private set; }
     public static ConfigEntry<string> BetaBuildURL { get; private set; }
     public static ConfigEntry<float> LastKillCooldown { get; private set; }
     public static ConfigEntry<float> LastShapeshifterCooldown { get; private set; }
@@ -159,6 +165,8 @@ public partial class Main : BasePlugin
             "Hide the account panel on the main menu until login finishes, so the menu can be used right after start-up.");
         OnlyTohlLobbies = Config.Bind("Client Options", "Only TOHL Lobbies", true,
             "Find Game lists only lobbies hosted with TOHL (official servers only). When off, TOHL lobbies are not listed.");
+        CrashWatchdog = Config.Bind("Client Options", "Crash Watchdog", false,
+            "Run a watchdog outside Among Us (Windows only) that relaunches the game when it crashes or freezes, and re-hosts the room.");
         DebugKeyInput = Config.Bind("Authentication", "Debug Key", "");
 
         Logger = BepInEx.Logging.Logger.CreateLogSource("TOH_L");
@@ -184,6 +192,9 @@ public partial class Main : BasePlugin
         Preset4 = Config.Bind("Preset Name Options", "Preset4", "Preset_4");
         Preset5 = Config.Bind("Preset Name Options", "Preset5", "Preset_5");
         WebhookURL = Config.Bind("Other", "WebhookURL", "none");
+        WebhookSendResult = Config.Bind("Other", "WebhookSendResult", false);
+        YouTubeStreamUrl = Config.Bind("Other", "YouTubeStreamUrl", "");
+        TownOfHostL.Modules.Streaming.StreamHub.BindConfig(Config);
         BetaBuildURL = Config.Bind("Other", "BetaBuildURL", "");
         MessageWait = Config.Bind("Other", "MessageWait", 0.5f);
         KillFlashAfterDeadByHost = Config.Bind("Other", "KillFlashAfterDeadByHost", false);
@@ -235,6 +246,12 @@ public partial class Main : BasePlugin
         TownOfHostL.Core.VanillaHideAndSeek.Init(this);
         // ホストの操作盤 (左下のボタンから開く)
         AddComponent<TownOfHostL.Modules.HostPanel>();
+        AddComponent<TownOfHostL.Modules.HostPanelButton>();
+        // 配信の重ね表示 (観客席・コメントの板・マップ投票)
+        AddComponent<TownOfHostL.Modules.Streaming.StreamOverlay>();
+        // 番犬の心拍と、終了の検知
+        TownOfHostL.Modules.Watchdog.Init();
+        AddComponent<TownOfHostL.Modules.Watchdog>();
         TownOfHostL.Core.Modes.PatchBundleSet.Init(Harmony);
         TownOfHostL.Core.Modes.PatchBundleSet.Apply(TownOfHostL.Core.Modes.ModeCatalog.Standard.LiveBundles);
         Application.quitting += new Action(Utils.SaveNowLog);

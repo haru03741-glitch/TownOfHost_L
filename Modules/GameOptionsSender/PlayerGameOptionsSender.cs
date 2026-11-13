@@ -148,6 +148,7 @@ namespace TownOfHostL.Modules
             foreach (var subRole in player.GetCustomSubRoles())
                 AddOnList.Get(subRole)?.ApplyGameOptions?.Invoke(opt);
             Blinder.ApplyGameOptionsByOther(player.PlayerId, opt);
+            Streaming.Audience.ApplyGameOptions(player.PlayerId, opt);
 
             if (Main.AllPlayerKillCooldown.TryGetValue(player.PlayerId, out var killCooldown))
             {

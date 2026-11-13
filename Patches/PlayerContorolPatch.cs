@@ -759,6 +759,9 @@ class CoEnterVentPatch
         {
             if (ModeCatalog.Current.BootsFromVents)
                 __instance.RpcBootFromVent(id);
+            // ベントの制限 (押し出す時も、ベントを能力のボタンにしている役職のために、役職の「ベントに入った」は起こす)
+            else if (RpcEnterVentPatch.Depth == 0)
+                Modules.VentLimit.OnEnterVent(__instance, id);
 
             // ホストが RpcEnterVent を呼んだ時は、その中で CoEnterVent も走る。役職へは RpcEnterVent の後置処理から 1 回だけ渡す
             if (RpcEnterVentPatch.Depth == 0)
@@ -809,6 +812,7 @@ class RpcEnterVentPatch
     public static void Postfix(PlayerPhysics __instance, [HarmonyArgument(0)] int id)
     {
         if (!AmongUsClient.Instance.AmHost) return;
+        Modules.VentLimit.OnEnterVent(__instance, id);
         CoEnterVentPatch.OnEnterVent(__instance, id);
     }
 }

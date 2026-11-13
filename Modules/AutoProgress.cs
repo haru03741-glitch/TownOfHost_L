@@ -32,6 +32,7 @@ public static class AutoProgress
         ReturnToLobbyDelay = IntegerOptionItem.Create("AutoReturnToLobbyDelay", new(3, 30, 1), 5, TabGroup.ModMainSettings, false).SetParent(ReturnToLobby)
             .SetValueFormat(OptionFormat.Seconds)
             .SetGameMode(CustomGameMode.All);
+        AutoRehost.SetupEveryGamesOption(ReturnToLobby);
         AutoStart = StringOptionItem.Create("AutoStartGame", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetColor(Color.cyan)
             .SetGameMode(CustomGameMode.All);
@@ -84,6 +85,7 @@ public static class AutoProgress
             return;
         }
         ClearText();
+        if (AutoRehost.DueAfterGame() && AutoRehost.RehostNow($"{AutoRehost.EveryGames.GetInt()} 試合ごとの作り直し")) return;
         TryNextGame(manager, generation, 1);
     }
 
@@ -164,6 +166,8 @@ public static class AutoProgress
             Logger.Info($"ロビーで {limit} 秒経ち {count} 人が揃ったので始める", "AutoStart");
             if (!GameStartManager.InstanceExists) return;
             var gsm = GameStartManager.Instance;
+            // 自動スタートは BeginGame を通らないので、配信のマップ投票はここで決めて送る
+            if (Streaming.MapVote.ApplyAtGameStart()) Streaming.MapVote.SyncSettings();
             gsm.countDownTimer = 5f;
             gsm.startState = GameStartManager.StartingStates.Countdown;
         }

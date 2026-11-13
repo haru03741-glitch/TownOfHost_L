@@ -41,6 +41,7 @@ class EndGamePatch
             KillLog = Modules.GameLog.LastText;
             if (AmongUsClient.Instance.AmHost) Modules.JoinGuard.OnGameEnd();
             Modules.MeetingExtras.OnGameEnd();
+            Modules.PlayerStats.OnGameEnd();
 
             if (Main.NormalOptions != null)
                 Main.NormalOptions.KillCooldown = Options.DefaultKillCooldown;
@@ -209,6 +210,7 @@ class SetEverythingUpPatch
             }
             LastWinsText = WinnerText.text;
             LastWinsText = LastWinsText.RemoveHtmlTags();
+            Modules.DiscordWebhook.SendResult();
 
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

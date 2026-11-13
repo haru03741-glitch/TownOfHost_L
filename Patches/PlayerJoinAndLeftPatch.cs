@@ -27,6 +27,7 @@ namespace TownOfHostL
 
                 Logger.Info($"{__instance?.GameId}に参加 (公式サーバー: {Modules.Net.OfficialServer.IsActive})", "OnGameJoined");
                 Main.playerVersion = new Dictionary<byte, PlayerVersion>();
+                try { AutoRehost.OnGameJoined(); } catch (Exception ex) { Logger.Warn($"AutoRehost.OnGameJoined failed: {ex.Message}", "OnGameJoined"); }
                 OnPlayerLeftPatch.ResetHandled();
                 try { RPC.RpcVersionCheck(); } catch { }
                 try { if (SoundManager.Instance != null) SoundManager.Instance.ChangeAmbienceVolume(DataManager.Settings.Audio.AmbienceVolume); } catch { }
@@ -73,6 +74,8 @@ namespace TownOfHostL
             try
             {
                 Logger.Info($"切断(理由:{reason}:{stringReason}, ping:{__instance?.Ping})", "Session");
+                try { AutoRehost.OnDisconnect(__instance, reason); }
+                catch (Exception ex) { Logger.Warn($"AutoRehost.OnDisconnect failed: {ex.Message}", "DisconnectInternalPatch"); }
 
                 // 終了の送信が失敗しても役職の後始末は必ず行う
                 try
