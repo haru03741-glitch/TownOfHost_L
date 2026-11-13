@@ -92,4 +92,10 @@ public enum RoleFlags : ulong
     DivinedAsKiller = 1UL << 37,
     /// <summary>インポスター陣営ではないが、本編のインポスターの組に入る (互いに仲間として見え、キルし合えない。エゴイスト)</summary>
     ImpostorTeammate = 1UL << 38,
+    /// <summary>停電・通信妨害を直せない (属性用。役職は RoleBase の IsClumsy で決める)</summary>
+    Clumsy = 1UL << 39,
+    /// <summary>アドミン・カメラ・バイタルなどの情報機器を使えない (属性用。役職は RoleBase の IsInfoPoor で決める)</summary>
+    InfoPoor = 1UL << 40,
+    /// <summary>投票で追放された時に誰かを道連れにする (属性用。役職は RoleBase の RevengesOnExile で決める)</summary>
+    RevengesOnExile = 1UL << 41,
 }

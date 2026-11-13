@@ -15,6 +15,7 @@ public static class Clumsy
         "Cl",
         setupOptions: SetupCustomOption,
         onAdd: Add,
+        flags: RoleFlags.Clumsy,
         chatCommand: "クラムシー",
         assignAtRandom: true);
 

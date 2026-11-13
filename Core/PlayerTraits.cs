@@ -12,17 +12,17 @@ public static class PlayerTraits
 {
     /// <summary>停電・通信妨害を直せない</summary>
     public static bool IsClumsy(PlayerControl pc)
-        => pc.Is(CustomRoles.Clumsy) || (pc.GetRoleClass()?.IsClumsy ?? false);
+        => (pc.GetRoleClass()?.IsClumsy ?? false) || Has(pc, RoleFlags.Clumsy);
 
     /// <summary>アドミン・カメラ・バイタルなどの情報機器を使えない</summary>
     public static bool IsInfoPoor(PlayerControl pc)
-        => pc != null && ((pc.GetRoleClass()?.IsInfoPoor ?? false) || pc.Is(CustomRoles.InfoPoor));
+        => pc != null && ((pc.GetRoleClass()?.IsInfoPoor ?? false) || Has(pc, RoleFlags.InfoPoor));
 
     /// <summary>投票で追放された時に誰かを道連れにする</summary>
     public static bool RevengesOnExile(PlayerControl pc)
         => (pc.Is(CustomRoles.SKMadmate) && Options.MadmateRevengeCrewmate.GetBool())
            || (pc.GetRoleClass()?.RevengesOnExile ?? false)
-           || pc.Is(CustomRoles.Revenger);
+           || Has(pc, RoleFlags.RevengesOnExile);
 
     /// <summary>妨害の修理の制限でマッドメイトとして扱う</summary>
     public static bool IsMadmateForSabotage(PlayerControl pc, RoleBase role)

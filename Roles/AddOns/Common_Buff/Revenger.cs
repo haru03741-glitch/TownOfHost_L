@@ -15,6 +15,7 @@ public static class Revenger
         "Ｒ",
         setupOptions: SetupCustomOption,
         onAdd: Add,
+        flags: RoleFlags.RevengesOnExile,
         chatCommand: "リベンジャー",
         assignAtRandom: true);
 

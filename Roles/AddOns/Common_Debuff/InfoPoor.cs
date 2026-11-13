@@ -15,6 +15,7 @@ public static class InfoPoor
         "Ip",
         setupOptions: SetupCustomOption,
         onAdd: Add,
+        flags: RoleFlags.InfoPoor,
         chatCommand: "インフォプアー",
         assignAtRandom: true);
 
