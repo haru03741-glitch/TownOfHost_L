@@ -756,7 +756,6 @@ class SelectRolesPatch
         }
         if (count <= 0) return null;
         List<PlayerControl> AssignedPlayers = new();
-        SetColorPatch.IsAntiGlitchDisabled = true;
         for (var i = 0; i < count; i++)
         {
             var player = players[rand.Next(0, players.Count)];
@@ -764,16 +763,7 @@ class SelectRolesPatch
             players.Remove(player);
             PlayerState.GetByPlayerId(player.PlayerId).SetMainRole(role, true);
             Logger.Info("役職設定:" + player?.Data?.PlayerName + " = " + role.ToString(), "AssignRoles");
-
-            if (ModeCatalog.IsHideAndSeekWithOwnRoles)
-            {
-                if (player.Is(CustomRoles.HASTroll))
-                    player.RpcSetColor(2);
-                else if (player.Is(CustomRoles.HASFox))
-                    player.RpcSetColor(3);
-            }
         }
-        SetColorPatch.IsAntiGlitchDisabled = false;
         return AssignedPlayers;
     }
 

@@ -49,9 +49,9 @@ public static class PlayerTraits
     /// <summary>他の役職の能力が「キル役」として扱う人 (インポスター・CountedAsKiller の第三陣営とクルー)</summary>
     public static bool IsCountedKiller(PlayerControl pc)
         => pc.GetCustomRole().IsImpostor() || pc.IsCountedNeutralKiller() || pc.IsCountedCrewKiller();
-    /// <summary>占い・霊媒の「キル役だけ」の設定で、キル役として数える (マッドシェリフ・グラージシェリフを含む)</summary>
+    /// <summary>占い・霊媒の「キル役だけ」の設定で、キル役として数える (RoleFlags.DivinedAsKiller の役職を含む)</summary>
     public static bool IsKillerForDivination(PlayerControl pc)
-        => IsCountedKiller(pc) || pc.Is(CustomRoles.MadSheriff) || pc.Is(CustomRoles.GrudgeSheriff);
+        => IsCountedKiller(pc) || pc.GetCustomRole().HasRoleFlag(RoleFlags.DivinedAsKiller);
 
     /// <summary>生きている間、他人のキルの光が見える (役職ごとの条件は IKillFlashSeeable で別に決める)</summary>
     public static bool SeesKillFlash(PlayerControl pc)

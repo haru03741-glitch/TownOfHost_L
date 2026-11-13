@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace TownOfHostL.Core.Modes;
@@ -42,6 +43,12 @@ public abstract class GameMode
     /// 本編の割り当ての代わりに走る。
     /// </summary>
     public virtual void SelectRoles() { }
+
+    /// <summary>
+    /// 試合後の結果の画面に勝者として出す人を、モードの決まりで決め直す。引き分け・勝者なしの時は呼ばれない。
+    /// 渡すのは勝者の ID・勝つ役職・勝てない人から組んだ一覧で、既定ではそのまま返す。
+    /// </summary>
+    public virtual List<PlayerControl> ResolveOutroWinners(List<PlayerControl> winners) => winners;
 
     /// <summary>ロビーの右上に出すモードの名前。null なら出さない。</summary>
     public virtual (string Key, Color Color)? Label => null;

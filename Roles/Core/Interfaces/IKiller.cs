@@ -48,6 +48,11 @@ public interface IKiller
     /// <param name="info">キル関係者情報</param>
     public void OnCheckMurderAsKiller(MurderInfo info) { }
     /// <summary>
+    /// キルのガード (役職に関わらないガード・相手の OnCheckMurderAsTarget・守護者) より前に、キルボタンをキル以外に使うかを決める。
+    /// false を返すとキルの判定をそこでやめる (ガードは働かない)。IsKiller の時だけ呼ばれる
+    /// </summary>
+    public bool OnCheckMurderBeforeGuards(MurderInfo info) => true;
+    /// <summary>
     /// キラーとしてのMurderPlayer処理
     /// </summary>
     /// <param name="info">キル関係者情報</param>

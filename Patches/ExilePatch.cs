@@ -166,7 +166,7 @@ namespace TownOfHostL
                         if (requireResetCam)
                             player?.ResetPlayerCam(1f);
                         // エクスキューショナー・弁護士・ジャッカルは SetDead の「誰かが死んだ」の知らせで動く
-                        Elder.DeadByRevenge(playerId);
+                        player?.GetRoleClass()?.OnAfterMeetingDeath(reason);
                     });
                     Main.AfterMeetingDeathPlayers.Clear();
                 }, 0.6f, "AfterMeetingDeathPlayers Task");

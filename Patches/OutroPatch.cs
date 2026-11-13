@@ -61,41 +61,7 @@ class EndGamePatch
             }
 
             if (CustomWinnerHolder.WinnerTeam != CustomWinner.Draw && CustomWinnerHolder.WinnerTeam != CustomWinner.None)
-            {
-                //HideAndSeek専用
-                if (ModeCatalog.IsHideAndSeekWithOwnRoles)
-                {
-                    winner = new();
-                    foreach (var pc in Main.AllPlayerControls)
-                    {
-                        var role = PlayerState.GetByPlayerId(pc.PlayerId).GetNowMainRole();
-                        if (role.GetCustomRoleTypes() == CustomRoleTypes.Impostor)
-                        {
-                            if (CustomWinnerHolder.WinnerTeam == CustomWinner.Impostor)
-                                winner.Add(pc);
-                        }
-                        else if (role.GetCustomRoleTypes() == CustomRoleTypes.Crewmate)
-                        {
-                            if (CustomWinnerHolder.WinnerTeam == CustomWinner.Crewmate)
-                                winner.Add(pc);
-                        }
-                        else if (role == CustomRoles.HASTroll && pc.Data.IsDead)
-                        {
-                            //トロールが殺されていれば単独勝ち
-                            winner = new()
-                        {
-                            pc
-                        };
-                            break;
-                        }
-                        else if (role == CustomRoles.HASFox && CustomWinnerHolder.WinnerTeam != CustomWinner.HASTroll && !pc.Data.IsDead)
-                        {
-                            winner.Add(pc);
-                            CustomWinnerHolder.AdditionalWinnerRoles.Add(CustomRoles.HASFox);
-                        }
-                    }
-                }
-            }
+                winner = ModeCatalog.Current.ResolveOutroWinners(winner);
 
             Main.winnerList = new();
             foreach (var pc in winner)

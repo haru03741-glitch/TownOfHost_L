@@ -22,7 +22,7 @@ static class HideAndSeekRoleAssign
         RpcSetRoleReplacer.Release(); //保存していたSetRoleRpcを一気に書く
 
         // GetRoleTypePlayers が本編の役職から既定の役職 (Impostor / Crewmate) を入れるので、色分けはその後に行う。
-        // 狐と荒らしの色は、この後の割り当ての中で塗り直す
+        // 狐と荒らしの色は、この後の割り当てで塗り直す
         var roleTypePlayers = SelectRolesPatch.GetRoleTypePlayers();
         SetColorPatch.IsAntiGlitchDisabled = true;
         foreach (var pc in Main.AllPlayerControls)
@@ -36,8 +36,9 @@ static class HideAndSeekRoleAssign
         //役職設定処理
         if (roleTypePlayers.TryGetValue(RoleTypes.Crewmate, out var list))
         {
-            SelectRolesPatch.AssignCustomRolesFromList(CustomRoles.HASFox, list);
-            SelectRolesPatch.AssignCustomRolesFromList(CustomRoles.HASTroll, list);
+            // 色で陣営を見分ける (荒らしは緑・狐は桃)
+            SelectRolesPatch.AssignCustomRolesFromList(CustomRoles.HASFox, list)?.ForEach(pc => pc.RpcSetColor(3));
+            SelectRolesPatch.AssignCustomRolesFromList(CustomRoles.HASTroll, list)?.ForEach(pc => pc.RpcSetColor(2));
         }
         foreach (var pair in PlayerState.AllPlayerStates)
         {

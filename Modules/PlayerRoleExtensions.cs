@@ -194,8 +194,8 @@ public static class PlayerRoleExtensions
     {
         var plrole = player.GetCustomRole();
         var tgrole = target.GetCustomRole();
-        if (plrole.IsImpostor() || plrole is CustomRoles.Egoist)
-            return tgrole.IsImpostor() || tgrole is CustomRoles.Egoist;
+        if (plrole.IsImpostor() || plrole.JoinsImpostorTeam())
+            return tgrole.IsImpostor() || tgrole.JoinsImpostorTeam();
         if (player.Is(CountTypes.Jackal)) return target.Is(CountTypes.Jackal);
         return false;
     }
@@ -233,7 +233,7 @@ public static class PlayerRoleExtensions
     {
         var playerrole = player.GetCustomRole();
         if (IsOneclick && !player.AmOwner) return player.TryGetKilltarget(true);
-        if (player.AmOwner && GameStates.IsInTask && !GameStates.Intro && !(playerrole.IsImpostor() || playerrole is CustomRoles.Egoist)
+        if (player.AmOwner && GameStates.IsInTask && !GameStates.Intro && !(playerrole.IsImpostor() || playerrole.JoinsImpostorTeam())
             && (playerrole.GetRoleInfo()?.IsDesyncImpostor ?? false) && !player.Data.IsDead)
             return player.TryGetKilltarget();
         var players = player.GetPlayersInAbilityRangeSorted(false);

@@ -237,7 +237,7 @@ class BeginCrewmatePatch
                 __instance.BackgroundBar.material.color = Palette.ImpostorRed;
                 break;
 
-            case var r when r.IsCountedCrewKiller():
+            case var r when r.IsCrewmate() && r.GetRoleInfo()?.IntroAsCrewmate == true:
                 __instance.BackgroundBar.material.color = Palette.CrewmateBlue;
                 __instance.ImpostorText.gameObject.SetActive(true);
                 __instance.ImpostorText.text = numImpostors == 1
@@ -339,8 +339,7 @@ class BeginImpostorPatch
 {
     public static bool Prefix(IntroCutscene __instance, ref Il2CppSystem.Collections.Generic.List<PlayerControl> yourTeam)
     {
-        if (PlayerControl.LocalPlayer.IsCountedCrewKiller()
-            || PlayerControl.LocalPlayer.Is(CustomRoles.jO))
+        if (PlayerControl.LocalPlayer.GetCustomRole().GetRoleInfo()?.IntroAsCrewmate == true)
         {
             yourTeam = new Il2CppSystem.Collections.Generic.List<PlayerControl>();
             yourTeam.Add(PlayerControl.LocalPlayer);

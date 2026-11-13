@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using TownOfHostL.Roles.Core;
 
 namespace TownOfHostL.Core.Modes;
 
@@ -85,6 +86,42 @@ public sealed class HideAndSeekMode : GameMode
     }
 
     public override void SelectRoles() => HideAndSeekRoleAssign.Assign();
+
+    /// <summary>
+    /// 専用の役職では、陣営の勝ちに加えて、殺された荒らしの単独勝ちと、荒らしが勝たずに生き残った狐の追加勝利を見る。
+    /// 人を順に見るので、荒らしより前に見た狐は勝つ役職に足されたまま残る
+    /// </summary>
+    public override List<PlayerControl> ResolveOutroWinners(List<PlayerControl> winners)
+    {
+        if (UsesStandardRoles) return winners;
+        winners = new();
+        foreach (var pc in Main.AllPlayerControls)
+        {
+            var role = PlayerState.GetByPlayerId(pc.PlayerId).GetNowMainRole();
+            if (role.GetCustomRoleTypes() == CustomRoleTypes.Impostor)
+            {
+                if (CustomWinnerHolder.WinnerTeam == CustomWinner.Impostor)
+                    winners.Add(pc);
+            }
+            else if (role.GetCustomRoleTypes() == CustomRoleTypes.Crewmate)
+            {
+                if (CustomWinnerHolder.WinnerTeam == CustomWinner.Crewmate)
+                    winners.Add(pc);
+            }
+            else if (role == CustomRoles.HASTroll && pc.Data.IsDead)
+            {
+                // 荒らしが殺されていれば単独勝ち
+                winners = new() { pc };
+                break;
+            }
+            else if (role == CustomRoles.HASFox && CustomWinnerHolder.WinnerTeam != CustomWinner.HASTroll && !pc.Data.IsDead)
+            {
+                winners.Add(pc);
+                CustomWinnerHolder.AdditionalWinnerRoles.Add(CustomRoles.HASFox);
+            }
+        }
+        return winners;
+    }
 
     public override (string Key, Color Color)? Label => UsesStandardRoles ? ("StandardHAS", Color.yellow) : ("HideAndSeek", Color.red);
 }

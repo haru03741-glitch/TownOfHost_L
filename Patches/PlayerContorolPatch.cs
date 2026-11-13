@@ -30,8 +30,9 @@ class CheckProtectPatch
         // CNO (客の手元の一覧に残る偽のプレイヤー) は Data がホストの物なので、守るとホストを守ったことになる
         if (Core.CustomNetObject.Is(target) || Core.CustomNetObject.Is(__instance)) return false;
         Logger.Info("CheckProtect発生: " + __instance.GetNameWithRole() + "=>" + target.GetNameWithRole(), "CheckProtect");
-        if (__instance.IsCountedCrewKiller()
-            || __instance.Is(CustomRoles.MadSheriff))
+        // 本人の画面だけインポスターのクルー・マッドメイト (シェリフ系など) は、死んだ後に守護できない
+        var role = __instance.GetCustomRole();
+        if (role.GetRoleInfo()?.IsDesyncImpostor == true && (role.IsCrewmate() || role.IsMadmate()))
         {
             if (__instance.Data.IsDead)
             {

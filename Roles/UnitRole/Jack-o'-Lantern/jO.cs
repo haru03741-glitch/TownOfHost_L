@@ -23,7 +23,8 @@ public sealed class JO : RoleBase, IKiller
             countType:CountTypes.Crew,
             introSound: () => GetIntroSound(RoleTypes.Impostor),
             flags: RoleFlags.DontShowOption | RoleFlags.DontSelectLoyalty | RoleFlags.DirectKill,
-            introShowsImpostorCount: true
+            introShowsImpostorCount: true,
+            introAsCrewmate: true
         );
     public JO(PlayerControl player)
     : base(

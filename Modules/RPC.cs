@@ -243,8 +243,8 @@ namespace TownOfHostL
                 case CustomRPC.PublicRoleSync:
                     {
                         byte playerid = reader.ReadByte();
-                        if (playerid == PlayerControl.LocalPlayer.PlayerId && (CustomRoles)reader.ReadPackedInt32() is CustomRoles.EvilBlender)
-                            TownOfHostL.Roles.Impostor.EvilBlender.ReceivePublickRpc(reader);
+                        if (playerid == PlayerControl.LocalPlayer.PlayerId)
+                            ((CustomRoles)reader.ReadPackedInt32()).GetRoleInfo()?.PublicRpcReceiver?.Invoke(reader);
                     }
                     break;
                 default:

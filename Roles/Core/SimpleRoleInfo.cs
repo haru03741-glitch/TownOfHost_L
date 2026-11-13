@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 using AmongUs.GameOptions;
+using Hazel;
 
 using static TownOfHostL.Options;
 
@@ -39,6 +40,15 @@ public partial class SimpleRoleInfo
     public CustomRoles? IntroTeam { get; private set; }
     /// <summary>既定のイントロで、インポスターの人数の文を出す (インポスター側に見えないデシンクのキル役など)</summary>
     public bool IntroShowsImpostorCount { get; private set; }
+    /// <summary>
+    /// 本人の画面ではインポスターの役職を持つが、イントロはクルーの形 (青の帯・全員が仲間・インポスターの人数) で見せる。
+    /// 既定はクルー陣営のデシンクの役職 (シェリフ系など)
+    /// </summary>
+    public bool IntroAsCrewmate { get; private set; }
+    /// <summary>
+    /// 役職の公開情報 (RPC.RpcPublicRoleSync) を、宛先の MOD の客が受け取る処理。宛先の PlayerId と役職を読んだ後の reader を渡す
+    /// </summary>
+    public Action<MessageReader> PublicRpcReceiver { get; private set; }
     /// <summary>
     /// 配るタスクの数を役職が決める。呼ぶ時点の数は、設定の上書きと属性 (Workhorse) を通した後の物。null を返すとそのまま。
     /// タスクを配る時は役職クラスがまだ無いことがあるので、クラスでなく登録で持つ
@@ -125,6 +135,8 @@ public partial class SimpleRoleInfo
         RoleFlags flags = RoleFlags.None,
         CustomRoles? introTeam = null,
         bool introShowsImpostorCount = false,
+        bool? introAsCrewmate = null,
+        Action<MessageReader> publicRpcReceiver = null,
         Func<PlayerControl, (bool hasCommonTasks, int numLong, int numShort)?> taskCount = null,
         bool onlyVentCleaningTask = false
     )
@@ -153,6 +165,8 @@ public partial class SimpleRoleInfo
             );
         info.IntroTeam = introTeam;
         info.IntroShowsImpostorCount = introShowsImpostorCount;
+        info.IntroAsCrewmate = introAsCrewmate ?? (isDesyncImpostor && customRoleType == CustomRoleTypes.Crewmate);
+        info.PublicRpcReceiver = publicRpcReceiver;
         info.TaskCount = taskCount;
         info.OnlyVentCleaningTask = onlyVentCleaningTask;
         return info;

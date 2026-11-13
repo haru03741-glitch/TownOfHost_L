@@ -72,8 +72,10 @@ static partial class CustomRolesHelper
     public static bool IsCrewKiller(this CustomRoles role) => role.Def().Has(RoleFlags.CrewKiller);
     /// <summary>他の役職の能力が「キル役」として扱う第三陣営 (RoleFlags.CountedAsKiller)</summary>
     public static bool IsCountedNeutralKiller(this CustomRoles role) => role.IsNeutral() && role.Def().Has(RoleFlags.CountedAsKiller);
-    /// <summary>他の役職の能力が「キル役」として扱うクルー (RoleFlags.CountedAsKiller)。シェリフ系のイントロもこれを見る</summary>
+    /// <summary>他の役職の能力が「キル役」として扱うクルー (RoleFlags.CountedAsKiller)</summary>
     public static bool IsCountedCrewKiller(this CustomRoles role) => role.IsCrewmate() && role.Def().Has(RoleFlags.CountedAsKiller);
+    /// <summary>インポスター陣営ではないが、本編のインポスターの組に入る役職 (RoleFlags.ImpostorTeammate)</summary>
+    public static bool JoinsImpostorTeam(this CustomRoles role) => role.Def().Has(RoleFlags.ImpostorTeammate);
     /// <summary>印のどれかを持つか (Enum.HasFlag と取り違えないよう名前を分けている)</summary>
     public static bool HasRoleFlag(this CustomRoles role, RoleFlags flags) => role.Def().Has(flags);
 

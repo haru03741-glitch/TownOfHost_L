@@ -489,6 +489,7 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
         var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.SyncAssassinState, SendOption.Reliable);
         writer.Write(Player.PlayerId);
         writer.Write((int)NowState);
+        AmongUsClient.Instance.FinishRpcImmediately(writer);
     }
 
     bool IUsePhantomButton.IsPhantomRole => AddRole is IUsePhantomButton iusephantom && iusephantom?.IsPhantomRole is true;

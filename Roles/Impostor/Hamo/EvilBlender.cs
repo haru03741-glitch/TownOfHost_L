@@ -40,7 +40,8 @@ public sealed class EvilBlender : RoleBase, IImpostor, IUsePhantomButton
             CustomRoleTypes.Impostor,
             (int)Options.offsetId.Hamo + 3800,
             SetupOptionItem,
-            "Eb"
+            "Eb",
+            publicRpcReceiver: ReceivePublickRpc
         );
 
     public EvilBlender(PlayerControl player)
@@ -575,6 +576,9 @@ public sealed class EvilBlender : RoleBase, IImpostor, IUsePhantomButton
 
     {
 
+        // 書き始めた電文は必ず送り切る (部屋が分からない時は書く前にやめる)
+        if (flug == 1 && room.HasValue is false) return;
+
         MessageWriter writer = RPC.RpcPublicRoleSync(playerid, CustomRoles.EvilBlender);
 
         writer.Write(flug);
@@ -590,8 +594,6 @@ public sealed class EvilBlender : RoleBase, IImpostor, IUsePhantomButton
                 break;
 
             case 1:
-
-                if (room.HasValue is false) return;
 
                 writer.Write((byte)room.Value);
 

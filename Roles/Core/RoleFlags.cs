@@ -46,8 +46,8 @@ public enum RoleFlags : ulong
     /// <summary>キルできるクルー (シェリフ系)。能力が「キル役」として扱う集合は CountedAsKiller</summary>
     CrewKiller = 1UL << 17,
     /// <summary>
-    /// 他の役職の能力 (占い・霊媒の「キル役だけ」・スニッチ・弁護士・エクスキューショナー・ダークハイド・ラブカッター) と、
-    /// シェリフ系のイントロ・守護の禁止が「キル役」として扱う役職。キルできる役職すべてではなく、遊びの調整で決めた集合
+    /// 他の役職の能力 (占い・霊媒の「キル役だけ」・スニッチ・弁護士・エクスキューショナー・ダークハイド・ラブカッター) が
+    /// 「キル役」として扱う役職。キルできる役職すべてではなく、遊びの調整で決めた集合
     /// </summary>
     CountedAsKiller = 1UL << 26,
 
@@ -88,4 +88,8 @@ public enum RoleFlags : ulong
     NotRevengeTarget = 1UL << 35,
     /// <summary>他人の名前を自分用に組み立て直す必要がある (属性用。役職は RoleBase の NeedsSeenNames で決める)</summary>
     NeedsSeenNames = 1UL << 36,
+    /// <summary>占い・霊媒の「キル役だけ」の設定で、CountedAsKiller でなくてもキル役として数える (マッドシェリフ・グラージシェリフ)</summary>
+    DivinedAsKiller = 1UL << 37,
+    /// <summary>インポスター陣営ではないが、本編のインポスターの組に入る (互いに仲間として見え、キルし合えない。エゴイスト)</summary>
+    ImpostorTeammate = 1UL << 38,
 }

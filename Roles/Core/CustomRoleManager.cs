@@ -86,8 +86,8 @@ public static partial class CustomRoleManager
         {
             if (killer.IsKiller)
             {
-                // イビルディバイナーのみ占いのためここで先に処理
-                if (killerRole is EvilDiviner diviner && !diviner.OnCheckMurder(info)) return false;
+                // キルボタンをキル以外に使う押し方 (イビルディバイナーの占いなど) は、ガードより先に振り分ける
+                if (!killer.OnCheckMurderBeforeGuards(info)) return false;
                 // 役職に関わらないガード (ガーディング・メディック・背徳者など)
                 if (TryKillGuards(info)) { }
                 // ターゲットのキルチェック処理実行

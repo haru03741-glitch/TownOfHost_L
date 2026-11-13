@@ -74,7 +74,7 @@ public sealed class EvilDiviner : RoleBase, IImpostor
 
     public override bool KnowsRoleOf(PlayerControl seen, bool isMeeting) => divinationTargets.Contains(seen.PlayerId) && Player.IsAlive();
 
-    public bool OnCheckMurder(MurderInfo info)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
         (var killer, var target) = info.AttemptTuple;
         if (divinationCount > 0)

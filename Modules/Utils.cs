@@ -290,38 +290,6 @@ public static partial class Utils
         }
         return deathReason;
     }
-    public static (string, Color) GetRoleTextHideAndSeek(RoleTypes oRole, CustomRoles hRole)
-    {
-        string text = "Invalid";
-        Color color = Color.red;
-        switch (oRole)
-        {
-            case RoleTypes.Impostor:
-            case RoleTypes.Shapeshifter:
-            case RoleTypes.Phantom:
-                text = "Impostor";
-                color = Palette.ImpostorRed;
-                break;
-            default:
-                switch (hRole)
-                {
-                    case CustomRoles.Crewmate:
-                        text = "Crewmate";
-                        color = Color.white;
-                        break;
-                    case CustomRoles.HASFox:
-                        text = "Fox";
-                        color = Color.magenta;
-                        break;
-                    case CustomRoles.HASTroll:
-                        text = "Troll";
-                        color = Color.green;
-                        break;
-                }
-                break;
-        }
-        return (text, color);
-    }
 
     public static bool HasTasks(NetworkedPlayerInfo p, bool ForRecompute = true)
     {

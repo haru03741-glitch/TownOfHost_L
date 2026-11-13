@@ -24,7 +24,7 @@ public sealed class GrudgeSheriff : RoleBase
             "グラージシェリフ",
             "#f8cd46",
             introSound: () => GetIntroSound(RoleTypes.Crewmate),
-            flags: RoleFlags.CrewKiller
+            flags: RoleFlags.CrewKiller | RoleFlags.DivinedAsKiller
         );
     public GrudgeSheriff(PlayerControl player)
     : base(

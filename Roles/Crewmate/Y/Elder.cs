@@ -98,13 +98,11 @@ public sealed class Elder : RoleBase
 
         _ = new LateTask(() => ChangeRole(), 0.5f, "ElderChangeRoleByExile");
     }
-    // 道連れ時の処理
-    public static void DeadByRevenge(byte targetId)
+    // 会議の後の死 (道連れなど) の処理
+    public override void OnAfterMeetingDeath(CustomDeathReason reason)
     {
-        // 長老でない時は関係ない
-        if (!Utils.GetPlayerById(targetId).Is(CustomRoles.Elder)) return;
         // タスクが完了している時は何もない
-        if (PlayerState.GetByPlayerId(targetId).GetTaskState().IsTaskFinished) return;
+        if (MyState.GetTaskState().IsTaskFinished) return;
 
         ChangeRole();
     }
