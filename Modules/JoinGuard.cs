@@ -127,11 +127,17 @@ public static class JoinGuard
     static readonly Dictionary<int, string> detected = new();
     static bool allowThisLobby;
 
-    static string KeyOf(ClientData client)
+    /// <summary>
+    /// その人を表す鍵 (フレンドコードと PUID の両方)。入室の直後はフレンドコードがまだ届いていないことがあるので、
+    /// 試合の始めに覚えた鍵と入室の時の鍵は、どちらか片方が合えば同じ人とみなす
+    /// </summary>
+    static IEnumerable<string> KeysOf(ClientData client)
     {
-        if (client == null) return "";
+        if (client == null) yield break;
         var fc = client.FriendCode?.Trim();
-        return !string.IsNullOrEmpty(fc) ? fc.ToUpperInvariant() : client.ProductUserId?.Trim() ?? "";
+        if (!string.IsNullOrEmpty(fc)) yield return "fc:" + fc.ToUpperInvariant();
+        var puid = client.ProductUserId?.Trim();
+        if (!string.IsNullOrEmpty(puid)) yield return "puid:" + puid;
     }
 
     [GameModuleInitializer]
@@ -144,8 +150,7 @@ public static class JoinGuard
         foreach (var client in AmongUsClient.Instance.allClients)
         {
             if (client.Id == AmongUsClient.Instance.ClientId) continue;
-            var key = KeyOf(client);
-            if (key != "") currentKeys.Add(key);
+            currentKeys.UnionWith(KeysOf(client));
         }
     }
 
@@ -162,7 +167,7 @@ public static class JoinGuard
     {
         var mode = (PreviousMode)PreviousPlayers.GetValue();
         if (mode == PreviousMode.Off || allowThisLobby || previousKeys.Count == 0) return;
-        if (!previousKeys.Contains(KeyOf(client))) return;
+        if (!KeysOf(client).Any(previousKeys.Contains)) return;
         var name = client.PlayerName ?? "???";
         if (mode == PreviousMode.Notify)
         {

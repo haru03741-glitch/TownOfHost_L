@@ -196,10 +196,15 @@ public class HostPanel : MonoBehaviour
                 var id = clientId;
                 Row(ref y, w, (name, sSmall, null), (Armed($"kp{id}", GetString("HostPanel.Kick")), sDanger, () => Arm($"kp{id}", () => JoinGuard.KickDetected(id))));
             }
-            if (detected.Count > 0 || !JoinGuard.AllowedThisLobby)
+            if (detected.Count > 0 && !JoinGuard.AllowedThisLobby)
                 Row(ref y, w,
-                    (Armed("kpall", GetString("HostPanel.KickAll")), sDanger, detected.Count > 0 ? () => Arm("kpall", JoinGuard.KickDetected) : null),
-                    (GetString("HostPanel.AllowThisLobby"), sAction, JoinGuard.AllowedThisLobby ? null : JoinGuard.AllowThisLobby));
+                    (Armed("kpall", GetString("HostPanel.KickAll")), sDanger, () => Arm("kpall", JoinGuard.KickDetected)),
+                    (GetString("HostPanel.AllowThisLobby"), sAction, JoinGuard.AllowThisLobby));
+            else if (detected.Count > 0)
+            {
+                if (Button(ref y, w, Armed("kpall", GetString("HostPanel.KickAll")), sDanger)) Arm("kpall", JoinGuard.KickDetected);
+            }
+            else if (!JoinGuard.AllowedThisLobby && Button(ref y, w, GetString("HostPanel.AllowThisLobby"), sAction)) JoinGuard.AllowThisLobby();
         }
 
         Row(ref y, w,
