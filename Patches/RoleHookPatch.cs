@@ -278,6 +278,9 @@ static class FixSabotageHookPatch
     {
         if (!__runOriginal) return;
         RoleHooks.OnFixSabotage(player, __state);
+        // ホストが直す作業を持っていない時 (修理の電文だけを受けた時) は、作業の完了 (Complete) が呼ばれない。
+        // 直した結果そのサボタージュがもう動いていなければ、ここで直り切った扱いにする (2 回目は IsActiveSabotage で弾かれる)
+        if (AmongUsClient.Instance.AmHost && Main.IsActiveSabotage && !Utils.IsActive(Main.SabotageType)) RoleHooks.CompleteSabotage();
     }
 }
 [HarmonyPatch]

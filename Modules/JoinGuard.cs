@@ -72,6 +72,8 @@ public static class JoinGuard
 
     static bool IsFriend(ClientData client)
     {
+        // フレンドの一覧がまだ無い時は決められないので、フレンド扱いにして見送る
+        if (!DestroyableSingleton<FriendsListManager>.InstanceExists) return true;
         var friends = DestroyableSingleton<FriendsListManager>.Instance;
         return friends != null && friends.IsPlayerFriend(client.ProductUserId);
     }

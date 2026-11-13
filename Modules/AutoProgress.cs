@@ -66,10 +66,14 @@ public static class AutoProgress
     static void Countdown(EndGameManager manager, int generation, int seconds)
     {
         if (generation != returnGeneration || manager == null || GameStates.IsLobby) { ClearText(); return; }
-        if (countdownText == null && manager.WinText != null)
+        if (countdownText == null)
         {
-            countdownText = Object.Instantiate(manager.WinText, manager.transform);
-            countdownText.transform.localPosition = new(0f, 2.5f, -10f);
+            // 勝ち負けの大きな字と重ならないよう、下の説明の更に下に小さく出す
+            var go = new GameObject("AutoReturnCountdown");
+            go.transform.SetParent(manager.transform, false);
+            go.transform.localPosition = new(0f, -0.9f, -10f);
+            countdownText = go.AddComponent<TextMeshPro>();
+            countdownText.alignment = TextAlignmentOptions.Center;
             countdownText.fontSize = 3f;
             countdownText.color = Color.white;
         }
@@ -80,14 +84,15 @@ public static class AutoProgress
             return;
         }
         ClearText();
-        TryNextGame(generation, 1);
+        TryNextGame(manager, generation, 1);
     }
 
     /// <summary>NextGame は遷移の途中だと例外を出すことがあるので、間を空けて数回やり直す</summary>
-    static void TryNextGame(int generation, int attempt)
+    static void TryNextGame(EndGameManager manager, int generation, int attempt)
     {
-        if (generation != returnGeneration || !AmongUsClient.Instance.AmHost || GameStates.IsLobby) return;
-        var nav = DestroyableSingleton<EndGameNavigation>.Instance;
+        if (generation != returnGeneration || !AmongUsClient.Instance.AmHost || GameStates.IsLobby || manager == null) return;
+        // 「もう一度遊ぶ」の本体は結果画面が持っている (シングルトンとしては登録されていない)
+        var nav = manager.Navigation;
         if (nav == null) return;
         try
         {
@@ -101,7 +106,7 @@ public static class AutoProgress
                 return;
             }
             Logger.Warn($"NextGame が失敗した ({attempt}/{MaxNextGameAttempts})。3 秒後にやり直す: {ex.Message}", "AutoReturnToLobby");
-            _ = new LateTask(() => TryNextGame(generation, attempt + 1), 3f, "AutoReturnToLobby.Retry", true);
+            _ = new LateTask(() => TryNextGame(manager, generation, attempt + 1), 3f, "AutoReturnToLobby.Retry", true);
         }
     }
 
@@ -157,6 +162,7 @@ public static class AutoProgress
 
             lobbyTimer = 0f;
             Logger.Info($"ロビーで {limit} 秒経ち {count} 人が揃ったので始める", "AutoStart");
+            if (!GameStartManager.InstanceExists) return;
             var gsm = GameStartManager.Instance;
             gsm.countDownTimer = 5f;
             gsm.startState = GameStartManager.StartingStates.Countdown;
@@ -167,6 +173,7 @@ public static class AutoProgress
     {
         if (count < AutoStartMinPlayers.GetInt()) return false;
         if (Time.time - countChangedAt < JoinSettleSeconds) return false;
+        if (!GameStartManager.InstanceExists) return false;
         var gsm = GameStartManager.Instance;
         if (gsm == null || gsm.startState != GameStartManager.StartingStates.NotStarting) return false;
         foreach (var pc in PlayerControl.AllPlayerControls)

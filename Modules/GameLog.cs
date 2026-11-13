@@ -116,6 +116,7 @@ public static class GameLog
             if (string.IsNullOrEmpty(e.Type)) { sb.Append("\n\t\t").Append(e.Text); continue; }
             sb.Append('\n').Append(Elapsed(e.At)).Append(" [").Append(Label(e.Type)).Append("] ").Append(e.Text);
         }
+        sb.Append('\n').Append(Elapsed(DateTime.Now)).Append(" [").Append(GetString("GameLog.End")).Append("] ").Append(WinnerText());
         LastText = Trim(sb.ToString());
     }
 
@@ -135,6 +136,13 @@ public static class GameLog
     /// <summary>見出し: 共通の種類は GameLog.種類、役職が書いた物は役職名、どちらも無ければそのまま</summary>
     static string Label(string type)
         => HasString($"GameLog.{type}") ? GetString($"GameLog.{type}") : HasString(type) ? GetString(type) : type;
+
+    static string WinnerText() => CustomWinnerHolder.WinnerTeam switch
+    {
+        CustomWinner.Draw => GetString("ForceEnd"),
+        CustomWinner.None or CustomWinner.Default => "-",
+        var team => Utils.GetRoleColorAndName((Roles.Core.CustomRoles)team) + GetString("Win"),
+    };
 
     /// <summary>キルの時刻がどの日に当たるか (記録した出来事の日を時刻で引く)</summary>
     static int DayAt(DateTime at)

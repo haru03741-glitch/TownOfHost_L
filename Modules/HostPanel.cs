@@ -21,7 +21,6 @@ public class HostPanel : MonoBehaviour
 
     Rect window;
     bool windowReady;
-    Vector2 scroll;
     float contentHeight;
     bool dragging;
     Vector2 dragOffset;
@@ -45,10 +44,23 @@ public class HostPanel : MonoBehaviour
 
     public void OnGUI()
     {
-        if (AmongUsClient.Instance == null || GameStates.IsNotJoined) { IsOpen = false; return; }
+        if (AmongUsClient.Instance == null || GameStates.IsNotJoined || InMainMenu()) { IsOpen = false; return; }
         if (!Mathf.Approximately(scale, Scale)) BuildStyles();
         DrawToggle();
         if (IsOpen) DrawWindow();
+    }
+
+    // 今の場面がメインメニューか (部屋の出入りの途中は IsNotJoined が外れることがあるので、場面の名前でも見る)。1 フレームに 1 回だけ調べる
+    int sceneCheckedFrame = -1;
+    bool inMainMenu;
+    bool InMainMenu()
+    {
+        if (sceneCheckedFrame != Time.frameCount)
+        {
+            sceneCheckedFrame = Time.frameCount;
+            inMainMenu = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu";
+        }
+        return inMainMenu;
     }
 
     // ===== 窓 =====
@@ -56,7 +68,8 @@ public class HostPanel : MonoBehaviour
     void DrawToggle()
     {
         var size = 56f * Scale;
-        var rect = new Rect(Pad * 2f, Screen.height * 0.70f, size, size);
+        // 左下の隅 (ロビーで左に出る設定の一覧より下)
+        var rect = new Rect(Pad * 2f, Screen.height * 0.90f - size, size, size);
         if (GUI.Button(rect, IsOpen ? "×" : "≡", sToggle)) IsOpen = !IsOpen;
     }
 
@@ -67,26 +80,46 @@ public class HostPanel : MonoBehaviour
             window = new Rect(Pad * 2f + 64f * Scale, Screen.height * 0.12f, Width, Screen.height * 0.70f);
             windowReady = true;
         }
+        // 高さは中身に合わせる (会議の札やタスクの一覧をなるべく隠さない)。前のフレームの中身の高さを使う
         window.width = Width;
-        window.height = Screen.height * 0.70f;
+        window.height = Mathf.Min(Screen.height * 0.70f, RowH * 0.9f + Pad * 3f + Mathf.Max(contentHeight, RowH));
         HandleDrag();
         window.x = Mathf.Clamp(window.x, 0f, Screen.width - window.width);
         window.y = Mathf.Clamp(window.y, 0f, Screen.height - window.height);
 
         GUI.Box(window, "", sWindow);
-        GUI.BeginGroup(window);
         var titleH = RowH * 0.9f;
-        GUI.Label(new Rect(0f, Pad * 0.5f, window.width, titleH), GetString("HostPanel.Title"), sTitle);
+        GUI.Label(new Rect(window.x, window.y + Pad * 0.5f, window.width, titleH), GetString("HostPanel.Title"), sTitle);
 
-        var view = new Rect(Pad * 2f, titleH + Pad, window.width - Pad * 4f, window.height - titleH - Pad * 2f);
-        var inner = new Rect(0f, 0f, view.width - 20f * Scale, Mathf.Max(contentHeight, view.height));
-        scroll = GUI.BeginScrollView(view, scroll, inner);
+        // 中身は画面の座標で直接描く (GUI のグループやスクロールの枠を使わない)。
+        // 枠に全部が入らない部品は描かず、スクロールはホイールと右端のスクロールバーで動かす
+        var barW = 18f * Scale;
+        view = new Rect(window.x + Pad * 2f, window.y + titleH + Pad, window.width - Pad * 4f - barW - Pad, window.height - titleH - Pad * 2f);
+        var maxScroll = Mathf.Max(0f, contentHeight - view.height);
+        var e = Event.current;
+        if (e.type == EventType.ScrollWheel && window.Contains(e.mousePosition))
+        {
+            scrollY += e.delta.y * RowH * 0.5f;
+            e.Use();
+        }
+        if (maxScroll > 0f)
+            scrollY = GUI.VerticalScrollbar(new Rect(view.xMax + Pad, view.y, barW, view.height), scrollY, view.height, 0f, contentHeight);
+        scrollY = Mathf.Clamp(scrollY, 0f, maxScroll);
+
         var y = 0f;
-        try { DrawContent(ref y, inner.width); }
+        try { DrawContent(ref y, view.width); }
         catch (Exception ex) { Logger.Exception(ex, nameof(HostPanel)); }
         contentHeight = y;
-        GUI.EndScrollView();
-        GUI.EndGroup();
+    }
+
+    Rect view;
+    float scrollY;
+
+    /// <summary>中身の座標 (枠の左上が 0,0) を画面の座標にする。枠に全部が入らなければ false</summary>
+    bool Place(float x, float y, float w, float h, out Rect rect)
+    {
+        rect = new Rect(view.x + x, view.y + y - scrollY, w, h);
+        return rect.yMin >= view.yMin - 0.5f && rect.yMax <= view.yMax + 0.5f;
     }
 
     void HandleDrag()
@@ -130,7 +163,8 @@ public class HostPanel : MonoBehaviour
     void LobbySection(ref float y, float w)
     {
         Section(ref y, w, GetString("HostPanel.Lobby"));
-        var gsm = GameStartManager.Instance;
+        // .Instance は無い時に空の物を作ってしまうので、在る時だけ読む
+        var gsm = GameStartManager.InstanceExists ? GameStartManager.Instance : null;
         if (gsm != null)
         {
             if (!GameStates.IsCountDown)
@@ -184,9 +218,8 @@ public class HostPanel : MonoBehaviour
         {
             if (Button(ref y, w, GetString("HostPanel.CallMeeting"), sHost))
             {
-                var pc = PlayerControl.LocalPlayer;
-                if (pc.IsAlive()) pc.ReportDeadBody(pc.Data);
-                else pc.NoCheckStartMeeting(pc.Data);
+                // 緊急会議として開く (ボタンの回数やサボタージュに関係なく開く)
+                PlayerControl.LocalPlayer.NoCheckStartMeeting(null);
             }
         }
         if (HudManager.InstanceExists && HudManager.Instance.Chat && !HudManager.Instance.Chat.IsOpenOrOpening)
@@ -201,13 +234,17 @@ public class HostPanel : MonoBehaviour
 
     void PlayersSection(ref float y, float w)
     {
+        // 結果画面などで誰も居ない時は見出しも出さない
+        if (PlayerControl.AllPlayerControls.Count == 0) return;
         Section(ref y, w, GetString("HostPanel.Players"));
         var afkOn = AfkDetector.Enabled.GetBool();
         foreach (var pc in PlayerControl.AllPlayerControls)
         {
             if (pc == null || pc.Data == null || pc.Data.Disconnected) continue;
+            // 試合中の PlayerName は役職の表示などで飾られているので、元の名前を使う
+            var rawName = Main.AllPlayerNames != null && Main.AllPlayerNames.TryGetValue(pc.PlayerId, out var n) ? n : pc.Data.PlayerName;
             var name = Utils.ColorString(Palette.PlayerColors.Length > pc.Data.DefaultOutfit.ColorId && pc.Data.DefaultOutfit.ColorId >= 0
-                ? (Color)Palette.PlayerColors[pc.Data.DefaultOutfit.ColorId] : Color.white, pc.Data.PlayerName);
+                ? (Color)Palette.PlayerColors[pc.Data.DefaultOutfit.ColorId] : Color.white, rawName);
             if (GameStates.IsInGame && !pc.IsAlive()) name = $"<i>{name}</i>";
             if (afkOn && !pc.AmOwner)
             {
@@ -230,7 +267,7 @@ public class HostPanel : MonoBehaviour
     static readonly Regex UnsupportedTags = new(@"</?(align|size|pos|line-height|voffset|font|mark|cspace|indent|margin|width)[^>]*>", RegexOptions.Compiled);
     static readonly Regex ShortColor = new(@"<#([0-9a-fA-F]{6,8})>", RegexOptions.Compiled);
     string logCacheSource;
-    string logCacheText;
+    string[] logCacheLines = Array.Empty<string>();
 
     void LogSection(ref float y, float w)
     {
@@ -242,11 +279,16 @@ public class HostPanel : MonoBehaviour
         {
             logCacheSource = GameLog.LastText;
             // TextMeshPro だけのタグは IMGUI では字のまま出るので外す
-            logCacheText = ShortColor.Replace(UnsupportedTags.Replace(GameLog.LastText, ""), "<color=#$1>").Replace("\t", "  ");
+            logCacheLines = ShortColor.Replace(UnsupportedTags.Replace(GameLog.LastText, ""), "<color=#$1>").Replace("\t", "  ").Split('\n');
         }
-        var h = sLabel.CalcHeight(new GUIContent(logCacheText), w);
-        GUI.Label(new Rect(0f, y, w, h), logCacheText, sLabel);
-        y += h + Pad;
+        // 1 行ずつ描く (枠からはみ出す行は描かない)
+        foreach (var line in logCacheLines)
+        {
+            var h = sLabel.CalcHeight(new GUIContent(line), w);
+            if (Place(0f, y, w, h, out var r)) GUI.Label(r, line, sLabel);
+            y += h;
+        }
+        y += Pad;
     }
 
     // ===== 部品 =====
@@ -254,20 +296,20 @@ public class HostPanel : MonoBehaviour
     void Section(ref float y, float w, string title)
     {
         y += Pad;
-        GUI.Label(new Rect(0f, y, w, RowH * 0.6f), title, sSection);
+        if (Place(0f, y, w, RowH * 0.6f, out var r)) GUI.Label(r, title, sSection);
         y += RowH * 0.6f + Pad * 0.5f;
     }
 
     void Label(ref float y, float w, string text)
     {
         var h = Mathf.Max(RowH * 0.6f, sLabel.CalcHeight(new GUIContent(text), w));
-        GUI.Label(new Rect(0f, y, w, h), text, sLabel);
+        if (Place(0f, y, w, h, out var r)) GUI.Label(r, text, sLabel);
         y += h + Pad * 0.5f;
     }
 
     bool Button(ref float y, float w, string text, GUIStyle style)
     {
-        var pressed = GUI.Button(new Rect(0f, y, w, RowH), text, style);
+        var pressed = Place(0f, y, w, RowH, out var r) && GUI.Button(r, text, style);
         y += RowH + Pad * 0.6f;
         return pressed;
     }
@@ -282,8 +324,8 @@ public class HostPanel : MonoBehaviour
         for (var i = 0; i < cells.Length; i++)
         {
             var cw = i == 0 ? (w - gap * (cells.Length - 1)) * first : (w - gap * (cells.Length - 1)) * (1f - first) / (cells.Length - 1);
-            var rect = new Rect(x, y, cw, RowH);
             var (text, style, action) = cells[i];
+            if (!Place(x, y, cw, RowH, out var rect)) { x += cw + gap; continue; }
             if (action == null && style == sSmall) GUI.Label(rect, text, sSmall);
             else
             {
@@ -320,7 +362,7 @@ public class HostPanel : MonoBehaviour
     {
         scale = Scale;
         sToggle = Btn(new Color(0.10f, 0.10f, 0.28f), new Color(0.20f, 0.30f, 0.55f), Font + 6);
-        sWindow = new GUIStyle { normal = { background = Tex(new Color(0.06f, 0.07f, 0.15f, 0.96f)) } };
+        sWindow = new GUIStyle { normal = { background = Tex(new Color(0.06f, 0.07f, 0.15f, 1f)) } };
         sTitle = Text(Font + 3, FontStyle.BoldAndItalic, TextAnchor.MiddleCenter, new Color(0.72f, 0.90f, 1f));
         sSection = Text(Font, FontStyle.BoldAndItalic, TextAnchor.MiddleLeft, new Color(0.58f, 0.82f, 1f));
         sLabel = Text(Font - 2, FontStyle.Normal, TextAnchor.UpperLeft, Color.white);
