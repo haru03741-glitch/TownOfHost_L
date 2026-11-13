@@ -66,6 +66,7 @@ public sealed class Counselor : RoleBase
 
         counselCount--;
         var VotedForPC = Utils.GetPlayerById(sourceVotedForId);
+        if (VotedForPC == null) return baseVote;
         if (VotedForPC.Is(CustomRoles.MadDilemma))
         {
             Reserved = (true, VotedForPC);
@@ -81,9 +82,13 @@ public sealed class Counselor : RoleBase
     {
         foreach(var pc in Main.AllPlayerControls.Where(pc=> pc.Is(CustomRoles.Counselor)))
         {
-            if (pc.GetRoleClass() is not Counselor counselor || !counselor.Reserved.Item1) return;
+            if (pc.GetRoleClass() is not Counselor counselor || !counselor.Reserved.Item1) continue;
 
-            counselor.Reserved.Item2.RpcSetCustomRole(CustomRoles.Crewmate);
+            var target = counselor.Reserved.Item2;
+            // 予約は 1 回の会議だけ。消さないと次の会議の後にも同じ人をクルーへ戻し、印も残る
+            counselor.Reserved = (false, null);
+            if (target == null || !target.Is(CustomRoles.MadDilemma)) continue;
+            target.RpcSetCustomRole(CustomRoles.Crewmate);
             //if (ResetAddonChangeCrew)
             //    PlayerState.GetByPlayerId(counselor.Reserved.Item2.PlayerId).SubRoles.Clear();
         }

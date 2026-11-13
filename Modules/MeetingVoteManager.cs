@@ -31,6 +31,7 @@ public class MeetingVoteManager
     public static void Start()
     {
         _instance = new();
+        TieBreaker.OnStartMeeting();
     }
 
     /// <summary>

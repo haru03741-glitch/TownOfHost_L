@@ -153,9 +153,13 @@ public sealed class JO : RoleBase, IKiller
         Logger.Info($"{Player.GetNameWithRole()} : 役職送信→{target.GetNameWithRole()}/残り{sendRoleLimit}回", "jO");
 
         // 表示更新
-        jack.KillFlash();
         Utils.NotifyRoles(SpecifySeer: Player);
-        Utils.NotifyRoles(SpecifySeer: jack);
+        // ジャックが抜けた後は光らせない (null だと例外になる)
+        if (jack != null)
+        {
+            jack.KillFlash();
+            Utils.NotifyRoles(SpecifySeer: jack);
+        }
 
         return false;
     }

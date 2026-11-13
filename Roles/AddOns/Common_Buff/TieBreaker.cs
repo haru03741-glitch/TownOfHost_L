@@ -42,9 +42,12 @@ public static class TieBreaker
     {
         if (!playerIdList.Contains(voter)) return;
 
-        Logger.Info($"{Utils.GetPlayerById(voter).GetNameWithRole()} が タイブレーカー投票({Utils.GetPlayerById(votedFor).GetNameWithRole()})", "TieBreaker");
-        TieBreakerVote.Add(voter, votedFor);
+        Logger.Info($"{Utils.GetPlayerById(voter).GetNameWithRole()} が タイブレーカー投票({Utils.GetPlayerById(votedFor)?.GetNameWithRole() ?? votedFor.ToString()})", "TieBreaker");
+        // 投票し直した時は上書きする
+        TieBreakerVote[voter] = votedFor;
     }
+    /// <summary>会議の始め。前の会議の票が結果を決める所を通らずに残っていても、持ち越さない</summary>
+    public static void OnStartMeeting() => TieBreakerVote.Clear();
     public static (bool, NetworkedPlayerInfo) BreakingVote(bool IsTie, NetworkedPlayerInfo Exiled, Dictionary<byte, int> votedCounts, int maxVoteNum)
     {
         if (TieBreakerVote.Count == 0) return (IsTie, Exiled);

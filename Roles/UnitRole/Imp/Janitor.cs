@@ -81,7 +81,7 @@ public sealed class Janitor : RoleBase, IImpostor
         isSuiside = false;
 
         // ジャニター視点の矢印表示追加
-        if (TrackGodfather)
+        if (TrackGodfather && godfather != null)
         {
             var god = Main.AllPlayerControls.Where(pc => pc.Is(CustomRoles.Godfather)).FirstOrDefault();
             if (god != null)
@@ -222,7 +222,7 @@ public sealed class Janitor : RoleBase, IImpostor
             // 矢印の取得
             string arrow = TargetArrow.GetArrows(Player, godfather.PlayerId);
             // 矢印表示があれば
-            if (arrow.Length >= 0)
+            if (arrow.Length > 0)
             {
                 // 色を付けてsb追加
                 sb.Append(arrow.Color(Palette.ImpostorRed));

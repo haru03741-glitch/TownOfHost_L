@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
+using TownOfHostL.Attributes;
 using TownOfHostL.Roles.Core;
 
 namespace TownOfHostL.Roles.AddOns.Crewmate
@@ -23,13 +24,15 @@ namespace TownOfHostL.Roles.AddOns.Crewmate
             Options.SetupRoleOptions(TabGroup.Addons, CustomRoles.CompleteCrew);
             Options.SetUpAddOnOptions(CustomRoles.CompleteCrew, TabGroup.Addons);
         }
+        // 試合ごとに空にする (戻さないと前の試合で付いた人数が残り、2 試合目から付かなくなる)
+        [GameModuleInitializer]
         public static void Init()
         {
             playerIdList = new();
         }
         public static void Add(byte playerId)
         {
-            playerIdList.Add(playerId);
+            if (!playerIdList.Contains(playerId)) playerIdList.Add(playerId);
         }
         public static bool IsThisRole(byte playerId) => playerIdList.Contains(playerId);
 

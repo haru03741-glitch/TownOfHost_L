@@ -137,15 +137,13 @@ public sealed class Godfather : RoleBase, IImpostor
         if (!GameStates.IsInTask || !Player.IsAlive()) return;
 
         // ジャニターがいない・抜けた時は何もしない (毎フレーム例外になる)
-        if (janitor == null || godfather == null) return;
-        var pc = janitor;
-        if (pc.inVent) return;
+        if (godfather == null) return;
         bool isChange = false;
-        // ゴッドファーザーとジャニターの距離
-        var janitorDist = Vector2.Distance(godfather.transform.position, janitor.transform.position);
-
-        // 設定距離範囲内か
-        bool canDist = janitorDist <= LockDistance;
+        // ベントの中の間は、出るまで今の状態のまま
+        if (janitor != null && janitor.inVent) return;
+        // ジャニターがいない・死んだ時は、ロックはできない (印とボタンの文字を残さない)
+        bool canDist = janitor != null && janitor.IsAlive()
+            && Vector2.Distance(godfather.transform.position, janitor.transform.position) <= LockDistance;
         // 変更されているか
         isChange = canLockKill != canDist;
 
