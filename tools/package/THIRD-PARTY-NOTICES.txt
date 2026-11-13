@@ -4,28 +4,38 @@ BepInEx/plugins/TownOfHost_L.dll
   TownOfHost_L - GPL-3.0 (licenses/GPL-3.0.txt)
   Source: https://github.com/haru03741-glitch/TownOfHost_L
 
+BepInEx/patchers/TownOfHost_L.BootAccel.dll
+  TownOfHost_L - GPL-3.0 (licenses/GPL-3.0.txt)
+  Source: tools/BootAccel in the TownOfHost_L source repository
+  Based on End K not (https://github.com/waffle-ful/Aeterna-End-K-not, GPL-3.0)
+
 BepInEx 6.0.0-be.735 (BepInEx/, dotnet/ runtime files shipped with it)
   BepInEx team - LGPL-2.1 (licenses/LGPL-2.1.txt)
   https://github.com/BepInEx/BepInEx
   Bundled components keep their own licenses (HarmonyX, MonoMod, Mono.Cecil, AsmResolver, Cpp2IL,
   Iced and others: MIT; .NET runtime: MIT).
 
-Unity Doorstop (winhttp.dll, doorstop_config.ini; the build reports version 4.5.1)
-  NeighTools - LGPL-2.1 (licenses/LGPL-2.1.txt)
-  https://github.com/NeighTools/UnityDoorstop
-  winhttp.dll is taken unmodified from the packaging of Endless Host Roles
+Unity Doorstop 4.5.1 (winhttp.dll, doorstop_config.ini)
+  NeighTools, Pietrodjaowjao - LGPL-2.1 (licenses/LGPL-2.1.txt)
+  https://github.com/Pietrodjaowjao/UnityDoorstop (a fork of https://github.com/NeighTools/UnityDoorstop)
+  winhttp.dll is the x64 build of the v4.5.1 release of Pietrodjaowjao/UnityDoorstop (source:
+  https://github.com/Pietrodjaowjao/UnityDoorstop/releases/tag/v4.5.1), taken unmodified from the packaging of Endless Host Roles
   (https://github.com/Gurge44/EndlessHostRoles/tree/c2e0b297e5fccec8e0a47de2157beb701cc2ff73/packaging/epic).
   doorstop_config.ini is a configuration file written for this package.
 
 Il2CppInterop 1.5.3 (BepInEx/core/Il2CppInterop.Common.dll, BepInEx/core/Il2CppInterop.Runtime.dll)
-  BepInEx team, knah et al. - LGPL-3.0 (licenses/LGPL-3.0.txt, licenses/GPL-3.0.txt)
+  BepInEx team, knah et al., Pietrodjaowjao - LGPL-3.0 (licenses/LGPL-3.0.txt, licenses/GPL-3.0.txt)
   https://github.com/BepInEx/Il2CppInterop
-  This is a modified build. The base build is a fixed Il2CppInterop 1.5.3 by pietro, taken from the packaging
-  of Endless Host Roles
-  (https://github.com/Gurge44/EndlessHostRoles/tree/c2e0b297e5fccec8e0a47de2157beb701cc2ff73/packaging/il2cppinterop).
+  This is a modified build (modified by TownOfHost_L, 2026-11-14). It is built from
+  https://github.com/Pietrodjaowjao/Il2CppInterop/commit/f1627d60efc218e4861bacc1239267f96f32ee2c
+  (a fork of BepInEx/Il2CppInterop that adds the GC write barrier for field stores) with
+  tools/Il2CppInterop/il2cppinterop.patch in the TownOfHost_L source repository applied: MemoryUtils calls
+  VirtualQuery without TerraFX.Interop.Windows, the memory region walk and the signature scan stop on empty
+  or unreadable input, and Class_FromIl2CppType_Hook passes a null type to the original function.
   TownOfHost_L further modifies Il2CppInterop.Runtime.dll so that three reference stores go through the
   game's GC write barrier (il2cpp_gc_wbarrier_set_field): IL2CPP.FieldWriteWbarrierStub,
   Il2CppReferenceArray<T>.StoreValue and the Il2CppStringArray indexer setter. It also adds
-  IL2CPP.WbStore(IntPtr, IntPtr). The modification is reproduced from the base build by
-  tools/InteropWbPatch in the TownOfHost_L source repository.
+  IL2CPP.WbStore(IntPtr, IntPtr). This step is done by tools/InteropWbPatch in the TownOfHost_L source
+  repository. tools/package.ps1 shows the whole build. The built files report the version
+  1.5.3+f1627d60.tohl.
   You may replace these files with any other compatible build of Il2CppInterop.

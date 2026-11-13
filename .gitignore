@@ -3,3 +3,5 @@ obj/
 bin/
 FodyWeavers.xsd
 /.vs/
+# dotnet build -o build/ の出力
+/build/

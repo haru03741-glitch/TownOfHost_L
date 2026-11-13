@@ -1,7 +1,8 @@
 ﻿# 配布用の zip を作る。BepInEx とその周りは版を固定して取り、sha256 で照合する。
 #   BepInEx 6.0.0-be.735 (win-x64)
-#   Unity Doorstop (winhttp.dll・版の表記は 4.5.1) と、pietro による Il2CppInterop 1.5.3 の修正版
-#     … Gurge44/EndlessHostRoles@c2e0b297e の packaging から
+#   Unity Doorstop 4.5.1 (Pietrodjaowjao/UnityDoorstop の fork 版の winhttp.dll) … Gurge44/EndlessHostRoles@c2e0b297e の packaging から
+#   Il2CppInterop 1.5.3 … Pietrodjaowjao/Il2CppInterop@f1627d60 に tools/Il2CppInterop/il2cppinterop.patch を当ててビルドする
+#     (global.json は SDK 8 を指すが、このスクリプトの場所から呼ぶので手元の SDK でビルドされる)
 #   Il2CppInterop.Runtime.dll は tools/InteropWbPatch で write barrier を通すように書き換える
 #   doorstop_config.ini は tools/package/doorstop_config.ini (GC_DISABLE_INCREMENTAL を置かない)
 #   BepInEx/config/BepInEx.cfg は tools/package/BepInEx.cfg (interop の先読みを切る)
@@ -20,16 +21,12 @@ $bepinexSha = 'badef8112853a00939a0df6ca143bc0a4e3dc02bd4d21b873302731bfa0e4df4'
 $ehr = 'https://raw.githubusercontent.com/Gurge44/EndlessHostRoles/c2e0b297e5fccec8e0a47de2157beb701cc2ff73/packaging'
 $parts = [ordered]@{
     'winhttp.dll'                             = @("$ehr/epic/winhttp.dll", 'd1ebba9d7412fbf89a34bea19f1c346fb536c1657ee8efa2309eb9a3a17ab878')
-    'BepInEx/core/Il2CppInterop.Common.dll'   = @("$ehr/il2cppinterop/Il2CppInterop.Common.dll", '3feddc562cec465b2a8c3f7beafbf31fbbf363349ef36cb602b20492d021773b')
-    'BepInEx/core/Il2CppInterop.Common.xml'   = @("$ehr/il2cppinterop/Il2CppInterop.Common.xml", 'fad6cafb620cfe54e992e43681472411c5f8e2d5f8de4cb6829d93bc0ecee0f0')
-    'BepInEx/core/Il2CppInterop.Runtime.dll'  = @("$ehr/il2cppinterop/Il2CppInterop.Runtime.dll", '1e0c158cf7ceaa4599841da4f85882330bdc0bff6bc70fa2b941dedde5c311c7')
-    'BepInEx/core/Il2CppInterop.Runtime.xml'  = @("$ehr/il2cppinterop/Il2CppInterop.Runtime.xml", 'a9cb2e376904abd279ed6db375d8f46b8c46ca59e37d365ec8bb0d25ed0dc799')
-    'BepInEx/core/Il2CppInterop.Runtime.deps.json' = @("$ehr/il2cppinterop/Il2CppInterop.Runtime.deps.json", '07e3ce436a14ff31c2de493fa402a52e1dadb6b0341dc8d9c8d93e332c6e1f3c')
     'licenses/LGPL-2.1.txt'                   = @('https://raw.githubusercontent.com/BepInEx/BepInEx/5fef3570f212b2fb5fbe9c1d20487c13c2fa90cb/LICENSE', 'f2ceca48af033d8adf337a8f9453e633cfad10a1f8c9fec2e5ae55a2d8ffe952')
     'licenses/LGPL-3.0.txt'                   = @('https://raw.githubusercontent.com/BepInEx/Il2CppInterop/dbda1cb353b0f4253345dc45136d170b9e50a5a0/LICENSE', '5eecce16e59e24ddd9d3712012517a033f2cd0459ace22b43d5659d4624abff0')
 }
-# InteropWbPatch の出力。Cecil の版と元の DLL が同じなら毎回同じバイト列になる
-$patchedRuntimeSha = '535b2c8f0e715b65a8b2bce83f86a970c6df867e44e5cebc9cf52d0b01da3641'
+$interopRepo = 'https://github.com/Pietrodjaowjao/Il2CppInterop.git'
+$interopCommit = 'f1627d60efc218e4861bacc1239267f96f32ee2c'
+$interopFiles = @('Il2CppInterop.Common.dll', 'Il2CppInterop.Common.xml', 'Il2CppInterop.Runtime.dll', 'Il2CppInterop.Runtime.xml', 'Il2CppInterop.Runtime.deps.json')
 
 function Get-Verified([string] $url, [string] $sha, [string] $dest) {
     New-Item -ItemType Directory -Force (Split-Path $dest -Parent) | Out-Null
@@ -58,12 +55,29 @@ try {
     Copy-Item (Join-Path $PSScriptRoot 'package/THIRD-PARTY-NOTICES.txt') (Join-Path $stage 'THIRD-PARTY-NOTICES.txt') -Force
     Copy-Item (Join-Path $repo 'LICENSE') (Join-Path $stage 'licenses/GPL-3.0.txt') -Force
 
+    # Il2CppInterop は commit を固定して取り、パッチを当ててビルドする。改行はリポジトリの LF のまま取る (パッチが LF のため)
+    $interopSrc = Join-Path $work 'il2cppinterop'
+    git init -q $interopSrc
+    git -C $interopSrc config core.autocrlf false
+    git -C $interopSrc fetch -q --depth 1 $interopRepo $interopCommit
+    if ($LASTEXITCODE -ne 0) { throw "fetching Il2CppInterop failed ($LASTEXITCODE)" }
+    git -C $interopSrc checkout -q FETCH_HEAD
+    if ($LASTEXITCODE -ne 0) { throw "checking out Il2CppInterop failed ($LASTEXITCODE)" }
+    git -C $interopSrc apply (Join-Path $PSScriptRoot 'Il2CppInterop/il2cppinterop.patch')
+    if ($LASTEXITCODE -ne 0) { throw "applying il2cppinterop.patch failed ($LASTEXITCODE)" }
+    Push-Location $repo
+    try {
+        dotnet build (Join-Path $interopSrc 'Il2CppInterop.Runtime/Il2CppInterop.Runtime.csproj') -c Release -v:q -nologo -p:GeneratePackageOnBuild=false -p:ContinuousIntegrationBuild=true -p:SourceRevisionId=f1627d60.tohl
+        if ($LASTEXITCODE -ne 0) { throw "Il2CppInterop build failed ($LASTEXITCODE)" }
+    }
+    finally { Pop-Location }
+    $interopOut = Join-Path $interopSrc 'bin/Il2CppInterop.Runtime/net6.0'
+    foreach ($f in $interopFiles) { Copy-Item (Join-Path $interopOut $f) (Join-Path $stage "BepInEx/core/$f") -Force }
+
     $runtime = Join-Path $stage 'BepInEx/core/Il2CppInterop.Runtime.dll'
     $patched = Join-Path $work 'Il2CppInterop.Runtime.dll'
     dotnet run --project (Join-Path $PSScriptRoot 'InteropWbPatch') -c Release -v:q -- $runtime $patched
     if ($LASTEXITCODE -ne 0) { throw "InteropWbPatch failed ($LASTEXITCODE)" }
-    $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $patched).Hash.ToLowerInvariant()
-    if ($actual -ne $patchedRuntimeSha) { throw "patched Il2CppInterop.Runtime.dll differs from the expected build ($actual)" }
     Copy-Item $patched $runtime -Force
 
     if (Select-String -LiteralPath (Join-Path $stage 'doorstop_config.ini') -Pattern '^\s*GC_DISABLE_INCREMENTAL\s*=' -Quiet) {
