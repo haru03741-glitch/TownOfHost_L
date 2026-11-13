@@ -87,6 +87,13 @@ public sealed class Executioner : RoleBase, IAdditionalWinner
 
             targetList.Add(target);
         }
+        // 候補がいない時は相手なしのまま (例外で役職の配布を止めない)
+        if (targetList.Count == 0)
+        {
+            Logger.Warn($"{Player.GetNameWithRole()}:ターゲットの候補がいない", "Executioner");
+            TargetId = byte.MaxValue;
+            return;
+        }
         var SelectedTarget = targetList[rand.Next(targetList.Count)];
         TargetId = SelectedTarget.PlayerId;
         SendRPC();
@@ -175,8 +182,8 @@ public sealed class Executioner : RoleBase, IAdditionalWinner
         {
             if (executioner.TargetId != targetId) continue;
 
+            // 同じ相手を引いた処刑人が何人いても、全員変える
             executioner.ChangeRole();
-            break;
         }
     }
 }

@@ -142,8 +142,8 @@ public sealed class Fox : RoleBase, ISystemTypeUpdateHook, IRoomTasker
             }
         }
 
-        //非ホスト導入者はタイマー処理のみ行う。
-        if (AmongUsClient.Instance.AmHost is false)
+        // 生存者が設定人数以下になったら死ぬ (ホストだけが行う。MOD の客はタイマーだけ進める)
+        if (AmongUsClient.Instance.AmHost)
         {
             if (Utils.AllAlivePlayersCount <= DieAliveCount)
             {

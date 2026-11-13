@@ -46,6 +46,8 @@ public sealed class PlagueDoctor : RoleBase, IKiller
             InfectTime = OptionInfectTime.GetFloat();
             InfectDistance = OptionInfectDistance.GetFloat();
             InfectInactiveTime = OptionInfectInactiveTime.GetFloat();
+            // エアシップはリスポーンの選択の分だけ固定で遅らせる (医師が何人いても 1 回だけ足す)
+            if (Main.NormalOptions.MapId == 4) InfectInactiveTime += 5f;
             CanInfectSelf = OptionInfectCanInfectSelf.GetBool();
             CanInfectVent = OptionInfectCanInfectVent.GetBool();
             DestroyPlague = OptionDestroyPlague.GetBool();
@@ -58,9 +60,10 @@ public sealed class PlagueDoctor : RoleBase, IKiller
             CustomRoleManager.OnMurderPlayerOthers.Add(OnMurderPlayerOthers);
         }
     }
+    // 自分だけ外す (全員分を消すと、残った医師の処理が一覧の先頭を引けなくなる)
     public override void OnDestroy()
     {
-        PlagueDoctors.Clear();
+        PlagueDoctors.Remove(this);
     }
     public bool CanKill { get; private set; } = false;
 
@@ -122,9 +125,6 @@ public sealed class PlagueDoctor : RoleBase, IKiller
 
         InfectActive = true;
         NonPlague = false;
-        if (Main.NormalOptions.MapId == 4)
-            //エアシップのリスポーン選択分固定で遅延させる
-            InfectInactiveTime += 5f;
     }
     public bool CanUseKillButton() => InfectCount != 0;
     public bool CanUseImpostorVentButton() => false;
@@ -253,7 +253,7 @@ public sealed class PlagueDoctor : RoleBase, IKiller
                 {
                     changed = true;
                     Logger.Info($"InfectRate[{target.GetNameWithRole().RemoveHtmlTags()}]:{newRate}%", "OnCheckMurderAsKiller");
-                    PlagueDoctors[0].SendRPC(target.PlayerId, newRate);
+                    if (PlagueDoctors.Count > 0) PlagueDoctors[0].SendRPC(target.PlayerId, newRate);
                     string Infectmeg = "50%";
                     if (newRate >= 100) Infectmeg = "100%";
                     Utils.AddGameLog("PlagueDoctor", string.Format(GetString("Log.PlagueDoctor"), (target.PlayerId).ColoredName(), Infectmeg));
@@ -269,7 +269,7 @@ public sealed class PlagueDoctor : RoleBase, IKiller
     }
     public override void AfterMeetingTasks()
     {
-        if (PlagueDoctors[0] == this)
+        if (PlagueDoctors.Count > 0 && PlagueDoctors[0] == this)
         {
             //非感染者が吊られた場合勝利するかもしれない
             LateCheckWin = true;

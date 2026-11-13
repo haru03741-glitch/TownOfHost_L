@@ -890,11 +890,10 @@ class PlayerControlSetRolePatch
         if (isGhostConversion)
         {
             var ghostRoles = new Dictionary<PlayerControl, RoleTypes>();
+            // 海賊の一味になる時は、全員から見てクルーの幽霊にする。一味にする処理 (役職・タスクの配り直し) は 1 回だけ
+            bool becomesGang = Pirate.TargetSetGhostAndTask(target);
             foreach (var seer in Main.AllPlayerControls)
-            {
-                ghostRoles[seer] = RoleView.Ghost(target, seer);
-                if (Pirate.TargetSetGhostAndTask(target)) ghostRoles[seer] = RoleTypes.CrewmateGhost;
-            }
+                ghostRoles[seer] = becomesGang ? RoleTypes.CrewmateGhost : RoleView.Ghost(target, seer);
             if (ghostRoles.All(kvp => kvp.Value == RoleTypes.CrewmateGhost))
             {
                 roleType = RoleTypes.CrewmateGhost;

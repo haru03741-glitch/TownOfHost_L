@@ -171,9 +171,9 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
     public bool? CheckKillFlash(MurderInfo info)
     {
         var pos = info.AppearanceTarget.GetTruePosition();
-        deadBodyPositions.Add(info.AppearanceTarget.PlayerId, pos);
+        deadBodyPositions[info.AppearanceTarget.PlayerId] = pos;
         GetArrow.Add(Player.PlayerId, pos);
-        if (info.AppearanceKiller.GetCustomRole() is CustomRoles.Viper) Viperkilledplayers.Add(info.AppearanceTarget.PlayerId, Utils.ViperDissolveTime);
+        if (info.AppearanceKiller.GetCustomRole() is CustomRoles.Viper) Viperkilledplayers[info.AppearanceTarget.PlayerId] = Utils.ViperDissolveTime;
         RpcAddDiePlayerPos(info.AppearanceTarget.PlayerId, pos);
 
         return OptionShowArrow.GetBool();
@@ -366,7 +366,7 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
                 break;
             case RPC_Types.AdddeadBodyPositions:
                 var playerPos = NetHelpers.ReadVector2(reader);
-                deadBodyPositions.Add(reader.ReadByte(), playerPos);
+                deadBodyPositions[reader.ReadByte()] = playerPos;
                 GetArrow.Add(Player.PlayerId, playerPos);
                 break;
             case RPC_Types.CleardeadBodyPositions:

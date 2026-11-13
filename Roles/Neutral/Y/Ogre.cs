@@ -78,7 +78,8 @@ namespace TownOfHostL.Roles.Neutral
             (var killer, var target) = info.AttemptTuple;
 
             int chance = IRandom.Instance.Next(1, 101);
-            if (chance >= nowKillRate)
+            // chance は 1〜100 なので、確率 nowKillRate% で成功させるには nowKillRate を超えた時に失敗にする
+            if (chance > nowKillRate)
             {
                 info.CanKill = false;
                 killer.RpcProtectedMurderPlayer(target);
@@ -99,7 +100,7 @@ namespace TownOfHostL.Roles.Neutral
             if (killer.GetCustomRole().IsDirectKillRole()) return true;
 
             int chance = IRandom.Instance.Next(1, 101);
-            if (chance >= KilledGuardRate) return true; //そのままキル
+            if (chance > KilledGuardRate) return true; //そのままキル (確率 KilledGuardRate% で守る)
 
             killer.RpcProtectedMurderPlayer(target);
             target.RpcProtectedMurderPlayer(target);

@@ -190,7 +190,7 @@ public sealed class Obolus : RoleBase, ILNKiller, IAdditionalWinner
         WinFlag = true;
 
         if (OptionAddWin.GetBool()) return;
-        if (CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.CountKiller, Player.PlayerId))
+        if (CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Obolus, Player.PlayerId))
         {
             CustomWinnerHolder.WinnerIds.Add(Player.PlayerId);
             CustomWinnerHolder.NeutralWinnerIds.Add(Player.PlayerId);

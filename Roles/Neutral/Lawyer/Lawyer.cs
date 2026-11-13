@@ -86,6 +86,12 @@ public sealed class Lawyer : RoleBase, ILateWinner
             var rand = IRandom.Instance;
             var targetList = GetTargetList(false);
             if (targetList.Count == 0) targetList = GetTargetList(true);
+            // 候補がいない時は依頼人なしのまま (例外で役職の配布を止めない)
+            if (targetList.Count == 0)
+            {
+                Logger.Warn($"{Player.GetNameWithRole()}:依頼人の候補がいない", "Lawyer");
+                return;
+            }
             var SelectedTarget = targetList[rand.Next(targetList.Count)];
             Target = SelectedTarget;
             SendRPC(Player.PlayerId, SelectedTarget.PlayerId, "SetTarget");
@@ -146,8 +152,8 @@ public sealed class Lawyer : RoleBase, ILateWinner
         {
             if (lawyer.Target?.PlayerId != playerId) continue;
 
+            // 同じ依頼人の弁護士が何人いても、全員変える
             lawyer.ChangeRole();
-            break;
         }
     }
     public override bool KnowsRoleOf(PlayerControl seen, bool isMeeting) => KnowTargetRole && Target != null && seen.PlayerId == Target.PlayerId;
