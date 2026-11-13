@@ -64,7 +64,7 @@ public class GameSettingMenuPatch
     // 検索を空にした時に戻るタブ
     static int ReturnTab = 1;
 
-    // 左の列 (設定画面の座標・MRP と同じ寸法)。X は本編のタブのボタンと同じ所。
+    // 左の列 (設定画面の座標・More Roles Plus と同じ寸法)。X は本編のタブのボタンと同じ所。
     // ボタンが CatFitCount 個を超えたら、同じ高さに収まるよう間隔とボタンの高さを詰める
     const float CatX = -2.96f, CatTopY = 1.6f, CatStepY = 0.46f;
     const float CatScaleX = 1f, CatScaleY = 0.78f;

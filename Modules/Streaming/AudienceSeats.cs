@@ -98,7 +98,7 @@ sealed class AudienceSeats
     float builtScale = -1f;
     TextMeshPro signText;
     SpriteRenderer signEdge, signFill;
-    /// <summary>今の大きさ (EK と同じく 1080 幅の画面で 0.5) と、台の左端・前列の足元 (画面の画素・下から)</summary>
+    /// <summary>今の大きさ (End K not と同じく 1080 幅の画面で 0.5) と、台の左端・前列の足元 (画面の画素・下から)</summary>
     float s = 1f, left, floor;
     Transform root;
 
