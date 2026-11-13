@@ -71,7 +71,21 @@ public sealed class HateKiller : RoleBase, IImpostor
 
     public override bool VotingResults(ref NetworkedPlayerInfo Exiled, ref bool IsTie, Dictionary<byte, int> vote, byte[] mostVotedPlayers, bool ClearAndExile)
     {
-        if (!Player.IsAlive()) return true;
+        // 同数の時の特殊な決め方は止めない (票を数えるだけの役職)
+        if (!Player.IsAlive()) return false;
+
+        // 自分に入った票のうち、インポスターの票と自分の票を数える (設定で数から外す)
+        ImpostorVotes = 0;
+        selfvote = 0;
+        if (TownOfHostL.Modules.MeetingVoteManager.Instance?.AllVotes is { } allVotes)
+        {
+            foreach (var data in allVotes.Values)
+            {
+                if (data.VotedFor != Player.PlayerId) continue;
+                if (data.Voter == Player.PlayerId) selfvote += data.NumVotes;
+                else if (Utils.GetPlayerById(data.Voter)?.Is(CustomRoleTypes.Impostor) == true) ImpostorVotes += data.NumVotes;
+            }
+        }
 
         vote.TryGetValue(Player.PlayerId, out var count);
         if (!OptionCountImpostorVotes.GetBool())
@@ -83,7 +97,7 @@ public sealed class HateKiller : RoleBase, IImpostor
             count = count - selfvote;
         }
 
-        if (count <= 0) return true;
+        if (count <= 0) return false;
 
         float Decrease = count * OptionDecreaseKillCool.GetFloat();
         currentKillCooldown = OptionKillCooldown.GetFloat() - Decrease;
@@ -91,7 +105,7 @@ public sealed class HateKiller : RoleBase, IImpostor
         if (currentKillCooldown < MinimumKillCooldown) currentKillCooldown = MinimumKillCooldown;
         if (currentKillCooldown < 0.1f) currentKillCooldown = 0.1f;
 
-        return true;
+        return false;
     }
     public override void AfterMeetingTasks()
     {
@@ -99,18 +113,4 @@ public sealed class HateKiller : RoleBase, IImpostor
         selfvote = 0;
     }
 
-    /// <summary>
-    /// インポスターがヘイトキラーに投票した数を増やす(自投票除く)
-    /// </summary>
-    public void AddImpVote()
-    {
-        ++ImpostorVotes;
-    }
-    /// <summary>
-    /// ヘイトキラーが自投票した数を増やす
-    /// </summary>
-    public void AddSelfVote()
-    {
-        ++selfvote;
-    }
 }
