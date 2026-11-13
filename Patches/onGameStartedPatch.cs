@@ -10,7 +10,6 @@ using TownOfHostL.Attributes;
 using TownOfHostL.Modules;
 using TownOfHostL.Roles;
 using TownOfHostL.Roles.Core;
-using TownOfHostL.Roles.Neutral;
 using static TownOfHostL.Translator;
 
 using TownOfHostL.Core.Modes;
@@ -569,9 +568,9 @@ class SelectRolesPatch
             foreach (var seer in Main.AllPlayerControls)
             {
                 if (seer == pc) continue;
+                // 役職の色を全員に見せる役職 (RoleBase.ShowsRoleColorToAll) は、MOD の客にも色を送っておく
                 if (pc.GetCustomRole().IsSpectator()
-                    || (pc.Is(CustomRoles.Workaholic) && Workaholic.Seen)
-                    || pc.Is(CustomRoles.Rainbow))
+                    || (pc.GetRoleClass()?.ShowsRoleColorToAll(false) ?? false))
                     NameColorManager.Add(seer.PlayerId, pc.PlayerId, pc.GetRoleColorCode());
             }
         }
