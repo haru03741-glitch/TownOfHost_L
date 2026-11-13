@@ -92,29 +92,25 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
 - [ExtremeRoles](https://github.com/yukieiji/ExtremeRoles)
   - トトカルチョ
 - [End K not](https://github.com/waffle-ful/Aeterna-End-K-not)
-  - 切断された時に部屋を自動で作り直す流れ (メニューが落ち着くのを待ってから作る・確定は 1 回の試行で 1 回)
+  - 切断された時に部屋を自動で作り直す流れ
   - 配信の視聴者がコメントで試合に干渉する仕組み (ポイント・待ち行列・干渉の種類)
-  - YouTube ライブのコメントの読み取り (続きの値の 3 つの型・失敗の時の待ち時間・配信終了の判定)
-  - Among Us の外で動く番犬 (タスク スケジューラから起動して落ちた・固まった時に起動し直す形・心拍の止まりで固まりを見分ける方法)
-  - 部屋を作り直せない時に、自分で終わって番犬に起動し直してもらうプロセスごとの再起動 (再起動の印で番犬の待ち時間を飛ばす形)
+  - YouTube ライブのコメントの読み取り
+  - Among Us の外で動く番犬 (落ちた・固まった時に起動し直す) と、部屋を作り直せない時のプロセスごとの再起動
   - 終わったコルーチンが持っていた参照の解放
   - 起動時のパッチ当てで作る delegate 型の使い回し
   - Il2CppInterop.Runtime を write barrier 経由に書き換える手順と、それに合わせた incremental GC の切り替え
-  - 他のプレイヤーの外見を PlayerInfo の送信で配る方式
-  - 会議の後の暗転を防ぐ頭数合わせで、死者を見た目だけ生き返らせる方法
-  - 偽の PlayerControl (CNO) を公式サーバーで通す形 (空の spawn・ID の循環・開始と会議明けの待ち)
-  - 設定画面にタブを足す作りと、設定の検索の一致判定 (More Roles Plus 経由で参照)
-  - 見せたくない書き込みを大きな空白で押し出し、会話を送り直す方法
-  - チャットのコマンドの補完と貼り付け
-  - 起動の待ちを減らす BepInEx のパッチャー (Class::Init の走査結果の保存・プラグインの読み込みを最初の 2 フレームの後へ送る)
+  - 偽の PlayerControl (CNO) の PlayerId を 200〜253 で回して使う形
+  - 起動の待ちを減らす BepInEx のパッチャー
   - 起動直後のメニューでアカウント表示を止め、ログインを待たずにメニューを使えるようにする方法 (More Roles Plus 経由)
-  - 波動砲のためとビームを偽の PlayerControl の名前で描く方法 (透明な列と見える列を並べる・文字の大きさを絶対値で書く)
+  - 設定の検索の一致判定 (More Roles Plus 経由)
+  - 波動砲のためとビームを偽の PlayerControl の名前で描く方法
 - [Endless Host Roles](https://github.com/Gurge44/EndlessHostRoles)
   - 配布物に入れる Unity Doorstop と、pietro による修正版 Il2CppInterop
   - 他のプレイヤーの外見を、PlayerInfo の送信と本人への変身解除で着せ替える方式
   - 会議の後の暗転を防ぐため、生存クルーが足りない時に死者を見た目だけ生き返らせる方法
-  - 名前で絵を描く偽の PlayerControl (CustomNetObject)
+  - 名前で絵を描く偽の PlayerControl (CustomNetObject) と、それを公式サーバーで通す形 (空の spawn・開始と会議明けの待ち)
   - ポータルメーカーの印の絵
+  - 設定画面にタブを足す作り (More Roles Plus 経由)
   - 設定画面の検索欄 (本編のチャット入力欄を複製して使う作り)
   - タスクの種類ごとの無効化の分類 (ショート・コモン・ロング・その他)
   - チャットの荒らし対策 (禁止語・開始の催促)・耳打ち

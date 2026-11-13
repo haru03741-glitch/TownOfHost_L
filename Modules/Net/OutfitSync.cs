@@ -13,8 +13,7 @@ namespace TownOfHostL.Modules.Net;
 // その人に変身している人がいれば、同じ束で変身も送り直す (変身の見た目は変身した時の外見の写しで、着せ替えても変わらないため)。
 // 名前には触らない。名前は SetName の経路で配る。
 // Data と Shapeshift は 1 人ずつ 1 つの GameData に収める (SendGuard が 1000 バイトを超えた束を分けると順序が保証されないため)。
-// 謝辞: PlayerInfo の serialize と本人への Shapeshift で外見を配る方式は Endless Host Roles (Gurge44, GPL-3.0) が
-// 始めたもので、End K not が取り入れた物に倣った。
+// 謝辞: PlayerInfo の serialize と本人への Shapeshift で外見を配る方式は Endless Host Roles (Gurge44, GPL-3.0) に倣った。
 public static class OutfitSync
 {
     // PlayerInfo を送れない間 (試合開始の直後・AntiBlackout の退避中) に変えた人。送れるようになった所で送り直す

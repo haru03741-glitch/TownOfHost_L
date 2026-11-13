@@ -93,7 +93,7 @@ public static partial class AntiBlackout
     // ホストの試合終了を待って暗転する。fillCrew のときは各クライアントの見え方で生存クルーが足りなければ、
     // 足りない数だけ死者を生きたクルーに見せ、演出の後で幽霊に戻す (RevertFilledCrew)。
     // ホストの演出はクライアントより先に終わるので、その死者の IsDead を戻して送るのも RevertFilledCrew まで待つ。
-    // 謝辞: 死者を見た目だけ生き返らせて頭数をそろえる方法は Endless Host Roles (Gurge44, GPL-3.0) と End K not に倣った。
+    // 謝辞: 死者を見た目だけ生き返らせて頭数をそろえる方法は Endless Host Roles (Gurge44, GPL-3.0) に倣った。
     private static readonly Dictionary<int, List<PlayerControl>> filledCrew = new();
     private static readonly Dictionary<byte, (bool isDead, bool Disconnected)> deferredDead = new();
     // デシンクの人の画面に送った身代わり (演出の後で RoleView の見え方へ戻す)

@@ -33,8 +33,8 @@ namespace TownOfHostL.Core;
 /// 名前ごと隠れる)。体は Create で渡す色で描かれるので、絵の色に合わせ、絵を体の大きさまで描いて覆う。
 ///
 /// 謝辞: 名前で絵を描く CNO は MoreGamemodes (Rabek009, GPL-3.0) の AllObjects が元で、
-/// Endless Host Roles (Gurge44, GPL-3.0) の CustomNetObject に倣い、
-/// 公式鯖で通る形 (空の spawn・ID の循環・開始と会議明けの待ち) は End K not に倣った。
+/// 公式鯖で通る形 (空の spawn・開始と会議明けの待ち) は Endless Host Roles (Gurge44, GPL-3.0) の CustomNetObject に倣った。
+/// PlayerId を 200〜253 で回して使う形は End K not に倣った。
 /// </summary>
 [PatchBundle(PatchBundles.Core)]
 public sealed class CustomNetObject
