@@ -147,6 +147,7 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
     - [Revolutionary Host Roles](https://github.com/sansaaaaai/Revolutionary-host-roles): リローダー
     - [The Other Roles: GM Edition](https://github.com/yukinogatari/TheOtherRoles-GM): ペスト医師
     - [TheOtherRoles](https://github.com/TheOtherRolesAU/TheOtherRoles): ヴァルチャー
+    - [UchuAddon](https://github.com/TeamUchuaddon/UchuAddon): オボルス・ノヴァ (UchuAddon では SuperNewRoles の波動砲が元)
   - 役職の共通の仕組み (ダブルトリガー・ワンクリックのファントムボタン・部屋のタスク・自投票・演出の送り方など)
   - 日ごとのゲームの記録の形
   - 放置の検出の流れ
@@ -169,6 +170,8 @@ TOH_Yに搭載されている機能の説明は[TOH_Yのwikiwiki](https://wikiwi
 - [TownOfHost-K](https://github.com/KYMario/TownOfHost-K)
   - プレイヤー情報 (NetworkedPlayerInfo) の同期
   - YouTube ライブのコメントの読み取り (配信のチャット欄のページから鍵と続きの値を取る方法・End K not 経由で参照)
+- [UchuAddon](https://github.com/TeamUchuaddon/UchuAddon) (TeamUchuAddon 制作)
+  - オボルスの役職と、ノヴァの役職の案 (UchuAddon では SuperNewRoles の波動砲が元)。どちらも TownOfHost-hamo 経由。UchuAddon の絵や音は使っていない
 - [Town Of Host For E](https://github.com/AsumuAkaguma/TownOfHost_ForE)
   - YouTube ライブのコメントの読み取り (TownOfHost-K が参考にした元)
 - [Unity Doorstop (Pietrodjaowjao 版)](https://github.com/Pietrodjaowjao/UnityDoorstop) (LGPL-2.1・元は [NeighTools/UnityDoorstop](https://github.com/NeighTools/UnityDoorstop))

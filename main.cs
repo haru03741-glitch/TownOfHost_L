@@ -352,6 +352,7 @@ public enum CustomWinner
     Zombie = CustomRoles.Zombie,
     PlagueDoctor = CustomRoles.PlagueDoctor,
     CountKiller = CustomRoles.CountKiller,
+    Obolus = CustomRoles.Obolus,
 }
 public enum SuffixModes
 {
