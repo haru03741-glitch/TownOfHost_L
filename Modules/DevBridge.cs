@@ -143,10 +143,12 @@ static class DevBridge
                     foreach (var pt in SpawnEditorKit.SpawnStore.Library.Current.GetPoints(id, false) ?? new())
                         sb.AppendLine($"map{id} {pt.Name} {pt.X:F2} {pt.Y:F2}");
                 break;
-            case "unchoose":
-                TownOfHostL.Modules.SpawnEditor.SpawnRoomOptions.Reset(int.Parse(a[1]));
-                sb.AppendLine("UNCHOOSE " + a[1]);
-                break;
+            case "mapclick":
+                {
+                    var p = a[1].Split(' ');
+                    sb.AppendLine("MAPCLICK " + TownOfHostL.SettingsUI.SpawnMapView.ClickScreen(new Vector3(float.Parse(p[0]), Screen.height - float.Parse(p[1]), 0f)));
+                    break;
+                }
             case "pko":
                 PikeoAI.Command(new ChatCommandContext(("/pko " + a[1]).Split(' '), PlayerControl.LocalPlayer, null));
                 sb.AppendLine("PKO");

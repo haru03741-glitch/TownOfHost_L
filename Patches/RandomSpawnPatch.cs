@@ -65,16 +65,7 @@ namespace TownOfHostL
             public abstract Dictionary<string, Vector2> Positions { get; }
             protected abstract IEnumerable<KeyValuePair<string, Vector2>> DefaultPool();
 
-            // 部屋を選ぶ設定が入っていれば選んだ部屋だけ、無ければ元の決まりで選ぶ部屋
-            public IEnumerable<KeyValuePair<string, Vector2>> RoomPool()
-            {
-                if (Modules.SpawnEditor.SpawnRoomOptions.IsChoosing(MapId))
-                {
-                    var chosen = Positions.Where(p => Modules.SpawnEditor.SpawnRoomOptions.IsOn(MapId, p.Key)).ToArray();
-                    if (chosen.Length > 0) return chosen;
-                }
-                return DefaultPool();
-            }
+            public IEnumerable<KeyValuePair<string, Vector2>> RoomPool() => DefaultPool();
             public Vector2 GetLocation()
             {
                 var pool = RoomPool().ToArray();
@@ -224,17 +215,13 @@ namespace TownOfHostL
             {
                 if (Options.DisableNearButton_Airship.GetBool())
                 {
-                    return Options.AdditionalSpawn_Airship.GetBool()
-                    ? positions.ToArray()[3..]
-                    : Options.AdditionalSpawn_AirshipTAKADA.GetBool()
+                    return Options.AdditionalSpawn_AirshipTAKADA.GetBool()
                     ? positions.ToArray()[3..11]
                     : positions.ToArray()[3..8];
                 }
                 else
                 {
-                    return Options.AdditionalSpawn_Airship.GetBool()
-                    ? positions.ToArray()
-                    : Options.AdditionalSpawn_AirshipTAKADA.GetBool()
+                    return Options.AdditionalSpawn_AirshipTAKADA.GetBool()
                     ? positions.ToArray()[2..11]
                     : positions.ToArray()[2..8];
                 }

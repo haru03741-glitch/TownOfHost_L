@@ -171,7 +171,6 @@ public static partial class Options
     public static OptionItem AdditionalSpawn_Skeld;
     public static OptionItem AdditionalSpawn_MiraHQ;
     public static OptionItem AdditionalSpawn_Polus;
-    public static OptionItem AdditionalSpawn_Airship;
     public static OptionItem AdditionalSpawn_AirshipTAKADA;
     public static OptionItem AdditionalSpawn_Fungle;
     public static OptionItem DisableNearButton_Skeld;
@@ -426,6 +425,7 @@ public static partial class Options
             .SetColor(new Color32(255, 91, 112, 255))
             .SetHeader(true, Translator.GetString("GM"))
             .SetGameMode(CustomGameMode.All);
+        GmOptions.Setup(EnableGM);
 
         // SpecialEvent
         //if (Main.IsChristmas)
@@ -558,7 +558,7 @@ public static partial class Options
 
         TextOptionItem.Create("Head.Map", TabGroup.ModMainSettings).SetColor(Palette.Orange).SetGameMode(CustomGameMode.All);
         /**************** SKELD ****************/
-        MapOption_Skeld = StringOptionItem.Create("MapOption_Skeld", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetEnabled(() => IsActiveSkeld)
+        MapOption_Skeld = StringOptionItem.Create("MapOption_Skeld", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetColor(Palette.Orange)
             .SetGameMode(CustomGameMode.All);
         // ランダムスポーン
@@ -572,7 +572,6 @@ public static partial class Options
             .SetGameMode(CustomGameMode.All);
         CustomSpawnOnly_Skeld = StringOptionItem.Create("CustomSpawnOnly", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(CustomSpawn_Skeld)
             .SetGameMode(CustomGameMode.All);
-        Modules.SpawnEditor.SpawnRoomOptions.Setup(0, RandomSpawn_Skeld, new RandomSpawn.SkeldSpawnMap().positions.Keys);
         FirstFixedSpawn_Skeld = StringOptionItem.Create("FirstFixedSpawn", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(RandomSpawn_Skeld)
             .SetGameMode(CustomGameMode.All);
         // デバイス無効化
@@ -589,7 +588,7 @@ public static partial class Options
             .SetValueFormat(OptionFormat.Seconds).SetGameMode(CustomGameMode.All);
 
         /**************** MIRA HQ ****************/
-        MapOption_MiraHQ = StringOptionItem.Create("MapOption_MiraHQ", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetEnabled(() => IsActiveMiraHQ)
+        MapOption_MiraHQ = StringOptionItem.Create("MapOption_MiraHQ", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetColor(Palette.Orange)
             .SetGameMode(CustomGameMode.All);
         // ランダムスポーン
@@ -603,7 +602,6 @@ public static partial class Options
             .SetGameMode(CustomGameMode.All);
         CustomSpawnOnly_MiraHQ = StringOptionItem.Create("CustomSpawnOnly", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(CustomSpawn_MiraHQ)
             .SetGameMode(CustomGameMode.All);
-        Modules.SpawnEditor.SpawnRoomOptions.Setup(1, RandomSpawn_MiraHQ, new RandomSpawn.MiraHQSpawnMap().positions.Keys);
         FirstFixedSpawn_MiraHQ = StringOptionItem.Create("FirstFixedSpawn", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(RandomSpawn_MiraHQ)
             .SetGameMode(CustomGameMode.All);
         // デバイス無効化
@@ -620,7 +618,7 @@ public static partial class Options
             .SetValueFormat(OptionFormat.Seconds).SetGameMode(CustomGameMode.All);
 
         /**************** POLUS ****************/
-        MapOption_Polus = StringOptionItem.Create("MapOption_Polus", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetEnabled(() => IsActivePolus)
+        MapOption_Polus = StringOptionItem.Create("MapOption_Polus", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetColor(Palette.Orange)
             .SetGameMode(CustomGameMode.All);
         // ランダムスポーン
@@ -634,7 +632,6 @@ public static partial class Options
             .SetGameMode(CustomGameMode.All);
         CustomSpawnOnly_Polus = StringOptionItem.Create("CustomSpawnOnly", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(CustomSpawn_Polus)
             .SetGameMode(CustomGameMode.All);
-        Modules.SpawnEditor.SpawnRoomOptions.Setup(2, RandomSpawn_Polus, new RandomSpawn.PolusSpawnMap().positions.Keys);
         FirstFixedSpawn_Polus = StringOptionItem.Create("FirstFixedSpawn", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(RandomSpawn_Polus)
             .SetGameMode(CustomGameMode.All);
         // デバイス無効化
@@ -655,7 +652,7 @@ public static partial class Options
             .SetValueFormat(OptionFormat.Seconds).SetGameMode(CustomGameMode.All);
 
         /**************** AIRSHIP ****************/
-        MapOption_Airship = StringOptionItem.Create("MapOption_Airship", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetEnabled(() => IsActiveAirship)
+        MapOption_Airship = StringOptionItem.Create("MapOption_Airship", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetColor(Palette.Orange)
             .SetGameMode(CustomGameMode.All);
         // ランダムスポーン
@@ -663,15 +660,12 @@ public static partial class Options
             .SetColor(Color.yellow).SetGameMode(CustomGameMode.All);
         AdditionalSpawn_AirshipTAKADA = StringOptionItem.Create("AdditionalSpawn_AirshipTAKADA", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(RandomSpawn_Airship)
             .SetGameMode(CustomGameMode.All);
-        AdditionalSpawn_Airship = StringOptionItem.Create("AdditionalSpawn_Airship", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(RandomSpawn_Airship)
-            .SetGameMode(CustomGameMode.All);
         DisableNearButton_Airship = StringOptionItem.Create("DisableNearButton", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(RandomSpawn_Airship)
             .SetGameMode(CustomGameMode.All);
         CustomSpawn_Airship = StringOptionItem.Create("CustomSpawn", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(RandomSpawn_Airship)
             .SetGameMode(CustomGameMode.All);
         CustomSpawnOnly_Airship = StringOptionItem.Create("CustomSpawnOnly", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(CustomSpawn_Airship)
             .SetGameMode(CustomGameMode.All);
-        Modules.SpawnEditor.SpawnRoomOptions.Setup(4, RandomSpawn_Airship, new RandomSpawn.AirshipSpawnMap().positions.Keys);
         // デバイス無効化
         DisableDevices_Airship = StringOptionItem.Create("DisableDevices", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(MapOption_Airship)
             .SetColor(Color.yellow).SetGameMode(CustomGameMode.All);
@@ -703,7 +697,7 @@ public static partial class Options
         DisableAirshipCargoLightsPanel = StringOptionItem.Create("DisableAirshipCargoLightsPanel", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(LightsOutSpecialSettings_Airship).SetGameMode(CustomGameMode.All);
 
         /**************** FUNGLE ****************/
-        MapOption_Fungle = StringOptionItem.Create("MapOption_Fungle", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetEnabled(() => IsActiveFungle)
+        MapOption_Fungle = StringOptionItem.Create("MapOption_Fungle", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetColor(Palette.Orange)
             .SetGameMode(CustomGameMode.All);
         // ランダムスポーン
@@ -717,7 +711,6 @@ public static partial class Options
             .SetGameMode(CustomGameMode.All);
         CustomSpawnOnly_Fungle = StringOptionItem.Create("CustomSpawnOnly", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(CustomSpawn_Fungle)
             .SetGameMode(CustomGameMode.All);
-        Modules.SpawnEditor.SpawnRoomOptions.Setup(5, RandomSpawn_Fungle, new RandomSpawn.FungleSpawnMap().positions.Keys);
         FirstFixedSpawn_Fungle = StringOptionItem.Create("FirstFixedSpawn", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(RandomSpawn_Fungle)
             .SetGameMode(CustomGameMode.All);
         // デバイス無効化

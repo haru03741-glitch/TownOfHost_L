@@ -146,6 +146,11 @@ internal sealed class CrewMeter : Widget
             var b = _crew ? _crew.bounds.size : Vector3.one;
             float sc = FigH / Math.Max(b.y, 0.0001f);
             sr.transform.localScale = new Vector3(sc, sc, 1f);
+            if (_track)
+            {
+                sr.sortingOrder = _track.sortingOrder + 4;
+                sr.maskInteraction = _track.maskInteraction;
+            }
             _figs.Add(sr);
         }
         return _figs[i];

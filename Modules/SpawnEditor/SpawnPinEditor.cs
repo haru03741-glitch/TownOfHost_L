@@ -12,7 +12,7 @@ public class SpawnPinEditor : MonoBehaviour
 {
     public SpawnPinEditor(IntPtr ptr) : base(ptr) { }
 
-    sealed class MapSheet
+    internal sealed class MapSheet
     {
         public int Id;
         public string Label;
@@ -33,7 +33,7 @@ public class SpawnPinEditor : MonoBehaviour
         }
     }
 
-    static readonly MapSheet[] Sheets =
+    internal static readonly MapSheet[] Sheets =
     {
         new() { Id = 0, Label = "The Skeld", Resource = "SpawnMap_Skeld", Ax = 0.04402f, Bx = -23.623f, Ay = -0.04637f, By = 7.523f },
         new() { Id = 1, Label = "MIRA HQ", Resource = "SpawnMap_MiraHQ", Ax = 0.05420f, Bx = -12.094f, Ay = -0.05438f, By = 25.732f },
@@ -42,7 +42,7 @@ public class SpawnPinEditor : MonoBehaviour
         new() { Id = 5, Label = "Fungle", Resource = "SpawnMap_Fungle", Ax = 0.06058f, Bx = -28.243f, Ay = -0.06036f, By = 16.501f },
     };
 
-    const int MaxPins = 40;
+    internal const int MaxPins = 40;
     const float PickRadius = 17f;
     const float ArmSeconds = 3f;
 
@@ -104,7 +104,7 @@ public class SpawnPinEditor : MonoBehaviour
         messageUntil = Time.unscaledTime + 2.5f;
     }
 
-    static bool Load(MapSheet s)
+    internal static bool Load(MapSheet s)
     {
         if (s.Tex != null) return true;
         if (s.Failed) return false;
@@ -347,7 +347,7 @@ public class SpawnPinEditor : MonoBehaviour
         ringTex ??= Disc(false);
     }
 
-    static Texture2D Disc(bool filled)
+    internal static Texture2D Disc(bool filled)
     {
         const int N = 64;
         var tex = new Texture2D(N, N, TextureFormat.RGBA32, false) { hideFlags = HideFlags.HideAndDontSave, filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };

@@ -208,7 +208,7 @@ public class RoleDictionary : MonoBehaviour
         Comparison<Entry> cmp = ja != null
             ? (a, b) => ja.Compare(a.Name, b.Name, CompareOptions.IgnoreKanaType | CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase)
             : (a, b) => string.CompareOrdinal(a.Name, b.Name);
-        all.Sort(cmp);
+        all.Sort((a, b) => a.Team != b.Team ? ((int)a.Team).CompareTo((int)b.Team) : cmp(a, b));
         teamCounts.Clear();
         teamCounts[Tab.All] = all.Count;
         foreach (var e in all) teamCounts[e.Team] = teamCounts.TryGetValue(e.Team, out var c) ? c + 1 : 1;

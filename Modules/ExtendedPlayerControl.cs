@@ -674,6 +674,7 @@ static partial class ExtendedPlayerControl
         {
             return true;
         }
+        if (GmOptions.IsGM(seer)) return GmOptions.Get(GmOptions.CanSeeDeathReason);
         // seerが死亡済で，霊界から死因が見える設定がON
         if (!seer.IsAlive() && Options.GhostCanSeeDeathReason.GetBool())
         {

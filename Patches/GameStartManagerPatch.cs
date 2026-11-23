@@ -18,6 +18,7 @@ namespace TownOfHostL
     public class GameStartManagerPatch
     {
         private static float timer = 600f;
+        internal static void SyncTimer(float seconds) => timer = Mathf.Max(0f, seconds);
         private static TextMeshPro warningText;
         public static TextMeshPro HideName;
         private static PassiveButton cancelButton;
@@ -181,8 +182,7 @@ namespace TownOfHostL
                     timer = Mathf.Max(0f, timer -= Time.deltaTime);
                     int minutes = (int)timer / 60;
                     int seconds = (int)timer % 60;
-                    string countDown = $"({minutes:00}:{seconds:00})";
-                    if (timer <= 60) countDown = "";
+                    string countDown = timer <= 60f ? $"(<color=#ff5050>{minutes:00}:{seconds:00}</color>)" : $"({minutes:00}:{seconds:00})";
 
                     // タイマーテキスト
                     if (__instance.StartButton != null && __instance.StartButton.buttonText != null)

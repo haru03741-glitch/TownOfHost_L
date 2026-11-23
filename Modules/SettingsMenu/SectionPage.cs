@@ -203,6 +203,8 @@ internal sealed class SectionPage
                 var plated = OptEditor.Plated(r, rowW, k++);
                 if (HasPreview && GamePreview.Has(opt) && plated is Plate plate) _hits.Add((opt, plate));
                 rows.Add(plated);
+                var map = SpawnMapView.After(opt, rowW, edit);
+                if (map != null) rows.Add(map);
             }
             _entries.Add(e);
         }

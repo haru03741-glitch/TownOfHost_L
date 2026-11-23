@@ -368,7 +368,7 @@ namespace TownOfHostL.Roles
             AssignRoleType = roleType;
             IsInitiallyAssignableCallBack = () => true;
             AssignCountRule =
-                roleType == CustomRoleTypes.Impostor ? new(1, 3, 1) : new(1, 15, 1);
+                new(1, 15, 1);
             AssignUnitRoles =
                 Enumerable.Repeat(role, AssignCountRule.Step).ToArray();
         }

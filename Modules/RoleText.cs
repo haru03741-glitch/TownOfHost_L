@@ -22,7 +22,7 @@ public static class RoleText
         //デフォルト値
         bool enabled = TownOfHostL.Core.NativeObject.Same(seer, seen)
             || seen.GetCustomRole().IsSpectator()
-            || (Main.VisibleTasksCount && !seer.IsAlive() && !Options.GhostCantSeeOtherRoles.GetBool());
+            || (Main.VisibleTasksCount && (GmOptions.IsGM(seer) ? GmOptions.Get(GmOptions.CanSeeRoles) : !seer.IsAlive() && !Options.GhostCantSeeOtherRoles.GetBool()));
         //オーバーライドによる表示ではサブロールは見えないようにする/上記場合のみ表示
         var view = new RoleNameView(enabled);
 
@@ -77,7 +77,7 @@ public static class RoleText
         {
             enabled = TownOfHostL.Core.NativeObject.Same(seer, seen) // 自分自身はtrue
                 || seen.GetCustomRole().IsSpectator() // 観戦者はtrue
-                || (Main.VisibleTasksCount && !seer.IsAlive() && !Options.GhostCantSeeOtherRoles.GetBool()); // 幽霊で役職見れるとき
+                || (Main.VisibleTasksCount && (GmOptions.IsGM(seer) ? GmOptions.Get(GmOptions.CanSeeRoles) : !seer.IsAlive() && !Options.GhostCantSeeOtherRoles.GetBool())); // 幽霊で役職見れるとき
         }
 
         // 幽霊が陣営のみ見れる設定ならtrue

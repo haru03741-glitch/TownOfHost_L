@@ -176,6 +176,10 @@ public static class ChatCommandTable
             Host = _ => Utils.ShowLastResult(),
             Remote = c => Utils.ShowLastResult(c.Player.PlayerId),
         },
+        new("/co") { Restrictable = true, Usage = "CommandUsage.Co", Host = CoLog.Co, Remote = CoLog.Co },
+        new("/colist", "/cl") { Restrictable = true, Host = CoLog.List, Remote = CoLog.List },
+        new("/aco") { Restrictable = true, Usage = "CommandUsage.Aco", Host = CoLog.Aco, Remote = CoLog.Aco },
+        new("/acl") { Restrictable = true, Host = CoLog.AddonList, Remote = CoLog.AddonList },
         new("/kl", "/killlog")
         {
             Restrictable = true,

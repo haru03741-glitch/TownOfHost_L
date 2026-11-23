@@ -171,7 +171,7 @@ namespace TownOfHostL.Modules
             AURoleOptions.PlayerSpeedMod = Mathf.Clamp(PlayerSpeed.Get(player.PlayerId), Main.MinSpeed, 3f);
 
             state.taskState.hasTasks = Utils.HasTasks(player.Data, false);
-            if (!Options.GhostCantSeeOtherVotes.GetBool() && player.Data.IsDead)
+            if (GmOptions.IsGM(player) ? GmOptions.Get(GmOptions.CanSeeVotes) : !Options.GhostCantSeeOtherVotes.GetBool() && player.Data.IsDead)
                 opt.SetBool(BoolOptionNames.AnonymousVotes, false);
             if (Options.AdditionalEmergencyCooldown.GetBool() &&
                 Options.AdditionalEmergencyCooldownThreshold.GetInt() <= Utils.AllAlivePlayersCount)

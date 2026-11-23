@@ -313,6 +313,8 @@ public static partial class CustomRoleManager
         AllRolesInfo.Do(kvp => kvp.Value.IsEnable = kvp.Key.IsEnable());
         AllActiveRoles.Clear();
         ClearOthers();
+        CoLog.Reset();
+        GmAutoPossessTiming.Reset();
     }
     /// <summary>役職や属性が登録した *Others と、キルの橋渡しを空にする。開始と終わりの両方で同じ物を消す</summary>
     private static void ClearOthers()

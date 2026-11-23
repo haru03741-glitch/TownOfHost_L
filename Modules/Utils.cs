@@ -202,6 +202,7 @@ public static partial class Utils
     {
         PlayerControl killer = info.AppearanceKiller, target = info.AttemptTarget;
         // 霊界キルフラッシュ
+        if (GmOptions.IsGM(seer)) return GmOptions.Get(GmOptions.CanSeeKillFlash);
         if (seer.GetCustomRole().IsSpectator()) return true;
         if (CheckKillFlashAfterDead(seer) && seer != target) return true;
         // 殺された人の側
@@ -362,7 +363,7 @@ public static partial class Utils
         seen ??= seer;
         //seer側による変更
         bool enabled = TownOfHostL.Core.NativeObject.Same(seer, seen)
-                    || (Main.VisibleTasksCount && !seer.IsAlive() && !Options.GhostCantSeeOtherTasks.GetBool())
+                    || (Main.VisibleTasksCount && (GmOptions.IsGM(seer) ? GmOptions.Get(GmOptions.CanSeeTaskProgress) : !seer.IsAlive() && !Options.GhostCantSeeOtherTasks.GetBool()))
                     || (seen.GetRoleClass()?.ShowsTaskProgressToAll ?? false);
         // 上書きは text を読まずに差し替えるだけなので、既定の字は見える時だけ組む (null = 上書きされていない)
         string text = null;
@@ -370,8 +371,10 @@ public static partial class Utils
         seer.GetRoleClass()?.OverrideProgressTextAsSeer(seen, ref enabled, ref text);
         // 見られる側による変更
         seen.GetRoleClass()?.OverrideProgressTextAsSeen(seer, ref enabled, ref text);
-        if (!enabled) return "";
+        var gmExtra = GmOptions.ExtraProgress(seer, seen);
+        if (!enabled) return gmExtra;
         text ??= GetProgressText(seen.PlayerId, IsActive(SystemTypes.Comms));
+        text += gmExtra;
         if (ModeCatalog.IsCatchCat && TownOfHostL.Core.NativeObject.Same(seer, seen))
         {
             text += CatchCat.Common.GetMark(seer);
