@@ -789,18 +789,6 @@ static partial class ExtendedPlayerControl
         writer.Write(sid);
         AmongUsClient.Instance.FinishRpcImmediately(writer);
     }
-    public static bool RpcSnapToDesync(this PlayerControl pc, PlayerControl target, Vector2 position, bool force = false)
-    {
-        if (!force && !Modules.Net.SnapToBudget.CanSend()) return false;
-        var net = pc.NetTransform;
-        var num = (ushort)(net.lastSequenceId + 2);
-        if (target.LacksClient("SnapTo")) return false;
-        MessageWriter messageWriter = AmongUsClient.Instance.StartRpcImmediately(net.NetId, (byte)RpcCalls.SnapTo, SendOption.None, target.GetClientId());
-        NetHelpers.WriteVector2(position, messageWriter);
-        messageWriter.Write(num);
-        AmongUsClient.Instance.FinishRpcImmediately(messageWriter);
-        return true;
-    }
     /// <summary>現在守護されているかどうか</summary>
     public static bool IsProtected(this PlayerControl self) => self.protectedByGuardianId > -1;
 
