@@ -125,7 +125,9 @@ public static class VanillaHideAndSeekRoles
 
     private static void Judge(GameOverReason reason)
     {
-        if (assigned.Count == 0) return;
+        var hiddenSeekers = VanillaHnsHiddenSeeker.SeekerNames.ToList();
+        // 鬼を隠した試合は、役職を配っていなくても結果を知らせる (隠れる側の結果画面では鬼も勝者に並ぶ)
+        if (assigned.Count == 0 && hiddenSeekers.Count == 0) return;
         bool seekersWon = GameManager.Instance
             ? GameManager.Instance.DidImpostorsWin(reason)
             : reason is GameOverReason.HideAndSeek_ImpostorsByKills or GameOverReason.CrewmateDisconnect;
@@ -149,6 +151,7 @@ public static class VanillaHideAndSeekRoles
                 .Select(p => Players.ById(p.Key).Data.PlayerName).ToList();
             if (foxes.Count > 0) sb.Append('\n').Append(string.Format(GetString("VanillaHns.FoxAlsoWin"), string.Join(", ", foxes)));
         }
+        if (hiddenSeekers.Count > 0) sb.Append('\n').Append(string.Format(GetString("VanillaHns.SeekerWas"), string.Join(", ", hiddenSeekers)));
         pendingResult = Truncate(sb.ToString(), MaxResultBytes);
         resultUntil = UnityEngine.Time.realtimeSinceStartup + ResultKeepSeconds;
         Logger.Info($"結果 ({reason}): {pendingResult.Replace("\n", " / ")}", "VanillaHideAndSeekRoles");

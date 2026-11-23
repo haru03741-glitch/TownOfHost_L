@@ -109,6 +109,7 @@ public static partial class Options
     public static OptionItem VanillaHnsGhostGuard;
     public static OptionItem VanillaHnsGuardDuration;
     public static OptionItem VanillaHnsGuardCooldown;
+    public static OptionItem VanillaHnsHiddenSeeker;
     public static OptionItem AllowCloseDoors;
     public static OptionItem KillDelay;
     // public static OptionItem IgnoreCosmetics;
@@ -544,6 +545,9 @@ public static partial class Options
             .SetGameMode(CustomGameMode.VanillaHideAndSeek);
         VanillaHnsGuardCooldown = IntegerOptionItem.Create("VanillaHnsGuardCooldown", new(5, 60, 5), 30, TabGroup.ModMainSettings, false).SetParent(VanillaHnsGhostGuard)
             .SetValueFormat(OptionFormat.Seconds)
+            .SetGameMode(CustomGameMode.VanillaHideAndSeek);
+        // 鬼の正体を隠れる側から隠す (Core/Modes/VanillaHnsHiddenSeeker)
+        VanillaHnsHiddenSeeker = BooleanOptionItem.Create("VanillaHnsHiddenSeeker", false, TabGroup.ModMainSettings, false)
             .SetGameMode(CustomGameMode.VanillaHideAndSeek);
 
         // CC: 今の試合開始の流れ (StandardIntroHelper) に載っておらず、客にイントロが届かず暗転するので選べないままにする

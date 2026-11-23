@@ -40,6 +40,11 @@ public static class VanillaHnsIntroNotice
     {
         sent.Clear();
         hostLine = null;
+        if (VanillaHnsHiddenSeeker.SeekerNames.Any())
+        {
+            SendHidden(assigned);
+            return;
+        }
         var seekers = Players.All.Where(pc => pc.Data is { Role: not null, Disconnected: false } && pc.Data.Role.IsImpostor).ToList();
         foreach (var (id, role) in assigned)
         {
@@ -67,6 +72,45 @@ public static class VanillaHnsIntroNotice
         }, SendDelay, "VanillaHnsIntroNotice.Send");
         // 試合がすぐ閉じても、書き換えた名前を残さないよう戻す
         _ = new LateTask(Restore, RestoreDelay, "VanillaHnsIntroNotice.Restore", outlivesSession: true);
+    }
+
+    // 鬼を隠した試合では、隠れる側のイントロに鬼の名前が出ない。鬼の名前に書き足すと鬼が誰か分かってしまうので、
+    // 役職を持つ本人の頭上の名前に、本人にだけ見える形で書き足す (イントロが終わってから少しの間)
+    private const float HiddenShowDelay = 7f;
+    private const float HiddenShowSeconds = 12f;
+
+    private static void SendHidden(IReadOnlyDictionary<byte, CustomRoles> assigned)
+    {
+        foreach (var (id, role) in assigned)
+        {
+            var pc = Players.ById(id);
+            if (pc == null || pc.Data == null || pc.Data.Disconnected) continue;
+            if (pc.AmOwner) { hostLine = Line(role); continue; }
+            var line = Line(role);
+            _ = new LateTask(() =>
+            {
+                if (!AmongUsClient.Instance.IsGameStarted || !pc || pc.Data == null || pc.Data.Disconnected) return;
+                SendOwnName(pc, pc.Data.PlayerName + "\n" + line);
+            }, HiddenShowDelay, "VanillaHnsIntroNotice.Hidden");
+            _ = new LateTask(() =>
+            {
+                if (!pc || pc.Data == null || pc.Data.Disconnected) return;
+                SendOwnName(pc, pc.Data.PlayerName);
+            }, HiddenShowDelay + HiddenShowSeconds, "VanillaHnsIntroNotice.HiddenRestore", outlivesSession: true);
+        }
+    }
+
+    // 本人の頭上の名前を、本人にだけ書き換える (TOHL が休んでいる間は名前の送り口 RpcSetNamePrivate が使えない)
+    private static void SendOwnName(PlayerControl pc, string name)
+    {
+        var client = AmongUsClient.Instance;
+        int clientId = pc.GetClientId();
+        if (client == null || !client.AmHost || clientId < 0 || pc.Data == null) return;
+        var writer = client.StartRpcImmediately(pc.NetId, (byte)RpcCalls.SetName, Hazel.SendOption.Reliable, clientId);
+        writer.Write(pc.Data.NetId);
+        writer.Write(name);
+        writer.Write(false);
+        client.FinishRpcImmediately(writer);
     }
 
     // 名前を一瞬だけ書き換えて serialize し、すぐ戻す。name が null なら今の名前のまま送る

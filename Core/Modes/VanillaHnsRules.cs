@@ -16,6 +16,8 @@ public static class VanillaHnsRules
 
     // 開始時の配役の間だけ立てる。配役の外の RpcSetRole (死んだ時の幽霊など) では鬼の役職を差し替えない
     private static bool assigning;
+    /// <summary>開始時の配役の最中か (ホストだけ)。</summary>
+    internal static bool Assigning => assigning;
 
     private static RoleTypes SeekerRole => Options.VanillaHnsSeekerRole.GetValue() switch
     {
@@ -44,7 +46,11 @@ public static class VanillaHnsRules
             try
             {
                 assigning = AmongUsClient.Instance && AmongUsClient.Instance.AmHost && IsHns;
-                if (assigning) VanillaHnsAbilities.Reset();
+                if (assigning)
+                {
+                    VanillaHnsAbilities.Reset();
+                    VanillaHnsHiddenSeeker.Reset();
+                }
             }
             catch (Exception ex) { Logger.Exception(ex, nameof(VanillaHnsRules)); }
         }
