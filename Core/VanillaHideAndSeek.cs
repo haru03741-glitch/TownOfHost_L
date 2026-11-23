@@ -232,6 +232,8 @@ public static class VanillaHideAndSeek
         if (LateTask.Tasks.Count > 0) Logger.Info($"休む前に LateTask を {LateTask.Tasks.Count} 件捨てます", "VanillaHideAndSeek");
         LateTask.Tasks.Clear();
         Modes.PatchBundleSet.Apply(Modes.ModeCatalog.Vanilla.LiveBundles);
+        // 今あるロビーにはかくれんぼの束の Start の後置が走らないので、ここで開始人数を合わせる
+        if (GameStartManager.InstanceExists) GameStartManager.Instance.MinPlayers = 1;
         state = State.Suspended;
         Logger.Info("かくれんぼの間 TOHL を休ませます", "VanillaHideAndSeek");
     }
