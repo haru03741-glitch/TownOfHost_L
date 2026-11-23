@@ -75,10 +75,73 @@ static class DevBridge
                     sb.AppendLine("CLICKED " + PathOf(hit.transform));
                     break;
                 }
-            case "room":
-                SpawnEditorKit.SpawnStore.Host?.ToggleRoom(SpawnEditorKit.SpawnStore.Host.EditMapId, a[1]);
-                sb.AppendLine("ROOM " + a[1]);
-                sb.AppendLine($"choosing={TownOfHostL.Modules.SpawnEditor.SpawnRoomOptions.IsChoosing(0)} on={TownOfHostL.Modules.SpawnEditor.SpawnRoomOptions.IsOn(0, a[1])} pins={string.Join(",", SpawnEditorKit.SpawnStore.Host.RoomPins(0).Select(p => p.Key + ":" + p.On))}");
+            case "pinmode":
+                {
+                    var p = a[1].Split(' ');
+                    TownOfHostL.Modules.SpawnEditor.TohlSpawnEditor.SetMode(int.Parse(p[0]), int.Parse(p[1]));
+                    sb.AppendLine("PINMODE " + TownOfHostL.Modules.SpawnEditor.TohlSpawnEditor.GetMode(int.Parse(p[0])));
+                    break;
+                }
+            case "map":
+                GameOptionsManager.Instance.CurrentGameOptions.SetByte(AmongUs.GameOptions.ByteOptionNames.MapId, byte.Parse(a[1]));
+                sb.AppendLine("MAP " + Main.NormalOptions.MapId);
+                break;
+            case "start":
+                if (GameStartManager.InstanceExists) GameStartManager.Instance.BeginGame();
+                sb.AppendLine("START");
+                break;
+            case "pos":
+                sb.AppendLine($"POS {PlayerControl.LocalPlayer.transform.position}");
+                break;
+            case "tree":
+                {
+                    void Dump(Transform tr, int depth)
+                    {
+                        var comps = string.Join(",", tr.GetComponents<Component>().Select(x => x.GetIl2CppType().Name));
+                        var sr = tr.GetComponent<SpriteRenderer>();
+                        sb.AppendLine($"{new string(' ', depth * 2)}{tr.name} act={tr.gameObject.activeSelf} [{comps}]{(sr ? $" col={sr.color} sprite={(sr.sprite ? sr.sprite.name : "-")}" : "")}");
+                        if (depth < 4) for (int i = 0; i < tr.childCount; i++) Dump(tr.GetChild(i), depth + 1);
+                    }
+                    if (AccountManager.InstanceExists) Dump(AccountManager.Instance.transform, 0);
+                    break;
+                }
+            case "pins":
+                TownOfHostL.Modules.SpawnEditor.SpawnPinEditor.SetOpen(a.Length < 2 || a[1] != "off");
+                sb.AppendLine("PINS " + TownOfHostL.Modules.SpawnEditor.SpawnPinEditor.IsOpen);
+                break;
+            case "freeplay":
+                AmongUsClient.Instance.TutorialMapId = int.Parse(a[1]);
+                UnityEngine.SceneManagement.SceneManager.LoadScene("Tutorial");
+                sb.AppendLine("FREEPLAY " + a[1]);
+                break;
+            case "rooms":
+                if (!ShipStatus.Instance) { sb.AppendLine("NOSHIP"); break; }
+                foreach (var r in ShipStatus.Instance.AllRooms)
+                {
+                    if (!r || !r.roomArea) continue;
+                    var b = r.roomArea.bounds;
+                    sb.AppendLine($"{r.RoomId} c=({b.center.x:F2},{b.center.y:F2}) min=({b.min.x:F2},{b.min.y:F2}) max=({b.max.x:F2},{b.max.y:F2})");
+                }
+                break;
+            case "tp":
+                {
+                    var p = a[1].Split(' ');
+                    PlayerControl.LocalPlayer.NetTransform.SnapTo(new Vector2(float.Parse(p[0]), float.Parse(p[1])));
+                    sb.AppendLine("TP");
+                    break;
+                }
+            case "snap":
+                {
+                    var p = a[1].Split(' ');
+                    var ok = TownOfHostL.Modules.SpawnEditor.TohlSpawnEditor.TrySnap(new Vector2(float.Parse(p[0]), float.Parse(p[1])), out var r);
+                    sb.AppendLine($"SNAP {ok} {r.x:F2} {r.y:F2}");
+                    break;
+                }
+            case "spawnfile":
+                SpawnEditorKit.SpawnStore.Load();
+                foreach (var id in new[] { 0, 1, 2, 4, 5 })
+                    foreach (var pt in SpawnEditorKit.SpawnStore.Library.Current.GetPoints(id, false) ?? new())
+                        sb.AppendLine($"map{id} {pt.Name} {pt.X:F2} {pt.Y:F2}");
                 break;
             case "unchoose":
                 TownOfHostL.Modules.SpawnEditor.SpawnRoomOptions.Reset(int.Parse(a[1]));

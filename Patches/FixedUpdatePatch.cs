@@ -46,10 +46,6 @@ namespace TownOfHostL
 
                 var player = __instance;
 
-                if (Modules.SpawnEditor.TohlSpawnEditor.Editing)
-                {
-                    return;
-                }
                 if (!GameStates.IsModHost) return;
 
                 TargetArrow.OnFixedUpdate(player);

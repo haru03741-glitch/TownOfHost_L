@@ -12,12 +12,51 @@ public static class RoleDictionaryHudButton
     private const string Name = "Tohl_RoleDictButton";
     private static Sprite icon;
 
+    private const string LobbyName = "Tohl_LobbyDictButton";
+    private static GameObject lobbyButton;
+    private static Transform chatButton;
+
     public static void Postfix(HudManager __instance)
     {
         var b = __instance.MatchInfoButton;
-        if (!b || b.name == Name) return;
+        if (!b) return;
         // ほかの Mod や本編のホストの部屋では、本編のボタンのままにする
-        if (TownOfHostL.Core.VanillaHideAndSeek.IsClientMode && !OptionItem.HasRemoteValues) return;
+        if (TownOfHostL.Core.VanillaHideAndSeek.IsClientMode && !OptionItem.HasRemoteValues)
+        {
+            if (lobbyButton) lobbyButton.SetActive(false);
+            return;
+        }
+        if (b.name != Name) Replace(b);
+        UpdateLobbyButton(__instance, b);
+    }
+
+    private static void UpdateLobbyButton(HudManager hud, PassiveButton source)
+    {
+        if (!GameStates.IsLobby)
+        {
+            if (lobbyButton && lobbyButton.activeSelf) lobbyButton.SetActive(false);
+            return;
+        }
+        if (!chatButton) chatButton = hud.transform.Find("ChatUi/ChatButton");
+        var gear = hud.SettingsButton ? hud.SettingsButton.transform : null;
+        if (!chatButton || !gear) return;
+        if (!lobbyButton)
+        {
+            lobbyButton = UnityEngine.Object.Instantiate(source.gameObject, source.transform.parent);
+            lobbyButton.name = LobbyName;
+            foreach (var a in lobbyButton.GetComponentsInChildren<AspectPosition>(true)) UnityEngine.Object.Destroy(a);
+            var pb = lobbyButton.GetComponent<PassiveButton>();
+            pb.OnClick = new UnityEngine.UI.Button.ButtonClickedEvent();
+            pb.OnClick.AddListener((Action)RoleDictionary.Toggle);
+        }
+        if (!lobbyButton.activeSelf) lobbyButton.SetActive(true);
+        var c = chatButton.position;
+        var g = gear.position;
+        lobbyButton.transform.position = new Vector3(c.x - (g.x - c.x) * 1.6f, g.y, source.transform.position.z);
+    }
+
+    private static void Replace(PassiveButton b)
+    {
         b.name = Name;
 
         b.OnClick = new UnityEngine.UI.Button.ButtonClickedEvent();

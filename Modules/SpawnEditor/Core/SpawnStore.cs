@@ -11,11 +11,14 @@ public static class SpawnStore
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
     private static SpawnLibrary _library;
-    private static ISpawnEditorHost _host;
+    private static string _path;
+    private static Action<string> _warn;
 
-    public static ISpawnEditorHost Host => _host;
-
-    public static void Init(ISpawnEditorHost host) => _host = host;
+    public static void Init(string path, Action<string> warn)
+    {
+        _path = path;
+        _warn = warn;
+    }
 
     public static SpawnLibrary Library
     {
@@ -32,7 +35,7 @@ public static class SpawnStore
 
         try
         {
-            string path = _host?.SavePath;
+            string path = _path;
 
             if (!string.IsNullOrEmpty(path) && File.Exists(path))
             {
@@ -40,7 +43,7 @@ public static class SpawnStore
                 if (json.Length > 0) _library = JsonSerializer.Deserialize<SpawnLibrary>(json, JsonOptions);
             }
         }
-        catch (Exception e) { _host?.Warn($"Spawn points could not be read: {e.Message}"); }
+        catch (Exception e) { _warn?.Invoke($"Spawn points could not be read: {e.Message}"); }
 
         _library ??= new SpawnLibrary();
         Sanitize(_library);
@@ -48,21 +51,20 @@ public static class SpawnStore
 
     public static void Save()
     {
-        if (_library == null || _host == null) return;
+        if (_library == null || string.IsNullOrEmpty(_path)) return;
 
         try
         {
-            string path = _host.SavePath;
+            string path = _path;
             string dir = Path.GetDirectoryName(path);
             if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
 
-            // Serialize first and swap the file in, so a failure never leaves a truncated file behind.
             string json = JsonSerializer.Serialize(_library, JsonOptions);
             string tmp = path + ".tmp";
             File.WriteAllText(tmp, json);
             File.Move(tmp, path, true);
         }
-        catch (Exception e) { _host.Warn($"Spawn points could not be saved: {e.Message}"); }
+        catch (Exception e) { _warn?.Invoke($"Spawn points could not be saved: {e.Message}"); }
     }
 
     // Enabled points of the current preset for a map, or null when there are none.

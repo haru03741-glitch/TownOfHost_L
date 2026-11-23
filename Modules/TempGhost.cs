@@ -213,7 +213,7 @@ public static class TempGhost
     /// (https://github.com/Gurge44/EndlessHostRoles, GPL-3.0) から取った。
     /// マップごとに床の作りが違うので、どちらを使うかを分ける (スケルドは床の当たりが外にも広がっている)
     /// </summary>
-    private static bool IsStandable(Vector2 pos)
+    internal static bool IsStandable(Vector2 pos)
     {
         int floors = Physics2D.OverlapPointNonAlloc(pos, overlapBuffer, Constants.ShipOnlyMask);
         // 幽霊の体は当たり判定が切れているので、体の当たりではなく位置で部屋を引く

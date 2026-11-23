@@ -331,6 +331,9 @@ public class HostPanel : MonoBehaviour
             }
         }
 
+        if (AmongUsClient.Instance.AmHost)
+            Button(ref y, w, GetString("SpawnPin.Open"), sAction, () => { IsOpen = false; SpawnEditor.SpawnPinEditor.SetOpen(true); });
+
         // 自動スタート
         var auto = AutoProgress.AutoStart.GetBool();
         var autoText = GetString("AutoStartGame") + ": " + GetString(auto ? "ColoredOn" : "ColoredOff");

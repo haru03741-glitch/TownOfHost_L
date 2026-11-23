@@ -11,7 +11,6 @@ namespace TownOfHostL.Modules;
 // メニュー全体を押せなくする。起動直後のメニューでだけ止めておき、メニューをすぐ使えるようにする。
 // 起こすのは: メニューの起動処理が終わった時 (アカウント欄が戻る)・マイアカウントを押した時・
 // 本編がログイン失敗や年齢確認などの画面を出す時 (止めたままだと見えない画面がボタンを待ち、ログインが進まない)。
-// 止めている間はアカウント欄が出ないので、ログインが終わるまでメニューの左上が空く。
 // メニューでしか効かず電文も送らないので、どのモードでも当てておく
 [HarmonyPatch, PatchBundle(PatchBundles.Core)]
 internal static class AccountSleep
@@ -20,6 +19,7 @@ internal static class AccountSleep
     private static bool sleptBeforeLogin; // 本編の幕を外したまま、ログインがまだ終わっていない
     private static bool loginFailed; // ログインに失敗した (トークン更新を待たせ続けない)
     private static MainMenuManager menu;
+    private static GameObject fill;
 
     [HarmonyPatch(typeof(MainMenuManager), nameof(MainMenuManager.Start)), HarmonyPostfix]
     private static void SleepOnMenu(MainMenuManager __instance)
@@ -32,7 +32,10 @@ internal static class AccountSleep
         if (!AccountManager.InstanceExists) return;
         var am = AccountManager.Instance;
         if (!am || !am.gameObject.activeSelf) return;
-        am.gameObject.SetActive(false);
+        var f = am.transform.Find("BackgroundFill");
+        if (!f) return;
+        fill = f.gameObject;
+        fill.SetActive(false);
         // 本編は右の窓のマスクをログインが終わってから有効にする。窓の中の絵はマスクの内側だけ描くので、
         // 幕を外したままだとログインまで右の窓 (背景・オンラインの画面のボタン) が真っ黒になる
         if (__instance.rightPanelMask) __instance.rightPanelMask.SetActive(true);
@@ -54,6 +57,7 @@ internal static class AccountSleep
     [HarmonyPatch(typeof(MainMenuManager), nameof(MainMenuManager.LateUpdate)), HarmonyPostfix]
     private static void WatchStartup(MainMenuManager __instance)
     {
+        if (asleep && fill && fill.activeSelf) fill.SetActive(false);
         if (!sleptBeforeLogin || !__instance.finishStartup) return;
         sleptBeforeLogin = false; // ログインはメニューの上で終わった
         if (asleep && __instance == menu) Wake("startup finished");
@@ -64,11 +68,13 @@ internal static class AccountSleep
         if (!asleep) return;
         asleep = false;
         menu = null;
+        var f = fill;
+        fill = null;
         try
         {
             if (!AccountManager.InstanceExists) return;
-            var am = AccountManager.Instance;
-            if (am && !am.gameObject.activeSelf) am.gameObject.SetActive(true);
+            var eos = EOSManager.Instance;
+            if (f && why != "startup finished" && eos && !eos.loginFlowFinished && !loginFailed) f.SetActive(true);
             Logger.Info($"woken ({why})", "AccountSleep");
         }
         catch (System.Exception e) { Logger.Warn($"wake failed: {e.Message}", "AccountSleep"); }

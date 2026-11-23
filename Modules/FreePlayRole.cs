@@ -14,7 +14,7 @@ public static class FreePlayRole
     private static bool ready;
 
     public static bool Available =>
-        GameStates.IsFreePlay && !TohlSpawnEditor.EditMode && PlayerControl.LocalPlayer && ShipStatus.Instance && !MeetingHud.Instance;
+        GameStates.IsFreePlay && PlayerControl.LocalPlayer && ShipStatus.Instance && !MeetingHud.Instance;
 
     private static void EnsureInit()
     {

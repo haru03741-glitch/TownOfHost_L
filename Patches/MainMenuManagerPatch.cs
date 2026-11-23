@@ -101,35 +101,8 @@ namespace TownOfHostL
                     isActive: false);
             }
 
-            SetupFreePlayButtons(__instance);
         }
 
-        private static GameObject customSpawnButton;
-
-        private static void SetupFreePlayButtons(MainMenuManager menu)
-        {
-            var freeplay = menu.howToPlayButton?.transform.parent?.Find("FreePlayButton");
-            if (freeplay == null) return;
-            var freeplayButton = freeplay.GetComponent<PassiveButton>();
-            freeplayButton?.OnClick.AddListener((Action)(() => Modules.SpawnEditor.TohlSpawnEditor.EditMode = false));
-            if (customSpawnButton) return;
-
-            customSpawnButton = UnityEngine.Object.Instantiate(freeplay.gameObject, freeplay.parent);
-            customSpawnButton.name = "Tohl_CustomSpawnButton";
-            var how = menu.howToPlayButton.transform;
-            var basePos = freeplay.localPosition;
-            var howPos = how.localPosition;
-            float mid = (basePos.x + howPos.x) / 2f;
-            float step = (basePos.x - howPos.x) * 0.8f;
-            how.localPosition = new Vector3(mid - step, howPos.y, howPos.z);
-            freeplay.localPosition = new Vector3(mid, basePos.y, basePos.z);
-            customSpawnButton.transform.localPosition = new Vector3(mid + step, basePos.y, basePos.z);
-            foreach (var t in new[] { how, freeplay, customSpawnButton.transform }) t.localScale = t.localScale * 0.75f;
-            foreach (var tr in customSpawnButton.GetComponentsInChildren<TextTranslatorTMP>(true)) UnityEngine.Object.DestroyImmediate(tr);
-            foreach (var tmp in customSpawnButton.GetComponentsInChildren<TMPro.TextMeshPro>(true)) tmp.text = Translator.GetString("EditCSp");
-            var button = customSpawnButton.GetComponent<PassiveButton>();
-            button?.OnClick.AddListener((Action)(() => Modules.SpawnEditor.TohlSpawnEditor.EditMode = true));
-        }
         /// <summary>TOHロゴの子としてボタンを生成</summary>
         /// <param name="name">オブジェクト名</param>
         /// <param name="normalColor">普段のボタンの色</param>

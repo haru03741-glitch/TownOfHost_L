@@ -32,7 +32,7 @@ public class RoleDictionary : MonoBehaviour
         open = value;
         if (!value && typing) SetTyping(false);
         if (Instance != null) Instance.enabled = value;
-        if (value) { listDirty = true; detailDirty = true; }
+        if (value) { listDirty = true; detailDirty = true; FocusMine(); }
     }
 
     public void Awake()
@@ -103,8 +103,12 @@ public class RoleDictionary : MonoBehaviour
     }
 
 
-    enum Tab { All, Crewmate, Impostor, Madmate, Neutral, Unit, AddOn }
+    enum Tab { Mine, All, Crewmate, Impostor, Madmate, Neutral, Unit, AddOn }
     static readonly Tab[] Tabs = (Tab[])Enum.GetValues(typeof(Tab));
+    static readonly Tab[] TabsNoMine = Tabs.Where(t => t != Tab.Mine).ToArray();
+    static readonly Dictionary<Tab, int> teamCounts = new();
+    static readonly List<CustomRoles> mine = new();
+    static Texture2D bar;
     static Tab tab = Tab.All;
     static bool onlyEnabled;
     static string search = "";
@@ -120,6 +124,7 @@ public class RoleDictionary : MonoBehaviour
     }
 
     static List<Entry> all;
+    static readonly Dictionary<CustomRoles, Entry> extra = new();
     static readonly List<Entry> shown = new();
     static bool listDirty = true, detailDirty = true;
     static GUIContent detailContent = GUIContent.none;
@@ -127,9 +132,65 @@ public class RoleDictionary : MonoBehaviour
     static float listScroll, detailScroll;
     static string builtLang;
 
+    static Entry MakeEntry(CustomRoles role)
+    {
+        var name = Plain(Utils.GetRoleName(role));
+        if (name.Length == 0) return null;
+        var color = Utils.GetRoleColor(role);
+        return new Entry
+        {
+            Role = role,
+            Name = name,
+            Shown = $"<color=#{ColorUtility.ToHtmlStringRGB(Readable(color))}>{name}</color>",
+            Team = TeamOf(role),
+            Color = color,
+        };
+    }
+
+    static Entry EntryOf(CustomRoles role)
+    {
+        foreach (var e in all) if (e.Role == role) return e;
+        if (!extra.TryGetValue(role, out var x))
+        {
+            try { x = MakeEntry(role); } catch { x = null; }
+            extra[role] = x;
+        }
+        return x;
+    }
+
+    static List<CustomRoles> MyRoles()
+    {
+        mine.Clear();
+        try
+        {
+            var pc = PlayerControl.LocalPlayer;
+            if (pc == null || GameStates.IsLobby || !GameStates.IsInGame) return mine;
+            var main = pc.GetCustomRole();
+            if (main != CustomRoles.NotAssigned) mine.Add(main);
+            var subs = pc.GetCustomSubRoles();
+            if (subs != null) foreach (var s in subs) if (s != CustomRoles.NotAssigned && !mine.Contains(s)) mine.Add(s);
+        }
+        catch { }
+        return mine;
+    }
+
+    static void FocusMine()
+    {
+        var roles = MyRoles();
+        if (roles.Count == 0)
+        {
+            if (tab == Tab.Mine) tab = Tab.All;
+            return;
+        }
+        tab = Tab.Mine;
+        selected = roles[0];
+        listScroll = 0;
+    }
+
     static void BuildAll()
     {
         all = new();
+        extra.Clear();
         CompareInfo ja = null;
         try { ja = CultureInfo.GetCultureInfo("ja-JP").CompareInfo; } catch { }
         foreach (var role in Options.CustomRoleSpawnChances.Keys)
@@ -139,17 +200,8 @@ public class RoleDictionary : MonoBehaviour
                 if (role.IsDontShowOptionRole() && !role.IsVanilla()) continue;
                 if (role.AliasOf() != CustomRoles.NotAssigned) continue;
                 if (!Translator.HasString(role.ToString())) continue;
-                var name = Plain(Utils.GetRoleName(role));
-                if (name.Length == 0) continue;
-                var color = Utils.GetRoleColor(role);
-                all.Add(new Entry
-                {
-                    Role = role,
-                    Name = name,
-                    Shown = $"<color=#{ColorUtility.ToHtmlStringRGB(Readable(color))}>{name}</color>",
-                    Team = TeamOf(role),
-                    Color = color,
-                });
+                var entry = MakeEntry(role);
+                if (entry != null) all.Add(entry);
             }
             catch (Exception ex) { Logger.Warn($"役職辞典に {role} を入れられませんでした: {ex.Message}", nameof(RoleDictionary)); }
         }
@@ -157,6 +209,9 @@ public class RoleDictionary : MonoBehaviour
             ? (a, b) => ja.Compare(a.Name, b.Name, CompareOptions.IgnoreKanaType | CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase)
             : (a, b) => string.CompareOrdinal(a.Name, b.Name);
         all.Sort(cmp);
+        teamCounts.Clear();
+        teamCounts[Tab.All] = all.Count;
+        foreach (var e in all) teamCounts[e.Team] = teamCounts.TryGetValue(e.Team, out var c) ? c + 1 : 1;
         builtLang = TranslationController.InstanceExists ? TranslationController.Instance.currentLanguage?.languageID.ToString() : "";
     }
 
@@ -179,6 +234,14 @@ public class RoleDictionary : MonoBehaviour
         if (all == null) BuildAll();
         shown.Clear();
         var q = (search ?? "").Trim();
+        if (tab == Tab.Mine)
+        {
+            foreach (var r in MyRoles())
+                if (EntryOf(r) is { } me) shown.Add(me);
+            if (shown.Count > 0 && !shown.Any(e => e.Role == selected)) { selected = shown[0].Role; detailDirty = true; }
+            listScroll = 0f;
+            return;
+        }
         foreach (var e in all)
         {
             if (tab != Tab.All && e.Team != tab) continue;
@@ -197,6 +260,7 @@ public class RoleDictionary : MonoBehaviour
 
     static string TeamName(Tab t) => t switch
     {
+        Tab.Mine => GetString("RoleDictionary.Mine"),
         Tab.All => GetString("RoleDictionary.All"),
         Tab.Crewmate => GetString("TeamCrewmate"),
         Tab.Impostor => GetString("TeamImpostor"),
@@ -215,18 +279,38 @@ public class RoleDictionary : MonoBehaviour
         Tab.Neutral => new Color(0.85f, 0.65f, 1f),
         Tab.Unit => new Color(0.6f, 1f, 0.6f),
         Tab.AddOn => new Color(1f, 0.85f, 0.4f),
+        Tab.Mine => new Color(1f, 0.95f, 0.55f),
         _ => Color.white,
     };
 
     static void BuildDetail(float width)
     {
         detailDirty = false;
-        var role = selected;
-        if (role == CustomRoles.NotAssigned) { detailContent = GUIContent.none; detailHeight = 0; return; }
         var sb = new StringBuilder();
+        var roles = tab == Tab.Mine ? MyRoles() : null;
+        if (roles != null && roles.Count > 0)
+        {
+            sb.Append($"<color=#{ColorUtility.ToHtmlStringRGB(TeamColor(Tab.Mine))}><b>★ {GetString("RoleDictionary.MineTitle")}</b></color>\n");
+            for (var i = 0; i < roles.Count; i++)
+            {
+                sb.Append(i == 0 ? "\n" : "\n<color=#3a4566>────────────────────────</color>\n\n");
+                AppendRole(sb, roles[i]);
+            }
+        }
+        else if (selected != CustomRoles.NotAssigned) AppendRole(sb, selected);
+        else { detailContent = GUIContent.none; detailHeight = 0; return; }
+        detailContent = new GUIContent(sb.ToString());
+        detailHeight = sDetail.CalcHeight(detailContent, width);
+        detailScroll = 0f;
+    }
+
+    static void AppendRole(StringBuilder sb, CustomRoles role)
+    {
         var team = TeamOf(role);
+        var isMine = MyRoles().Contains(role);
         var c = Readable(Utils.GetRoleColor(role));
         sb.Append($"<size={Mathf.RoundToInt(BigFont)}><b><color=#{ColorUtility.ToHtmlStringRGB(c)}>{Plain(Utils.GetRoleName(role))}</color></b></size>\n");
+        if (isMine) sb.Append($"<color=#{ColorUtility.ToHtmlStringRGB(TeamColor(Tab.Mine))}>★ {GetString(role.IsAddOn() || role.IsOtherAddOn() || role == CustomRoles.Lovers ? "RoleDictionary.MyAddOn" : "RoleDictionary.MyRole")}</color>   ");
         sb.Append($"<color=#{ColorUtility.ToHtmlStringRGB(TeamColor(team))}>{TeamName(team)}</color>");
         var from = RoleFrom.GetText(role);
         if (from.Length > 0) sb.Append("   ").Append(Rich(from));
@@ -250,10 +334,10 @@ public class RoleDictionary : MonoBehaviour
             if (win != null) sb.Append($"<color=#9fd7ff>{GetString("RoleDictionary.WinRate")}</color> ").Append(Rich(win)).Append('\n');
         }
         catch { }
-        sb.Append('\n');
-        if (Translator.HasString(role + "Info")) sb.Append("<b>").Append(Rich(GetString(role + "Info"))).Append("</b>\n\n");
+        if (Translator.HasString(role + "Info"))
+            sb.Append('\n').Append(Heading("RoleDictionary.Summary")).Append("<b>").Append(Rich(GetString(role + "Info"))).Append("</b>\n");
         var info = Translator.HasString(role + "InfoLong") ? GetString(role + "InfoLong") : "";
-        if (info.Length > 0) sb.Append(Rich(info)).Append('\n');
+        if (info.Length > 0) sb.Append('\n').Append(Heading("RoleDictionary.Detail")).Append(Rich(info)).Append('\n');
 
         try
         {
@@ -262,16 +346,14 @@ public class RoleDictionary : MonoBehaviour
                 var set = new StringBuilder();
                 Utils.ShowChildrenSettings(opt, ref set);
                 if (set.Length > 0)
-                    sb.Append('\n').Append($"<b><color=#9fd7ff>{GetString("RoleDictionary.Settings")}</color></b>\n").Append(Rich(set.ToString()));
+                    sb.Append('\n').Append(Heading("RoleDictionary.Settings")).Append(Rich(set.ToString()));
             }
         }
         catch { }
-
-        detailContent = new GUIContent(sb.ToString());
-        detailHeight = sDetail.CalcHeight(detailContent, width);
-        detailScroll = 0f;
     }
 
+
+    static string Heading(string key) => $"<b><color=#9fd7ff>▍{GetString(key)}</color></b>\n";
 
     static readonly Regex HexTag = new(@"<#([0-9a-fA-F]{6,8})>", RegexOptions.Compiled);
     static readonly Regex ColorEq = new(@"<color=#([0-9a-fA-F]{6,8})>", RegexOptions.Compiled);
@@ -309,9 +391,20 @@ public class RoleDictionary : MonoBehaviour
     static float Scale => sw / 1920f;
     static int Font => Mathf.Max(12, Mathf.RoundToInt(22f * Scale));
     static float BigFont => Font * 1.6f;
-    static float RowH => 46f * Scale;
+    static float RowH => 50f * Scale;
     static float Pad => 10f * Scale;
-    static GUIStyle sWindow, sTitle, sRow, sRowOn, sTab, sTabOn, sDetail, sField, sFieldOn, sSmall, sClose, sPanel;
+    static GUIStyle sWindow, sTitle, sRow, sRowOn, sTab, sTabOn, sDetail, sField, sFieldOn, sSmall, sClose, sPanel, sOnChip;
+    static Texture2D Bar
+    {
+        get
+        {
+            if (bar != null) return bar;
+            bar = new Texture2D(1, 1, TextureFormat.RGBA32, false) { hideFlags = HideFlags.HideAndDontSave };
+            bar.SetPixel(0, 0, Color.white);
+            bar.Apply(false, true);
+            return bar;
+        }
+    }
     static float wx = -1, wy, ww, wh;
     static bool dragging;
     static float dragDx, dragDy;
@@ -370,14 +463,19 @@ public class RoleDictionary : MonoBehaviour
             }
         }
 
+        if (all == null) BuildAll();
+        var hasMine = MyRoles().Count > 0;
+        if (!hasMine && tab == Tab.Mine) { tab = Tab.All; listDirty = true; }
+        var tabs = hasMine ? Tabs : TabsNoMine;
         var ty = wy + titleH;
-        var th = 40f * Scale;
-        var tw = (ww - Pad * 2f) / Tabs.Length;
-        for (var i = 0; i < Tabs.Length; i++)
+        var th = 44f * Scale;
+        var tw = (ww - Pad * 2f) / tabs.Length;
+        for (var i = 0; i < tabs.Length; i++)
         {
-            var t = Tabs[i];
-            var label = $"<color=#{ColorUtility.ToHtmlStringRGB(TeamColor(t))}>{TeamName(t)}</color>";
-            if (GUI.Button(new Rect(wx + Pad + tw * i + 2f, ty, tw - 4f, th), label, t == tab ? sTabOn : sTab)) { tab = t; listDirty = true; listScroll = 0; }
+            var t = tabs[i];
+            var num = t == Tab.Mine ? mine.Count : teamCounts.TryGetValue(t, out var tc) ? tc : 0;
+            var label = $"<color=#{ColorUtility.ToHtmlStringRGB(TeamColor(t))}>{(t == Tab.Mine ? "★ " : "")}{TeamName(t)}</color> <size={Mathf.RoundToInt(Font * 0.75f)}><color=#8f9ab3>{num}</color></size>";
+            if (GUI.Button(new Rect(wx + Pad + tw * i + 2f, ty, tw - 4f, th), label, t == tab ? sTabOn : sTab)) { tab = t; listDirty = true; detailDirty = true; listScroll = 0; }
         }
 
         if (all == null || builtLang != (TranslationController.InstanceExists ? TranslationController.Instance.currentLanguage?.languageID.ToString() : "")) { all = null; listDirty = true; detailDirty = true; }
@@ -399,20 +497,39 @@ public class RoleDictionary : MonoBehaviour
             if (y + RowH > top + bodyH) break;
             var en = shown[i];
             var r = new Rect(lx + Pad * 0.5f, y, lw - Pad - 18f * Scale, RowH - 4f * Scale);
-            var mark = SafeEnabled(en.Role) ? "● " : "   ";
-            if (GUI.Button(r, mark + en.Shown, en.Role == selected ? sRowOn : sRow)) { selected = en.Role; detailDirty = true; }
+            if (GUI.Button(r, "  " + en.Shown, en.Role == selected ? sRowOn : sRow)) { selected = en.Role; detailDirty = true; }
+            if (type == EventType.Repaint)
+            {
+                var old = GUI.color;
+                GUI.color = Readable(en.Color);
+                ImguiTex.Draw(new Rect(r.x + 4f * Scale, r.y + r.height * 0.2f, 5f * Scale, r.height * 0.6f), Bar);
+                if (SafeEnabled(en.Role))
+                {
+                    GUI.color = new Color(0.45f, 1f, 0.6f);
+                    GUI.Label(new Rect(r.xMax - 60f * Scale, r.y, 54f * Scale, r.height), "ON", sOnChip);
+                }
+                GUI.color = old;
+            }
         }
         if (shown.Count == 0) GUI.Label(new Rect(lx + Pad, top + Pad, lw - Pad * 2, RowH), GetString("RoleDictionary.None"), sSmall);
 
         var dx = lx + lw + Pad; var dw = wx + ww - Pad - dx;
         GUI.Box(new Rect(dx, top, dw, bodyH), GUIContent.none, sPanel);
-        var textW = dw - Pad * 3f - 16f * Scale;
+        if (type == EventType.Repaint && selected != CustomRoles.NotAssigned)
+        {
+            var old = GUI.color;
+            var rc = Readable(Utils.GetRoleColor(selected));
+            GUI.color = new Color(rc.r, rc.g, rc.b, 0.9f);
+            ImguiTex.Draw(new Rect(dx + Pad * 0.5f, top + Pad, 6f * Scale, bodyH - Pad * 2f), Bar);
+            GUI.color = old;
+        }
+        var textW = dw - Pad * 4f - 16f * Scale;
         if (detailDirty) BuildDetail(textW);
         var maxD = Mathf.Max(0f, detailHeight - bodyH + Pad * 2f);
         if (type == EventType.ScrollWheel && Inside(e.mousePosition, dx, top, dw, bodyH)) { detailScroll += e.delta.y * RowH; e.Use(); }
         detailScroll = Mathf.Clamp(detailScroll, 0f, maxD);
         if (maxD > 0f) detailScroll = GUI.VerticalScrollbar(new Rect(dx + dw - 16f * Scale, top, 16f * Scale, bodyH), detailScroll, bodyH, 0f, detailHeight + Pad * 2f);
-        GUI.BeginGroup(new Rect(dx + Pad, top + Pad, textW, bodyH - Pad * 2f));
+        GUI.BeginGroup(new Rect(dx + Pad * 2f, top + Pad, textW, bodyH - Pad * 2f));
         GUI.Label(new Rect(0, -detailScroll, textW, detailHeight + 4f), detailContent, sDetail);
         GUI.EndGroup();
     }
@@ -429,7 +546,8 @@ public class RoleDictionary : MonoBehaviour
         sPanel = new GUIStyle { normal = { background = HostPanel.RoundTex(new Color(0.09f, 0.11f, 0.21f, 1f), br) }, border = HostPanel.Border(br) };
         sTitle = Text(Font + 6, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.45f, 0.92f, 1f));
         sSmall = Text(Font - 2, FontStyle.Normal, TextAnchor.MiddleLeft, new Color(0.75f, 0.8f, 0.9f));
-        sDetail = Text(Font, FontStyle.Normal, TextAnchor.UpperLeft, Color.white);
+        sDetail = Text(Font + 1, FontStyle.Normal, TextAnchor.UpperLeft, new Color(0.93f, 0.95f, 1f));
+        sOnChip = Text(Mathf.Max(10, Font - 6), FontStyle.Bold, TextAnchor.MiddleRight, Color.white);
         sDetail.wordWrap = true;
         sRow = Btn(new Color(0, 0, 0, 0), new Color(0.2f, 0.26f, 0.45f), br, TextAnchor.MiddleLeft);
         sRowOn = Btn(new Color(0.18f, 0.30f, 0.55f), new Color(0.24f, 0.38f, 0.66f), br, TextAnchor.MiddleLeft);

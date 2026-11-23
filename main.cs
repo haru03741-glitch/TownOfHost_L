@@ -254,9 +254,8 @@ public partial class Main : BasePlugin
         AddComponent<TownOfHostL.Modules.HostPanel>();
         AddComponent<TownOfHostL.Modules.HostPanelButton>();
         AddComponent<TownOfHostL.Modules.RoleDictionary>();
-        // 練習で使うスポーン地点の編集 (タイトルの「カスタムスポーン」から入る)
         TownOfHostL.Modules.SpawnEditor.TohlSpawnEditor.Init();
-        AddComponent<SpawnEditorKit.SpawnEditorUi>();
+        AddComponent<TownOfHostL.Modules.SpawnEditor.SpawnPinEditor>();
         // 配信の重ね表示 (観客席・コメントの板・マップ投票)
         AddComponent<TownOfHostL.Modules.Streaming.StreamOverlay>();
         // 番犬の心拍と、終了の検知
