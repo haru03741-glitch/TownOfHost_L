@@ -6,6 +6,7 @@ namespace TownOfHostL.Core.Modes;
 /// <summary>
 /// 本編のかくれんぼの間も、ホストのロビーに要る物だけを当てておく。
 /// 通常モードのロビーの処理 (GameStartManagerPatch・OnPlayerJoinedPatch) は休んでいる間は外れている。
+/// 本編の最低人数 (4 人) を外すには、開始ボタンの人数と鬼の数の絞りの両方を外す。
 /// </summary>
 [PatchBundle(PatchBundles.VanillaHideAndSeek)]
 public static class VanillaHnsLobby
@@ -17,6 +18,16 @@ public static class VanillaHnsLobby
         public static void Postfix(GameStartManager __instance)
         {
             if (__instance) __instance.MinPlayers = 1;
+        }
+    }
+
+    // 本編は 3 人以下だと鬼の数を 0 に絞るので、鬼のいない試合が始まってすぐ終わる。2 人からは鬼を 1 人は出す
+    [HarmonyPatch(typeof(IGameOptionsExtensions), nameof(IGameOptionsExtensions.GetAdjustedNumImpostors))]
+    private static class NumImpostorsPatch
+    {
+        public static void Postfix([HarmonyArgument(1)] int playerCount, ref int __result)
+        {
+            if (__result < 1 && playerCount >= 2) __result = 1;
         }
     }
 
