@@ -110,6 +110,9 @@ public static partial class Options
     public static OptionItem VanillaHnsGuardDuration;
     public static OptionItem VanillaHnsGuardCooldown;
     public static OptionItem VanillaHnsHiddenSeeker;
+    public static OptionItem FlashlightMode;
+    public static OptionItem FlashlightCrewSize;
+    public static OptionItem FlashlightImpostorSize;
     public static OptionItem AllowCloseDoors;
     public static OptionItem KillDelay;
     // public static OptionItem IgnoreCosmetics;
@@ -938,6 +941,16 @@ public static partial class Options
         SCM_NothingMeetingNameColor = StringOptionItem.Create("SCM_NothingMeetingNameColor", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(SyncColorModeSelect)
             .SetGameMode(CustomGameMode.Standard);
         SCM_RestoredDeadPlayer = StringOptionItem.Create("SCM_RestoredDeadPlayer", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(SyncColorModeSelect)
+            .SetGameMode(CustomGameMode.Standard);
+        // 懐中電灯モード: 全員の視界を本編のかくれんぼの懐中電灯にする (Modules/Flashlight)
+        FlashlightMode = StringOptionItem.Create("FlashlightMode", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
+            .SetColor(Color.yellow)
+            .SetGameMode(CustomGameMode.Standard);
+        FlashlightCrewSize = FloatOptionItem.Create("FlashlightCrewSize", new(0.1f, 1.5f, 0.05f), 0.35f, TabGroup.ModMainSettings, false).SetParent(FlashlightMode)
+            .SetValueFormat(OptionFormat.Multiplier)
+            .SetGameMode(CustomGameMode.Standard);
+        FlashlightImpostorSize = FloatOptionItem.Create("FlashlightImpostorSize", new(0.1f, 1.5f, 0.05f), 0.5f, TabGroup.ModMainSettings, false).SetParent(FlashlightMode)
+            .SetValueFormat(OptionFormat.Multiplier)
             .SetGameMode(CustomGameMode.Standard);
 
 

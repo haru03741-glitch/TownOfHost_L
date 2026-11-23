@@ -42,9 +42,13 @@ namespace TownOfHostL.Modules
             this.player = player;
         }
         public void SetDirty() => IsDirty = true;
+        /// <summary>組み立て済みの設定を、この人にだけそのまま送る。</summary>
+        public void SendRaw(IGameOptions opt) => SendBuiltOptions(opt);
 
         public override void SendGameOptions()
         {
+            // 懐中電灯を点けている間は、送ったかくれんぼ型の設定を上書きしない (終わりに Flashlight が送り直す)
+            if (player != null && Flashlight.IsHolding(player.PlayerId)) return;
             var opt = BuildGameOptions();
             if (opt == null) return;
             if (player.AmOwner)
@@ -195,6 +199,8 @@ namespace TownOfHostL.Modules
                 opt.SetFloat(FloatOptionNames.ImpostorLightMod, 0f);
             }
             MeetingTimeManager.ApplyGameOptions(opt);
+            // 視界の値が決まった後 (暗転・会議の時間より後) に、懐中電灯の半径のずれを足す
+            Flashlight.ApplyGameOptions(player, opt);
 
             AURoleOptions.ShapeshifterCooldown = Mathf.Max(1f, AURoleOptions.ShapeshifterCooldown);
             AURoleOptions.ProtectionDurationSeconds = 0f;

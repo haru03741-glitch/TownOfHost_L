@@ -25,10 +25,15 @@ public static class AddLight
     private static OptionItem OptionAddCrewmateVision;
     private static OptionItem OptionAddImpostorVision;
     private static OptionItem OptionDisableLightOut;
+    private static OptionItem OptionFlashlight;
+    private static OptionItem OptionFlashlightSize;
 
     public static float AddCrewmateVision;
     public static float AddImpostorVision;
     public static bool DisableLightOut;
+    /// <summary>懐中電灯を持たせるか (Modules/Flashlight)。</summary>
+    public static bool FlashlightOn;
+    public static float FlashlightSize;
 
     public static void SetupCustomOption()
     {
@@ -38,6 +43,9 @@ public static class AddLight
         OptionAddImpostorVision = FloatOptionItem.Create("AddLightAddImpostorVision", new(0f, 5f, 0.1f), 0.5f, TabGroup.Addons, false)
             .SetValueFormat(OptionFormat.Multiplier);
         OptionDisableLightOut = BooleanOptionItem.Create("AddLighterDisableLightOut", true, TabGroup.Addons, false);
+        OptionFlashlight = BooleanOptionItem.Create("AddLightFlashlight", false, TabGroup.Addons, false);
+        OptionFlashlightSize = FloatOptionItem.Create("AddLightFlashlightSize", new(0.1f, 1.5f, 0.05f), 0.5f, TabGroup.Addons, false).SetParent(OptionFlashlight)
+            .SetValueFormat(OptionFormat.Multiplier);
     }
     [GameModuleInitializer]
     public static void Init()
@@ -47,6 +55,8 @@ public static class AddLight
         AddCrewmateVision = OptionAddCrewmateVision.GetFloat();
         AddImpostorVision = OptionAddImpostorVision.GetFloat();
         DisableLightOut = OptionDisableLightOut.GetBool();
+        FlashlightOn = OptionFlashlight.GetBool() && CustomRoles.AddLight.IsEnable();
+        FlashlightSize = OptionFlashlightSize.GetFloat();
     }
     public static void Add(byte playerId)
     {
