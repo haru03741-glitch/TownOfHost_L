@@ -56,6 +56,7 @@ public static class VanillaHnsRules
         }
         public static Exception Finalizer(Exception __exception)
         {
+            if (assigning) VanillaHnsHiddenSeeker.Flush();
             assigning = false;
             return __exception;
         }
