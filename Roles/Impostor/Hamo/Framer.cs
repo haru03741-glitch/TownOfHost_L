@@ -1,3 +1,5 @@
+using Hazel;
+using InnerNet;
 using System.Collections.Generic;
 using AmongUs.GameOptions;
 using UnityEngine;
@@ -162,7 +164,7 @@ public sealed class Framer : RoleBase, IImpostor, IUsePhantomButton, IDoubleTrig
             return;
         }
 
-        var sender = CustomRpcSender.Create(name: $"Framer.SendOutfit({target.Data?.PlayerName})");
+        // 宛先つきの Shapeshift は客ごとに別のパケットで送る
         foreach (var seer in Main.AllPlayerControls)
         {
             if (seer == null || seer == target) continue;
@@ -176,12 +178,11 @@ public sealed class Framer : RoleBase, IImpostor, IUsePhantomButton, IDoubleTrig
             var clientId = seer.GetClientId();
             if (clientId == -1) continue;
 
-            sender.AutoStartRpc(target.NetId, (byte)RpcCalls.Shapeshift, clientId)
-                .WriteNetObject(pc)
-                .Write(false)
-                .EndRpc();
+            var writer = AmongUsClient.Instance.StartRpcImmediately(target.NetId, (byte)RpcCalls.Shapeshift, SendOption.Reliable, clientId);
+            writer.WriteNetObject(pc);
+            writer.Write(false);
+            AmongUsClient.Instance.FinishRpcImmediately(writer);
         }
-        sender.SendMessage();
     }
 
     public override string MeetingAddMessage()
