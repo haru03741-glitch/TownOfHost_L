@@ -82,6 +82,9 @@ public static class VanillaHnsCommands
             .Where(role => role.IsEnable())
             .Select(role => $"{RoleName(role)}: {role.GetChance()}% ×{role.GetCount()}")
             .ToList();
+        // 本編のかくれんぼの決まりは、既定から変えた物だけを並べる
+        foreach (var opt in new[] { Options.VanillaHnsSeekers, Options.VanillaHnsTimeOnKill })
+            if (opt.CurrentValue != opt.DefaultValue) lines.Add($"{opt.GetName(disableColor: true)}: {opt.GetString().RemoveHtmlTags()}");
         return lines.Count == 0 ? GetString("VanillaHns.NoRoles") : string.Join("\n", lines);
     }
 

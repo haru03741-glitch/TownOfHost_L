@@ -100,6 +100,9 @@ public static partial class Options
     // HideAndSeek
     /// <summary>0 = かくれんぼ専用の役職、1 = 通常モードの役職</summary>
     public static OptionItem HideAndSeekRolePool;
+    // 本編のかくれんぼ (/mode hns) の決まり
+    public static OptionItem VanillaHnsSeekers;
+    public static OptionItem VanillaHnsTimeOnKill;
     public static OptionItem AllowCloseDoors;
     public static OptionItem KillDelay;
     // public static OptionItem IgnoreCosmetics;
@@ -509,6 +512,16 @@ public static partial class Options
             .SetGameMode(CustomGameMode.HideAndSeek);
         IgnoreVent = StringOptionItem.Create("IgnoreVent", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetGameMode(CustomGameMode.HideAndSeek);
+
+        // 本編のかくれんぼ (/mode hns) の決まり。本編の役職と勝敗のまま、鬼の人数と残り時間を変える
+        VanillaHnsSeekers = IntegerOptionItem.Create("VanillaHnsSeekers", new(1, 5, 1), 1, TabGroup.ModMainSettings, false)
+            .SetHeader(true)
+            .SetColor(Color.cyan)
+            .SetValueFormat(OptionFormat.Players)
+            .SetGameMode(CustomGameMode.VanillaHideAndSeek);
+        VanillaHnsTimeOnKill = IntegerOptionItem.Create("VanillaHnsTimeOnKill", new(-30, 30, 5), 0, TabGroup.ModMainSettings, false)
+            .SetValueFormat(OptionFormat.Seconds)
+            .SetGameMode(CustomGameMode.VanillaHideAndSeek);
 
         // CC: 今の試合開始の流れ (StandardIntroHelper) に載っておらず、客にイントロが届かず暗転するので選べないままにする
         //CatchCat.Option.SetupCustomOption();
