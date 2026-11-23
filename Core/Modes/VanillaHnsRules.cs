@@ -82,16 +82,16 @@ public static class VanillaHnsRules
                 float sec = Options.VanillaHnsTimeOnKill.GetInt();
                 var flow = __instance.LogicFlowHnS;
                 if (sec == 0f || flow == null) return;
-                // バーが満杯を超えないよう、増やす分は満杯までにする
+                // バーが満杯を超えず 0 を下回らないよう、増やす分は満杯まで・減らす分は残りまでにする
                 if (flow.IsFinalCountdown)
                 {
-                    float d = sec > 0f ? Math.Min(sec, Math.Max(0f, flow.totalFinalHideTime - flow.currentFinalHideTime)) : sec;
+                    float d = sec > 0f ? Math.Min(sec, Math.Max(0f, flow.totalFinalHideTime - flow.currentFinalHideTime)) : -Math.Min(-sec, Math.Max(0f, flow.currentFinalHideTime));
                     if (d != 0f) flow.AdjustFinalEscapeTimer(d);
                 }
                 else
                 {
                     // AdjustEscapeTimer は正の値で残りを減らす (タスクで縮む向き)
-                    float d = sec > 0f ? Math.Min(sec, Math.Max(0f, flow.totalHideTime - flow.currentHideTime)) : sec;
+                    float d = sec > 0f ? Math.Min(sec, Math.Max(0f, flow.totalHideTime - flow.currentHideTime)) : -Math.Min(-sec, Math.Max(0f, flow.currentHideTime));
                     if (d != 0f) flow.AdjustEscapeTimer(-d, false);
                 }
                 Logger.Info($"{player.Data.PlayerName} が死んだので残り時間を {sec:+0;-0} 秒", nameof(VanillaHnsRules));
