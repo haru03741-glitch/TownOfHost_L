@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
@@ -295,6 +295,7 @@ public static class ChatCommandTable
             Host = Modules.Whisper.Command,
             Remote = Modules.Whisper.Command,
         },
+        //私は許可出してないです。削除も考えてください - akebono-1382
         new("/pko", "/pikeo")
         {
             Usage = "CommandUsage.PikeoAI",

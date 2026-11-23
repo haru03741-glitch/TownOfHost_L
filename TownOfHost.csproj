@@ -12,15 +12,11 @@
 		<Product>TownOfHost_L</Product>
 		<AssemblyName>TownOfHost_L</AssemblyName>
 		<RootNamespace>TownOfHost_L</RootNamespace>
-		<!-- [CallerFilePath] と PDB にビルドした機械の絶対パスを埋めない -->
 		<PathMap>$(MSBuildProjectDirectory)=TownOfHost_L</PathMap>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<DefineConstants>TRACE</DefineConstants>
 	</PropertyGroup>
-
-	<!-- 手元では -p:AmongUs=<Among Us のフォルダ> を付けて、入っている BepInEx の DLL を参照する。
-	     付けない時 (CI など) は NuGet のゲーム DLL と BepInEx を参照する。 -->
 	<ItemGroup Condition="'$(AmongUs)' != ''">
 		<Reference Include="$(AmongUs)\BepInEx\core\*.dll" />
 		<Reference Include="$(AmongUs)\BepInEx\interop\*.dll" />

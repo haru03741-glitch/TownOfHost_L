@@ -32,7 +32,6 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 {
     public override bool NeedsSeenNames => true;
 
-    // 役職の元: TownOfHost_Pko (TownOfHost-hamo 経由)
     public static readonly SimpleRoleInfo RoleInfo =
 
         SimpleRoleInfo.Create(
@@ -48,13 +47,9 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
             isDesyncImpostor: true,
             countType: CountTypes.StandMaster,
             assignInfo: new RoleAssignInfo(CustomRoles.StandMaster, CustomRoleTypes.Neutral)
-
             {
-
                 AssignCountRule = new(1, 1, 1)
-
             },
-            // スタンドマスター本人が生きている時だけ人数で勝つ。勝つのはスタンドマスターとスタンドの全員
             killingFaction: new(CountTypes.StandMaster, CustomWinner.StandMaster, 400,
                 canWin: () => Main.AllAlivePlayerControls.Any(p => p.Is(CustomRoles.StandMaster)),
                 addWinners: AddTeamWinners)
@@ -821,15 +816,9 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
 
 }
-
-
-
 public sealed class Stand : RoleBase, ILNKiller
-
 {
     public override bool NeedsSeenNames => OwnerId != byte.MaxValue;
-
-    // 役職の元: TownOfHost_Pko (TownOfHost-hamo 経由)
     public static readonly SimpleRoleInfo RoleInfo =
 
         SimpleRoleInfo.Create(
@@ -841,6 +830,7 @@ public sealed class Stand : RoleBase, ILNKiller
             (int)Options.offsetId.Hamo + 54500,
             SetupOptionItem,
             "stnd",
+            "#8B4513",
             countType: CountTypes.StandMaster
         );
 
