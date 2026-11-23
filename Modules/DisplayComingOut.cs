@@ -22,9 +22,13 @@ class DisplayComingOut
         Limit,
         NG,
     }
-    /// <summary>役職ごとの設定が無い役職 (NoComingOutOption) は None</summary>
+    /// <summary>役職ごとの設定が無い役職 (NoComingOutOption) は None。別の役職の姿は元の役職の設定に従う</summary>
     public static EnableComingOut GetEnableComingOut(CustomRoles role)
-        => EachRoles.TryGetValue(role, out var option) ? (EnableComingOut)option.GetValue() : EnableComingOut.None;
+    {
+        if (EachRoles.TryGetValue(role, out var option)) return (EnableComingOut)option.GetValue();
+        var alias = role.AliasOf();
+        return alias != CustomRoles.NotAssigned && EachRoles.TryGetValue(alias, out option) ? (EnableComingOut)option.GetValue() : EnableComingOut.None;
+    }
 
     public static void SetupCustomOption()
     {
@@ -51,6 +55,8 @@ class DisplayComingOut
         foreach (var role in CustomRolesHelper.AllStandardRoles.Where(x => x.GetCustomRoleTypes() == type).ToArray())
         {
             if (role.HasRoleFlag(RoleFlags.NoComingOutOption)) continue;
+            // 別の役職の姿 (殺した後の猫など) は元の役職の項目で足りる。入れると同じ名前の項目が 2 つ並ぶ
+            if (role.AliasOf() != CustomRoles.NotAssigned) continue;
 
             var roleName = Utils.GetRoleName(role);
             Dictionary<string, string> replacementDic = new() { { "%role%", Utils.ColorString(Utils.GetRoleColor(role), roleName) } };

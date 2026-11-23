@@ -137,6 +137,7 @@ public class RoleDictionary : MonoBehaviour
             try
             {
                 if (role.IsDontShowOptionRole() && !role.IsVanilla()) continue;
+                if (role.AliasOf() != CustomRoles.NotAssigned) continue;
                 if (!Translator.HasString(role.ToString())) continue;
                 var name = Plain(Utils.GetRoleName(role));
                 if (name.Length == 0) continue;

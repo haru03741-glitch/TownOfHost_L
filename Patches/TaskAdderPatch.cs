@@ -47,6 +47,7 @@ namespace TownOfHostL
 
                 foreach (var cRole in CustomRolesHelper.AllRoles)
                 {
+                    if (cRole.AliasOf() != CustomRoles.NotAssigned) continue;
                     /*if(cRole == CustomRoles.Crewmate ||
                         cRole == CustomRoles.Impostor ||
                         cRole == CustomRoles.Scientist ||

@@ -33,6 +33,33 @@ static partial class CustomRolesHelper
     /// <summary>インポスター陣営でも第三陣営でもない役職 (ユニット役職の親も含む)</summary>
     public static bool IsCrewmate(this CustomRoles role) => role.Def().Team is not (CustomRoleTypes.Impostor or CustomRoleTypes.Madmate or CustomRoleTypes.Neutral);
     public static bool IsVanilla(this CustomRoles role) => role.Def().Has(RoleFlags.Vanilla);
+    /// <summary>
+    /// 試合の途中でだけ就く「別の役職の姿」なら、その元の役職を返す (それ以外は NotAssigned)。
+    /// 役職の一覧 (役職辞典・名前での検索) では元の役職と同じ名前で 2 つ並ぶので外す。
+    /// 例: 殺した後のシュレディンガーの猫・チェインシフターの属性の姿・本編の役職そのもの (TOHL の Normal 版がある物)
+    /// </summary>
+    public static CustomRoles AliasOf(this CustomRoles role)
+    {
+        var standsFor = Roles.AddOns.AddOnList.Get(role)?.StandsFor ?? CustomRoles.NotAssigned;
+        if (standsFor != CustomRoles.NotAssigned) return standsFor;
+        // 本編の役職は、同じ名前の Normal 版 (エンジニア → NormalEngineer) が設定と一覧の受け持ち
+        if (role.IsVanilla())
+        {
+            if (System.Enum.TryParse<CustomRoles>("Normal" + role, out var normal)
+                && Translator.GetString(normal.ToString(), SupportedLangs.Japanese) == Translator.GetString(role.ToString(), SupportedLangs.Japanese))
+                return normal;
+            return CustomRoles.NotAssigned;
+        }
+        // メニューに出さない役職のうち、出る役職と同じ名前の物
+        if (!Options.CustomRoleSpawnChances.TryGetValue(role, out var own) || own.GameMode != CustomGameMode.HideMenu) return CustomRoles.NotAssigned;
+        var name = Translator.GetString(role.ToString(), SupportedLangs.Japanese);
+        foreach (var (other, option) in Options.CustomRoleSpawnChances)
+        {
+            if (other == role || option == null || option.GameMode == CustomGameMode.HideMenu) continue;
+            if (Translator.GetString(other.ToString(), SupportedLangs.Japanese) == name) return other;
+        }
+        return CustomRoles.NotAssigned;
+    }
     public static CustomRoles VanillaRoleConversion(this CustomRoles role)
     {
         return role switch

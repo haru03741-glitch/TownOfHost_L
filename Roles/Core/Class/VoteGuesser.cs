@@ -227,14 +227,8 @@ public abstract class VoteGuesser : RoleBase
     private bool TargetIs(PlayerControl target, CustomRoles role)
     {
         if (target.Is(role)) return true;
-        switch (role)
-        {
-            case CustomRoles.SchrodingerCat:
-                if (target.Is(CustomRoles.SchrodingerCatKiller)) return true;
-                break;
-        }
-
-        return false;
+        // 一覧には元の役職だけを出すので、別の役職の姿 (殺した後の猫・本編のエンジニアなど) も元の役職で当たりにする
+        return target.GetCustomRole().AliasOf() == role;
     }
     private void SendMessageGuide()
     {
@@ -351,8 +345,11 @@ public abstract class VoteGuesser : RoleBase
         {
             roleList = new();
             // 設定画面と同じ順 (区分ごと) に並べる。組の役職から出る役職は、元の役職の所に並ぶ
-            foreach (CustomRoles role in RoleOrder.Sort(CustomRolesHelper.AllStandardRoles.Where(r => r.IsEnable())))
+            foreach (CustomRoles enabled in RoleOrder.Sort(CustomRolesHelper.AllStandardRoles.Where(r => r.IsEnable())))
             {
+                // 別の役職の姿は元の役職として並べる (同じ名前が 2 つ並ばないように)
+                var alias = enabled.AliasOf();
+                var role = alias != CustomRoles.NotAssigned ? alias : enabled;
                 var assign = role.GetRoleAssignInfo()?.AssignUnitRoles;
                 if (assign != null)
                 {

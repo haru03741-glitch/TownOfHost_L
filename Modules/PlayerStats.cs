@@ -159,6 +159,9 @@ public static class PlayerStats
             foreach (var (key, v) in r.Roles)
             {
                 if (v is not { Length: 2 } || !Enum.TryParse<CustomRoles>(key, out var role)) continue;
+                // 別の役職の姿 (殺した後の猫など) は元の役職に数える
+                var alias = role.AliasOf();
+                if (alias != CustomRoles.NotAssigned) role = alias;
                 if (!totals.TryGetValue(role, out var t)) totals[role] = t = new int[2];
                 t[0] += v[0];
                 t[1] += v[1];
@@ -179,8 +182,8 @@ public static class PlayerStats
         string text;
         if (query.Length > 0)
         {
-            var role = EnumHelper.GetAllValues<CustomRoles>().FirstOrDefault(r =>
-                r.ToString().Equals(query, StringComparison.OrdinalIgnoreCase) || Utils.GetRoleName(r).RemoveHtmlTags() == query);
+            var role = EnumHelper.GetAllValues<CustomRoles>().FirstOrDefault(r => r.AliasOf() == CustomRoles.NotAssigned && (
+                r.ToString().Equals(query, StringComparison.OrdinalIgnoreCase) || Utils.GetRoleName(r).RemoveHtmlTags() == query));
             text = role != default ? RoleWinLine(role) : null;
             text ??= string.Format(GetString("RoleWinStats.NoRecord"), query);
         }

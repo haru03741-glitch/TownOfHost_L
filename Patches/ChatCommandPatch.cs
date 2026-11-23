@@ -487,6 +487,7 @@ namespace TownOfHostL
                 // 属性
                 roleCommands.Add((CustomRoles)(-5), $"== {GetString("Addons")} ==");  // 区切り用
                 foreach (var info in TownOfHostL.Roles.AddOns.AddOnList.All)
+                    if (info.Role.AliasOf() == CustomRoles.NotAssigned)
                     roleCommands.TryAdd(info.Role, info.ChatCommand ?? "");  // 短縮名の無い物も表示名で引けるように入れる
 
                 // HAS
@@ -501,6 +502,8 @@ namespace TownOfHostL
             var roles = CustomRoleManager.AllRolesInfo.Values.Where(role => role.CustomRoleType == roleType);
             foreach (var role in roles)
             {
+                // 別の役職の姿 (同じ名前) は入れない。入れると名前で引いた時に同じ名前が 2 つ当たる
+                if (role.RoleName.AliasOf() != CustomRoles.NotAssigned) continue;
                 // 短縮名の無い役職も表示名で引けるように入れる
                 roleCommands[role.RoleName] = role.ChatCommand ?? "";
             }

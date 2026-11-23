@@ -69,7 +69,10 @@ public class FilterOptionItem : StringOptionItem
     {
         if (role is CustomRoles.NotAssigned) return true;
         if ((NotAssin?.Invoke() ?? Array.Empty<CustomRoles>()).Contains(role)) return false;
+        if (role.AliasOf() != CustomRoles.NotAssigned) return false;
         if (role > CustomRoles.StartAddon) return roles.addon;
+        // 役職のクラスを持たない物 (別のモードの役職など) は選んでも能力が付かない
+        if (!CustomRoleManager.AllRolesInfo.ContainsKey(role)) return false;
         return role.GetCustomRoleTypes() switch
         {
             CustomRoleTypes.Impostor => roles.impostor,
