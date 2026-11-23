@@ -112,20 +112,7 @@ namespace TownOfHostL
             {
                 if (client == null) return;
                 Logger.Info($"{client.PlayerName}(ClientID:{client.Id}(HashedPUID:{Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(client.ProductUserId))).ToLowerInvariant()}))が参加", "Session");
-                if (AmongUsClient.Instance.AmHost && client.FriendCode == "" && Options.KickPlayerFriendCodeNotExist.GetBool())
-                {
-                    AmongUsClient.Instance.KickPlayer(client.Id, false);
-                    Logger.SendInGame(string.Format(GetString("Message.KickedByNoFriendCode"), client.PlayerName));
-                    Logger.Info($"フレンドコードがないプレイヤー{client?.PlayerName}({client.ProductUserId})をキックしました。", "Kick");
-                }
-                if (DestroyableSingleton<FriendsListManager>.Instance.IsPlayerBlockedUsername(client.FriendCode) && AmongUsClient.Instance.AmHost)
-                {
-                    AmongUsClient.Instance.KickPlayer(client.Id, true);
-                    Logger.Info($"ブロック済みのプレイヤー{client?.PlayerName}({client.FriendCode})({client.ProductUserId})をBANしました。", "BAN");
-                }
-                BanManager.CheckBanPlayer(client);
-                BanManager.CheckDenyNamePlayer(client);
-                JoinGuard.OnPlayerJoined(client);
+                CheckJoiner(client);
                 try { RPC.RpcVersionCheck(); } catch { }
                 // 入った直後の版は、入った人の側でホストの PlayerControl がまだ出来ておらず捨てられることがある。
                 // TOHL を入れた客は客の間は電文を送らないので、ホストから出来た頃にもう一度送る
@@ -137,6 +124,24 @@ namespace TownOfHostL
                 Logger.Warn($"OnPlayerJoinedPatch.Postfix で例外: {ex.Message}", "OnPlayerJoinedPatch");
                 Logger.Exception(ex, "OnPlayerJoinedPatch");
             }
+        }
+        /// <summary>入ってきた人をホストの決まり (フレンドコード無し・ブロック・BAN・禁止名・入室の守り) で確かめる。本編のかくれんぼの間も同じ物を呼ぶ</summary>
+        public static void CheckJoiner(ClientData client)
+        {
+            if (AmongUsClient.Instance.AmHost && client.FriendCode == "" && Options.KickPlayerFriendCodeNotExist.GetBool())
+            {
+                AmongUsClient.Instance.KickPlayer(client.Id, false);
+                Logger.SendInGame(string.Format(GetString("Message.KickedByNoFriendCode"), client.PlayerName));
+                Logger.Info($"フレンドコードがないプレイヤー{client?.PlayerName}({client.ProductUserId})をキックしました。", "Kick");
+            }
+            if (DestroyableSingleton<FriendsListManager>.Instance.IsPlayerBlockedUsername(client.FriendCode) && AmongUsClient.Instance.AmHost)
+            {
+                AmongUsClient.Instance.KickPlayer(client.Id, true);
+                Logger.Info($"ブロック済みのプレイヤー{client?.PlayerName}({client.FriendCode})({client.ProductUserId})をBANしました。", "BAN");
+            }
+            BanManager.CheckBanPlayer(client);
+            BanManager.CheckDenyNamePlayer(client);
+            JoinGuard.OnPlayerJoined(client);
         }
     }
     [HarmonyPatch(typeof(AmongUsClient), nameof(AmongUsClient.OnPlayerLeft))]

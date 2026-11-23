@@ -87,7 +87,9 @@ namespace TownOfHostL
         }
     }
 
+    // BAN を BAN の一覧へ書くだけで電文は送らないので、本編のかくれんぼの間も当てておく
     [HarmonyPatch(typeof(InnerNet.InnerNetClient), nameof(InnerNet.InnerNetClient.KickPlayer))]
+    [TownOfHostL.Core.Modes.PatchBundle(TownOfHostL.Core.Modes.PatchBundles.Core)]
     class KickPlayerPatch
     {
         public static void Prefix(InnerNet.InnerNetClient __instance, int clientId, bool ban)
