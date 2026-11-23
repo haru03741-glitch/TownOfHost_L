@@ -103,6 +103,12 @@ public static partial class Options
     // 本編のかくれんぼ (/mode hns) の決まり
     public static OptionItem VanillaHnsSeekers;
     public static OptionItem VanillaHnsTimeOnKill;
+    public static OptionItem VanillaHnsSeekerRole;
+    public static OptionItem VanillaHnsAbilityDuration;
+    public static OptionItem VanillaHnsAbilityCooldown;
+    public static OptionItem VanillaHnsGhostGuard;
+    public static OptionItem VanillaHnsGuardDuration;
+    public static OptionItem VanillaHnsGuardCooldown;
     public static OptionItem AllowCloseDoors;
     public static OptionItem KillDelay;
     // public static OptionItem IgnoreCosmetics;
@@ -513,13 +519,30 @@ public static partial class Options
         IgnoreVent = StringOptionItem.Create("IgnoreVent", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetGameMode(CustomGameMode.HideAndSeek);
 
-        // 本編のかくれんぼ (/mode hns) の決まり。本編の役職と勝敗のまま、鬼の人数と残り時間を変える
+        // 本編のかくれんぼ (/mode hns) の決まり。本編の勝敗のまま、鬼の人数・残り時間・鬼と死んだ隠れる側の役職を変える
         VanillaHnsSeekers = IntegerOptionItem.Create("VanillaHnsSeekers", new(1, 5, 1), 1, TabGroup.ModMainSettings, false)
             .SetHeader(true)
             .SetColor(Color.cyan)
             .SetValueFormat(OptionFormat.Players)
             .SetGameMode(CustomGameMode.VanillaHideAndSeek);
         VanillaHnsTimeOnKill = IntegerOptionItem.Create("VanillaHnsTimeOnKill", new(-30, 30, 5), 0, TabGroup.ModMainSettings, false)
+            .SetValueFormat(OptionFormat.Seconds)
+            .SetGameMode(CustomGameMode.VanillaHideAndSeek);
+        // 本編のかくれんぼでは役職の能力の秒数が客の手元で 1 秒に決まるので、長さと待ち時間はホストが数える (Core/Modes/VanillaHnsAbilities)
+        VanillaHnsSeekerRole = StringOptionItem.Create("VanillaHnsSeekerRole", new string[] { "VanillaHnsRole.Default", "Shapeshifter", "Phantom" }, 0, TabGroup.ModMainSettings, false)
+            .SetGameMode(CustomGameMode.VanillaHideAndSeek);
+        VanillaHnsAbilityDuration = IntegerOptionItem.Create("VanillaHnsAbilityDuration", new(3, 30, 1), 10, TabGroup.ModMainSettings, false).SetParent(VanillaHnsSeekerRole)
+            .SetValueFormat(OptionFormat.Seconds)
+            .SetGameMode(CustomGameMode.VanillaHideAndSeek);
+        VanillaHnsAbilityCooldown = IntegerOptionItem.Create("VanillaHnsAbilityCooldown", new(5, 60, 5), 20, TabGroup.ModMainSettings, false).SetParent(VanillaHnsSeekerRole)
+            .SetValueFormat(OptionFormat.Seconds)
+            .SetGameMode(CustomGameMode.VanillaHideAndSeek);
+        VanillaHnsGhostGuard = StringOptionItem.Create("VanillaHnsGhostGuard", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
+            .SetGameMode(CustomGameMode.VanillaHideAndSeek);
+        VanillaHnsGuardDuration = IntegerOptionItem.Create("VanillaHnsGuardDuration", new(3, 30, 1), 10, TabGroup.ModMainSettings, false).SetParent(VanillaHnsGhostGuard)
+            .SetValueFormat(OptionFormat.Seconds)
+            .SetGameMode(CustomGameMode.VanillaHideAndSeek);
+        VanillaHnsGuardCooldown = IntegerOptionItem.Create("VanillaHnsGuardCooldown", new(5, 60, 5), 30, TabGroup.ModMainSettings, false).SetParent(VanillaHnsGhostGuard)
             .SetValueFormat(OptionFormat.Seconds)
             .SetGameMode(CustomGameMode.VanillaHideAndSeek);
 
