@@ -81,8 +81,10 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammat
     private int rampageKills;
     // 忘我か (仲間もキルできる)
     private bool trance;
-    // 忘我の見え方を、窓 (SetRole を送れない間) が明けたら送る
+    // 忘我の見え方を送る予約。キルの 0.5 秒後の暗転対策が仲間を本来の役職で送り直すので、それより後
+    // (キルの後の鬼の体の付け直しの窓が明けた所) で送る
     private bool tranceSendPending;
+    private const float TranceSendDelay = 1.5f;
     // 忘我で見え方を替えた仲間と、替える前の見え方 (自分の画面で)
     private readonly Dictionary<byte, RoleTypes> tranceViews = new();
 
@@ -121,7 +123,7 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammat
     }
 
     // 暴走の間に押すと鎮静化する (変身中と窓の間は何もしない)。
-    // ボタンを戻す SetRole は鬼の体を外すので送らない。ボタンのクールは窓の SetRole で始め直される
+    // ボタンを戻す SetRole は鬼の体を外すので送らない。ボタンのクールは暴走が終わった時に始め直す
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
         AdjustKillCooldown = false;
@@ -163,7 +165,7 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammat
         }
         float remaining = Mathf.Max(0f, rampageKillCooldown - (now - lastKillAt));
         Player.SetKillCooldown(remaining);
-        if (tranceSendPending) SendTranceViews();
+        if (trance) SendTranceViews();
     }
 
     public void OnMurderPlayerAsKiller(MurderInfo info)
@@ -175,23 +177,26 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammat
         trance = true;
         tranceSendPending = true;
         Logger.Info($"忘我: {Player.GetNameWithRole()}", nameof(Berserker));
-        if (!SeekerBody.InWindow) SendTranceViews();
         Utils.NotifyRoles(SpecifySeer: Player);
     }
 
-    // 自分の画面で、生きている仲間 (キルを持つ人に見えている人) を、キルの対象にできる見え方にする
+    // 自分の画面で、生きている仲間 (キルを持つ人に見えている人) を、キルの対象にできる見え方にする。
+    // 一度替えた仲間にも送り直す (キルのたびに暗転対策が本来の役職で送り直すため)
     private void SendTranceViews()
     {
         tranceSendPending = false;
-        if (!trance || !Player.IsAlive()) return;
+        if (!trance || !Player.IsAlive() || SeekerBody.InWindow) return;
         bool sent = false;
         foreach (var pc in Main.AllAlivePlayerControls)
         {
-            if (pc.PlayerId == Player.PlayerId || tranceViews.ContainsKey(pc.PlayerId)) continue;
-            if (!pc.Is(CustomRoleTypes.Impostor)) continue;
-            var current = RoleView.Living(pc, Player);
-            if (!RoleView.IsKillerRole(current)) continue;
-            tranceViews[pc.PlayerId] = current;
+            if (pc.PlayerId == Player.PlayerId) continue;
+            if (!tranceViews.ContainsKey(pc.PlayerId))
+            {
+                if (!pc.Is(CustomRoleTypes.Impostor)) continue;
+                var current = RoleView.Living(pc, Player);
+                if (!RoleView.IsKillerRole(current)) continue;
+                tranceViews[pc.PlayerId] = current;
+            }
             RoleView.Send(pc, Player, RoleTypes.Scientist);
             sent = true;
         }
@@ -221,7 +226,8 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammat
             if (tranceViews.Count > 0) RestoreTranceViews();
             return;
         }
-        if (tranceSendPending && !SeekerBody.InWindow) SendTranceViews();
+        // 鬼の体の付け直しの窓が来なかった時の予備
+        if (tranceSendPending && !SeekerBody.InWindow && Time.realtimeSinceStartup - lastKillAt >= TranceSendDelay) SendTranceViews();
         if (!Player.IsAlive()) { EndRampage(release: true); return; }
         if (chilling && Time.realtimeSinceStartup >= chillUntil)
         {
@@ -252,7 +258,12 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammat
         {
             Player.ResetKillCooldown();
             Player.MarkDirtySettings();
-            if (!GameStates.IsMeeting && release) Player.SetKillCooldown();
+            if (!GameStates.IsMeeting && release)
+            {
+                Player.SetKillCooldown();
+                // 鬼の体を外す SetRole ではボタンのクールが始まらない (終えてすぐまた暴走できてしまう) ので、ここで始め直す
+                Player.RpcResetAbilityCooldown(sync: true);
+            }
         }
         Utils.NotifyRoles();
         Logger.Info($"暴走が終わった: {Player.GetNameWithRole()}", nameof(Berserker));
