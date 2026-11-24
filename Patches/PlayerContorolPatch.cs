@@ -89,6 +89,8 @@ class CheckMurderPatch
                 if (seer.PlayerId == killer.PlayerId) continue;
                 if (seer.GetClientId() == -1) continue;
                 var was = RoleView.Living(killer, seer);
+                // 自分の画面でキルを持つ人 (デシンクの役職) にキル役で見せると、インポスターの仲間になってキルの対象から外れる
+                if (RoleView.IsDesync(seer) && !RoleView.IsKillerRole(was)) continue;
                 before[seer.PlayerId] = was == RoleTypes.Viper ? RoleTypes.Impostor : was;
                 killer.RpcSetRoleDesync(RoleTypes.Viper, seer.GetClientId());
             }
@@ -102,7 +104,8 @@ class CheckMurderPatch
                 {
                     if (seer.PlayerId == capKiller.PlayerId) continue;
                     if (seer.GetClientId() == -1) continue;
-                    capKiller.RpcSetRoleDesync(before.TryGetValue(seer.PlayerId, out var back) ? back : RoleTypes.Impostor, seer.GetClientId());
+                    if (!before.TryGetValue(seer.PlayerId, out var back)) continue;
+                    capKiller.RpcSetRoleDesync(back, seer.GetClientId());
                 }
             }, 2f, "RevertViperVisualReveal");
         }
