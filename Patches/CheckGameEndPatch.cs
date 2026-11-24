@@ -42,6 +42,7 @@ namespace TownOfHostL
                     if (CustomWinnerHolder.WinnerTeam != CustomWinner.Crewmate
                         && (reason.Equals(GameOverReason.CrewmatesByTask) || reason.Equals(GameOverReason.CrewmatesByVote)))
                         reason = GameOverReason.ImpostorsByVote;
+                    if (HamoConvenient.OutroCrew && (reason.Equals(GameOverReason.CrewmatesByTask) || reason.Equals(GameOverReason.CrewmatesByVote))) reason = GameOverReason.ImpostorsByVote;
                     StartEndGame(reason);
                 }
                 return false;
@@ -78,11 +79,13 @@ namespace TownOfHostL
             Modules.Net.OutfitSync.SendAllNow();
 
             reason = WinnerResolver.Resolve(reason);
+            HamoSabotage.AfterResolve(reason);
             ShipStatus.Instance.enabled = false;
 
             if (CustomWinnerHolder.WinnerTeam != CustomWinner.Crewmate
                 && (reason.Equals(GameOverReason.CrewmatesByTask) || reason.Equals(GameOverReason.CrewmatesByVote)))
                 reason = GameOverReason.ImpostorsByVote;
+            if (HamoConvenient.OutroCrew && (reason.Equals(GameOverReason.CrewmatesByTask) || reason.Equals(GameOverReason.CrewmatesByVote))) reason = GameOverReason.ImpostorsByVote;
             StartEndGame(reason);
             predicate = null;
             return false;

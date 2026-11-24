@@ -46,6 +46,7 @@ public static class PetAbility
         if (lastPressAt.TryGetValue(pc.PlayerId, out var last) && now - last < PressInterval) return;
         lastPressAt[pc.PlayerId] = now;
 
+        if (FirstTurnMeeting.BeforeFirstMeeting) return;
         try { VanillaHnsPortalMaker.OnPet(pc); }
         catch (Exception ex) { Logger.Exception(ex, "PetAbility"); }
 

@@ -299,6 +299,11 @@ public static class PlayerControlCheckShapeshiftPatch
             __instance.RpcRejectShapeshift();
             return false;
         }
+        if (FirstTurnMeeting.BeforeFirstMeeting)
+        {
+            __instance.RpcRejectShapeshift();
+            return false;
+        }
         var shapeshifter = __instance;
         var shapeshifting = shapeshifter.PlayerId != target.PlayerId;
         // 変身したとき一番近い人をマッドメイトにする処理
@@ -471,6 +476,7 @@ public static class PlayerControlCheckVanishPatch
             return true;
         }
 
+        if (FirstTurnMeeting.BeforeFirstMeeting) return false;
         var phantom = __instance;
         Logger.Info($"{phantom.GetNameWithRole()} : CheckVanishStart", "CheckVanish");
         // 死んだ後や会議・追放の演出の間に届いた要求では、役職の能力 (ワンクリックのボタンなど) を起こさず、消えさせもしない
@@ -745,6 +751,7 @@ partial class ReportDeadBodyPatch
             }
         }
 
+        HamoFall.OnReportDeadBody();
         MushroomMixupDeterioratePatch.RestorName();
 
         // 通報の時に起こす役職のキル (吸血鬼の噛んだ相手など) は、会議の呼び出し直後の止めを通す
@@ -832,6 +839,11 @@ class CoEnterVentPatch
     {
         if (AmongUsClient.Instance.AmHost)
         {
+            if (FirstTurnMeeting.BeforeFirstMeeting)
+            {
+                _ = new LateTask(() => __instance.RpcBootFromVent(id), 0.5f, "FirstTurnMeeting.BootVent");
+                return true;
+            }
             if (ModeCatalog.Current.BootsFromVents)
                 __instance.RpcBootFromVent(id);
             // ベントの制限 (押し出す時も、ベントを能力のボタンにしている役職のために、役職の「ベントに入った」は起こす)

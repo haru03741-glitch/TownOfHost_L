@@ -70,10 +70,10 @@ public sealed class ChatCommand
 /// <summary>チャットコマンドの登録表。名前は大文字小文字を区別しない。</summary>
 public static class ChatCommandTable
 {
-    private static readonly ChatCommand[] All = Build();
+    private static readonly ChatCommand[] All = Build().Concat(HamoCommands.Build()).ToArray();
     private static readonly Dictionary<string, ChatCommand> byName = BuildMap();
 
-    public static ChatCommand Find(string name) => name != null && byName.TryGetValue(name, out var cmd) ? cmd : null;
+    public static ChatCommand Find(string name) => name != null && byName.TryGetValue(name, out var cmd) ? cmd : (HamoCommands.IsDice(name) ? byName.GetValueOrDefault("/dice") : null);
 
     /// <summary>他の人のコマンドを個別に止める設定 (見出し 1 つと、Restrictable なコマンド 1 つずつ)</summary>
     public static void SetupCustomOption()
@@ -140,14 +140,14 @@ public static class ChatCommandTable
             Remote = c => Utils.SendMessageAutoSplit(PlayerIdList(), true, sendTo: c.Player.PlayerId),
         },
         new("/start") { Usage = "CommandUsage.Start", ForModerator = true, Host = StartCommand },
-        new("/end", "/abort") { ForModerator = true, Host = _ => EndAsDraw() },
-        new("/mt", "/endmeeting") { ForModerator = true, Host = _ => { if (GameStates.IsMeeting) MeetingHud.Instance.RpcClose(); } },
+        new("/end", "/abort", "/fe", "/forceend") { ForModerator = true, Host = _ => EndAsDraw() },
+        new("/mt", "/endmeeting", "/mf", "/ms") { ForModerator = true, Host = _ => { if (GameStates.IsMeeting) MeetingHud.Instance.RpcClose(); } },
         new("/kick") { Usage = "CommandUsage.Kick", ForModerator = true, Host = c => ChatCommands.KickCommand(c.Args, ban: false, c.Player) },
         new("/mute") { Usage = "CommandUsage.Mute", ForModerator = true, Host = Modules.ChatMute.MuteCommand },
         new("/unmute") { Usage = "CommandUsage.Kick", ForModerator = true, Host = Modules.ChatMute.UnmuteCommand },
         new("/ban") { Usage = "CommandUsage.Ban", ForModerator = true, Host = c => ChatCommands.KickCommand(c.Args, ban: true, c.Player) },
         // 前の試合に居た人の再入室: 見つけた人を一括キック / このロビーだけ許す
-        new("/kp", "/kickprevious") { ForModerator = true, Host = _ => Modules.JoinGuard.KickDetected() },
+        new("/kp", "/kickprevious", "/kickprev") { ForModerator = true, Host = _ => Modules.JoinGuard.KickDetected() },
         new("/aj", "/allowjoin") { ForModerator = true, Host = _ => Modules.JoinGuard.AllowThisLobby() },
         // 試合の結果を送る Discord の Webhook (URL・on・off・test)
         new("/webhook") { Usage = "CommandUsage.Webhook", Local = Modules.DiscordWebhook.Command },

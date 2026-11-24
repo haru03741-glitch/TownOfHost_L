@@ -126,7 +126,7 @@ namespace TownOfHostL
                         ((Options.DisableDevicesIgnoreImpostors?.GetBool() ?? false) && pc.Is(CustomRoleTypes.Impostor)) ||
                         ((Options.DisableDevicesIgnoreMadmates?.GetBool() ?? false) && pc.Is(CustomRoleTypes.Madmate)) ||
                         ((Options.DisableDevicesIgnoreNeutrals?.GetBool() ?? false) && pc.Is(CustomRoleTypes.Neutral)) ||
-                        ((Options.DisableDevicesIgnoreCrewmates?.GetBool() ?? false) && pc.Is(CustomRoleTypes.Crewmate)) ||
+                        HamoDevices.CrewIgnored(pc) ||
                         ((Options.DisableDevicesIgnoreAfterAnyoneDied?.GetBool() ?? false) && GameStates.AlreadyDied);
 
                     // 使える時間の上限 (ホストも数える。ホストの画面は DeviceTimer が閉じる)
@@ -178,6 +178,7 @@ namespace TownOfHostL
                         }
                     }
                     doComms &= !ignore;
+                    if (pc.IsAlive() && !Utils.IsActive(SystemTypes.Comms)) doComms |= HamoDevices.NearRecords(PlayerPos);
                     if (doComms && !pc.inVent && GameStates.IsInTask)
                     {
                         // 入った時に送り、居続ける間は 1 秒ごとの再送だけにする (4 フレームごとに送ると同種 Reliable の連射になる)
@@ -229,7 +230,7 @@ namespace TownOfHostL
                 ((Options.DisableDevicesIgnoreImpostors?.GetBool() ?? false) && player.Is(CustomRoleTypes.Impostor)) ||
                 ((Options.DisableDevicesIgnoreMadmates?.GetBool() ?? false) && player.Is(CustomRoleTypes.Madmate)) ||
                 ((Options.DisableDevicesIgnoreNeutrals?.GetBool() ?? false) && player.Is(CustomRoleTypes.Neutral)) ||
-                ((Options.DisableDevicesIgnoreCrewmates?.GetBool() ?? false) && player.Is(CustomRoleTypes.Crewmate)) ||
+                HamoDevices.CrewIgnored(player) ||
                 ((Options.DisableDevicesIgnoreAfterAnyoneDied?.GetBool() ?? false) && GameStates.AlreadyDied);
 
             var admins = GameObject.FindObjectsOfType<MapConsole>(true);
@@ -270,7 +271,7 @@ namespace TownOfHostL
                         if (((Options.DisableCockpitAdmin_Airship?.GetBool() ?? false) || PcIsPoor) && x.name == "panel_cockpit_map")
                             x.gameObject.GetComponent<BoxCollider2D>().enabled = ignore;
                         if (((Options.DisableRecordsAdmin_Airship?.GetBool() ?? false) || PcIsPoor) && x.name == "records_admin_map")
-                            x.gameObject.GetComponent<BoxCollider2D>().enabled = ignore;
+                            x.gameObject.GetComponent<BoxCollider2D>().enabled = ignore && !HamoDevices.ForceRecords;
                     });
                     if ((Options.DisableCamera_Airship?.GetBool() ?? false) || PcIsPoor)
                         consoles.DoIf(x => x.name == "task_cams", x => x.gameObject.GetComponent<BoxCollider2D>().enabled = ignore);

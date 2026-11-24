@@ -67,6 +67,8 @@ public static class GameEndRules
 {
     private static readonly KillingFaction ImpostorFaction = new(CountTypes.Impostor, CustomWinner.Impostor, 0);
 
+    public static KillingFaction FactionOf(CountTypes type) => System.Array.Find(KillingFactions, f => f.CountType == type);
+
     private static KillingFaction[] killingFactions;
     /// <summary>判定の順に並べた陣営。役職の登録は起動時に揃うので、最初に使う時に 1 回だけ組む (static 初期化から役職を引かない)</summary>
     private static KillingFaction[] KillingFactions => killingFactions ??= BuildKillingFactions();
@@ -259,6 +261,7 @@ public static class GameEndRules
                 return false;
             }
             CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Impostor);
+            HamoSabotage.ApplyWinner();
             reason = GameOverReason.ImpostorsBySabotage;
             lifeSupp.Countdown = 10000f;
             return true;
@@ -282,6 +285,7 @@ public static class GameEndRules
                 return false;
             }
             CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Impostor);
+            HamoSabotage.ApplyWinner();
             reason = GameOverReason.ImpostorsBySabotage;
             critical.ClearSabotage();
             return true;

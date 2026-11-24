@@ -66,6 +66,7 @@ namespace TownOfHostL.Modules
 
         public static bool Canuseability()
         {
+            if (FirstTurnMeeting.CantAbilityNow) return false;
             if (MadAvenger.Skill) return false;
             if (Assassin.NowUse) return false;
 
