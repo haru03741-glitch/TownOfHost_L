@@ -90,6 +90,7 @@ public static class NameParts
     public static bool HideSeenName(bool isMeeting)
     {
         if (isMeeting) return false;
+        if (SuddenDeath.HidesNames) return true;
         if (Utils.IsActive(SystemTypes.Comms) && Options.CommsCamouflage.GetBool() && !Options.IsSyncColorMode) return true;
         return EvilDyer.IsColorCamouflage;
     }

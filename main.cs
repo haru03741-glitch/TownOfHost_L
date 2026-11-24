@@ -351,7 +351,7 @@ public enum CustomWinner
 
     HASTroll = CustomRoles.HASTroll,
     TaskPlayerB = CustomRoles.TaskPlayerB,
-    Kedoro = 9006,
+    SuddenDeathRed = 9010, SuddenDeathBlue = 9011, SuddenDeathYellow = 9012, SuddenDeathGreen = 9013, SuddenDeathPurple = 9014,
 
     // TownOfHost-hamo から移植
     Pavlov = CustomRoles.PavlovDog,

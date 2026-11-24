@@ -171,7 +171,7 @@ class SetEverythingUpPatch
             string CustomWinnerColor = Utils.GetRoleColorCode(CustomRoles.Crewmate);
 
             var winnerRole = (CustomRoles)CustomWinnerHolder.WinnerTeam;
-            if (winnerRole >= 0)
+            if (winnerRole >= 0 && !SuddenDeath.IsTeamWinner(CustomWinnerHolder.WinnerTeam))
             {
                 CustomWinnerText = Utils.GetRoleName(winnerRole);
                 CustomWinnerColor = Utils.GetRoleColorCode(winnerRole);
@@ -230,6 +230,8 @@ class SetEverythingUpPatch
                     if (CustomWinnerHolder.WinnerTeam == CustomWinner.BlueL)    WinnerText.text = $"<color={CustomWinnerColor}>{GetString("CCBlueWin")}</color>";
                     if (CustomWinnerHolder.WinnerTeam == CustomWinner.YellowL)  WinnerText.text = $"<color={CustomWinnerColor}>{GetString("CCYellowWin")}</color>";
                 }
+                else if (SuddenDeath.TryGetTeamWinText(out var teamWinText))
+                    WinnerText.text = teamWinText;
                 else
                     WinnerText.text = $"<color={CustomWinnerColor}>{CustomWinnerText}{AdditionalWinnerText}{GetString("Win")}</color>";
             }

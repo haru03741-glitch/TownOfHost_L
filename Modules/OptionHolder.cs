@@ -28,8 +28,7 @@ public enum CustomGameMode
     /// <summary>本編のかくれんぼ。設定では選ばず、ロビーの切り替え (/mode) で入る。</summary>
     VanillaHideAndSeek,
     TaskBattle,
-    MurderMystery,
-    Kedoro,
+    SuddenDeath,
     All = int.MaxValue
 }
 [HarmonyPatch]
@@ -57,12 +56,12 @@ public static partial class Options
     public static CustomGameMode CurrentGameMode => GameMode == null ? CustomGameMode.Standard : gameModeIds[System.Math.Clamp(GameMode.GetValue(), 0, gameModeIds.Length - 1)];
     static readonly CustomGameMode[] gameModeIds =
     {
-        CustomGameMode.Standard, CustomGameMode.HideAndSeek, CustomGameMode.TaskBattle, CustomGameMode.MurderMystery, CustomGameMode.Kedoro,
+        CustomGameMode.Standard, CustomGameMode.HideAndSeek, CustomGameMode.TaskBattle, CustomGameMode.SuddenDeath,
     };
 
     public static readonly string[] gameModes =
     {
-         "Standard", "HideAndSeek", "TaskBattle", "MurderMystery", "Kedoro",
+         "Standard", "HideAndSeek", "TaskBattle", "SuddenDeath",
     };
 
     // MapActive

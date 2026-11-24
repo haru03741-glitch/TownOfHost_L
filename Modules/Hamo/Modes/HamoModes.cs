@@ -13,8 +13,7 @@ public static partial class Options
     static void SetupHamoModeOptions()
     {
         SetupTaskBattleOptions();
-        SetupMurderMysteryOptions();
-        SetupKedoroOptions();
+        SetupSuddenDeathOptions();
     }
 
     /// <summary>役職の設定 (確率・人数・子の設定) を、そのモードでだけ出す</summary>
@@ -37,8 +36,7 @@ public static class HamoModes
     [Attributes.GameModuleInitializer]
     public static void Init() => IntroDone = false;
 
-    public static bool IsHamoMode => Options.CurrentGameMode is CustomGameMode.TaskBattle or CustomGameMode.MurderMystery
-        or CustomGameMode.Kedoro;
+    public static bool IsHamoMode => Options.CurrentGameMode is CustomGameMode.TaskBattle or CustomGameMode.SuddenDeath;
 
     /// <summary>通常の役職の仕組みを使わないモードの割り当ての後始末 (CatchCat と同じ)</summary>
     public static void FinishAssign(GameEndRuleSet rules)
@@ -66,7 +64,7 @@ public static class HamoModes
     {
         switch (Options.CurrentGameMode)
         {
-            case CustomGameMode.MurderMystery: MurderMystery.AfterAssign(); break;
+            case CustomGameMode.SuddenDeath: SuddenDeath.AfterAssign(); break;
         }
     }
 
@@ -81,8 +79,6 @@ public static class HamoModes
                     opt.SetFloat(FloatOptionNames.EngineerInVentMaxTime, 0f);
                 }
                 break;
-            case CustomGameMode.MurderMystery: MurderMystery.ApplyGameOptions(player, opt); break;
-            case CustomGameMode.Kedoro: Kedoro.ApplyGameOptions(player, opt); break;
         }
     }
 
@@ -91,8 +87,6 @@ public static class HamoModes
         switch (Options.CurrentGameMode)
         {
             case CustomGameMode.TaskBattle: TaskBattle.OnCompleteTask(pc, taskState); break;
-            case CustomGameMode.MurderMystery: MurderMystery.OnCompleteTask(pc); break;
-            case CustomGameMode.Kedoro: Kedoro.OnCompleteTask(pc); break;
         }
     }
 
@@ -104,8 +98,7 @@ public static class HamoModes
             IntroDone = true;
             if (!AmongUsClient.Instance.AmHost) return;
             TaskBattle.OnIntroEnd();
-            MurderMystery.OnIntroEnd();
-            Kedoro.OnIntroEnd();
+            SuddenDeath.OnIntroEnd();
         }
     }
 
@@ -117,8 +110,7 @@ public static class HamoModes
             if (!GameStates.IsInGame || !IsHamoMode || __instance == null) return;
             TaskBattle.OnFixedUpdate(__instance);
             if (!AmongUsClient.Instance.AmHost || __instance.PlayerId != PlayerControl.LocalPlayer.PlayerId) return;
-            MurderMystery.OnFixedUpdate();
-            Kedoro.OnFixedUpdate();
+            SuddenDeath.OnFixedUpdate();
         }
     }
 

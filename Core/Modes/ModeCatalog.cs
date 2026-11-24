@@ -12,8 +12,7 @@ public static class ModeCatalog
     public static readonly CatchCatMode CatchCat = new();
     public static readonly VanillaHideAndSeekMode Vanilla = new();
     public static readonly TaskBattleMode TaskBattle = new();
-    public static readonly MurderMysteryMode MurderMystery = new();
-    public static readonly KedoroMode Kedoro = new();
+    public static readonly SuddenDeathMode SuddenDeath = new();
 
     /// <summary>いま遊んでいるモード。本編のかくれんぼで TOHL が休んでいる間は <see cref="Vanilla"/>。</summary>
     public static GameMode Current
@@ -26,8 +25,7 @@ public static class ModeCatalog
                 CustomGameMode.HideAndSeek => HideAndSeek,
                 CustomGameMode.CatchCat => CatchCat,
                 CustomGameMode.TaskBattle => TaskBattle,
-                CustomGameMode.MurderMystery => MurderMystery,
-                CustomGameMode.Kedoro => Kedoro,
+                CustomGameMode.SuddenDeath => SuddenDeath,
                 _ => Standard,
             };
         }

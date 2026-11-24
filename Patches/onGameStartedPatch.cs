@@ -381,6 +381,7 @@ class SelectRolesPatch
                     return role != CustomRoles.NotAssigned && role.IsImpostor();
                 });
                 adjustedNumImpostors = Math.Max(0, adjustedNumImpostors - alreadyAssignedImpostors);
+                adjustedNumImpostors = SuddenDeath.AdjustImpostorCount(adjustedNumImpostors, playerInfos.Count);
 
                 Logger.Info($"NomalAssign playerInfos: {playerInfos.Count}, impostor: {adjustedNumImpostors}", "AssignRoles");
 
@@ -521,6 +522,7 @@ class SelectRolesPatch
         // 役職ごとに付ける属性
         RoleAddAddons.GrantAll();
 
+        SuddenDeath.BeforeCreateInstance();
         CustomRoleManager.CreateInstance();
         foreach (var pc in Main.AllPlayerControls)
         {
@@ -915,7 +917,7 @@ public static class StandardIntroHelper
             data.Disconnected = false;
             if (i > 4) continue;
             var pc = Utils.GetPlayerById(data.PlayerId);
-            var isDesync = pc?.GetCustomRole().GetRoleInfo()?.IsDesyncImpostor == true;
+            var isDesync = pc != null && RoleView.IsDesync(pc);
             var originalRole = data.Role?.Role ?? RoleTypes.Crewmate;
             if (isDesync && data.Role != null)
                 data.Role.Role = RoleTypes.Crewmate;
@@ -957,7 +959,7 @@ public static class StandardIntroHelper
                         hasData = true;
                         data.Disconnected = false;
                         var pc2 = Utils.GetPlayerById(data.PlayerId);
-                        var isDesync2 = pc2?.GetCustomRole().GetRoleInfo()?.IsDesyncImpostor == true;
+                        var isDesync2 = pc2 != null && RoleView.IsDesync(pc2);
                         var originalRole2 = data.Role?.Role ?? RoleTypes.Crewmate;
                         if (isDesync2 && data.Role != null)
                             data.Role.Role = RoleTypes.Crewmate;
@@ -1023,8 +1025,10 @@ public static class StandardIntroHelper
     private static void Intoro()
     {
 
+        if (SuddenDeath.Active) SuddenDeath.SendAllViews();
         foreach (var pc in Main.AllPlayerControls)
         {
+            if (SuddenDeath.Active) break;
             if (pc.PlayerId == PlayerControl.LocalPlayer.PlayerId) continue;
             if (pc.GetClientId() == -1) continue;
 
@@ -1120,6 +1124,11 @@ public static class StandardIntroHelper
 
         new LateTask(() =>
         {
+            if (SuddenDeath.Active)
+            {
+                SuddenDeath.SendAllViews();
+                return;
+            }
             foreach (var pc in Main.AllPlayerControls)
             {
                 if (pc.PlayerId == PlayerControl.LocalPlayer.PlayerId) continue;
@@ -1209,6 +1218,7 @@ public static class StandardIntroHelper
 
 
                 if (roleInfo?.IsDesyncImpostor ?? false) continue;
+                if (SuddenDeath.Active) continue;
 
                 var baseRole = roleInfo?.BaseRoleType?.Invoke() ?? RoleTypes.Crewmate;
                 pc.RpcSetRoleDesync(baseRole, pc.GetClientId());

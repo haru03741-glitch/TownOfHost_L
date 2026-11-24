@@ -16,7 +16,7 @@ public static class HamoSabotageTrigger
         Active = false;
     }
 
-    static bool BlocksRepair => Active && Options.CurrentGameMode is CustomGameMode.MurderMystery or CustomGameMode.Kedoro;
+    static bool BlocksRepair => Active && Options.CurrentGameMode is CustomGameMode.SuddenDeath;
 
     public static void Critical(float seconds)
     {

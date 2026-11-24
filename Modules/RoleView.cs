@@ -108,7 +108,7 @@ public static class RoleView
         return RoleTypes.CrewmateGhost;
     }
 
-    public static bool IsDesync(PlayerControl pc) => pc.GetCustomRole().GetRoleInfo()?.IsDesyncImpostor == true;
+    public static bool IsDesync(PlayerControl pc) => SuddenDeath.Active || pc.GetCustomRole().GetRoleInfo()?.IsDesyncImpostor == true;
 
     private static bool IsDead(PlayerControl pc) => PlayerState.GetByPlayerId(pc.PlayerId)?.IsDead ?? !pc.IsAlive();
 
@@ -117,6 +117,7 @@ public static class RoleView
 
     private static bool Teammates(PlayerControl a, PlayerControl b)
     {
+        if (SuddenDeath.Active) return SuddenDeath.SameTeam(a.PlayerId, b.PlayerId);
         var type = a.GetCountTypes();
         if (type is CountTypes.Crew or CountTypes.None or CountTypes.OutOfGame || type != b.GetCountTypes()) return false;
         return IsKillerRole(SelfRole(a)) && IsKillerRole(SelfRole(b));

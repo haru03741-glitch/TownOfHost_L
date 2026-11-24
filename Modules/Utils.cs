@@ -211,6 +211,7 @@ public static partial class Utils
         if (target == BestieWolf.EnableKillFlash) return true;
 
         if (seer.Data.IsDead || TownOfHostL.Core.NativeObject.Same(killer, seer) || TownOfHostL.Core.NativeObject.Same(target, seer)) return false;
+        if (SuddenDeath.SeesKillFlash(seer)) return true;
 
         // 属性などの印は、役職ごとの条件より先に見る (役職の条件が偽でも属性の光は消さない)
         if (PlayerTraits.SeesKillFlash(seer)) return true;
