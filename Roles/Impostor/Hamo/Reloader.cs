@@ -69,6 +69,7 @@ public sealed class Reloader : RoleBase, IImpostor, IUsePhantomButton
         Player.SetKillCooldown(ReloadKillCooldown, ForceProtect: true);
         Utils.NotifyRoles(SpecifySeer: Player);
     }
+    public override int? UsesRemaining => Count;
     public override string GetProgressText(bool comms = false) => Utils.ColorString(Count > 0 ? RoleInfo.RoleColor : Palette.DisabledGrey, $"({Count})");
 
     public override string GetAbilityButtonText()

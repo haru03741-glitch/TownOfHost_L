@@ -207,6 +207,7 @@ public sealed class Framer : RoleBase, IImpostor, IUsePhantomButton, IDoubleTrig
         return mark;
     }
 
+    public override int? UsesRemaining => remaining;
     public override string GetProgressText(bool comms = false)
         => Utils.ColorString(remaining > 0 ? RoleInfo.RoleColor : Color.gray, $"[{remaining}]");
 

@@ -90,6 +90,7 @@ public sealed class Jack : RoleBase, IImpostor
             view.Prefix = Utils.ColorString(Utils.GetRoleColor(CustomRoles.JackOLantern),"◆") + view.Prefix;
         }
     }
+    public override int? UsesRemaining => removeKillLimit;
     public override string GetProgressText(bool comms = false)
         => Utils.ColorString(removeKillLimit > 0 ? RoleInfo.RoleColor : Color.gray, $"[{removeKillLimit}]");
 }

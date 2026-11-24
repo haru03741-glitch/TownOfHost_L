@@ -125,6 +125,7 @@ public sealed class Hunter : RoleBase, IKiller, ISchrodingerCatOwner
             killer.ResetKillCooldown();
         }
     }
+    public override int? UsesRemaining => ShotLimit;
     public override string GetProgressText(bool comms = false) => ColorString(CanUseKillButton() ? Color.yellow : Color.gray, $"〈{ShotLimit}〉");
 
     public override string GetMark(PlayerControl seer, PlayerControl seen, bool isForMeeting = false)

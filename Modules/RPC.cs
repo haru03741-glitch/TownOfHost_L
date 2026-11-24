@@ -22,6 +22,7 @@ namespace TownOfHostL
         ModClientOptions = 90,
         ModClientRoles = 91,
         ModClientEnd = 92,
+        ModClientHud = 93,
     }
     public enum Sounds
     {

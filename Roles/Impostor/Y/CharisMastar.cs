@@ -190,6 +190,7 @@ public sealed class CharismaStar : RoleBase, IImpostor
 
         return string.Empty;
     }
+    public override int? UsesRemaining => GatherLimitCount;
     public override string GetProgressText(bool comms = false) => Utils.ColorString(GatherLimitCount > 0 ? RoleInfo.RoleColor : Color.gray, $"[{GatherLimitCount}]");
     public override string GetAbilityButtonText() => Translator.GetString("CharismaStarGatherButtonText");
 }

@@ -1,5 +1,6 @@
 using HarmonyLib;
 using TownOfHostL.Core.Modes;
+using TownOfHostL.Roles.Core;
 
 namespace TownOfHostL.Modules.Net;
 
@@ -11,15 +12,61 @@ namespace TownOfHostL.Modules.Net;
 [HarmonyPatch, PatchBundle(PatchBundles.Core)]
 public static class ModClientView
 {
-    // ロビーの左上の設定の一覧。ホストが替わった時は届いた物を捨てる
+    // ロビーの左上の設定の一覧と、試合中のボタンの見え方。ホストが替わった時は届いた物を捨てる
     [HarmonyPatch(typeof(HudManager), nameof(HudManager.Update)), HarmonyPostfix]
     public static void HudUpdatePostfix(HudManager __instance)
     {
         if (!TownOfHostL.Core.VanillaHideAndSeek.IsClientMode) return;
         ModClientSync.Tick();
+        ApplyHud(__instance);
         if (!ModClientSync.IsLinked) return;
         HudManagerPatch.EnsureOptionShower(__instance);
         HudManagerPatch.UpdateOptionShower();
+    }
+
+    private static RoleHudState applied = RoleHudState.None;
+
+    /// <summary>客をやめた時。当てていた見え方の記録を捨てる (画面はもう無いか、本編が作り直す)</summary>
+    public static void ForgetHud()
+    {
+        applied = RoleHudState.None;
+        RoleHud.ClearUses();
+    }
+
+    /// <summary>
+    /// ホストから届いたボタンの見え方を当てる。隠す・字を替える・数を出すだけで、本編が隠したボタンは出さない。
+    /// 隠していた物を戻す時は、本編の決め方 (SetHudActive) に任せる
+    /// </summary>
+    private static void ApplyHud(HudManager hud)
+    {
+        var client = AmongUsClient.Instance;
+        bool started = client && client.IsGameStarted;
+        var state = started && ModClientSync.ViewReady ? ModClientSync.RemoteHud : RoleHudState.None;
+        var prev = applied;
+        if (state.Equals(RoleHudState.None) && prev.Equals(RoleHudState.None)) return;
+        var pc = PlayerControl.LocalPlayer;
+        if (pc == null || pc.Data == null || hud.KillButton == null || hud.AbilityButton == null) return;
+        applied = state;
+
+        // 戻す物は先に本編に出し直させ、その後でまだ隠す物を隠す (逆だと 1 フレームだけ出る)
+        bool shown = (prev.HideKill && !state.HideKill) || (prev.HideAbility && !state.HideAbility)
+                     || (prev.HideVent && !state.HideVent) || (prev.HideSabotage && !state.HideSabotage);
+        bool inTask = started && !MeetingHud.Instance && !ExileController.Instance && !IntroCutscene.Instance;
+        if (shown && inTask && !pc.Data.IsDead && pc.Data.Role != null) hud.SetHudActive(pc, pc.Data.Role, true);
+
+        if (state.KillLabel != null) RoleHud.SetButtonText(hud.KillButton, state.KillLabel);
+        else if (prev.KillLabel != null) RoleHud.SetButtonText(hud.KillButton, Translator.GetString(StringNames.KillLabel));
+        if (state.AbilityLabel != null) RoleHud.SetButtonText(hud.AbilityButton, state.AbilityLabel);
+        else if (prev.AbilityLabel != null && pc.Data.Role != null
+                 && RoleBase.DefaultAbilityButtonText(pc.Data.Role.Role) is string label)
+            RoleHud.SetButtonText(hud.AbilityButton, label);
+
+        if (state.HideKill) hud.KillButton.ToggleVisible(false);
+        if (state.HideAbility) hud.AbilityButton.ToggleVisible(false);
+        if (state.HideVent && !pc.inVent && hud.ImpostorVentButton != null) hud.ImpostorVentButton.ToggleVisible(false);
+        if (state.HideSabotage && hud.SabotageButton != null) hud.SabotageButton.ToggleVisible(false);
+
+        RoleHud.ApplyUses(hud, state);
     }
 
     // イントロの役職の名前・色・説明

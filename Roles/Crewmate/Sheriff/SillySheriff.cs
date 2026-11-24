@@ -205,6 +205,7 @@ public sealed class SillySheriff : RoleBase, IKiller, ISchrodingerCatOwner
 
         // ここまで到達は通常キル
     }
+    public override int? UsesRemaining => ShotLimit;
     public override string GetProgressText(bool comms = false) => Utils.ColorString(CanUseKillButton() ? Color.yellow : Color.gray, $"〈{ShotLimit}〉");
     public static bool CanBeKilledBy(PlayerControl player)
     {

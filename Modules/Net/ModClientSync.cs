@@ -13,7 +13,8 @@ namespace TownOfHostL.Modules.Net;
 /// ホストは返ってきた客だけを送り先にする。版が違う・ほかの Mod のホスト・本編のホストの時は、客は何も返さず本編の客のまま。
 /// </para>
 /// <para>
-/// 送る物: 設定の値 (初期値と違う物だけ・変わった時はその分)、全員の役職 (配役の後と、変わった時)、試合の結果。
+/// 送る物: 設定の値 (初期値と違う物だけ・変わった時はその分)、全員の役職 (配役の後と、変わった時)、
+/// 客本人のボタンの見え方 (<see cref="RoleHudState"/>・変わった時だけ)、試合の結果。
 /// どれも送り先の客だけに宛てる (本編の客には届かない)。1 本は 800B 前後までに分け、同じ客へは間を空けて送る。
 /// </para>
 /// </summary>
@@ -31,6 +32,10 @@ public static class ModClientSync
     {
         public readonly Queue<(CustomRPC call, Action<MessageWriter> write)> Queue = new();
         public float NextAt;
+        // ボタンの見え方: 最後に組んだ物と、待ちに入っているか (待ちの 1 本は送る時に最新の物を書く)
+        public RoleHudState Hud = RoleHudState.None;
+        public bool HudKnown;
+        public bool HudQueued;
     }
 
     // 送り先の客 (clientId ごと)
@@ -96,6 +101,36 @@ public static class ModClientSync
         if (GameStates.IsInGame && rolesSent) EnqueueRoles(clientId, initial: true);
     }
 
+    // ── ボタンの見え方 ──
+
+    private const float HudInterval = 0.2f;
+    private static float nextHudAt;
+
+    /// <summary>ホストの毎フレーム。試合中、送り先の客それぞれのボタンの見え方を組み、変わっていたら送る</summary>
+    public static void TickHud()
+    {
+        if (peers.Count == 0 || !rolesSent || !AmHost) return;
+        float now = Time.realtimeSinceStartup;
+        if (now < nextHudAt) return;
+        nextHudAt = now + HudInterval;
+        Prune();
+        foreach (var (clientId, peer) in peers)
+        {
+            var pc = AmongUsClient.Instance.GetClient(clientId)?.Character;
+            if (pc == null) continue;
+            RoleHudState hud;
+            try { hud = RoleHud.Build(pc, remote: true); }
+            catch (Exception ex) { Logger.Exception(ex, "ModClientSync.Hud"); continue; }
+            if (peer.HudKnown && peer.Hud.Equals(hud)) continue;
+            peer.Hud = hud;
+            peer.HudKnown = true;
+            if (peer.HudQueued) continue;
+            peer.HudQueued = true;
+            var p = peer;
+            Enqueue(clientId, CustomRPC.ModClientHud, w => p.Hud.Write(w));
+        }
+    }
+
     private static void Enqueue(int clientId, CustomRPC call, Action<MessageWriter> write)
     {
         if (!peers.TryGetValue(clientId, out var peer)) return;
@@ -126,6 +161,8 @@ public static class ModClientSync
             if (now >= peer.NextAt)
             {
                 var (call, write) = peer.Queue.Dequeue();
+                // 送りが失敗しても次の見え方を待ちに入れられるよう、取り出した時に下ろす
+                if (call == CustomRPC.ModClientHud) peer.HudQueued = false;
                 Send(clientId, call, write);
                 peer.NextAt = now + PeerInterval;
             }
@@ -270,6 +307,8 @@ public static class ModClientSync
         {
             int from = start, count = Math.Min(RolePlayersPerMessage, ids.Count - start);
             bool first = initial && start == 0;
+            // 新しい配役を受けた客はボタンの見え方を捨てるので、組み直して送り直す
+            if (first && peers.TryGetValue(clientId, out var hudPeer)) hudPeer.HudKnown = false;
             Enqueue(clientId, CustomRPC.ModClientRoles, w =>
             {
                 w.Write(first);
@@ -350,9 +389,10 @@ public static class ModClientSync
             if (peers.TryGetValue(clientId, out var peer) && peer.Queue.Count > 0)
             {
                 foreach (var (call, write) in peer.Queue)
-                    if (call != CustomRPC.ModClientRoles) Send(clientId, call, write);
+                    if (call is not (CustomRPC.ModClientRoles or CustomRPC.ModClientHud)) Send(clientId, call, write);
                 peer.Queue.Clear();
             }
+            if (peer != null) { peer.HudQueued = false; peer.HudKnown = false; peer.Hud = RoleHudState.None; }
             for (int part = 0; part < parts; part++)
             {
                 int p = part, from = part * EndPlayersPerMessage, count = Math.Min(EndPlayersPerMessage, ids.Count - from);
@@ -400,6 +440,8 @@ public static class ModClientSync
            && AmongUsClient.Instance && AmongUsClient.Instance.HostId == linkedHostId;
     /// <summary>この試合の役職が届いている (客の画面に TOHL の役職を出してよい)</summary>
     public static bool ViewReady => rolesReady && IsLinked;
+    /// <summary>ホストから届いた、自分のボタンの見え方</summary>
+    public static RoleHudState RemoteHud { get; private set; } = RoleHudState.None;
     /// <summary>この試合の結果が届いている</summary>
     public static bool EndReady => endReady && IsLinked;
 
@@ -458,6 +500,8 @@ public static class ModClientSync
         rolesReady = false;
         endReady = false;
         endProgress.Clear();
+        RemoteHud = RoleHudState.None;
+        ModClientView.ForgetHud();
         OptionItem.EndRemoteValues();
         // 自分がホストだった試合の役職のインスタンスを、客の画面の描き方 (別の役職としての見せ方など) に拾わせない
         CustomRoleManager.AllActiveRoles.Clear();
@@ -477,7 +521,7 @@ public static class ModClientSync
     /// <summary>客の側でホストからの電文を受ける。読んだら true</summary>
     public static bool Receive(CustomRPC call, MessageReader reader)
     {
-        if (!IsLinked) return call is CustomRPC.ModClientOptions or CustomRPC.ModClientRoles or CustomRPC.ModClientEnd;
+        if (!IsLinked) return call is CustomRPC.ModClientOptions or CustomRPC.ModClientRoles or CustomRPC.ModClientEnd or CustomRPC.ModClientHud;
         try
         {
             switch (call)
@@ -485,6 +529,7 @@ public static class ModClientSync
                 case CustomRPC.ModClientOptions: ReadOptions(reader); return true;
                 case CustomRPC.ModClientRoles: ReadRoles(reader); return true;
                 case CustomRPC.ModClientEnd: ReadEnd(reader); return true;
+                case CustomRPC.ModClientHud: ReadHud(reader); return true;
             }
         }
         catch (Exception ex)
@@ -557,6 +602,7 @@ public static class ModClientSync
             Main.ShowChangeMainRole.Clear();
             Main.AllPlayerNames = new();
             Main.PlayerColors = new();
+            RemoteHud = RoleHudState.None;
             endReady = false;
             endProgress.Clear();
         }
@@ -568,6 +614,13 @@ public static class ModClientSync
             ReadRolesInto(reader, id);
         }
         rolesReady = true;
+    }
+
+    private static void ReadHud(MessageReader reader)
+    {
+        var hud = RoleHudState.Read(reader);
+        // 配役より前・結果の後に届いた物は、この試合の物ではない
+        if (rolesReady) RemoteHud = hud;
     }
 
     private static void ReadEnd(MessageReader reader)
@@ -607,6 +660,7 @@ public static class ModClientSync
         }
         endReady = true;
         rolesReady = false;
+        RemoteHud = RoleHudState.None;
     }
 
     /// <summary>結果画面に出し終えた時</summary>

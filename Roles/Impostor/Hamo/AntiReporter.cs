@@ -77,6 +77,7 @@ public sealed class AntiReporter : RoleBase, IImpostor, IUsePhantomButton
         Brokens.Add(target.PlayerId);
         Utils.NotifyRoles(SpecifySeer: Player);
     }
+    public override int? UsesRemaining => Use;
     public override string GetProgressText(bool comms = false) => Utils.ColorString(Use > 0 ? Color.red : Color.gray, $"({Use})");
     public override bool CancelReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target, ref DontReportReason reportreson)
     {

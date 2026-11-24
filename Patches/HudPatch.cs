@@ -19,14 +19,7 @@ class HudManagerPatch
 {
     static TextMeshPro optionShowerText;
     static string lastOptionText;
-    // ボタンの文字は前と同じなら書かない (毎フレーム文字列をゲーム側へ写していた)。本編が書き換えた時は書き直す
-    static void SetButtonText(ActionButton button, string text)
-    {
-        var label = button.buttonLabelText;
-        if (label != null && TextWriteCache.IsCurrent(label, text)) return;
-        button.OverrideText(text);
-        if (label != null) TextWriteCache.Remember(label, text);
-    }
+    static void SetButtonText(ActionButton button, string text) => RoleHud.SetButtonText(button, text);
 
     public static bool ShowDebugText = false;
     public static int LastCallNotifyRolesPerSecond = 0;
@@ -94,6 +87,7 @@ class HudManagerPatch
         UpdateOptionShower();
         //ゲーム中でなければ以下は実行されない
         if (!AmongUsClient.Instance.IsGameStarted) return;
+        Modules.Net.ModClientSync.TickHud();
         UpdateInGame(__instance, player, TaskTextPrefix);
     }
 
@@ -152,20 +146,22 @@ class HudManagerPatch
             if (player.IsAlive())
             {
                 var roleClass = player.GetRoleClass();
+                // 同じ版の TOHL の客へ送る物と同じ組み立て (RoleHud) を使う
+                var hud = RoleHud.Build(player, remote: false);
                 if (roleClass != null)
                 {
-                    var killLabel = (roleClass as IKiller)?.OverrideKillButtonText(out string text) == true ? text : GetString(StringNames.KillLabel);
-                    SetButtonText(__instance.KillButton, killLabel);
+                    SetButtonText(__instance.KillButton, hud.KillLabel ?? GetString(StringNames.KillLabel));
                     if (roleClass.HasAbility)
                     {
-                        SetButtonText(__instance.AbilityButton, roleClass.GetAbilityButtonText());
-                        __instance.AbilityButton.ToggleVisible(roleClass.CanUseAbilityButton() && GameStates.IsInTask);
+                        SetButtonText(__instance.AbilityButton, hud.AbilityLabel);
+                        __instance.AbilityButton.ToggleVisible(!hud.HideAbility && GameStates.IsInTask);
                     }
                 }
                 if (player.GetCustomRole().IsCCCatRoles())
                 {
-                    __instance.AbilityButton.ToggleVisible(CatchCat.CatPlayer.CanUseVent(player) && GameStates.IsInTask);
+                    __instance.AbilityButton.ToggleVisible(!hud.HideAbility && GameStates.IsInTask);
                 }
+                RoleHud.ApplyUses(__instance, hud);
 
                 //バウンティハンターのターゲットテキスト
                 if (LowerInfoText == null)
@@ -212,6 +208,7 @@ class HudManagerPatch
             }
             else
             {
+                RoleHud.ClearUses();
                 __instance.ReportButton.Hide();
                 __instance.ImpostorVentButton.Hide();
                 __instance.KillButton.Hide();

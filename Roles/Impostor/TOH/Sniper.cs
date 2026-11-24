@@ -283,6 +283,7 @@ public sealed class Sniper : RoleBase, IImpostor
     {
         MeetingReset = true;
     }
+    public override int? UsesRemaining => BulletCount;
     public override string GetProgressText(bool comms = false)
     {
         return Utils.ColorString(Color.yellow, $"[{BulletCount}]");

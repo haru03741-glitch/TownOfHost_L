@@ -125,6 +125,7 @@ public sealed class JackalBusker : RoleBase, ILNKiller, IUsePhantomButton, ISchr
         Utils.NotifyRoles(SpecifySeer: Player);
     }
 
+    public override int? UsesRemaining => pet == null ? uses : null;
     public override string GetProgressText(bool comms = false)
         => Utils.ColorString(uses > 0 ? RoleInfo.RoleColor : UnityEngine.Color.gray, $"[{uses}]");
     public override string GetAbilityButtonText() => GetString("BuskerGhostButtonText");

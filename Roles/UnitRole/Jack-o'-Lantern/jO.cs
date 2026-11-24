@@ -197,6 +197,7 @@ public sealed class JO : RoleBase, IKiller
         text = Translator.GetString("jODetect");
         return true;
     }
+    public override int? UsesRemaining => sendRoleLimit;
     public override string GetProgressText(bool comms = false)
         => Utils.ColorString(sendRoleLimit > 0 ? RoleInfo.RoleColor : Color.gray, $"[{sendRoleLimit}]");
 }

@@ -301,6 +301,8 @@ public sealed class PavlovOwner : RoleBase, IKiller, IAdditionalWinner, ISchrodi
         return true;
     }
 
+    public override int? UsesRemaining => RemainingImprintCount;
+    public override bool UsesOnKillButton => true;
     public override string GetProgressText(bool comms = false)
         => $"<color=#b8860b>({RemainingImprintCount})</color>";
 

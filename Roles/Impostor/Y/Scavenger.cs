@@ -66,6 +66,7 @@ public sealed class Scavenger : RoleBase, IImpostor
         }
     }
     public float CalculateKillCooldown() => KillCooldown;
+    public override int? UsesRemaining => IsEatUpKillLimit ? limitCount : null;
     public override string GetProgressText(bool comms = false)
     {
         if (!IsEatUpKillLimit) return string.Empty;

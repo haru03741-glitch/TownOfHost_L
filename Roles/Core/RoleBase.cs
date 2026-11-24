@@ -358,6 +358,13 @@ public abstract class RoleBase : IDisposable
     /// <param name="comms">コミュサボ中扱いするかどうか</param>
     public virtual string GetProgressText(bool comms = false) => "";
     /// <summary>
+    /// ボタンの隅に出す、能力の残り回数。回数で数えない役職は null。
+    /// 会議の中で使う能力・狙われた時に勝手に減る守りは、押すボタンが無いので数えない
+    /// </summary>
+    public virtual int? UsesRemaining => null;
+    /// <summary>残り回数をキルボタンに出すか。出さない時は能力ボタンに出す</summary>
+    public virtual bool UsesOnKillButton => !HasAbility;
+    /// <summary>
     /// seerが自分であるときのMark
     /// seer,seenともに自分以外であるときに表示したい場合は同じ引数でstaticとして実装し
     /// CustomRoleManager.MarkOthersに登録する
@@ -392,9 +399,12 @@ public abstract class RoleBase : IDisposable
     /// <summary>
     /// シェイプシフトボタンのテキストを変更します
     /// </summary>
-    public virtual string GetAbilityButtonText()
+    public virtual string GetAbilityButtonText() => DefaultAbilityButtonText(Player.Data.Role.Role) ?? "Invalid";
+
+    /// <summary>本編の役職の能力ボタンの字。能力ボタンを持たない役職は null</summary>
+    public static string DefaultAbilityButtonText(RoleTypes role)
     {
-        StringNames? str = Player.Data.Role.Role switch
+        StringNames? str = role switch
         {
             RoleTypes.Engineer => StringNames.VentAbility,
             RoleTypes.Scientist => StringNames.VitalsAbility,
@@ -405,7 +415,7 @@ public abstract class RoleBase : IDisposable
             RoleTypes.ImpostorGhost or RoleTypes.CrewmateGhost => StringNames.HauntAbilityName,
             _ => null
         };
-        return str.HasValue ? GetString(str.Value) : "Invalid";
+        return str.HasValue ? GetString(str.Value) : null;
     }
 
     protected static AudioClip GetIntroSound(RoleTypes roleType)

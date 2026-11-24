@@ -85,6 +85,7 @@ namespace TownOfHostL.Roles.Impostor
             Utils.NotifyRoles(SpecifySeer: Player);
         }
         bool IUsePhantomButton.IsPhantomRole => BomberExplosion > 0;
+        public override int? UsesRemaining => BomberExplosion;
         public override string GetProgressText(bool comms = false) => Utils.ColorString(0 < BomberExplosion ? Color.red : Color.gray, $"({BomberExplosion})");
         public override void OnFixedUpdate(PlayerControl _)
         {

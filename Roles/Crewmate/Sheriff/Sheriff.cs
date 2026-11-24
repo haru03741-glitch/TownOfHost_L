@@ -158,6 +158,7 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
         }
         killer.ResetKillCooldown();
     }
+    public override int? UsesRemaining => ShotLimit;
     public override string GetProgressText(bool comms = false) => Utils.ColorString(CanUseKillButton() ? Color.yellow : Color.gray, $"〈{ShotLimit}〉");
     public static bool CanBeKilledBy(PlayerControl player)
     {

@@ -206,6 +206,8 @@ public sealed class Charger : RoleBase, IImpostor
         return str.ToString();
     }
 
+    public override int? UsesRemaining => killLimit;
+    public override bool UsesOnKillButton => true;
     public override string GetProgressText(bool comms = false)
         => Utils.ColorString(Color.yellow, $"〈{killLimit}〉");
 }

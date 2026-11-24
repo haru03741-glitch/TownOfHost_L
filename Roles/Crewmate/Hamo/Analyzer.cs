@@ -146,6 +146,7 @@ public sealed class Analyzer : RoleBase
         }
         return false;
     }
+    public override int? UsesRemaining => Maximum - Usecount;
     public override string GetProgressText(bool comms = false)
         => Maximum <= Usecount || turnmax <= turnusecount ? $"<#cccccc>({Maximum - Usecount})</color>" : $"<{RoleInfo.RoleColorCode}>({Maximum - Usecount})</color>";
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)

@@ -23,7 +23,7 @@ public static class ClientModeVersion
         if (!TownOfHostL.Core.VanillaHideAndSeek.IsClientMode) return true;
         if (callId == (byte)CustomRPC.RequestRetryVersionCheck) return false;
         var client = AmongUsClient.Instance;
-        if (callId is (byte)CustomRPC.ModClientOptions or (byte)CustomRPC.ModClientRoles or (byte)CustomRPC.ModClientEnd)
+        if (callId is (byte)CustomRPC.ModClientOptions or (byte)CustomRPC.ModClientRoles or (byte)CustomRPC.ModClientEnd or (byte)CustomRPC.ModClientHud)
         {
             if (client != null && __instance != null && __instance.OwnerId == client.HostId)
                 ModClientSync.Receive((CustomRPC)callId, reader);
