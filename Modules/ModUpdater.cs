@@ -30,24 +30,41 @@ namespace TownOfHostL
             InfoPopup = UnityEngine.Object.Instantiate(Twitch.TwitchManager.Instance.TwitchPopup);
             InfoPopup.name = "InfoPopup";
             InfoPopup.TextAreaTMP.GetComponent<RectTransform>().sizeDelta = new(2.5f, 2f);
-            // 問い合わせはメインスレッドで待たず、終わったらメニューの LateUpdate でボタンへ反映する
+            // 問い合わせはメインスレッドで待たず、終わったらメニューの LateUpdate で読んでボタンへ反映する
             if (!isChecked && checkTask == null)
             {
                 // 設定と本編の値はメインスレッドで読んでから渡す (問い合わせはスレッドプールで動く)
-                string betaUrl = Main.BetaBuildURL.Value;
-                var platform = Constants.GetPlatformType();
+                checkBetaUrl = Main.BetaBuildURL.Value;
+                checkPlatform = Constants.GetPlatformType();
                 isChecked = true;
-                checkTask = Task.Run(() => CheckRelease(betaUrl, platform));
+                string url = checkBetaUrl != "" ? checkBetaUrl : URL + "/releases/latest";
+                checkTask = Task.Run(() => FetchRelease(url));
             }
             if (checkTask == null) ShowUpdateButton();
         }
-        private static Task<bool> checkTask;
+        // 裏のスレッドでは文字列を取ってくるだけにする。JSON を読む Newtonsoft は本編の il2cpp の物で、
+        // il2cpp に登録されていないスレッドで il2cpp の物を作ると、そこで GC が走った時にゲームが落ちる
+        // ("Fatal error in GC: Collecting from unknown thread")。Unity の物・ログ・翻訳もメインスレッドで触る
+        private static Task<(string Body, string Error)> checkTask;
+        private static string checkBetaUrl;
+        private static Platforms checkPlatform;
+        private static Task<bool> downloadTask;
+        private static string downloadError;
 
         [HarmonyPatch(typeof(MainMenuManager), nameof(MainMenuManager.LateUpdate)), HarmonyPostfix]
         public static void LateUpdatePostfix()
         {
+            if (downloadTask is { IsCompleted: true })
+            {
+                bool ok = downloadTask.Status == TaskStatus.RanToCompletion && downloadTask.Result;
+                downloadTask = null;
+                if (!ok) Logger.Error($"ダウンロードに失敗しました。\n{downloadError}", "DownloadDLL", false);
+                ShowPopup(GetString(ok ? "updateRestart" : "updateManually"), true);
+            }
             if (checkTask is not { IsCompleted: true }) return;
+            var (body, error) = checkTask.Status == TaskStatus.RanToCompletion ? checkTask.Result : (null, checkTask.Exception?.ToString());
             checkTask = null;
+            CheckRelease(body, error, checkBetaUrl != "", checkPlatform);
             ShowUpdateButton();
         }
         private static void ShowUpdateButton()
@@ -57,25 +74,35 @@ namespace TownOfHostL
             button.Button.gameObject.SetActive(hasUpdate);
             button.Button.transform.Find("FontPlacer/Text_TMP").GetComponent<TMPro.TMP_Text>().SetText($"<size=7><color=#00bfff>TownOfHost</color>_<color=#ffff00>L\n★ UPDATE ★</color>\n[ <color=#73e673>{latestTitle}</color> ]</size>");
         }
-        public static async Task<bool> CheckRelease(string betaUrl, Platforms platform)
+        // スレッドプールで動く。管理コードだけを使う (il2cpp・Unity・ログ・翻訳は触らない)
+        private static async Task<(string Body, string Error)> FetchRelease(string url)
         {
-            bool beta = betaUrl != "";
-            string url = beta ? betaUrl : URL + "/releases/latest";
             try
             {
-                string result;
                 // GitHub に届かない時に、更新の有無が決まらないまま長く待たないよう短く切る
-                using (HttpClient client = new() { Timeout = TimeSpan.FromSeconds(5) })
-                {
-                    client.DefaultRequestHeaders.Add("User-Agent", "TownOfHost Updater");
-                    using var response = await client.GetAsync(new Uri(url), HttpCompletionOption.ResponseContentRead);
-                    if (!response.IsSuccessStatusCode || response.Content == null)
-                    {
-                        Logger.Error($"ステータスコード: {response.StatusCode}", "CheckRelease");
-                        return false;
-                    }
-                    result = await response.Content.ReadAsStringAsync();
-                }
+                using HttpClient client = new() { Timeout = TimeSpan.FromSeconds(5) };
+                client.DefaultRequestHeaders.Add("User-Agent", "TownOfHost Updater");
+                using var response = await client.GetAsync(new Uri(url), HttpCompletionOption.ResponseContentRead).ConfigureAwait(false);
+                if (!response.IsSuccessStatusCode || response.Content == null) return (null, $"ステータスコード: {response.StatusCode}");
+                return (await response.Content.ReadAsStringAsync().ConfigureAwait(false), null);
+            }
+            catch (Exception ex)
+            {
+                return (null, ex.ToString());
+            }
+        }
+
+        // メインスレッドで、取ってきた中身を読む
+        private static bool CheckRelease(string result, string error, bool beta, Platforms platform)
+        {
+            if (result == null)
+            {
+                isBroken = true;
+                Logger.Error($"リリースのチェックに失敗しました。\n{error}", "CheckRelease", false);
+                return false;
+            }
+            try
+            {
                 JObject data = JObject.Parse(result);
                 if (beta)
                 {
@@ -129,8 +156,9 @@ namespace TownOfHostL
                 ShowPopup(GetString("updateManually"), true);
                 return;
             }
-            _ = DownloadDLL(url);
-            return;
+            // ダウンロードは裏のスレッドで、終わりの知らせはメニューの LateUpdate で出す
+            string path = $"BepInEx/plugins/TownOfHost_L-v{latestVersion}.dll";
+            downloadTask ??= Task.Run(() => DownloadDLL(url, path));
         }
         public static bool BackupDLL()
         {
@@ -161,16 +189,16 @@ namespace TownOfHostL
             }
             return;
         }
-        public static async Task<bool> DownloadDLL(string url)
+        // スレッドプールで動く。管理コードだけを使う
+        private static async Task<bool> DownloadDLL(string url, string path)
         {
             try
             {
                 using HttpClient client = new();
-                using var response = await client.GetAsync(url);
+                using var response = await client.GetAsync(url).ConfigureAwait(false);
                 if (response.IsSuccessStatusCode)
                 {
                     // 途中で切れた時に壊れた DLL が plugins に残らないよう、別名に書き終えてから置き換える
-                    string path = $"BepInEx/plugins/TownOfHost_L-v{latestVersion}.dll";
                     string tempPath = path + ".download";
                     using (var content = response.Content)
                     using (var stream = content.ReadAsStream())
@@ -179,16 +207,15 @@ namespace TownOfHostL
                         stream.CopyTo(file);
                     }
                     File.Move(tempPath, path, true);
-                    ShowPopup(GetString("updateRestart"), true);
                     return true;
                 }
+                downloadError = $"ステータスコード: {response.StatusCode}";
             }
             catch (Exception ex)
             {
-                Logger.Error($"ダウンロードに失敗しました。\n{ex}", "DownloadDLL", false);
-                try { File.Delete($"BepInEx/plugins/TownOfHost_L-v{latestVersion}.dll.download"); } catch { }
+                downloadError = ex.ToString();
+                try { File.Delete(path + ".download"); } catch { }
             }
-            ShowPopup(GetString("updateManually"), true);
             return false;
         }
         private static void DownloadCallBack(object sender, DownloadProgressChangedEventArgs e)
