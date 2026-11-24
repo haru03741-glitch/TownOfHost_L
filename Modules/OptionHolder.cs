@@ -1204,6 +1204,7 @@ public static partial class Options
         ImpTOH = 12000,
         ImpY = 20000,
         ImpPorted = 24000,
+        ImpL = 26000,
 
         // Madmate
         MadTOH = 28500,

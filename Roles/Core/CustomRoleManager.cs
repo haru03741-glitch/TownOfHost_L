@@ -797,6 +797,9 @@ public enum CustomRoles
     // 他の mod から移した役職
     EvilBusker, Busker, JackalBusker,
 
+    // TownOfHost_L の役職
+    Rampager,
+
     GM,
     CounselorAndMadDilemma,
     GodfatherAndJanitor,
