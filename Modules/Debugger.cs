@@ -62,9 +62,14 @@ namespace TownOfHostL
 
         /// <summary>このタグのログが出るか。出ないなら文字列を組み立てる前に止められる。</summary>
         public static bool IsTagEnabled(string tag) => isEnable && !disableList.Contains(tag);
+        // プラグインを読んだスレッド (Unity のメインスレッド)。裏のスレッドのログは画面へ出さない
+        // (il2cpp に登録されていないスレッドで本編の物を触ると、GC が走った時にゲームが落ちる)
+        public static int MainThreadId = -1;
+
         public static void SendInGame(string text, bool isAlways = false)
         {
             if (!isEnable) return;
+            if (MainThreadId >= 0 && Environment.CurrentManagedThreadId != MainThreadId) return;
             if (DestroyableSingleton<HudManager>._instance) DestroyableSingleton<HudManager>.Instance.Notifier.AddDisconnectMessage(text);
         }
 

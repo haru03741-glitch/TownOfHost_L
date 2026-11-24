@@ -153,6 +153,7 @@ public partial class Main : BasePlugin
     public override void Load()
     {
         Instance = this;
+        TownOfHostL.Logger.MainThreadId = System.Environment.CurrentManagedThreadId;
         TownOfHostL.Modules.IncrementalGcGate.Apply();
         TownOfHostL.Modules.OptionSaver.Initialize(); // オプション保存用ディレクトリ・ファイルを起動時に作成
 
