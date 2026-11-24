@@ -22,13 +22,15 @@ namespace TownOfHostL.Modules;
 ///   暗転対策の数え方にも入る)。自分の画面でキルを持つ客 (デシンクのキル役) には送らない。仲間に見えてキルできなくなるため。
 /// - 後で対象の SetRole がその客へ届くと、通常の GameManager の下で体が決め直されて外れる (暗転対策のキル後の送り直しなど)。
 ///   キルの後と、関所 (RoleView) を通った送り直しの後に、窓を開け直して付け直す。
-/// - 窓の間 (約 2.5 秒) は客の画面で設定が引けず、全員が歩けない。窓の間は通報を預かり、キル・勝敗判定・設定の送信を止める。
+/// - 窓の間 (約 3 秒) は客の画面で設定が引けず、全員が歩けない。窓の間は通報を預かり、キル・勝敗判定・設定の送信を止める。
+///   止まっている所を見せないよう、窓の少し前に全員の視界を 0 にして、窓が閉じるまで暗転させる。
+///   初めて付ける窓では、暗転に合わせて原子炉の赤い点滅も見せる (変身の演出)。
 /// - Despawn と Spawn の間は空ける。客の手元で同じフレームに重なると、新しい GameManager は Awake で自分を消す。
 /// </summary>
 public static class SeekerBody
 {
     // Despawn から Spawn までの間 (客の手元で同じフレームに重ならないように)。
-    // 客が一瞬固まる (役職の作り直しなど) と 0.5 秒では重なり、通常の GameManager が戻らないことがあった
+    // 客が一瞬固まる (役職の作り直し・原子炉の点滅) と 0.5 秒では重なり、通常の GameManager が戻らないことがあった
     private const float SpawnGap = 0.8f;
     // かくれんぼの GameManager を出してから SetRole を送るまで
     private const float SendDelay = 0.2f;
@@ -36,8 +38,10 @@ public static class SeekerBody
     private const float Hold = 0.8f;
     // 窓の後、次の窓を開けるまでの最短の間
     private const float BetweenWindows = 1f;
+    // 暗転させてから GameManager を消すまで (視界が暗くなり終えるまで)
+    private const float CoverLead = 0.4f;
 
-    private enum Phase { Idle, SpawnHns, Send, DespawnHns, SpawnNormal }
+    private enum Phase { Idle, Cover, SpawnHns, Send, DespawnHns, SpawnNormal }
 
     private sealed class Entry
     {
@@ -55,6 +59,10 @@ public static class SeekerBody
     private static readonly HashSet<byte> releaseAfterWindow = new();
     private static readonly List<byte> sending = new();
     private static readonly List<byte> work = new();
+    // まだ一度も送っていない人 (付け始め)。この人を含む窓では点滅を見せる
+    private static readonly HashSet<byte> fresh = new();
+    // 窓の暗転で IsBlackOut を立てた人 (窓の後で下ろす)
+    private static readonly List<byte> covered = new();
     // 自分で送っている間は、関所の記録で付け直しを予約しない
     private static bool selfSending;
 
@@ -72,6 +80,8 @@ public static class SeekerBody
         applyAt.Clear();
         releaseAfterWindow.Clear();
         sending.Clear();
+        fresh.Clear();
+        covered.Clear();
         selfSending = false;
     }
 
@@ -82,7 +92,11 @@ public static class SeekerBody
     public static void Apply(PlayerControl pc, Action onApplied = null, Action onReleased = null)
     {
         if (pc == null || !AmongUsClient.Instance.AmHost) return;
-        if (!masked.TryGetValue(pc.PlayerId, out var entry)) masked[pc.PlayerId] = entry = new();
+        if (!masked.TryGetValue(pc.PlayerId, out var entry))
+        {
+            masked[pc.PlayerId] = entry = new();
+            fresh.Add(pc.PlayerId);
+        }
         entry.OnApplied = onApplied;
         entry.OnReleased = onReleased;
         releaseAfterWindow.Remove(pc.PlayerId);
@@ -189,10 +203,43 @@ public static class SeekerBody
     {
         Logger.Info($"窓を開ける: [{string.Join(",", sending)}]", nameof(SeekerBody));
         Revive.BeginSettling();
-        client.Despawn(GameManager.Instance);
-        GameManager.Instance = null;
-        phase = Phase.SpawnHns;
-        nextAt = Time.realtimeSinceStartup + SpawnGap;
+        bool flash = false;
+        foreach (var id in sending) flash |= fresh.Contains(id);
+        // 暗転の設定は窓に入る前に送る (窓の間は送れない)
+        Cover(flash);
+        phase = Phase.Cover;
+        nextAt = Time.realtimeSinceStartup + CoverLead;
+    }
+
+    private static void Cover(bool flash)
+    {
+        bool critical = Utils.IsActive(Utils.GetCriticalSabotageSystemType());
+        foreach (var pc in Main.AllPlayerControls)
+        {
+            if (pc.Data == null || pc.Data.Disconnected) continue;
+            var state = PlayerState.GetByPlayerId(pc.PlayerId);
+            if (state == null) continue;
+            if (!state.IsBlackOut)
+            {
+                state.IsBlackOut = true;
+                covered.Add(pc.PlayerId);
+            }
+            if (!flash) continue;
+            if (pc.AmOwner) Utils.FlashColor(new Color(1f, 0f, 0f, 0.5f));
+            // 本物の重大な妨害の最中に点滅を送ると、その客の手元で妨害が直ってしまう
+            else if (!critical) pc.ReactorFlash();
+        }
+        Utils.SyncAllSettings();
+    }
+
+    private static void Uncover()
+    {
+        foreach (var id in covered)
+        {
+            var state = PlayerState.GetByPlayerId(id);
+            if (state != null) state.IsBlackOut = false;
+        }
+        covered.Clear();
     }
 
     private static void Advance(InnerNetClient client)
@@ -201,6 +248,12 @@ public static class SeekerBody
         Revive.BeginSettling();
         switch (phase)
         {
+            case Phase.Cover:
+                client.Despawn(GameManager.Instance);
+                GameManager.Instance = null;
+                phase = Phase.SpawnHns;
+                nextAt = now + SpawnGap;
+                break;
             case Phase.SpawnHns:
                 client.Spawn(GameManagerCreator.CreateGameManager(GameModes.HideNSeek), -2, SpawnFlags.None);
                 phase = Phase.Send;
@@ -236,7 +289,9 @@ public static class SeekerBody
         phase = Phase.Idle;
         idleSince = Time.realtimeSinceStartup;
         Logger.Info("窓を閉じた", nameof(SeekerBody));
-        // 出し直した GameManager は全員に同じ設定を配ったので、人ごとの設定を送り直す。懐中電灯も消えるので点け直す
+        // 暗転を明ける。出し直した GameManager は全員に同じ設定を配ったので、人ごとの設定を送り直す。懐中電灯も消えるので点け直す
+        Uncover();
+        foreach (var id in sending) fresh.Remove(id);
         Utils.MarkEveryoneDirtySettings();
         Flashlight.RequestAll();
         Revive.BeginSettling();

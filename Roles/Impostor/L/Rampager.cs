@@ -55,6 +55,14 @@ public sealed class Rampager : RoleBase, IImpostor, IUsePhantomButton
     }
 
     private const string SpeedKey = nameof(Rampager);
+    // 咆哮の演出の絵 (CNO の名前の絵) と、絵の下に描かれる体の色 (Palette.PlayerColors の番号・赤)
+    private static readonly string[] RoarFrames =
+    {
+        "<size=10><color=#ffffff>●</color></size>",
+        "<size=22><color=#ff1a1a>★</color></size>",
+        "<size=18><color=#8b000099>●</color></size>",
+    };
+    private const byte RoarBodyColor = 0;
 
     private bool rampaging;
     // 暴走が終わる時刻 (Time.realtimeSinceStartup)。鬼の体を付け終えてから数え始める
@@ -112,6 +120,8 @@ public sealed class Rampager : RoleBase, IImpostor, IUsePhantomButton
         {
             endAt = now + duration;
             Utils.NotifyRoles();
+            // 変身の暗転が明けた所で、咆哮の演出を出す
+            TownOfHostL.Core.CnoBurst.Play(Player.transform.position, RoarFrames, RoarBodyColor, 0.3f, 1.2f, 0.15f);
         }
         float remaining = Mathf.Max(0f, rampageKillCooldown - (now - lastKillAt));
         Player.SetKillCooldown(remaining);
