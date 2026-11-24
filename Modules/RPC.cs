@@ -148,7 +148,8 @@ namespace TownOfHostL
                     {
                         Version version = Version.Parse(reader.ReadString());
                         string tag = reader.ReadString();
-                        string forkId = 3 <= version.Major ? reader.ReadString() : Main.OriginalForkId;
+                        // ForkId は本家の古い版 (3 より前) だけが載せない。版の数字ではなく、残りがあるかで読む (TOHL の版は 0 から始まる)
+                        string forkId = reader.BytesRemaining > 0 ? reader.ReadString() : Main.OriginalForkId;
                         var pv = new PlayerVersion(version, tag, forkId);
                         Main.playerVersion[__instance.PlayerId] = pv;
                         Modules.Net.ModClientSync.OnVersionFromClient(__instance, pv);

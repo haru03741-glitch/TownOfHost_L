@@ -36,7 +36,8 @@ public static class ClientModeVersion
             var sub = MessageReader.Get(reader);
             var version = Version.Parse(sub.ReadString());
             var tag = sub.ReadString();
-            var forkId = 3 <= version.Major ? sub.ReadString() : Main.OriginalForkId;
+            // ForkId は本家の古い版 (3 より前) だけが載せない。版の数字ではなく、残りがあるかで読む (TOHL の版は 0 から始まる)
+            var forkId = sub.BytesRemaining > 0 ? sub.ReadString() : Main.OriginalForkId;
             sub.Recycle();
             var pv = new PlayerVersion(version, tag, forkId);
             Main.playerVersion[__instance.PlayerId] = pv;
