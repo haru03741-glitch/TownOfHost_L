@@ -74,6 +74,22 @@ public static class SeekerBody
     /// <summary>窓の暗さを掛けている人か (人ごとの設定を組む時に視界を狭める)</summary>
     public static bool IsDimmed(byte playerId) => dimmed.Count > 0 && dimmed.Contains(playerId);
 
+    /// <summary>
+    /// クルーの視界の倍率に掛けると、停電中でもインポスターの視界 (停電の影響を受けない) と同じ半径になる値。
+    /// 本編の客の視界の半径は、クルーが Lerp(MinLightRadius, MaxLightRadius, 明るさ) × CrewLightMod、
+    /// インポスターが MaxLightRadius × ImpostorLightMod
+    /// </summary>
+    public static float CrewLightCompensation()
+    {
+        var ship = ShipStatus.Instance;
+        if (!ship || !ship.Systems.TryGetValue(SystemTypes.Electrical, out var system)) return 1f;
+        var lights = system.TryCast<SwitchSystem>();
+        if (lights == null) return 1f;
+        float radius = Mathf.Lerp(ship.MinLightRadius, ship.MaxLightRadius, lights.Level);
+        if (radius <= 0.01f) return 1f;
+        return Mathf.Clamp(ship.MaxLightRadius / radius, 1f, 10f);
+    }
+
     [GameModuleInitializer]
     public static void Init()
     {
