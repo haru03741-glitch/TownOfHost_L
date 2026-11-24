@@ -166,7 +166,8 @@ public static class RoleHud
             usesShown = -1;
         }
         if (target == null || !EnsureUsesBadge(target, hud)) return;
-        if (usesButton == target && usesShown == state.Uses) return;
+        // 本編が役職の初めに数を消す (SetInfiniteUses) ことがあるので、出ているかも見る
+        if (usesButton == target && usesShown == state.Uses && target.usesRemainingSprite.gameObject.activeSelf) return;
         target.SetUsesRemaining(state.Uses);
         if (target.usesRemainingSprite != null) target.usesRemainingSprite.color = state.UsesColor;
         usesButton = target;
