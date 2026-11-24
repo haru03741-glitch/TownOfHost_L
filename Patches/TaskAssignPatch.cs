@@ -91,7 +91,9 @@ namespace TownOfHostL
             if (!onlyVentCleaning
                 && hasCommonTasks && numCommonTasks < 0
                 && NumLongTasks == Main.NormalOptions.NumLongTasks
-                && NumShortTasks == Main.NormalOptions.NumShortTasks)
+                && NumShortTasks == Main.NormalOptions.NumShortTasks
+                && !HamoMapTask.UploadDataIsLong
+                && !HamoConvenient.CommonReset)
             {
                 taskIds[__instance.PlayerId] = taskTypeIds;
                 return;
@@ -112,14 +114,28 @@ namespace TownOfHostL
             int start2 = 0;
             int start3 = 0;
 
+            if (hasCommonTasks && HamoConvenient.CommonReset && ShipStatus.Instance.CommonTasks.Length > 0)
+            {
+                TasksList.Clear();
+                Il2CppSystem.Collections.Generic.List<NormalPlayerTask> CommonTasks = new();
+                foreach (var task in ShipStatus.Instance.CommonTasks)
+                    CommonTasks.Add(task);
+                Shuffle<NormalPlayerTask>(CommonTasks);
+                int start1 = 0;
+                ShipStatus.Instance.AddTasksFromList(ref start1, commonToKeep, TasksList, usedTaskTypes, CommonTasks);
+            }
+
             Il2CppSystem.Collections.Generic.List<NormalPlayerTask> LongTasks = new();
             foreach (var task in ShipStatus.Instance.LongTasks)
                 LongTasks.Add(task);
-            Shuffle<NormalPlayerTask>(LongTasks);
 
             Il2CppSystem.Collections.Generic.List<NormalPlayerTask> ShortTasks = new();
             foreach (var task in ShipStatus.Instance.ShortTasks)
-                ShortTasks.Add(task);
+            {
+                if (task.TaskType == TaskTypes.UploadData && HamoMapTask.UploadDataIsLong) LongTasks.Add(task);
+                else ShortTasks.Add(task);
+            }
+            Shuffle<NormalPlayerTask>(LongTasks);
             Shuffle<NormalPlayerTask>(ShortTasks);
 
            

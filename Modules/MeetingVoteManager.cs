@@ -222,6 +222,8 @@ public class MeetingVoteManager
         // 記録や演出の例外で RpcVotingComplete まで届かないと、次のフレームでも同じ所で止まり会議が終わらない
         try { GameLog.OnVoteResult(exiled, result.IsTie); }
         catch (Exception ex) { Logger.Exception(ex, "GameLog.OnVoteResult"); }
+        try { HamoMeeting.OnVoteResult(exiled, result.IsTie); }
+        catch (Exception ex) { Logger.Exception(ex, "HamoMeeting.OnVoteResult"); }
 
         var states = new List<MeetingHud.VoterState>();
         foreach (var voteArea in meetingHud.playerStates)

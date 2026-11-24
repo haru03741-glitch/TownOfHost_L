@@ -88,6 +88,8 @@ public static partial class CustomRoleManager
         var killerRole = attemptKiller.GetRoleClass();
         var targetRole = attemptTarget.GetRoleClass();
 
+        if (!FirstTurnMeeting.AllowKill(info, deathReason)) return false;
+
         // キラーがキル能力持ちなら
         if (killerRole is IKiller killer)
         {

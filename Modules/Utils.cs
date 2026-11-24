@@ -205,6 +205,7 @@ public static partial class Utils
         if (GmOptions.IsGM(seer)) return GmOptions.Get(GmOptions.CanSeeKillFlash);
         if (seer.GetCustomRole().IsSpectator()) return true;
         if (CheckKillFlashAfterDead(seer) && seer != target) return true;
+        if (HamoGhost.SeesKillFlash(seer, target)) return true;
         // 殺された人の側
         if (PlayerTraits.KillFlashToAll(target)) return true;
         if (target == BestieWolf.EnableKillFlash) return true;
@@ -320,7 +321,7 @@ public static partial class Utils
         else
         {
             // 死んでいて，死人のタスク免除が有効なら確定でfalse
-            if (p.IsDead && Options.GhostIgnoreTasks.GetBool() && !TownOfHostL.Core.PlayerTraits.KeepsTasksWhenDead(p.Object))
+            if (p.IsDead && Options.GhostIgnoreTasks.GetBool() && !TownOfHostL.Core.PlayerTraits.KeepsTasksWhenDead(p.Object) && HamoGhost.IgnoreTasksFor(p))
             {
                 return false;
             }
@@ -364,7 +365,8 @@ public static partial class Utils
         //seer側による変更
         bool enabled = TownOfHostL.Core.NativeObject.Same(seer, seen)
                     || (Main.VisibleTasksCount && (GmOptions.IsGM(seer) ? GmOptions.Get(GmOptions.CanSeeTaskProgress) : !seer.IsAlive() && !Options.GhostCantSeeOtherTasks.GetBool()))
-                    || (seen.GetRoleClass()?.ShowsTaskProgressToAll ?? false);
+                    || (seen.GetRoleClass()?.ShowsTaskProgressToAll ?? false)
+                    || SpecialMode.KnowsTasks(seer);
         // 上書きは text を読まずに差し替えるだけなので、既定の字は見える時だけ組む (null = 上書きされていない)
         string text = null;
 
@@ -372,6 +374,7 @@ public static partial class Utils
         // 見られる側による変更
         seen.GetRoleClass()?.OverrideProgressTextAsSeen(seer, ref enabled, ref text);
         var gmExtra = GmOptions.ExtraProgress(seer, seen);
+        gmExtra += HamoGhost.ExtraProgress(seer, seen);
         if (!enabled) return gmExtra;
         text ??= GetProgressText(seen.PlayerId, IsActive(SystemTypes.Comms));
         text += gmExtra;
@@ -1120,6 +1123,8 @@ public static partial class Utils
         if (!AmongUsClient.Instance.AmHost) return;
 
         // 1 行が長すぎると下の分割では切れないので、バイト数でも割る。予算は戻す名前やホストの生死で変わる
+        if (HamoExperimental.Monochrome) { text = text.RemoveColorTags(); title = title.RemoveColorTags(); }
+
         int MAX_LINE_BYTES = TownOfHostL.Core.ChatSenderName.BodyBudget(TownOfHostL.Core.ChatSenderName.Sender());
 
         string titleText = (title == "") ? $"<color=#aaaaff>{GetString("DefaultSystemMessageTitle")}</color>" : title;
@@ -1588,6 +1593,7 @@ public static partial class Utils
         // 天秤が 2 人を選んで会議を閉じた時は、日を進めず役職の会議明けの処理もせずに天秤会議を開く
         // 会議明けの処理は 1 回の会議で 2 回来るので、天秤会議を開くまでの間に来た 2 回目も素通りさせる (天秤の状態を消さない)
         if (Balancer.Scheduled) return;
+        HamoMapTask.SetPlatform();
         if (AmongUsClient.Instance.AmHost && Balancer.Id == byte.MaxValue && Balancer.target1 != byte.MaxValue && Balancer.target2 != byte.MaxValue)
         {
             foreach (var roleClass in CustomRoleManager.AllActiveRoles.Values)
@@ -1607,7 +1613,7 @@ public static partial class Utils
             var state = PlayerState.GetByPlayerId(pc.PlayerId);
             state.IsBlackOut = false; //ブラックアウト解除
         }
-        RoleHooks.ForEachRole(roleClass => roleClass.AfterMeetingTasks(), "AfterMeetingTasks");
+        if (!FirstTurnMeeting.InFirst) RoleHooks.ForEachRole(roleClass => roleClass.AfterMeetingTasks(), "AfterMeetingTasks");
         // 天秤会議の途中で天秤が役職を失ったり抜けたりしても、次の天秤会議が開けるように戻す
         Balancer.AfterMeetingReset();
 

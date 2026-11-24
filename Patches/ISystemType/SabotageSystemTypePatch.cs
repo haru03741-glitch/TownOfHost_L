@@ -36,6 +36,7 @@ public static class SabotageSystemTypeUpdateSystemPatch
         logger.Info($"PlayerName: {player.GetNameWithRole()}, SabotageType: {nextSabotage}");
 
         if (!ModeCatalog.Current.AllowsSabotage) return false;
+        if (FirstTurnMeeting.BeforeFirstMeeting) return false;
         if (IsDisabledType(nextSabotage)) return false;
         if (Options.DeadImpostorCannotSabotage.GetBool() && !player.IsAlive()) return false;
         if (!CustomRoleManager.OnSabotage(player, nextSabotage))

@@ -6567,3 +6567,6 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "GMCanSeeOverallTaskProgress","GM can see overall task progress","GMが全体のタスク進捗を見ることができる","","","","",""
 "GMCanSeeEmergencyCount","GM can see remaining emergency buttons","GMが他人の緊急ボタン残数を見ることができる","","","","",""
 "GMCanSeeKillFlash","GM can see the kill flash","GMがキルフラッシュを見ることができる","","","","",""
+"TurnTimeLimitAdmin","Admin Time Limit (per turn)","ターンごとのアドミンの制限時間","","","","",""
+"TurnTimeLimitCamAndLog","Camera and DoorLog Time Limit (per turn)","ターンごとのカメラ・ドアログの制限時間","","","","",""
+"TurnTimeLimitVital","Vital Time Limit (per turn)","ターンごとのバイタルの制限時間","","","","",""

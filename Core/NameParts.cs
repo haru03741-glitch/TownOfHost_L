@@ -69,6 +69,7 @@ public static class NameParts
     public static StringBuilder AppendSelfLower(StringBuilder sb, PlayerControl seer, bool isMeeting)
     {
         sb.Append(VentEnterTask.GetLowerText(seer, isForMeeting: isMeeting));
+        sb.Append(HamoMeeting.LowerText(seer, isMeeting));
         sb.Append(seer.GetRoleClass()?.GetLowerText(seer, isForMeeting: isMeeting));
         sb.Append(CustomRoleManager.GetLowerTextOthers(seer, isForMeeting: isMeeting));
         return sb;
@@ -77,7 +78,9 @@ public static class NameParts
     /// <summary>seer に seen の死因が見えるなら「(死因)」、見えなければ空</summary>
     public static string DeathReason(PlayerControl seer, PlayerControl seen)
         => seer.KnowDeathReason(seen)
-            ? $"({Utils.ColorString(Utils.GetRoleColor(CustomRoles.Doctor), Utils.GetVitalText(seen.PlayerId))})"
+            ? (HamoGhost.SeesKillerColor(seer)
+                ? $"({Utils.GetVitalText(seen.PlayerId, true)})"
+                : $"({Utils.ColorString(Utils.GetRoleColor(CustomRoles.Doctor), Utils.GetVitalText(seen.PlayerId))})")
             : "";
 
     /// <summary>
@@ -113,6 +116,7 @@ public static class NameParts
             || seer.GetRoleClass()?.NeedsSeenNames == true
             || PlayerTraits.NeedsSeenNames(seer)
             || PlayerTraits.SeesDeathReason(seer)
+            || HamoMadmate.SeesImpostors(seer)
             || VentEnterTask.HaveTask(seer)
             || Duelist.CheckNotify(seer);
 
