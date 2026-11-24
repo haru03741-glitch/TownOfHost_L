@@ -14,8 +14,8 @@ namespace TownOfHostL.Modules.Net;
 // 限り: 本物の変身・会議・他の外見の変更が見る人の客で描き直されると、その人だけ元の見た目に戻る。使う側は会議の前に End を呼ぶ。
 public static class SeerCamouflage
 {
-    // 1 つの GameData に詰める大きさの目安 (SendGuard が分ける 1000 バイトより小さく)
-    const int ChunkLimit = 700;
+    // 1 つの GameData に詰める人数 (1 人は PlayerInfo と Shapeshift で 150 バイトほど。SendGuard が分ける 1000 バイトより小さく)
+    const int PerChunk = 4;
     // 同じ見る人へ続けて送る時の間
     const float ChunkGap = 0.25f;
 
@@ -100,54 +100,55 @@ public static class SeerCamouflage
         if (seer.LacksClient("SeerCamouflage")) return;
         int clientId = seer.GetClientId();
 
-        var chunks = new List<(MessageWriter writer, List<byte> targets)>();
-        MessageWriter current = null;
-        List<byte> currentTargets = null;
+        var groups = new List<List<byte>>();
         foreach (var target in Main.AllPlayerControls)
         {
             if (target.PlayerId == seer.PlayerId || target.Data == null || target.Data.Disconnected) continue;
             // 死んだ人は見る人の画面に出ない。戻す時だけ PlayerInfo を書き戻す (見分けられない間に死んだ人の分)
             if (disguise && !target.IsAlive()) continue;
-            if (current == null)
-            {
-                current = MessageWriter.Get(SendOption.Reliable);
-                current.StartMessage(6);
-                current.Write(AmongUsClient.Instance.GameId);
-                current.WritePacked(clientId);
-                currentTargets = new();
-            }
-            WriteTarget(current, target, disguise);
-            currentTargets.Add(target.PlayerId);
-            if (current.Length >= ChunkLimit)
-            {
-                current.EndMessage();
-                chunks.Add((current, currentTargets));
-                current = null;
-            }
-        }
-        if (current != null)
-        {
-            current.EndMessage();
-            chunks.Add((current, currentTargets));
+            if (groups.Count == 0 || groups[^1].Count >= PerChunk) groups.Add(new());
+            groups[^1].Add(target.PlayerId);
         }
 
         byte seerId = seer.PlayerId;
-        for (int i = 0; i < chunks.Count; i++)
+        for (int i = 0; i < groups.Count; i++)
         {
-            var (writer, targets) = chunks[i];
+            var targets = groups[i];
+            // PlayerInfo は送る時に書き出す (遅れて送る間に死んだ・タスクが進んだ人の古い値を送らない)
             void SendChunk()
             {
-                if (generation.GetValueOrDefault(seerId) != gen || !GameStates.IsInGame)
+                if (generation.GetValueOrDefault(seerId) != gen || !GameStates.IsInGame) return;
+                var seerNow = Utils.GetPlayerById(seerId);
+                if (seerNow == null || seerNow.LacksClient("SeerCamouflage")) return;
+                if (!CanSend())
                 {
-                    writer.Recycle();
+                    // 送れない間 (暗転対策の退避など) は、送れるようになってから全員分を送り直す
+                    pending[seerId] = disguise;
                     return;
                 }
-                AmongUsClient.Instance.SendOrDisconnect(writer);
-                writer.Recycle();
+                var writer = MessageWriter.Get(SendOption.Reliable);
+                try
+                {
+                    writer.StartMessage(6);
+                    writer.Write(AmongUsClient.Instance.GameId);
+                    writer.WritePacked(clientId);
+                    int written = 0;
+                    foreach (var id in targets)
+                    {
+                        var target = Utils.GetPlayerById(id);
+                        if (target == null || target.Data == null || target.Data.Disconnected) continue;
+                        if (disguise && !target.IsAlive()) continue;
+                        WriteTarget(writer, target, disguise);
+                        written++;
+                    }
+                    writer.EndMessage();
+                    if (written > 0) AmongUsClient.Instance.SendOrDisconnect(writer);
+                }
+                finally { writer.Recycle(); }
                 ResendNames(seerId, targets);
             }
             if (i == 0) SendChunk();
-            else _ = new LateTask(SendChunk, ChunkGap * i, "SeerCamouflage", true);
+            else _ = new LateTask(SendChunk, ChunkGap * i, "SeerCamouflage");
         }
     }
 
@@ -164,6 +165,8 @@ public static class SeerCamouflage
             if (saved.ContainsKey(PlayerOutfitType.Shapeshifted)) data.Outfits[PlayerOutfitType.Shapeshifted] = UnknownOutfit;
         }
         GameDataSerializePatch.SerializeMessageCount++;
+        // 宛先 1 人への書き出しで dirty を消すと、同じ時に他の客へ配るはずの更新 (タスクなど) が届かなくなる
+        uint dirty = data.DirtyBits;
         try
         {
             writer.StartMessage(1);
@@ -173,6 +176,7 @@ public static class SeerCamouflage
         }
         finally
         {
+            data.DirtyBits = dirty;
             GameDataSerializePatch.SerializeMessageCount--;
             if (saved != null) foreach (var kv in saved) data.Outfits[kv.Key] = kv.Value;
         }
