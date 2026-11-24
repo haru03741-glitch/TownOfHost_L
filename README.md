@@ -75,7 +75,7 @@ Thank you for finding and using TOH_L!<br>
 - TownOfHost_Yの開発者様は省略。
 
 ## 移植・参考クレジット
-役職の説明の最後に出る「From」は、その役職を最初に考えた Mod です。<br>
+役職の説明の最後に出る「From」は、その役職の出どころを、移した元の Mod の表示 (From やクレジット) に従って書いた物です。どの Mod が最初に考えたかを TOH_L が確かめた物ではありません。<br>
 下の一覧は、TOH_L に入っているコードや仕組みを、元の Mod ごとに並べています。別の Mod を通して持ってきた物は「〜経由」と添え、アイデアだけを借りた物は「〜のアイデア」と書いています。TownOfHost-hamo から移した役職は hamo の欄にまとめ、From と同じ Mod ごとに分けています。<br>
 
 - [本家TOH](https://github.com/tukasa0001/TownOfHost)・[TOH_H](https://github.com/Hyz-sui/TownOfHost-H)・[TOH_Y](https://github.com/Yumenopai/TownOfHost_Y)

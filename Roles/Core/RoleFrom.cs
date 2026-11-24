@@ -2,7 +2,7 @@
 
 namespace TownOfHostL.Roles.Core;
 
-/// <summary>役職の出どころ (どの MOD で生まれた役職か)。役職の説明の最後に「From:」で出す。</summary>
+/// <summary>役職の出どころ。移した元の MOD の表示 (From・クレジット) に従う。どの MOD が最初に考えたかの判定ではない。役職の説明の最後に「From:」で出す。</summary>
 /// <remarks>並びと色は TownOfHost-hamo の From に合わせる (rar006/TownOfHost-hamo@f7b00a9e Roles/Core/SimpleRoleInfo.cs・Modules/Utils/UtilsOption.cs)。</remarks>
 public enum From
 {
