@@ -88,6 +88,8 @@ public sealed class Puppeteer : RoleBase, IImpostor
 
             var min = targetDistance.OrderBy(c => c.Value).FirstOrDefault();//一番値が小さい
             var target = min.Key;
+            // 鬼の体の差し替えの窓の間は GameManager が無い
+            if (!GameManager.Instance) return;
             var KillRange = GameManager.Instance.LogicOptions.GetKillDistance();
             if (min.Value <= KillRange && puppet.CanMove && target.CanMove)
             {
