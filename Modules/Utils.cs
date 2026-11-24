@@ -1552,7 +1552,7 @@ public static partial class Utils
 
                         string TargetDeathReason = TownOfHostL.Core.NameParts.DeathReason(seer, target);
 
-                        if (hideSeenNames)
+                        if (hideSeenNames || (!isForMeeting && TownOfHostL.Modules.Net.SeerCamouflage.IsActive(seer.PlayerId)))
                             TargetPlayerName = $"<size=0%>{TargetPlayerName}</size>";
 
                         //全てのテキストを合成します。

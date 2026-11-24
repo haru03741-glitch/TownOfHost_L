@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using AmongUs.GameOptions;
 using UnityEngine;
 using TownOfHostL.Modules;
+using TownOfHostL.Modules.Net;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
 using static TownOfHostL.Translator;
@@ -177,6 +178,8 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammat
         trance = true;
         tranceSendPending = true;
         Logger.Info($"忘我: {Player.GetNameWithRole()}", nameof(Berserker));
+        // 忘我の間は、周りの人を見た目で見分けられなくなる
+        SeerCamouflage.Begin(Player);
         Utils.NotifyRoles(SpecifySeer: Player);
     }
 
@@ -252,6 +255,7 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammat
         tranceSendPending = false;
         endAt = float.PositiveInfinity;
         RestoreTranceViews();
+        SeerCamouflage.End(Player);
         PlayerSpeed.Remove(Player.PlayerId, SpeedKey);
         if (release) SeekerBody.Release(Player);
         if (Player.IsAlive())
