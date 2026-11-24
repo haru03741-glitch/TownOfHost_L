@@ -141,6 +141,7 @@ public class HostPanel : MonoBehaviour
         wy = Mathf.Clamp(wy, 0f, sh - wh);
 
         GUI.Box(new Rect(wx, wy, ww, wh), GUIContent.none, sWindow);
+        titleContent ??= new GUIContent(GetString("HostPanel.Title"));
         GUI.Label(new Rect(wx, wy + Pad * 0.5f, ww, titleH), titleContent, sTitle);
         // 題の帯の右の閉じるボタン (左下の開閉ボタンが出ない結果の画面でも閉じられるように)
         var cs = titleH * 0.8f;
@@ -684,7 +685,8 @@ public class HostPanel : MonoBehaviour
         sHost = Btn(new Color(0.07f, 0.22f, 0.40f), new Color(0.12f, 0.36f, 0.62f), Font, btnR);
         sOn = Btn(new Color(0.08f, 0.36f, 0.22f), new Color(0.12f, 0.50f, 0.32f), Font, btnR);
         sDanger = Btn(new Color(0.38f, 0.07f, 0.07f), new Color(0.60f, 0.12f, 0.12f), Font, btnR);
-        titleContent = new GUIContent(GetString("HostPanel.Title"));
+        // 題の字は描く時に作る (起動時の準備の回は、まだ翻訳を引けない)
+        titleContent = null;
         // 字の大きさが変わったので測り直す
         foreach (var it in items) it.MeasuredW = -1f;
         dirty = true;
