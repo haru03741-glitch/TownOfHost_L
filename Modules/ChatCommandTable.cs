@@ -299,12 +299,6 @@ public static class ChatCommandTable
             Host = Modules.Whisper.Command,
             Remote = Modules.Whisper.Command,
         },
-        new("/pko", "/pikeo")
-        {
-            Usage = "CommandUsage.PikeoAI",
-            Host = Modules.PikeoAI.Command,
-            Remote = Modules.PikeoAI.Command,
-        },
         new("/tc", "/teamchat")
         {
             Usage = "CommandUsage.TeamChat",

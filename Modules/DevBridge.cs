@@ -149,10 +149,6 @@ static class DevBridge
                     sb.AppendLine("MAPCLICK " + TownOfHostL.SettingsUI.SpawnMapView.ClickScreen(new Vector3(float.Parse(p[0]), Screen.height - float.Parse(p[1]), 0f)));
                     break;
                 }
-            case "pko":
-                PikeoAI.Command(new ChatCommandContext(("/pko " + a[1]).Split(' '), PlayerControl.LocalPlayer, null));
-                sb.AppendLine("PKO");
-                break;
             case "dict":
                 RoleDictionary.Toggle();
                 sb.AppendLine("DICT");

@@ -26,7 +26,6 @@ class ChangeRoleSettings
         try
         {
             Logger.Info("CoStartGame invoked: starting game initialization", "ChangeRoleSettings");
-            Modules.PikeoAI.Reset();
 
             if (GameOptionsManager.Instance == null)
             {
