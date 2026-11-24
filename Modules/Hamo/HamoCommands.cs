@@ -9,6 +9,10 @@ using static TownOfHostL.Translator;
 
 namespace TownOfHostL;
 
+/// <remarks>
+/// /rule・/nc・/ns・/8ball・サイコロは TownOfHost-Pko (satokazoku/TownOfHost-Pko@7c56f1a3・a05d9f3d・88015551 Patches/ChatCommandPatch.cs)、
+/// /kc・/apt・/timer・/sw・/fm・/rev は TownOfHost-K (Patches/ChatCommandPatch.cs) が元で、どれも TownOfHost-hamo (rar006/TownOfHost-hamo@f7b00a9e) 経由。
+/// </remarks>
 public static class HamoCommands
 {
     static readonly Regex DicePattern = new(@"^/(\d+)d(\d+)$", RegexOptions.IgnoreCase);

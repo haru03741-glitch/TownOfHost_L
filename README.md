@@ -189,6 +189,7 @@ Thank you for finding and using TOH_L!<br>
 - [TownOfHost-Pko](https://github.com/satokazoku/TownOfHost-Pko)
   - 前の試合の人の再入室の検知
   - モデレーターにコマンドを渡す仕組み
+  - ルールの表示と設定 (/rule)・名前の色と大きさ (/nc /ns)・8ball・サイコロ (/1d6 の形)
 - [TownOfNext](https://github.com/TownOfNext/TownOfNext)
   - チャットの入力欄の文字数の上限を広げる方法
 - [TownOfHost-K](https://github.com/KYMario/TownOfHost-K)
@@ -203,6 +204,7 @@ Thank you for finding and using TOH_L!<br>
   - 本編の設定の刻みとインポスター人数の幅 (0〜15 人)
   - 役職の説明の画面
   - タスクバトルとサドンデスのモード
+  - キルクールの変更・全員の呼び寄せ・タイマー・勝者の指定・会議を開く・生き返らせるのコマンド (/kc /apt /timer /sw /fm /rev)
 - [Town Of Host For E](https://github.com/AsumuAkaguma/TownOfHost_ForE)
   - YouTube ライブのコメントの読み取り (TownOfHost-K が参考にした元)
 - [Unity Doorstop (Pietrodjaowjao 版)](https://github.com/Pietrodjaowjao/UnityDoorstop) (LGPL-2.1・元は [NeighTools/UnityDoorstop](https://github.com/NeighTools/UnityDoorstop))
