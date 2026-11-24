@@ -363,8 +363,9 @@ public static class SeekerBody
                 if (seer.Data == null || seer.Data.Disconnected) continue;
                 if (seer.AmOwner)
                 {
-                    // ホストの画面は手元で体だけ替える (ホストの手元の役職は試合の始めに固まっていて、SetRole は通らない)
-                    target.MyPhysics.SetBodyType(GameManager.Instance.GetBodyType(target));
+                    // ホストの画面は手元で体だけ替える (ホストの手元の役職は試合の始めに固まっていて、SetRole は通らない)。
+                    // ホストの手元の他人の役職は他人から見た役職なのでインポスター系とは限らず、かくれんぼの GameManager に決めさせずに鬼の体を付ける
+                    target.MyPhysics.SetBodyType(PlayerBodyTypes.Seeker);
                     continue;
                 }
                 if (seer.GetClientId() == -1) continue;

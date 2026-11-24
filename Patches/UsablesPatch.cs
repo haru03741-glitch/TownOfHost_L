@@ -58,8 +58,8 @@ namespace TownOfHostL
             float actualDistance = float.MaxValue;
 
             couldUse =
-                // クラシックではtrue 多分バニラHnS用
-                GameManager.Instance.LogicUsables.CanUse(usableVent, playerControl) &&
+                // クラシックではtrue 多分バニラHnS用 (鬼の体の差し替えの窓の間は GameManager が無い)
+                GameManager.Instance && GameManager.Instance.LogicUsables.CanUse(usableVent, playerControl) &&
                 // pc.Role.CanUse(usableVent) &&  バニラロールではなくカスタムロールを元に判定するので無視
                 // 対象のベントにベントタスクがない もしくは今自分が対象のベントに入っている
                 (!playerControl.MustCleanVent(__instance.Id) || (playerControl.inVent && Vent.currentVent == __instance)) &&
