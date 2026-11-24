@@ -477,6 +477,7 @@ public static partial class Options
             .SetValueFormat(OptionFormat.Seconds);
         MadmateVentMaxTime = FloatOptionItem.Create("MadmateVentMaxTime", new(0f, 180f, 5f), 0f, TabGroup.MadmateRoles, false)
             .SetValueFormat(OptionFormat.Seconds);
+        SetupHamoCommonMadmateOptions();
 
         // Add-Ons
         //TextOptionItem.Create("Head.NewAddOn", TabGroup.Addons).SetColor(Color.green);

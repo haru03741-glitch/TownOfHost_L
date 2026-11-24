@@ -841,7 +841,11 @@ class CoEnterVentPatch
         {
             if (FirstTurnMeeting.BeforeFirstMeeting)
             {
-                _ = new LateTask(() => __instance.RpcBootFromVent(id), 0.5f, "FirstTurnMeeting.BootVent");
+                // 待つ間に会議が始まったり死んだりした時は押し出さない
+                _ = new LateTask(() =>
+                {
+                    if (GameStates.IsInTask && __instance != null && __instance.myPlayer.IsAlive()) __instance.RpcBootFromVent(id);
+                }, 0.5f, "FirstTurnMeeting.BootVent");
                 return true;
             }
             if (ModeCatalog.Current.BootsFromVents)

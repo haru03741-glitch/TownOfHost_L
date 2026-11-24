@@ -114,7 +114,9 @@ public static class HamoCommands
 
     static void NameSize(ChatCommandContext c)
     {
-        if (!float.TryParse(c.Arg(1), out var size)) return;
+        // 文字の大きさは 25〜300% に収める (大きすぎる名前は全員の画面を覆う)
+        if (!float.TryParse(c.Arg(1), out var size) || !float.IsFinite(size)) return;
+        size = Mathf.Clamp(size, 25f, 300f);
         PlayerControl.LocalPlayer.RpcSetNameEx($"<size={size}%>{RawName}</size>");
     }
 
@@ -128,20 +130,24 @@ public static class HamoCommands
     static void EightBall(ChatCommandContext c)
     {
         if (c.Args.Length < 2) return;
-        var question = string.Join(" ", c.Args.Skip(1));
+        // 客の入力をホストの名前で全員へ流すので、色や大きさのタグは外す
+        var question = string.Join(" ", c.Args.Skip(1)).RemoveHtmlTags();
         var answer = EightBallAnswers[IRandom.Instance.Next(EightBallAnswers.Length)];
         Utils.SendMessage($"8ball {c.Player.Data.PlayerName}「{question}」\n→ {answer}");
     }
+
+    const int MaxDice = 1000000;
 
     static void Dice(ChatCommandContext c)
     {
         var spec = IsDice(c.Arg(0)) ? c.Arg(0) : "/" + c.Arg(1);
         var m = DicePattern.Match(spec);
         int min = 1, max = 6;
-        if (m.Success)
+        // 桁あふれと Next(min, max + 1) のあふれを避けて、0〜1000000 に収める
+        if (m.Success && int.TryParse(m.Groups[1].Value, out var a) && int.TryParse(m.Groups[2].Value, out var b))
         {
-            min = int.Parse(m.Groups[1].Value);
-            max = int.Parse(m.Groups[2].Value);
+            min = Math.Clamp(a, 0, MaxDice);
+            max = Math.Clamp(b, 0, MaxDice);
         }
         if (max < min) (min, max) = (max, min);
         var result = IRandom.Instance.Next(min, max + 1);
@@ -152,7 +158,7 @@ public static class HamoCommands
     static void LobbyKillCooldown(ChatCommandContext c)
     {
         if (!GameStates.IsLobby) return;
-        if (float.TryParse(c.Arg(1), out var sec))
+        if (float.TryParse(c.Arg(1), out var sec) && float.IsFinite(sec))
         {
             if (sec <= 0) sec = 0.00000000000000001f;
             Main.NormalOptions.SetFloat(FloatOptionNames.KillCooldown, sec);
@@ -195,8 +201,7 @@ public static class HamoCommands
             Utils.SendMessage(GetString("CommandUsage.SetWinner"), c.Player.PlayerId);
             return;
         }
-        CustomWinnerHolder.ResetAndSetWinner(winner.Value);
-        GameManager.Instance.LogicFlow.CheckEndCriteria();
+        ChatCommandTable.EndWith(winner.Value);
     }
 
     static void ForceMeeting(ChatCommandContext c)

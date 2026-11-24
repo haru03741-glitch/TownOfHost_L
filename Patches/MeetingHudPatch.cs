@@ -37,13 +37,14 @@ public static partial class MeetingHudPatch
             var voter = Utils.GetPlayerById(srcPlayerId);
             var voted = Utils.GetPlayerById(suspectPlayerId);
             if (voter == null) return false;
+            // 締めた後 (結果の表示の間) に遅れて届いた票で、役職の能力 (ゲッサーの撃ちなど) を走らせない
+            if (AmongUsClient.Instance.AmHost && __instance.state is MeetingHud.MeetingStates.Results or MeetingHud.MeetingStates.Proceeding) return false;
+            // 初手会議で能力を使えない時は、誰に入れても飛ばしとして数える
             if (AmongUsClient.Instance.AmHost && FirstTurnMeeting.CantAbilityNow)
             {
                 MeetingVoteManager.Instance?.SetVote(srcPlayerId, MeetingVoteManager.Skip);
                 return true;
             }
-            // 締めた後 (結果の表示の間) に遅れて届いた票で、役職の能力 (ゲッサーの撃ちなど) を走らせない
-            if (AmongUsClient.Instance.AmHost && __instance.state is MeetingHud.MeetingStates.Results or MeetingHud.MeetingStates.Proceeding) return false;
             if (voter.GetRoleClass()?.CheckVoteAsVoter(voted) == false)
             {
                 __instance.RpcClearVote(voter.PlayerId);

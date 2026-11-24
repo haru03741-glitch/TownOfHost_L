@@ -220,6 +220,8 @@ public static class FirstMeetingChatBlock
         {
             if (!IsBlocking || sourcePlayer == null) return true;
             if (sourcePlayer.PlayerId == PlayerControl.LocalPlayer.PlayerId) return true;
+            // TOHL 入りの客の画面では、ホストの知らせ (止めている間の案内など) を隠さない
+            if (sourcePlayer.OwnerId == AmongUsClient.Instance.HostId) return true;
             return !ShouldBlock(chatText);
         }
     }

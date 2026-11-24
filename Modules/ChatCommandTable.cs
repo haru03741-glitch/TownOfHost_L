@@ -380,10 +380,13 @@ public static class ChatCommandTable
     }
 
     /// <summary>/end: 廃村にする (Shift+Enter+L と同じ)</summary>
-    internal static void EndAsDraw()
+    internal static void EndAsDraw() => EndWith(CustomWinner.Draw);
+
+    /// <summary>勝者を決めて試合を終える (/end・/sw)。鬼の体の差し替えの窓の間は GameManager が無いので何もしない</summary>
+    internal static void EndWith(CustomWinner winner)
     {
-        if (!GameStates.IsInGame || !Main.IsSetRoleFinished) return;
-        CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Draw);
+        if (!GameStates.IsInGame || !Main.IsSetRoleFinished || !GameManager.Instance) return;
+        CustomWinnerHolder.ResetAndSetWinner(winner);
         GameManager.Instance.LogicFlow.CheckEndCriteria();
     }
 

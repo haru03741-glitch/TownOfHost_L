@@ -20,7 +20,7 @@ public static class PlayerTraits
 
     /// <summary>投票で追放された時に誰かを道連れにする</summary>
     public static bool RevengesOnExile(PlayerControl pc)
-        => (HamoMadmate.IsMadmate(pc) && Options.MadmateRevengeCrewmate.GetBool())
+        => HamoMadmate.RevengesOnExile(pc)
            || (pc.GetRoleClass()?.RevengesOnExile ?? false)
            || Has(pc, RoleFlags.RevengesOnExile);
 

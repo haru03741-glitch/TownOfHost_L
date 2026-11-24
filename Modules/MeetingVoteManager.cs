@@ -84,6 +84,9 @@ public class MeetingVoteManager
     }
     /// <summary>会議の結果として出す文 (役職が書き換える)</summary>
     public static string Voteresult = "";
+    /// <summary>前の試合の最後の会議の結果を、次の試合の名前の下や最初の会議へ持ち越さない</summary>
+    [TownOfHostL.Attributes.GameModuleInitializer]
+    public static void ResetVoteresult() => Voteresult = "";
     /// 投票を行います．投票者が既に投票している場合は票を上書きします
     /// <param name="voter">投票者</param>
     /// <param name="voteFor">投票先</param>

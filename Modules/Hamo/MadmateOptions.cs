@@ -13,15 +13,22 @@ public static partial class Options
     public static OptionItem MadmateRevengeNeutral;
     public static OptionItem MadCanSeeImpostor;
 
+    /// <summary>サイドキックマッドメイトの「追放時に道連れ」の下に置く、道連れ先の陣営</summary>
     static void SetupHamoMadmateOptions()
     {
-        MadmateHasLighting = BooleanOptionItem.Create("MadmateHasLighting", false, TabGroup.MadmateRoles, false).SetColorcode("#ec6800").SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard);
-        MadmateHasMoon = BooleanOptionItem.Create("MadmateHasMoon", false, TabGroup.MadmateRoles, false).SetColorcode("#ffff33").SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard);
+        // 既定は、この設定が入る前の道連れ先 (クルーだけ) に合わせる
         MadmateRevengeCanImpostor = BooleanOptionItem.Create("NekoKabochaImpostorsGetRevenged", false, TabGroup.MadmateRoles, false).SetParent(MadmateRevengeCrewmate).SetGameMode(CustomGameMode.Standard);
         MadmateRevengeToCrewmate = BooleanOptionItem.Create("RevengeToCrewmate", true, TabGroup.MadmateRoles, false).SetParent(MadmateRevengeCrewmate).SetGameMode(CustomGameMode.Standard);
-        MadmateRevengeMadmate = BooleanOptionItem.Create("NekoKabochaMadmatesGetRevenged", true, TabGroup.MadmateRoles, false).SetParent(MadmateRevengeCrewmate).SetGameMode(CustomGameMode.Standard);
-        MadmateRevengeNeutral = BooleanOptionItem.Create("RevengeToNeutral", true, TabGroup.MadmateRoles, false).SetParent(MadmateRevengeCrewmate).SetGameMode(CustomGameMode.Standard);
-        MadCanSeeImpostor = BooleanOptionItem.Create("MadmateCanSeeImpostor", false, TabGroup.MadmateRoles, false).SetColor(Utils.GetRoleColor(CustomRoles.Snitch)).SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard);
+        MadmateRevengeMadmate = BooleanOptionItem.Create("NekoKabochaMadmatesGetRevenged", false, TabGroup.MadmateRoles, false).SetParent(MadmateRevengeCrewmate).SetGameMode(CustomGameMode.Standard);
+        MadmateRevengeNeutral = BooleanOptionItem.Create("RevengeToNeutral", false, TabGroup.MadmateRoles, false).SetParent(MadmateRevengeCrewmate).SetGameMode(CustomGameMode.Standard);
+    }
+
+    /// <summary>マッドメイト共通 (サイドキックに限らず全部のマッドメイトに効く) の視界と見え方</summary>
+    static void SetupHamoCommonMadmateOptions()
+    {
+        MadmateHasLighting = BooleanOptionItem.Create("MadmateHasLighting", false, TabGroup.MadmateRoles, false).SetColorcode("#ec6800").SetGameMode(CustomGameMode.Standard);
+        MadmateHasMoon = BooleanOptionItem.Create("MadmateHasMoon", false, TabGroup.MadmateRoles, false).SetColorcode("#ffff33").SetGameMode(CustomGameMode.Standard);
+        MadCanSeeImpostor = BooleanOptionItem.Create("MadmateCanSeeImpostor", false, TabGroup.MadmateRoles, false).SetColor(Utils.GetRoleColor(CustomRoles.Snitch)).SetGameMode(CustomGameMode.Standard);
     }
 }
 
@@ -38,10 +45,13 @@ public static class HamoMadmate
     public static bool SeesImpostor(PlayerControl seer, PlayerControl target)
         => target != null && SeesImpostors(seer) && target.Is(CustomRoleTypes.Impostor);
 
+    /// <summary>追放時の道連れはサイドキックマッドメイトの設定 (設定の置き場所もサイドキックの下)</summary>
+    public static bool RevengesOnExile(PlayerControl pc)
+        => pc != null && pc.Is(CustomRoles.SKMadmate) && Options.MadmateRevengeCrewmate.GetBool();
+
     public static bool UsesRevengeFilter(PlayerControl exiled, CustomDeathReason deathReason)
     {
-        if (!Standard || deathReason != CustomDeathReason.Vote || !IsMadmate(exiled)) return false;
-        if (!Options.MadmateRevengeCrewmate.GetBool()) return false;
+        if (!Standard || deathReason != CustomDeathReason.Vote || !RevengesOnExile(exiled)) return false;
         if (exiled.GetRoleClass()?.RevengesOnExile ?? false) return false;
         return !Core.PlayerTraits.Has(exiled, Roles.Core.RoleFlags.RevengesOnExile);
     }

@@ -21,7 +21,9 @@ public static partial class Options
 
         OptionBatchSetting = BooleanOptionItem.Create("OptionBatchSetting", false, TabGroup.ModMainSettings, false)
             .SetHeader(true)
-            .SetColorcode("#6c831a");
+            .SetColorcode("#6c831a")
+            // 入れた時にも、今の一括の値を全部の役職へ配る (値を動かすまで効かないと分かりにくい)
+            .RegisterUpdateValueEvent((_, _) => { HamoConvenient.ApplyBatch(true); HamoConvenient.ApplyBatch(false); });
         OptionAllImpostorKillCool = FloatOptionItem.Create("OptionAllImpostorKillCool", new(0f, 180f, 0.5f), 29.5f, TabGroup.ModMainSettings, false)
             .SetValueFormat(OptionFormat.Seconds)
             .SetParent(OptionBatchSetting)
@@ -50,7 +52,8 @@ public static class HamoConvenient
 
     public static void ApplyBatch(bool impostor)
     {
-        if (Options.OptionBatchSetting == null || !Options.OptionBatchSetting.GetBool()) return;
+        // 設定を組み立てている間は役職の表がまだ揃っておらず、引き当ての表を欠けたまま覚えてしまう
+        if (!Options.IsLoaded || Options.OptionBatchSetting == null || !Options.OptionBatchSetting.GetBool()) return;
         var value = (impostor ? Options.OptionAllImpostorKillCool : Options.OptionAllNeutralKillCool).GetFloat();
         foreach (var opt in OptionItem.AllOptions)
         {
