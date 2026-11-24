@@ -16,8 +16,9 @@ namespace TownOfHostL.Modules;
 /// ・前の試合に居た人が続けて入ってきたら、知らせるかキックする (/kp で一括キック、/aj でこのロビーだけ許す)
 /// </summary>
 /// <remarks>
-/// TownOfHost-hamo (rar006/TownOfHost-hamo@f7b00a9e Patches/PlayerJoinAndLeftPatch.cs の入室の確認・
-/// Patches/ConsecutiveJoinKickPatch.cs) と、スマホのキックは EndlessHostRoles (KickAndroidPlayer) を元にした。
+/// 入室の確認は TownOfHost-K (PlayerJoinAndLeftPatch.cs)、前の試合の人の再入室の検知は TownOfHost-Pko
+/// (satokazoku/TownOfHost-Pko@2b7895b5 Patches/ConsecutiveJoinKickPatch.cs) が元で、どちらも TownOfHost-hamo (rar006/TownOfHost-hamo@f7b00a9e) 経由。
+/// スマホのキックは EndlessHostRoles (KickAndroidPlayer) を元にした。
 /// </remarks>
 public static class JoinGuard
 {

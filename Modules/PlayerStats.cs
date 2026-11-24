@@ -15,7 +15,7 @@ namespace TownOfHostL.Modules;
 /// 自分の部屋で遊んだ人の戦績 (試合数・勝ち・キル・死亡・役職ごとの試合と勝ち)。ホストの手元の TOHL_DATA/PlayerStats.json にだけ持つ (外へは送らない)。
 /// 人はフレンドコード (無ければ PUID) で見分ける。廃村の試合は数えない。/me で自分の戦績を、操作盤から部屋の全員の戦績を出す。
 /// </summary>
-/// <remarks>試合後に戦績を数えて /me で見せる形は TownOfHost-hamo (rar006/TownOfHost-hamo@f7b00a9e Modules/PlayerStatsSync.cs・Statistics.cs) を元に、保存をホストの手元だけにした。</remarks>
+/// <remarks>試合後に戦績を数えて /me で見せる形は TownOfHost-K (KYMario/TownOfHost-K@629452a2 Modules/Statistics.cs) の戦績の記録と、TownOfHost-hamo (rar006/TownOfHost-hamo@f7b00a9e Modules/PlayerStatsSync.cs) の /me を元に、保存をホストの手元だけにした。</remarks>
 public static class PlayerStats
 {
     const string FilePath = "./TOHL_DATA/PlayerStats.json";

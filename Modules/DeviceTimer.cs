@@ -12,7 +12,7 @@ namespace TownOfHostL.Modules;
 /// 使っているかは、装置の前で止まっているかで見る (本編は客が装置を開いたことをホストに知らせないため)。
 /// 尽きた装置は、装置の無効化と同じく、近づいた人にだけ通信妨害を送って使えなくする。持ち時間は試合ごと、または会議ごとに戻す。
 /// </summary>
-/// <remarks>TownOfHost-hamo (rar006/TownOfHost-hamo@f7b00a9e Modules/DisableDevice.cs TimeLimitDevices) を元にした。</remarks>
+/// <remarks>TownOfHost-K (KYMario/TownOfHost-K@4c57eede Modules/DisableDevice.cs TimeLimitDevices) を元にした (TownOfHost-hamo rar006/TownOfHost-hamo@f7b00a9e 経由)。</remarks>
 public static class DeviceTimer
 {
     public enum Kind { Admin, Camera, Vital }

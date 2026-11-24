@@ -15,7 +15,7 @@ namespace TownOfHostL.Modules;
 /// 送り先はホストの手元の設定 (BepInEx の設定 Other.WebhookURL) だけで、送るかどうかもホストが切り替える (初めは送らない)。
 /// 送り先は discord.com の Webhook の URL に限る。送信は別のスレッドで行い、試合の進行を待たせない。
 /// </summary>
-/// <remarks>試合結果を Discord の Webhook へ送る機能は TownOfHost-hamo (rar006/TownOfHost-hamo@f7b00a9e Modules/Debugger.cs Webhook.SendResult・WebhookSettingDialog.cs) を元にした。</remarks>
+/// <remarks>試合結果を Discord の Webhook へ送る機能は TownOfHost-K (KYMario/TownOfHost-K@ca065c50 Modules/Debugger.cs Webhook.SendResult) を元にし、設定の画面は TownOfHost-hamo (rar006/TownOfHost-hamo@f7b00a9e WebhookSettingDialog.cs) を元にした。</remarks>
 public static class DiscordWebhook
 {
     // Discord の 1 通の本文の上限は 2000 字

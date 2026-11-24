@@ -11,7 +11,7 @@ namespace TownOfHostL.Modules;
 /// モデレーターの名簿。ホストが選んだ人は、ホストと同じ一部のコマンド (ChatCommand.ForModerator) をチャットから使える。
 /// 名簿は TOHL_DATA/Moderators.txt に「フレンドコードか PUID,名前」を 1 行ずつ持つ。どちらで書いても、入室した人のどちらかに合えば当てる。
 /// </summary>
-/// <remarks>モデレーターに一部のコマンドを渡す仕組みは EndlessHostRoles (Modules/BanManager.cs Moderators.txt・Command.UsageLevels) と TownOfHost-hamo (rar006/TownOfHost-hamo@f7b00a9e Modules/Moderator.cs) を元にした。</remarks>
+/// <remarks>モデレーターに一部のコマンドを渡す仕組みは EndlessHostRoles (Modules/BanManager.cs Moderators.txt・Command.UsageLevels) と TownOfHost-Pko (satokazoku/TownOfHost-Pko@c14672aa Modules/Moderator.cs・TownOfHost-hamo rar006/TownOfHost-hamo@f7b00a9e 経由) を元にした。</remarks>
 public static class Moderators
 {
     const string ListPath = "./TOHL_DATA/Moderators.txt";

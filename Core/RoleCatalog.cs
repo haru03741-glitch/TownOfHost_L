@@ -57,7 +57,7 @@ public static class RoleCatalog
         (CustomRoles.HASTroll, CustomRoleTypes.Neutral, "#00ff00", RoleFlags.NoTasks | RoleFlags.NotCounted),
         (CustomRoles.HASPortalMaker, CustomRoleTypes.Crewmate, "#9b5cff", RoleFlags.NoTasks | RoleFlags.NotCounted),
 
-        // TownOfHost-hamo のタスクバトル
+        // タスクバトル (TownOfHost-K が元・TownOfHost-hamo 経由)
         (CustomRoles.TaskPlayerB, Crew, "#87cffa", RoleFlags.None),
 
         // CatchCat

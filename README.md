@@ -170,32 +170,39 @@ Thank you for finding and using TOH_L!<br>
     - [The Other Roles: GM Edition](https://github.com/yukinogatari/TheOtherRoles-GM): ペスト医師
     - [TheOtherRoles](https://github.com/TheOtherRolesAU/TheOtherRoles): ヴァルチャー
   - 役職の共通の仕組み (ダブルトリガー・ワンクリックのファントムボタン・部屋のタスク・自投票・演出の送り方など)
-  - 日ごとのゲームの記録の形
   - 放置の検出の流れ
   - 結果画面からロビーへ戻る時の再試行と、自動スタートで人数と外見が落ち着くのを待つ条件
-  - 入室の確認 (フレンド以外・初期名・キック後の入り直し) と、前の試合の人の再入室の検知
   - 投票の残り時間の知らせと MVP の発表
   - 配信のコメントでのマップ投票
   - OBS 用に手元で小さな HTTP サーバーを立ててページを出す形
-  - モデレーターにコマンドを渡す仕組み・設定を名前で変えるコマンド
+  - 設定を名前で変えるコマンド
   - ロビーの投票とプリセットの投票
-  - アドミン・カメラ・バイタルの使用時間の制限
-  - 試合後の戦績の記録と /me
-  - 試合の結果を Discord の Webhook へ送る機能
-  - 生存人数でのベント禁止とベントの滞在時間の上限
+  - 戦績を /me で見せる形
+  - Discord の Webhook の設定の画面
   - 部屋の作り直しで LAN の部屋になった時の扱いと、N 試合ごとの作り直し
   - 配信の観客席 (席の並び・入場と退場・仕草・跳ね・光り方) と、観客席の右に貼るコメントの板 (ロビーでは開始のボタンをよける置き方)
   - ホストの操作盤の、閉じた時のボタンを絵で出して OnGUI を止める作り
   - 連勝の通知・設定の変更の通知・役職ごとの勝率 (/rw)
-  - 本編の設定の刻みとインポスター人数の幅 (0〜15 人)
   - メニューの切り替えの動き・ペンギンに引きずられる見た目
   - ミラHQのベントの区切り
   - 役職辞典の見せ方と、役職の説明に出す出どころ (From)
+- [TownOfHost-Pko](https://github.com/satokazoku/TownOfHost-Pko)
+  - 前の試合の人の再入室の検知
+  - モデレーターにコマンドを渡す仕組み
 - [TownOfNext](https://github.com/TownOfNext/TownOfNext)
   - チャットの入力欄の文字数の上限を広げる方法
 - [TownOfHost-K](https://github.com/KYMario/TownOfHost-K)
   - プレイヤー情報 (NetworkedPlayerInfo) の同期
   - YouTube ライブのコメントの読み取り (配信のチャット欄のページから鍵と続きの値を取る方法・End K not 経由で参照)
+  - 入室の確認 (フレンド以外・初期名・キック後の入り直し)
+  - アドミン・カメラ・バイタルの使用時間の制限
+  - 試合の結果を Discord の Webhook へ送る機能
+  - 日ごとのゲームの記録の形
+  - 試合後の戦績の記録
+  - 生存人数でのベント禁止とベントの滞在時間の上限
+  - 本編の設定の刻みとインポスター人数の幅 (0〜15 人)
+  - 役職の説明の画面
+  - タスクバトルとサドンデスのモード
 - [Town Of Host For E](https://github.com/AsumuAkaguma/TownOfHost_ForE)
   - YouTube ライブのコメントの読み取り (TownOfHost-K が参考にした元)
 - [Unity Doorstop (Pietrodjaowjao 版)](https://github.com/Pietrodjaowjao/UnityDoorstop) (LGPL-2.1・元は [NeighTools/UnityDoorstop](https://github.com/NeighTools/UnityDoorstop))

@@ -12,7 +12,7 @@ namespace TownOfHostL.Modules;
 /// ・生きている人が決めた人数以下になったら、誰もベントに入れない (入ると押し出す)
 /// ・ベントの中にいられる時間の上限を超えたら押し出す
 /// </summary>
-/// <remarks>TownOfHost-hamo (rar006/TownOfHost-hamo@f7b00a9e Modules/VentManager.cs CheckVentLimit・OptionHolder.cs CantUseVentMode / MaxInVentMode) を元にした。</remarks>
+/// <remarks>TownOfHost-K (KYMario/TownOfHost-K@9236eeda・d7d0ed3b Modules/VentManager.cs CheckVentLimit・OptionHolder.cs CantUseVentMode / MaxInVentMode) を元にした (TownOfHost-hamo rar006/TownOfHost-hamo@f7b00a9e 経由)。</remarks>
 public static class VentLimit
 {
     static OptionItem enabled;

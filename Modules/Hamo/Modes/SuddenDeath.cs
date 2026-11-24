@@ -71,6 +71,7 @@ public static partial class Options
 }
 
 /// <summary>サドンデス。通常の役職で配り、全員が自分以外を敵として戦う (チーム戦もある)。会議とサボタージュは無い</summary>
+/// <remarks>TownOfHost-K (KYMario/TownOfHost-K@b7c85c84) のサドンデスを元にした (TownOfHost-hamo 経由)。</remarks>
 public sealed class SuddenDeathMode : GameMode
 {
     public override CustomGameMode Id => CustomGameMode.SuddenDeath;

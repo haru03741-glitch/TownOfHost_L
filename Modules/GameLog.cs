@@ -13,7 +13,7 @@ namespace TownOfHostL.Modules;
 /// キルは死亡の記録 (PlayerState.RealKiller) から試合の終わりに時刻順で差し込むので、ここへ個別に書かない。
 /// 出来上がった文は /l と、試合後にロビーへ戻った時の自動表示で使う。
 /// </summary>
-/// <remarks>日ごとの記録の形は TownOfHost-hamo (rar006/TownOfHost-hamo@f7b00a9e Modules/Utils/UtilsLog.cs UtilsGameLog) を元にした。</remarks>
+/// <remarks>日ごとの記録の形は TownOfHost-K (KYMario/TownOfHost-K@8dfc0e82 Modules/Utils/UtilsLog.cs UtilsGameLog) を元にした (TownOfHost-hamo rar006/TownOfHost-hamo@f7b00a9e 経由)。</remarks>
 public static class GameLog
 {
     readonly record struct Entry(DateTime At, int Day, string Type, string Text);

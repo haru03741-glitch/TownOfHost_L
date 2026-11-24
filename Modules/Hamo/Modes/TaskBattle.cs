@@ -57,6 +57,7 @@ public static partial class Options
     }
 }
 
+/// <remarks>TownOfHost-K (KYMario/TownOfHost-K@7d6f8156) のタスクバトルを元にした (TownOfHost-hamo 経由)。</remarks>
 public sealed class TaskBattleMode : GameMode
 {
     public override CustomGameMode Id => CustomGameMode.TaskBattle;
