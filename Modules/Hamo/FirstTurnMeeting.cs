@@ -57,6 +57,7 @@ public static class FirstTurnMeeting
     {
         Options.firstturnmeeting = Options.FirstTurnMeeting.GetBool() && Options.CurrentGameMode == CustomGameMode.Standard;
         MeetingStates.First = true;
+        FirstMeetingChatBlock.Reset();
     }
 
     public static bool AllowKill(MurderInfo info, CustomDeathReason reason)
@@ -104,6 +105,9 @@ public static class FirstMeetingChatBlock
     static float startedAt;
     static bool hiding;
     static int Seconds => Options.FirstTurnMeetingChatBlock?.GetInt() ?? 0;
+
+    /// <summary>会議の途中で試合が終わった時に、止めている印を次の試合へ持ち越さない</summary>
+    public static void Reset() { active = false; hiding = false; }
 
     public static bool IsBlocking
         => active && GameStates.IsMeeting && (Seconds >= UntilEnd || Time.time - startedAt < Seconds);
