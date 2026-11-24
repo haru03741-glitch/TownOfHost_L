@@ -464,9 +464,7 @@ public static partial class Options
             .SetValueFormat(OptionFormat.Players);
         MadmateCanFixLightsOut = StringOptionItem.Create("MadmateCanFixLightsOut", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard);
         MadmateCanFixComms = StringOptionItem.Create("MadmateCanFixComms", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard);
-        MadmateHasImpostorVision = StringOptionItem.Create("MadmateHasImpostorVision", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard);
         MadmateCanSeeKillFlash = StringOptionItem.Create("MadmateCanSeeKillFlash", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard);
-        MadmateCanSeeOtherVotes = StringOptionItem.Create("MadmateCanSeeOtherVotes", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard);
         MadmateCanSeeDeathReason = StringOptionItem.Create("MadmateCanSeeDeathReason", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard);
         MadmateRevengeCrewmate = StringOptionItem.Create("MadmateExileCrewmate", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard);
 
@@ -477,6 +475,9 @@ public static partial class Options
             .SetValueFormat(OptionFormat.Seconds);
         MadmateVentMaxTime = FloatOptionItem.Create("MadmateVentMaxTime", new(0f, 180f, 5f), 0f, TabGroup.MadmateRoles, false)
             .SetValueFormat(OptionFormat.Seconds);
+        // 視界と票の見え方はサイドキックに限らず全部のマッドメイトに効くので、共通の欄に置く
+        MadmateHasImpostorVision = StringOptionItem.Create("MadmateHasImpostorVision", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetGameMode(CustomGameMode.Standard);
+        MadmateCanSeeOtherVotes = StringOptionItem.Create("MadmateCanSeeOtherVotes", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetGameMode(CustomGameMode.Standard);
         SetupHamoCommonMadmateOptions();
 
         // Add-Ons
