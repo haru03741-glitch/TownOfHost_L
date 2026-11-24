@@ -15,6 +15,8 @@ using InnerNet;
 
             public static void SendAllGameOptions()
             {
+                // 鬼の体の窓の間は GameManager が無いか、かくれんぼの物で、設定を送れない。dirty は残して窓の後で送る
+                if (SeekerBody.InWindow) return;
                 AllSenders.RemoveAll(static s =>
                 {
                     try { return !s.AmValid(); }

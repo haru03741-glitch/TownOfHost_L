@@ -33,6 +33,7 @@ public static class RoleView
         // 試合の始めの配り (イントロ中) も覚えるよう、InGame が立つ前から記録する
         if (!AmongUsClient.Instance || !AmongUsClient.Instance.AmHost || AmongUsClient.Instance.GameState != AmongUsClient.GameStates.Started) return;
         living[(seer.PlayerId, target.PlayerId)] = role;
+        SeekerBody.OnRoleSent(target);
     }
 
     internal static void RecordByClientId(int clientId, PlayerControl target, RoleTypes role)

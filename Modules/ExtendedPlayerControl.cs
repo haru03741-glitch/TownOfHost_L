@@ -646,6 +646,9 @@ static partial class ExtendedPlayerControl
         // nullチェック追加
         if (player?.Data?.Role == null)
             return rangePlayers;
+        // 鬼の体の窓の間は GameManager が無いか、かくれんぼの物で、本編が能力の距離を引けない
+        if (SeekerBody.InWindow)
+            return rangePlayers;
 
         player.Data.Role.GetPlayersInAbilityRangeSorted(rangePlayersIL, ignoreColliders);
         foreach (var pc in rangePlayersIL)

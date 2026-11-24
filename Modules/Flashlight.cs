@@ -100,6 +100,16 @@ public static class Flashlight
 
     /// <summary>点け直しの最中か。最中は TOHL のふだんの設定の送信を止める (かくれんぼ型を上書きしない)。</summary>
     public static bool IsHolding(byte playerId) => holdUntil.ContainsKey(playerId);
+    /// <summary>誰かの点け直しの最中か</summary>
+    public static bool AnyHolding => holdUntil.Count > 0;
+
+    /// <summary>懐中電灯を持つ全員の点け直しを予約する (GameManager を出し直して視界が配り直された時など)</summary>
+    public static void RequestAll()
+    {
+        if (!activeThisGame) return;
+        foreach (var pc in Core.Players.All)
+            if (Has(pc)) RequestArm(pc.PlayerId, AfterChangeDelay);
+    }
 
     private static void RequestArm(byte playerId, float delay)
     {
@@ -142,6 +152,8 @@ public static class Flashlight
             activeKnown = true;
         }
         if (!activeThisGame || !AmongUsClient.Instance.AmHost) return;
+        // 鬼の体の窓の間は設定を送れない
+        if (SeekerBody.InWindow) return;
         float now = Time.realtimeSinceStartup;
 
         bool inTask = InTaskNow();

@@ -63,6 +63,8 @@ class CheckMurderPatch
     public static bool Prefix(PlayerControl __instance, [HarmonyArgument(0)] PlayerControl target)
     {
         if (!AmongUsClient.Instance.AmHost || AmongUsClient.Instance.IsGameOver) return false;
+        // 鬼の体の窓の間 (GameManager を差し替えている間) は、客がキルの電文を処理できないのでキルを通さない
+        if (SeekerBody.InWindow) return false;
         // CNO へのキルは Core の前置で捨てている (前置は全部走るので、ここでも見る)
         if (Core.CustomNetObject.Is(target) || Core.CustomNetObject.Is(__instance)) return false;
 
@@ -261,6 +263,8 @@ class MurderPlayerPatch
         {
             AntiBlackout.SetRoleChange(__instance);
         }, 0.5f, "PostMurderSetRoleChange");
+        // 上の送り直しで外れた鬼の体を付け直す
+        SeekerBody.OnAnyMurder();
         var killer = __instance;
         bool killerIsViper = killer.Is(RoleTypes.Viper);
         if (killerIsViper)
@@ -621,6 +625,8 @@ partial class ReportDeadBodyPatch
         if (target != null && !SpecialMeeting && Revive.WasRevived(target.PlayerId) && !(PlayerState.GetByPlayerId(target.PlayerId)?.IsDead ?? true)) return false;
         // 一時的に幽霊になっている人は、会議の前に戻す (戻す SetRole が落ち着くまで、下で通報を預かる)
         if (AmongUsClient.Instance.AmHost) TempGhost.ReturnAllForMeeting();
+        // 鬼の体も会議の前に外す (外す SetRole が落ち着くまで、下で通報を預かる)
+        if (AmongUsClient.Instance.AmHost) SeekerBody.ReleaseAllForMeeting();
         // 復活の SetRole が落ち着く前に会議を開くと、本編の客の会議の画面が壊れる。1 件だけ預かり、落ち着いてから通す
         if (AmongUsClient.Instance.AmHost && Revive.HoldReport(__instance, target)) return false;
         // 役職の能力で確認なしに会議を開く
