@@ -69,18 +69,21 @@ public static class HamoGhost
     public static bool SeesKillFlash(PlayerControl seer, PlayerControl target)
         => Dead(seer) && seer != target && (Options.GhostCanSeeKillflash?.GetBool() ?? false);
 
+    static readonly Color ButtonCountColor = new Color32(255, 140, 60, 255);
+
     public static string ExtraProgress(PlayerControl seer, PlayerControl seen)
     {
-        if (!Dead(seer) || seen == null) return "";
-        var sb = new System.Text.StringBuilder();
-        if ((Options.GhostCanSeeNumberOfButtonsOnOthers?.GetBool() ?? false) && !Core.NativeObject.Same(seer, seen))
+        // 名前の組み立てで全員の組ごとに呼ばれるので、設定が切りの時は何も作らない
+        if (seen == null || !Dead(seer)) return "";
+        bool self = Core.NativeObject.Same(seer, seen);
+        if (!self)
         {
+            if (!(Options.GhostCanSeeNumberOfButtonsOnOthers?.GetBool() ?? false)) return "";
             var st = PlayerState.GetByPlayerId(seen.PlayerId);
-            if (st != null) sb.Append(Utils.ColorString((Color)new Color32(255, 140, 60, 255), $"[{(int)st.NumberOfRemainingButtons}]"));
+            return st == null ? "" : Utils.ColorString(ButtonCountColor, $"[{(int)st.NumberOfRemainingButtons}]");
         }
-        if ((Options.GhostCanSeeAllTasks?.GetBool() ?? false) && Core.NativeObject.Same(seer, seen) && GameData.Instance)
-            sb.Append(Utils.ColorString(Color.yellow, $"({GameData.Instance.CompletedTasks}/{GameData.Instance.TotalTasks})"));
-        return sb.ToString();
+        if (!(Options.GhostCanSeeAllTasks?.GetBool() ?? false) || !GameData.Instance) return "";
+        return Utils.ColorString(Color.yellow, $"({GameData.Instance.CompletedTasks}/{GameData.Instance.TotalTasks})");
     }
 
     static readonly Dictionary<byte, bool> ignoreDecided = new();

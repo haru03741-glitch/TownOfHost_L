@@ -26,10 +26,12 @@ public static class SpecialMode
 
     public static bool KnowsRole(PlayerControl seer, PlayerControl seen)
     {
+        // 名前の組み立てで全員の組ごとに呼ばれるので、設定を先に見て役職を引かずに抜ける
         if (seer == null || seen == null) return false;
-        var seerRole = seer.GetCustomRole();
-        if (IsInsider && seerRole.IsImpostor()) return true;
-        return On(Options.CanSeeImpostorRole) && seerRole.IsImpostor() && seen.GetCustomRole().IsImpostor();
+        bool insider = IsInsider;
+        if (!insider && !On(Options.CanSeeImpostorRole)) return false;
+        if (!seer.GetCustomRole().IsImpostor()) return false;
+        return insider || seen.GetCustomRole().IsImpostor();
     }
 
     public static bool KnowsTasks(PlayerControl seer)
