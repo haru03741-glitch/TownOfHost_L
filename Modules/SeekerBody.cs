@@ -22,17 +22,18 @@ namespace TownOfHostL.Modules;
 ///   暗転対策の数え方にも入る)。自分の画面でキルを持つ客 (デシンクのキル役) には送らない。仲間に見えてキルできなくなるため。
 /// - 後で対象の SetRole がその客へ届くと、通常の GameManager の下で体が決め直されて外れる (暗転対策のキル後の送り直しなど)。
 ///   キルの後と、関所 (RoleView) を通った送り直しの後に、窓を開け直して付け直す。
-/// - 窓の間 (約 1.7 秒) は客の画面で設定が引けず、全員が歩けない。窓の間は通報を預かり、キル・勝敗判定・設定の送信を止める。
+/// - 窓の間 (約 2.5 秒) は客の画面で設定が引けず、全員が歩けない。窓の間は通報を預かり、キル・勝敗判定・設定の送信を止める。
 /// - Despawn と Spawn の間は空ける。客の手元で同じフレームに重なると、新しい GameManager は Awake で自分を消す。
 /// </summary>
 public static class SeekerBody
 {
-    // Despawn から Spawn までの間 (客の手元で同じフレームに重ならないように)
-    private const float SpawnGap = 0.5f;
+    // Despawn から Spawn までの間 (客の手元で同じフレームに重ならないように)。
+    // 客が一瞬固まる (役職の作り直しなど) と 0.5 秒では重なり、通常の GameManager が戻らないことがあった
+    private const float SpawnGap = 0.8f;
     // かくれんぼの GameManager を出してから SetRole を送るまで
     private const float SendDelay = 0.2f;
     // SetRole を送ってから、かくれんぼの GameManager を消すまで (客が SetRole を処理し終えるまで)
-    private const float Hold = 0.5f;
+    private const float Hold = 0.8f;
     // 窓の後、次の窓を開けるまでの最短の間
     private const float BetweenWindows = 1f;
 
