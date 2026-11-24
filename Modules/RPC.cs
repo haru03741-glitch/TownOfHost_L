@@ -19,10 +19,12 @@ namespace TownOfHostL
     {
         VersionCheck = 80,
         RequestRetryVersionCheck = 81,
+        // 90 からは、ホストが同じ版の TOHL の客へ宛てる電文 (ModClientSync)。間を空けずに続き番号で足す
         ModClientOptions = 90,
         ModClientRoles = 91,
         ModClientEnd = 92,
         ModClientHud = 93,
+        ModClientBodyErase = 94,
     }
     public enum Sounds
     {

@@ -10,7 +10,7 @@ namespace TownOfHostL.Modules.Net;
 /// ホストが TOHL かどうかを左上に出すためのホストの版だけをここで受ける。ホスト以外から来た物は読まない。
 /// 客の側から送るのは、ホストが同じ版の TOHL だった時に、ホストにだけ宛てて返す版の 1 本だけ (<see cref="ModClientSync"/>)。
 /// 版の違う TOHL・ほかの Mod・本編のホストには何も送らない (ホストは入った人に版を送り直す)。
-/// 同じ版のホストから届く TOHL の画面の情報 (設定・役職・結果) もここで受ける。
+/// 同じ版のホストから届く TOHL の画面の情報 (設定・役職・結果・ボタン・消した死体) もここで受ける。
 /// 独自の番号の電文は本編へ渡さない。本編は知らない番号を役職の電文として読み、ロビーでは役職が無いので例外になる
 /// (例外になると、その後ろの Postfix も走らない)。
 /// </summary>
@@ -23,7 +23,7 @@ public static class ClientModeVersion
         if (!TownOfHostL.Core.VanillaHideAndSeek.IsClientMode) return true;
         if (callId == (byte)CustomRPC.RequestRetryVersionCheck) return false;
         var client = AmongUsClient.Instance;
-        if (callId is (byte)CustomRPC.ModClientOptions or (byte)CustomRPC.ModClientRoles or (byte)CustomRPC.ModClientEnd or (byte)CustomRPC.ModClientHud)
+        if (ModClientSync.IsSyncCall(callId))
         {
             if (client != null && __instance != null && __instance.OwnerId == client.HostId)
                 ModClientSync.Receive((CustomRPC)callId, reader);

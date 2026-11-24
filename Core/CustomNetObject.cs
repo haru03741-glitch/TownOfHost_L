@@ -91,6 +91,8 @@ public sealed class CustomNetObject
     private float settleAt = float.PositiveInfinity;
     // この人の画面にだけ出す (ほかの客へは出し終えてから消す)。null なら全員
     private byte? onlyVisibleTo;
+    // この条件に合う人の画面には出さない (出し終えてから消す)。null なら全員に出す
+    private Func<PlayerControl, bool> hiddenFrom;
 
     public Vector2 Position { get; private set; }
     public string Sprite { get; private set; }
@@ -143,6 +145,16 @@ public sealed class CustomNetObject
     {
         if (state != State.Waiting) Log.Warn(Tag, "ShowOnlyTo は出す前に呼ぶ");
         onlyVisibleTo = playerId;
+    }
+
+    /// <summary>
+    /// 条件に合う人の画面には出さない。出す前に呼ぶ。条件は出し終えた時に 1 回だけ見て、合う客にだけ消す電文を送る
+    /// (先に止められない理由は <see cref="ShowOnlyTo"/> と同じ)。ホストが条件に合えば、ホストの手元では隠す。
+    /// </summary>
+    public void HideFrom(Func<PlayerControl, bool> who)
+    {
+        if (state != State.Waiting) Log.Warn(Tag, "HideFrom は出す前に呼ぶ");
+        hiddenFrom = who;
     }
 
     public void MoveTo(Vector2 position)
@@ -570,14 +582,23 @@ public sealed class CustomNetObject
         SendSnap(now, SendOption.Reliable);
         moved = false;
         state = State.Live;
-        if (onlyVisibleTo is byte viewer) HideFromOthers(viewer);
+        if (onlyVisibleTo is byte viewer)
+        {
+            int hidden = HideFromMatching(p => p.PlayerId != viewer);
+            Log.Info(Tag, $"見る人だけに netId={pc.NetId} 見る人={viewer} 隠した客={hidden}");
+        }
+        else if (hiddenFrom != null)
+        {
+            int hidden = HideFromMatching(hiddenFrom);
+            Log.Info(Tag, $"一部の人には出さない netId={pc.NetId} 隠した客={hidden}");
+        }
     }
 
-    // 見る人以外の客へ、その客にだけ CNO を消す電文を送る。ホストが見る人でなければ手元で隠す
-    private void HideFromOthers(byte viewer)
+    // 条件に合う客へ、その客にだけ CNO を消す電文を送る。ホストが条件に合えば手元で隠す。隠した客の数を返す
+    private int HideFromMatching(Func<PlayerControl, bool> match)
     {
         var client = AmongUsClient.Instance;
-        if (PlayerControl.LocalPlayer.PlayerId != viewer)
+        if (match(PlayerControl.LocalPlayer))
         {
             pc.Visible = false;
             if (pc.cosmetics.nameText) pc.cosmetics.nameText.gameObject.SetActive(false);
@@ -585,8 +606,9 @@ public sealed class CustomNetObject
         int hidden = 0;
         foreach (var target in Players.All)
         {
-            if (!target || target.AmOwner || target.PlayerId >= MinPlayerId || target.PlayerId == viewer) continue;
+            if (!target || target.AmOwner || target.PlayerId >= MinPlayerId) continue;
             if (target.Data == null || target.Data.Disconnected) continue;
+            if (!match(target)) continue;
             var w = MessageWriter.Get(SendOption.Reliable);
             w.StartMessage(6);
             w.Write(client.GameId);
@@ -599,7 +621,7 @@ public sealed class CustomNetObject
             w.Recycle();
             hidden++;
         }
-        Log.Info(Tag, $"見る人だけに netId={pc.NetId} 見る人={viewer} 隠した客={hidden}");
+        return hidden;
     }
 
     private void UpdatePosition(float now)

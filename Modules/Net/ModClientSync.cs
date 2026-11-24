@@ -14,7 +14,7 @@ namespace TownOfHostL.Modules.Net;
 /// </para>
 /// <para>
 /// 送る物: 設定の値 (初期値と違う物だけ・変わった時はその分)、全員の役職 (配役の後と、変わった時)、
-/// 客本人のボタンの見え方 (<see cref="RoleHudState"/>・変わった時だけ)、試合の結果。
+/// 客本人のボタンの見え方 (<see cref="RoleHudState"/>・変わった時だけ)、試合の結果、ホストが消した死体。
 /// どれも送り先の客だけに宛てる (本編の客には届かない)。1 本は 800B 前後までに分け、同じ客へは間を空けて送る。
 /// </para>
 /// </summary>
@@ -25,6 +25,10 @@ public static class ModClientSync
 
     public static bool IsSameBuild(PlayerVersion v)
         => v != null && v.forkId == Main.ForkId && v.version.Equals(Main.version) && v.tag == BuildTag;
+
+    /// <summary>ホストが送り先の客へ宛てる電文の番号か (客はこの番号を本編へ渡さない)</summary>
+    public static bool IsSyncCall(byte callId)
+        => callId is >= (byte)CustomRPC.ModClientOptions and <= (byte)CustomRPC.ModClientBodyErase;
 
     // ───────────── ホスト ─────────────
 
@@ -427,6 +431,23 @@ public static class ModClientSync
         }
     }
 
+    // ── 死体 ──
+
+    /// <summary>
+    /// ホストが死体を消した時。送り先の客の手元でも、その人の死体を消す。送った客 (clientId) を <paramref name="sentTo"/> に足す。
+    /// 本編には死体を消す電文が無いので、本編の客の画面は覆いで隠す (<see cref="DeadBodyEraser"/>)。
+    /// </summary>
+    public static void SendBodyErase(byte parentId, HashSet<int> sentTo)
+    {
+        if (peers.Count == 0 || !AmHost) return;
+        Prune();
+        foreach (var id in new List<int>(peers.Keys))
+        {
+            Enqueue(id, CustomRPC.ModClientBodyErase, w => w.Write(parentId));
+            sentTo.Add(id);
+        }
+    }
+
     // ───────────── 客 ─────────────
 
     private static int linkedHostId = -1;
@@ -521,7 +542,7 @@ public static class ModClientSync
     /// <summary>客の側でホストからの電文を受ける。読んだら true</summary>
     public static bool Receive(CustomRPC call, MessageReader reader)
     {
-        if (!IsLinked) return call is CustomRPC.ModClientOptions or CustomRPC.ModClientRoles or CustomRPC.ModClientEnd or CustomRPC.ModClientHud;
+        if (!IsLinked) return IsSyncCall((byte)call);
         try
         {
             switch (call)
@@ -530,6 +551,7 @@ public static class ModClientSync
                 case CustomRPC.ModClientRoles: ReadRoles(reader); return true;
                 case CustomRPC.ModClientEnd: ReadEnd(reader); return true;
                 case CustomRPC.ModClientHud: ReadHud(reader); return true;
+                case CustomRPC.ModClientBodyErase: DeadBodyEraser.EraseOnClient(reader.ReadByte()); return true;
             }
         }
         catch (Exception ex)
