@@ -552,6 +552,7 @@ static partial class ExtendedPlayerControl
             LastImpostor.SetKillCooldown(player);
         if (TownOfHostL.Roles.Impostor.EvilCommander.TryGetKillCooldownOverride(player.PlayerId, out var overridden))
             Main.AllPlayerKillCooldown[player.PlayerId] = overridden;
+        SuddenDeath.OverrideKillCooldown(player);
     }
     public static bool CanMakeMadmate(this PlayerControl player)
     {

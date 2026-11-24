@@ -74,9 +74,10 @@ public static partial class CustomRoleManager
 
         // インポスター同士のキル無効 (はぐれ狼のように仲間に数えないインポスターは、殺す側でも殺される側でも、その役職の判定に任せる。
         // 今は仲間もキルできる状態の役職 (ITeammateKiller) が殺す側なら止めない)
-        if (attemptKiller.GetCustomRole().IsImpostor() && attemptTarget.GetCustomRole().IsImpostor()
+        if (!SuddenDeath.Active && attemptKiller.GetCustomRole().IsImpostor() && attemptTarget.GetCustomRole().IsImpostor()
             && !attemptKiller.GetCustomRole().IsLoneImpostor() && !attemptTarget.GetCustomRole().IsLoneImpostor()
             && attemptKiller.GetRoleClass() is not ITeammateKiller { CanKillTeammates: true }) return false;
+        if (SuddenDeath.BlocksKill(attemptKiller, attemptTarget)) return false;
         // 役職によって今キルできない状態 (ゴッドファーザーのロック・ペンギンの拉致など)
         // 例外は「止めない」として扱う (投げ続ける 1 つのせいで誰もキルできなくならないように)
         foreach (var isBlocked in KillBlockersOthers)
@@ -815,6 +816,11 @@ public enum CustomRoles
     ONStart = 400,
 
     MaxON,
+
+    // TownOfHost-hamo のゲームモード
+    HamoModeStart = 420,
+    TaskPlayerB,
+    MaxHamoMode,
     /************/
 
     //CC

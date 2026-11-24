@@ -128,6 +128,7 @@ namespace TownOfHostL.Roles
                     break;
             }
 
+            SuddenDeath.AdjustAssignList(AssignRoleList);
             AssignRoleList.Sort();
             Logger.Info($"{string.Join(", ", AssignCount)}", "AssignCount");
             Logger.Info($"{string.Join(", ", AssignRoleList)}", "AssignRoleList");
@@ -158,8 +159,8 @@ namespace TownOfHostL.Roles
                 var targetRoles = role.GetAssignUnitRolesArray();
                 var numImpostorAssign = targetRoles.Count(role => role.GetAssignRoleType() == CustomRoleTypes.Impostor);
                 var numOthersAssign = targetRoles.Length - numImpostorAssign;
-                if (numImpostorAssign > numImpostorsLeft
-                || numOthersAssign > numOthersLeft) continue;
+                if ((numImpostorAssign > numImpostorsLeft
+                || numOthersAssign > numOthersLeft) && !SuddenDeath.Active) continue;
 
                 AssignRoleList.AddRange(targetRoles);
                 numImpostorsLeft -= numImpostorAssign;
@@ -260,6 +261,7 @@ namespace TownOfHostL.Roles
             foreach (var role in AllMainRoles.OrderBy(x => Guid.NewGuid())) //確定枠が偏らないようにシャッフル
             {
                 if (!role.IsAssignable()) continue;
+                if (Options.CustomRoleSpawnChances.TryGetValue(role, out var ticketOption) && !ModeCatalog.Current.ShowsOption(ticketOption)) continue;
 
                 var chance = role.GetChance();
                 var count = role.GetAssignCount();

@@ -960,6 +960,7 @@ class PlayerControlCompleteTaskPatch
         CompreteCrew.OnCompleteTask(pc);
 
         if (ModeCatalog.IsCatchCat) CatchCat.CatPlayer.OnCompleteTask(pc, taskState);
+        HamoModes.OnCompleteTask(pc, taskState);
 
         Utils.NotifyRoles();
         return ret;

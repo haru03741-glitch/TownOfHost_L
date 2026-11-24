@@ -27,6 +27,8 @@ public enum CustomGameMode
     HideMenu,
     /// <summary>本編のかくれんぼ。設定では選ばず、ロビーの切り替え (/mode) で入る。</summary>
     VanillaHideAndSeek,
+    TaskBattle,
+    SuddenDeath,
     All = int.MaxValue
 }
 [HarmonyPatch]
@@ -51,11 +53,15 @@ public static partial class Options
 
     // ゲームモード
     public static OptionItem GameMode;
-    public static CustomGameMode CurrentGameMode => (CustomGameMode)GameMode.GetValue();
+    public static CustomGameMode CurrentGameMode => GameMode == null ? CustomGameMode.Standard : gameModeIds[System.Math.Clamp(GameMode.GetValue(), 0, gameModeIds.Length - 1)];
+    static readonly CustomGameMode[] gameModeIds =
+    {
+        CustomGameMode.Standard, CustomGameMode.HideAndSeek, CustomGameMode.TaskBattle, CustomGameMode.SuddenDeath,
+    };
 
     public static readonly string[] gameModes =
     {
-         "Standard", "HideAndSeek", /*"CatchCat", "OneNight",*/
+         "Standard", "HideAndSeek", "TaskBattle", "SuddenDeath",
     };
 
     // MapActive
@@ -527,6 +533,7 @@ public static partial class Options
         IgnoreVent = StringOptionItem.Create("IgnoreVent", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetGameMode(CustomGameMode.HideAndSeek);
 
+        SetupHamoModeOptions();
         // 本編のかくれんぼ (/mode hns) の決まり。本編の勝敗のまま、鬼の人数・残り時間・鬼と死んだ隠れる側の役職を変える
         VanillaHnsSeekers = IntegerOptionItem.Create("VanillaHnsSeekers", new(1, 5, 1), 1, TabGroup.ModMainSettings, false)
             .SetHeader(true)
