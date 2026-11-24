@@ -38,7 +38,8 @@ public static class VanillaHideAndSeek
     private const float ResumeSettle = 1f;
 
     // 古い GameManager の破棄が客の側で済んでから新しい物を出す
-    private const float SpawnDelay = 0.5f;
+    // (客が一瞬固まると 0.5 秒では Despawn と Spawn が同じフレームに届き、新しい GameManager が Awake で自分を消す)
+    private const float SpawnDelay = 0.8f;
 
     public static bool IsSuspended => state == State.Suspended;
     /// <summary>客として部屋にいて、TOHL のホストの処理を外している間</summary>

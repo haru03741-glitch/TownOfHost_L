@@ -63,6 +63,8 @@ public static class SeekerBody
     private static readonly HashSet<byte> fresh = new();
     // 窓の暗転で IsBlackOut を立てた人 (窓の後で下ろす)
     private static readonly List<byte> covered = new();
+    // 失敗から戻そうとした回数 (窓ごと)
+    private static int recoverTries;
     // 自分で送っている間は、関所の記録で付け直しを予約しない
     private static bool selfSending;
 
@@ -82,6 +84,7 @@ public static class SeekerBody
         sending.Clear();
         fresh.Clear();
         covered.Clear();
+        recoverTries = 0;
         selfSending = false;
     }
 
@@ -287,6 +290,7 @@ public static class SeekerBody
     private static void FinishWindow()
     {
         phase = Phase.Idle;
+        recoverTries = 0;
         idleSince = Time.realtimeSinceStartup;
         Logger.Info("窓を閉じた", nameof(SeekerBody));
         // 暗転を明ける。出し直した GameManager は全員に同じ設定を配ったので、人ごとの設定を送り直す。懐中電灯も消えるので点け直す
@@ -314,16 +318,24 @@ public static class SeekerBody
         }
     }
 
-    // 失敗した時: GameManager が無ければ通常の物を出し、窓を閉じる
+    // 失敗した時: 通常の GameManager を戻して窓を閉じる。かくれんぼの物が残っていれば消し、間を空けてから出す
+    // (同じフレームに Despawn と Spawn を送ると、客の手元で新しい GameManager が Awake で自分を消す)
     private static void Recover(InnerNetClient client)
     {
         try
         {
-            if (!GameManager.Instance || GameManager.Instance.TryCast<NormalGameManager>() == null)
+            if (GameManager.Instance && GameManager.Instance.TryCast<NormalGameManager>() != null)
+            {
+                FinishWindow();
+                return;
+            }
+            if (recoverTries++ < 2)
             {
                 if (GameManager.Instance) client.Despawn(GameManager.Instance);
                 GameManager.Instance = null;
-                SpawnNormal(client);
+                phase = Phase.SpawnNormal;
+                nextAt = Time.realtimeSinceStartup + SpawnGap;
+                return;
             }
         }
         catch (Exception ex) { Logger.Exception(ex, nameof(SeekerBody)); }
