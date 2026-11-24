@@ -7,23 +7,23 @@ using static TownOfHostL.Translator;
 
 namespace TownOfHostL.Roles.Impostor;
 
-// 暴走鬼: ファントムのボタンで暴走する。暴走の間は本編のかくれんぼの鬼の体 (マスク) になって全員に正体が見えるが、
+// バーサーカー: ファントムのボタンで暴走する。暴走の間は本編のかくれんぼの鬼の体 (マスク) になって全員に正体が見えるが、
 // キルクールが短く、足が速く、視界が広い。決めた時間が過ぎるか会議が始まると元に戻る。
-public sealed class Rampager : RoleBase, IImpostor, IUsePhantomButton
+public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
-            typeof(Rampager),
-            player => new Rampager(player),
-            CustomRoles.Rampager,
+            typeof(Berserker),
+            player => new Berserker(player),
+            CustomRoles.Berserker,
             () => RoleTypes.Phantom,
             CustomRoleTypes.Impostor,
             (int)Options.offsetId.ImpL + 0,
             SetupOptionItem,
-            "rmp"
+            "bsk"
         );
 
-    public Rampager(PlayerControl player)
+    public Berserker(PlayerControl player)
     : base(RoleInfo, player)
     {
         killCooldown = OptionKillCooldown.GetFloat();
@@ -49,12 +49,12 @@ public sealed class Rampager : RoleBase, IImpostor, IUsePhantomButton
 
     private enum OptionName
     {
-        RampagerRampageKillCooldown,
-        RampagerRampageSpeed,
-        RampagerRampageVision,
+        BerserkerRampageKillCooldown,
+        BerserkerRampageSpeed,
+        BerserkerRampageVision,
     }
 
-    private const string SpeedKey = nameof(Rampager);
+    private const string SpeedKey = nameof(Berserker);
     // 暗転が明けてから、名前の下の「背筋が凍った」を消すまで
     private const float ChillLinger = 2f;
 
@@ -63,7 +63,7 @@ public sealed class Rampager : RoleBase, IImpostor, IUsePhantomButton
     private float endAt = float.PositiveInfinity;
     private float lastKillAt = float.NegativeInfinity;
     private int lastShownSeconds = -1;
-    // 変身の暗転の間 (と明けた少し後) か。暴走鬼以外の人の名前の下に「背筋が凍った」を出す
+    // 変身の暗転の間 (と明けた少し後) か。バーサーカー以外の人の名前の下に「背筋が凍った」を出す
     private bool chilling;
     private float chillUntil = float.PositiveInfinity;
 
@@ -75,11 +75,11 @@ public sealed class Rampager : RoleBase, IImpostor, IUsePhantomButton
             .SetValueFormat(OptionFormat.Seconds);
         OptionDuration = FloatOptionItem.Create(RoleInfo, GeneralOption.Duration, new(5f, 60f, 1f), 15f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionRampageKillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.RampagerRampageKillCooldown, new(0f, 60f, 0.5f), 5f, false)
+        OptionRampageKillCooldown = FloatOptionItem.Create(RoleInfo, OptionName.BerserkerRampageKillCooldown, new(0f, 60f, 0.5f), 5f, false)
             .SetValueFormat(OptionFormat.Seconds);
-        OptionRampageSpeed = FloatOptionItem.Create(RoleInfo, OptionName.RampagerRampageSpeed, new(1f, 3f, 0.1f), 1.5f, false)
+        OptionRampageSpeed = FloatOptionItem.Create(RoleInfo, OptionName.BerserkerRampageSpeed, new(1f, 3f, 0.1f), 1.5f, false)
             .SetValueFormat(OptionFormat.Multiplier);
-        OptionRampageVision = FloatOptionItem.Create(RoleInfo, OptionName.RampagerRampageVision, new(0.25f, 5f, 0.25f), 2f, false)
+        OptionRampageVision = FloatOptionItem.Create(RoleInfo, OptionName.BerserkerRampageVision, new(0.25f, 5f, 0.25f), 2f, false)
             .SetValueFormat(OptionFormat.Multiplier);
     }
 
@@ -112,7 +112,7 @@ public sealed class Rampager : RoleBase, IImpostor, IUsePhantomButton
         PlayerSpeed.Multiply(Player.PlayerId, SpeedKey, rampageSpeed);
         Player.MarkDirtySettings();
         SeekerBody.Apply(Player, OnApplied, () => EndRampage(release: false));
-        Logger.Info($"暴走: {Player.GetNameWithRole()}", nameof(Rampager));
+        Logger.Info($"暴走: {Player.GetNameWithRole()}", nameof(Berserker));
     }
 
     // 鬼の体を付けた窓の後 (暴走の始め・キルの後の付け直し)。窓で SetRole を送り直したので、キルクールを付け直す
@@ -168,28 +168,28 @@ public sealed class Rampager : RoleBase, IImpostor, IUsePhantomButton
             if (!GameStates.IsMeeting && release) Player.SetKillCooldown();
         }
         Utils.NotifyRoles();
-        Logger.Info($"暴走が終わった: {Player.GetNameWithRole()}", nameof(Rampager));
+        Logger.Info($"暴走が終わった: {Player.GetNameWithRole()}", nameof(Berserker));
     }
 
     public override void OnStartMeeting() => EndRampage(release: true);
 
-    // 暴走鬼以外の人の画面で、自分の名前の下に出す
+    // バーサーカー以外の人の画面で、自分の名前の下に出す
     private string GetLowerTextOthers(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
     {
         seen ??= seer;
         if (!chilling || isForMeeting || seer != seen || seer == Player || !seer.IsAlive()) return "";
-        return "\n<color=#a8d8ff>" + GetString("RampagerChill") + "</color>";
+        return "\n<color=#a8d8ff>" + GetString("BerserkerChill") + "</color>";
     }
 
-    public override string GetAbilityButtonText() => GetString("RampagerButtonText");
+    public override string GetAbilityButtonText() => GetString("BerserkerButtonText");
 
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
     {
         seen ??= seer;
         if (!rampaging || isForMeeting || seer != Player || seen != Player) return "";
         if (float.IsPositiveInfinity(endAt))
-            return chilling ? Utils.ColorString(RoleInfo.RoleColor, GetString("RampagerTransform")) : "";
+            return chilling ? Utils.ColorString(RoleInfo.RoleColor, GetString("BerserkerTransform")) : "";
         int seconds = Mathf.Max(0, Mathf.CeilToInt(endAt - Time.realtimeSinceStartup));
-        return Utils.ColorString(RoleInfo.RoleColor, string.Format(GetString("RampagerRemaining"), seconds));
+        return Utils.ColorString(RoleInfo.RoleColor, string.Format(GetString("BerserkerRemaining"), seconds));
     }
 }

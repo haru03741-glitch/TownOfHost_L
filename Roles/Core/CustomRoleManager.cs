@@ -798,7 +798,7 @@ public enum CustomRoles
     EvilBusker, Busker, JackalBusker,
 
     // TownOfHost_L の役職
-    Rampager,
+    Berserker,
 
     GM,
     CounselorAndMadDilemma,
