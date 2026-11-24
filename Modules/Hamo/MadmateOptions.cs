@@ -3,6 +3,7 @@ using TownOfHostL.Roles.Core;
 
 namespace TownOfHostL;
 
+/// <remarks>マッドメイトの光源・月・インポスターが見える設定と、化け狐の復讐の設定は TownOfHost-K が元 (TownOfHost-hamo 経由)。</remarks>
 public static partial class Options
 {
     public static OptionItem MadmateHasLighting;

@@ -8,6 +8,7 @@ using TownOfHostL.Roles.Core;
 
 namespace TownOfHostL;
 
+/// <remarks>初回の会議は TownOfHost-K が元で、初回の会議のチャットの制限は TownOfHost-hamo が足した物 (どちらも TownOfHost-hamo 経由)。</remarks>
 public static partial class Options
 {
     public static OptionItem FirstTurnMeeting;

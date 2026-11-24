@@ -9,6 +9,7 @@ using static TownOfHostL.Translator;
 
 namespace TownOfHostL;
 
+/// <remarks>幽霊の設定・はしごとジップラインの死・会議と投票の表示の設定は TownOfHost-K が元 (TownOfHost-hamo 経由)。</remarks>
 public static partial class Options
 {
     public static OptionItem GhostCanSeeKillerColor;

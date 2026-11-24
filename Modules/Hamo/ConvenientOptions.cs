@@ -4,6 +4,7 @@ using TownOfHostL.Roles.Core;
 
 namespace TownOfHostL;
 
+/// <remarks>共通タスクの再配布・投票結果を見る・結果画面の勝因・キルクールの一括設定は TownOfHost-K が元 (TownOfHost-hamo 経由)。</remarks>
 public static partial class Options
 {
     public static OptionItem CommnTaskResetAssing;

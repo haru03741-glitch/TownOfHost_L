@@ -205,6 +205,12 @@ Thank you for finding and using TOH_L!<br>
   - 役職の説明の画面
   - タスクバトルとサドンデスのモード
   - キルクールの変更・全員の呼び寄せ・タイマー・勝者の指定・会議を開く・生き返らせるのコマンド (/kc /apt /timer /sw /fm /rev)
+  - 初回の会議・インサイダーモード・実験モード
+  - 幽霊の設定・会議と投票の表示の設定・はしごとジップラインの死
+  - サボタージュの設定 (勝ちの役職・時間切れの全滅・通信妨害と停電に触れない時間)
+  - マッドメイトの設定 (光源・月・インポスターが見える)・化け狐の復讐の設定
+  - エアシップの足場とアップロードのタスク・共通タスクの再配布・キルクールの一括設定
+  - 投票結果を見る設定・結果画面の勝因・機器の制限の追加の設定
 - [Town Of Host For E](https://github.com/AsumuAkaguma/TownOfHost_ForE)
   - YouTube ライブのコメントの読み取り (TownOfHost-K が参考にした元)
 - [Unity Doorstop (Pietrodjaowjao 版)](https://github.com/Pietrodjaowjao/UnityDoorstop) (LGPL-2.1・元は [NeighTools/UnityDoorstop](https://github.com/NeighTools/UnityDoorstop))

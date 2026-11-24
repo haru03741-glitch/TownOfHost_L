@@ -2,6 +2,7 @@ using HarmonyLib;
 
 namespace TownOfHostL;
 
+/// <remarks>実験モード (会議明けの暗転・チャットの白黒) は TownOfHost-K が元 (TownOfHost-hamo 経由)。</remarks>
 public static partial class Options
 {
     public static OptionItem ExperimentalMode;

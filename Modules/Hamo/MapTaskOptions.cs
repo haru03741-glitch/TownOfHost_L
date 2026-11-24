@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace TownOfHostL;
 
+/// <remarks>エアシップの足場とアップロードのタスクの設定は TownOfHost-K が元 (TownOfHost-hamo 経由)。</remarks>
 public static partial class Options
 {
     public static OptionItem MapModification;

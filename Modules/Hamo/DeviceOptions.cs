@@ -3,6 +3,7 @@ using TownOfHostL.Roles.Core;
 
 namespace TownOfHostL;
 
+/// <remarks>機器の制限の追加の設定は TownOfHost-K が元 (TownOfHost-hamo 経由)。</remarks>
 public static partial class Options
 {
     public static OptionItem DisableDevicesIgnoreCompleteTask;

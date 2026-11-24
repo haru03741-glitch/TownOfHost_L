@@ -5,6 +5,7 @@ using TownOfHostL.Core.Win;
 
 namespace TownOfHostL;
 
+/// <remarks>サボタージュの勝ちの役職・時間切れの全滅・通信妨害と停電に触れない時間の設定は TownOfHost-K が元 (TownOfHost-hamo 経由)。</remarks>
 public static partial class Options
 {
     public static OptionItem ChangeSabotageWinRole;

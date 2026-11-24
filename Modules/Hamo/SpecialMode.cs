@@ -1,5 +1,6 @@
 namespace TownOfHostL;
 
+/// <remarks>インサイダーモードとインポスターの役職が見える設定は TownOfHost-K が元 (TownOfHost-hamo 経由)。</remarks>
 public static partial class Options
 {
     public static OptionItem ONspecialMode;
