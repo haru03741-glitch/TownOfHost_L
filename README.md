@@ -75,6 +75,9 @@ Thank you for finding and using TOH_L!<br>
 - TownOfHost_Yの開発者様は省略。
 
 ## 移植・参考クレジット
+役職の説明の最後に出る「From」は、その役職を最初に考えた Mod です。<br>
+下の一覧は、TOH_L に入っているコードや仕組みを、元の Mod ごとに並べています。別の Mod を通して持ってきた物は「〜経由」と添え、アイデアだけを借りた物は「〜のアイデア」と書いています。TownOfHost-hamo から移した役職は hamo の欄にまとめ、From と同じ Mod ごとに分けています。<br>
+
 - [本家TOH](https://github.com/tukasa0001/TownOfHost)・[TOH_H](https://github.com/Hyz-sui/TownOfHost-H)・[TOH_Y](https://github.com/Yumenopai/TownOfHost_Y)
   - Fork元であり、様々な機能の参考にしています。
 - [TownOfPlus](https://github.com/tugaru1975/TownOfPlus)
@@ -159,7 +162,7 @@ Thank you for finding and using TOH_L!<br>
   - 名前で絵を描く偽の PlayerControl (CustomNetObject)
   - チャットを大きな空白で押し出す処理
 - [TownOfHost-hamo](https://github.com/rar006/TownOfHost-hamo)
-  - hamo から移した役職 (役職ごとの元の Mod):
+  - hamo から移した役職 (役職の From ごと):
     - TownOfHost-hamo: 守護者・ナイスハッカー・リピーター・イビルコマンダー・フレーマー・マエストロ・サロゲート・マッドカイザー・アンチヒーロー・マッドマジック
     - [TownOfHost-K](https://github.com/KYMario/TownOfHost-K): アナライザー・ナイスアドナー・ウルトラスター・アンチレポーター・バルーナー・爆弾魔・ドライバー・イビルアドナー・イビルブレンダー・マジシャン・大狼・マッドアベンジャー・化け狐・ジャッカルウルフ・ブレイド・カメレオン
     - [SuperNewRoles](https://github.com/ykundesu/SuperNewRoles): 天秤・ミーティングシェリフ・賢者・村長・イビルギャンブラー・波動砲・ペンギン・突き落とし師・侍・フリーター・波動砲ジャッカル・弾・陰陽師・式神・パブロフの犬・スペランカー・マグロ・ノヴァ (波動砲が元)
