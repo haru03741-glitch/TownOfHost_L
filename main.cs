@@ -40,7 +40,8 @@ public partial class Main : BasePlugin
     // Discordサーバーの招待リンク / Discord Server Invite URL (Default: https://discord.gg/W5ug6hXB9V)
     public static readonly string DiscordInviteUrl = "https://discord.gg/Bv8XRBvCXW";
     // ==========
-    public const string OriginalForkId = "OriginalTOH"; // Don't Change The Value. / この値を変更しないでください。
+    // 本家の ForkId。古い版の本家は版の通信に ForkId を載せないので、その時はこの値として読む (本家の値と同じでないと見分けが狂う)
+    public const string OriginalForkId = "OriginalTOH";
     // == 認証設定 / Authentication Config ==
     // デバッグキーの認証インスタンス
     public static HashAuth DebugKeyAuth { get; private set; }
