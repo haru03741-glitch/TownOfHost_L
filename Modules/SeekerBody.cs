@@ -69,10 +69,11 @@ public static class SeekerBody
     private static bool selfSending;
 
     /// <summary>窓の最中か (GameManager を差し替えている間)。この間は GameManager.Instance が無いか、かくれんぼの物</summary>
-    public static bool InWindow => phase != Phase.Idle;
+    // 窓の最中に試合が終わると窓は閉じずに残るので、試合の外では窓の最中と見ない (次の試合の始めに Init で戻る)
+    public static bool InWindow => phase != Phase.Idle && GameStates.IsInGame;
     public static bool IsMasked(byte playerId) => masked.ContainsKey(playerId);
     /// <summary>鬼の体を付けている人がいるか、窓の最中か</summary>
-    public static bool Active => phase != Phase.Idle || masked.Count > 0;
+    public static bool Active => InWindow || masked.Count > 0;
     /// <summary>窓の暗さを掛けている人か (人ごとの設定を組む時に視界を狭める)</summary>
     public static bool IsDimmed(byte playerId) => dimmed.Count > 0 && dimmed.Contains(playerId);
 
