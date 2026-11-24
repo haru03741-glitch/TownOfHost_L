@@ -4,6 +4,11 @@ BepInEx/plugins/TownOfHost_L.dll
   TownOfHost_L - GPL-3.0 (licenses/GPL-3.0.txt)
   Source: https://github.com/haru03741-glitch/TownOfHost_L
 
+Among Us artwork inside TownOfHost_L.dll
+  Resources/SpawnMap_*.png (the game's map images) and Resources/Footage/*.jpg (frames recorded from the
+  game) are Among Us artwork, copyright Innersloth LLC. They are not covered by the GPL-3.0 license of
+  TownOfHost_L. The same applies to the map images in Images/ of the source repository.
+
 BepInEx/patchers/TownOfHost_L.BootAccel.dll
   TownOfHost_L - GPL-3.0 (licenses/GPL-3.0.txt)
   Source: tools/BootAccel in the TownOfHost_L source repository
