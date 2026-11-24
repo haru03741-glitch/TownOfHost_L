@@ -1057,13 +1057,13 @@ public static class StandardIntroHelper
                 pc.RpcSetRoleDesync(roleType, pc.GetClientId());
 
 
+                // インポスターの仲間を、本人の画面でインポスターに見せる (基底がファントムの人にも。見せないとキルボタンが仲間を狙う)
                 foreach (var seen in Main.AllPlayerControls)
                 {
                     if (role.GetCustomRoleTypes() != CustomRoleTypes.Impostor) continue;
                     if (seen.GetCustomRole().GetCustomRoleTypes() != CustomRoleTypes.Impostor) continue;
                     if (role.GetRoleInfo()?.IsDesyncImpostor == true) continue;
                     if (seen.GetCustomRole().GetRoleInfo()?.IsDesyncImpostor == true) continue;
-                    if (pc.GetCustomRole().GetRoleTypes() == RoleTypes.Phantom) continue;
 
                     if (seen.PlayerId == pc.PlayerId) continue;
                     var capPc = pc;
