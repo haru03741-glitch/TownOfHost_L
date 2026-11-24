@@ -28,7 +28,7 @@ public static class ModClientSync
 
     /// <summary>ホストが送り先の客へ宛てる電文の番号か (客はこの番号を本編へ渡さない)</summary>
     public static bool IsSyncCall(byte callId)
-        => callId is >= (byte)CustomRPC.ModClientOptions and <= (byte)CustomRPC.ModClientBodyErase;
+        => callId is >= (byte)CustomRPC.ModClientOptions and <= (byte)CustomRPC.ModClientBodyMove;
 
     // ───────────── ホスト ─────────────
 
@@ -448,6 +448,21 @@ public static class ModClientSync
         }
     }
 
+    /// <summary>
+    /// ホストが動かした死体を、送り先の客の手元でも動かす。送った客を <paramref name="sentTo"/> に足す
+    /// (この客には覆いと作り直しの死体を出さない)。位置は死体の持ち主が立っていた所に当たる足元の位置。
+    /// </summary>
+    public static void SendBodyMove(byte parentId, Vector2 standPos, HashSet<int> sentTo)
+    {
+        if (peers.Count == 0 || !AmHost) return;
+        Prune();
+        foreach (var id in new List<int>(peers.Keys))
+        {
+            Enqueue(id, CustomRPC.ModClientBodyMove, w => { w.Write(parentId); w.Write(standPos.x); w.Write(standPos.y); });
+            sentTo.Add(id);
+        }
+    }
+
     // ───────────── 客 ─────────────
 
     private static int linkedHostId = -1;
@@ -552,6 +567,7 @@ public static class ModClientSync
                 case CustomRPC.ModClientEnd: ReadEnd(reader); return true;
                 case CustomRPC.ModClientHud: ReadHud(reader); return true;
                 case CustomRPC.ModClientBodyErase: DeadBodyEraser.EraseOnClient(reader.ReadByte()); return true;
+                case CustomRPC.ModClientBodyMove: DeadBodyMover.MoveOnClient(reader.ReadByte(), new Vector2(reader.ReadSingle(), reader.ReadSingle())); return true;
             }
         }
         catch (Exception ex)

@@ -634,6 +634,8 @@ partial class ReportDeadBodyPatch
         Logger.Info($"{__instance.GetNameWithRole()} => {target?.Object?.GetNameWithRole() ?? "null"}", "ReportDeadBody");
         // 生き返った人の死体 (本編の死体は消せずに残る) は通報できない
         if (target != null && !SpecialMeeting && Revive.WasRevived(target.PlayerId) && !(PlayerState.GetByPlayerId(target.PlayerId)?.IsDead ?? true)) return false;
+        // 動かした死体を、動かす前の所 (本編の客の画面では覆いの下に残っている) から通報したものは捨てる
+        if (AmongUsClient.Instance.AmHost && !ForceReport && !SpecialMeeting && !DeadBodyMover.AllowsReport(__instance, target)) return false;
         // 一時的に幽霊になっている人は、会議の前に戻す (戻す SetRole が落ち着くまで、下で通報を預かる)
         if (AmongUsClient.Instance.AmHost) TempGhost.ReturnAllForMeeting();
         // 鬼の体も会議の前に外す (外す SetRole が落ち着くまで、下で通報を預かる)
@@ -775,6 +777,7 @@ partial class ReportDeadBodyPatch
         Step(MeetingTimeManager.OnReportDeadBody, "MeetingTimeManager.OnReportDeadBody");
         // 会議で死体は全部片付くので、死体の覆いも外す
         Step(DeadBodyEraser.OnReportDeadBody, "DeadBodyEraser.OnReportDeadBody");
+        Step(DeadBodyMover.OnReportDeadBody, "DeadBodyMover.OnReportDeadBody");
         Step(() => Utils.NotifyRoles(isForMeeting: true, NoCache: true), "ReportDeadBody.NotifyRoles");
         Step(Utils.SyncAllSettings, "ReportDeadBody.SyncAllSettings");
 

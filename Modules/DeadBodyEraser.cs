@@ -180,14 +180,30 @@ public static class DeadBodyEraser
     {
         if (!AmongUsClient.Instance.AmHost || covers.ContainsKey(playerId)) return;
         if (!(Options.ErasedBodyCover?.GetBool() ?? true)) return;
-        var color = FloorColorSampler.Sample(pos);
-        var cover = Core.CustomNetObject.Create(CoverArt(ColorUtility.ToHtmlStringRGB(color)), pos);
-        if (cover == null) return;
         // 覆いが要るのは、死体が残る客だけ。死体そのものを消したホストと、消す電文を送った客には出さない
         erasedOnClients.TryGetValue(playerId, out var erasedOn);
-        cover.HideFrom(p => p.AmOwner || (erasedOn != null && erasedOn.Contains(p.OwnerId)));
+        var cover = CoverAt(pos, erasedOn);
+        if (cover == null) return;
         covers[playerId] = cover;
     }
+
+    /// <summary>
+    /// 本編の客の画面で、<paramref name="pos"/> (死体の真ん中) の死体を床の色で覆う CNO を出す。
+    /// ホストと <paramref name="skipClients"/> の客 (死体を手元で消した・動かした客) には出さない。外すのは呼んだ側
+    /// </summary>
+    public static Core.CustomNetObject CoverAt(Vector2 pos, HashSet<int> skipClients)
+    {
+        var cover = Core.CustomNetObject.Create(CoverSpriteAt(pos), pos);
+        cover?.HideFrom(p => p.AmOwner || (skipClients != null && skipClients.Contains(p.OwnerId)));
+        return cover;
+    }
+
+    /// <summary><paramref name="pos"/> の床の色で描いた、死体を覆う絵</summary>
+    public static string CoverSpriteAt(Vector2 pos)
+        => CoverArt(ColorUtility.ToHtmlStringRGB(FloorColorSampler.Sample(pos)));
+
+    /// <summary>死体の絵の真ん中 (覆いを置く所)</summary>
+    public static Vector2 CenterOf(DeadBody body) => BodyCenter(body);
 
     // 絵の大きさは、体を覆う実績のあるポータルの絵 (VanillaHnsPortalMaker) の字の大きさに合わせ、横たわった死体の幅まで広げる
     private static string CoverArt(string hex)
