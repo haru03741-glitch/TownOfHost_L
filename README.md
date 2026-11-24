@@ -34,7 +34,7 @@
 ## ★見どころ: 通常の試合に、かくれんぼの鬼と懐中電灯
 - **役職「バーサーカー」**: 通常モードの試合の途中で、インポスターが本編のかくれんぼの鬼の姿 (マスク姿) に変わります。Mod を入れていない参加者の画面にも鬼の姿で映ります。
 - **懐中電灯モード・属性「ライティング」**: 通常モードの試合で、かくれんぼの懐中電灯の視界を出します。こちらも Mod を入れていない参加者の画面で動きます。
-- かくれんぼの鬼と懐中電灯を通常モードの試合に出すのは、私たちの知る限り、ホストだけで動く Mod では初めての試みです。
+- どちらも、ホストだけが TOH_L を入れていれば動きます。
 
 ## ★この Mod について
 
@@ -56,7 +56,7 @@ TownOfHost-L is a host-only mod: only the host needs to install it. Players who 
 
 TownOfHost-L is a modified version of [TownOfHost_Y](https://github.com/Yumenopai/TownOfHost_Y), which is itself based on [TownOfHost](https://github.com/tukasa0001/TownOfHost). It has been modified by haru, waffle and other TownOfHost-L contributors since November 2026, and is licensed under GPL-3.0, the same as the original ([LICENSE](LICENSE)).<br>
 
-Highlight: TownOfHost-L brings the Hide and Seek Seeker (the Berserker role) and the Hide and Seek flashlight (Flashlight Mode and the Lighting add-on) into normal-mode games, and players without the mod see them too. As far as we know, no host-only mod has done this before.<br>
+Highlight: TownOfHost-L brings the Hide and Seek Seeker (the Berserker role) and the Hide and Seek flashlight (Flashlight Mode and the Lighting add-on) into normal-mode games, and players without the mod see them too. Only the host needs the mod.<br>
 
 Thank you for finding and using TOH_L!<br>
 
