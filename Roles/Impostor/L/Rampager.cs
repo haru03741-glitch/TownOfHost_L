@@ -55,20 +55,17 @@ public sealed class Rampager : RoleBase, IImpostor, IUsePhantomButton
     }
 
     private const string SpeedKey = nameof(Rampager);
-    // 咆哮の演出の絵 (CNO の名前の絵) と、絵の下に描かれる体の色 (Palette.PlayerColors の番号・赤)
-    private static readonly string[] RoarFrames =
-    {
-        "<size=10><color=#ffffff>●</color></size>",
-        "<size=22><color=#ff1a1a>★</color></size>",
-        "<size=18><color=#8b000099>●</color></size>",
-    };
-    private const byte RoarBodyColor = 0;
+    // 暗転が明けてから、名前の下の「背筋が凍った」を消すまで
+    private const float ChillLinger = 2f;
 
     private bool rampaging;
     // 暴走が終わる時刻 (Time.realtimeSinceStartup)。鬼の体を付け終えてから数え始める
     private float endAt = float.PositiveInfinity;
     private float lastKillAt = float.NegativeInfinity;
     private int lastShownSeconds = -1;
+    // 変身の暗転の間 (と明けた少し後) か。暴走鬼以外の人の名前の下に「背筋が凍った」を出す
+    private bool chilling;
+    private float chillUntil = float.PositiveInfinity;
 
     private static void SetupOptionItem()
     {
@@ -88,6 +85,9 @@ public sealed class Rampager : RoleBase, IImpostor, IUsePhantomButton
 
     public bool IsRampaging => rampaging;
 
+    public override void Add() => CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
+    public override void OnDestroy() => CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
+
     public float CalculateKillCooldown() => rampaging ? rampageKillCooldown : killCooldown;
 
     public override void ApplyGameOptions(IGameOptions opt)
@@ -105,6 +105,10 @@ public sealed class Rampager : RoleBase, IImpostor, IUsePhantomButton
         rampaging = true;
         endAt = float.PositiveInfinity;
         lastShownSeconds = -1;
+        chilling = true;
+        chillUntil = float.PositiveInfinity;
+        // 暗転が始まる前に名前を送る (暗い間も自分の名前の下の文字は見える)
+        Utils.NotifyRoles();
         PlayerSpeed.Multiply(Player.PlayerId, SpeedKey, rampageSpeed);
         Player.MarkDirtySettings();
         SeekerBody.Apply(Player, OnApplied, () => EndRampage(release: false));
@@ -119,9 +123,8 @@ public sealed class Rampager : RoleBase, IImpostor, IUsePhantomButton
         if (float.IsPositiveInfinity(endAt))
         {
             endAt = now + duration;
+            chillUntil = now + ChillLinger;
             Utils.NotifyRoles();
-            // 変身の暗転が明けた所で、咆哮の演出を出す
-            TownOfHostL.Core.CnoBurst.Play(Player.transform.position, RoarFrames, RoarBodyColor, 0.3f, 1.2f, 0.15f);
         }
         float remaining = Mathf.Max(0f, rampageKillCooldown - (now - lastKillAt));
         Player.SetKillCooldown(remaining);
@@ -136,6 +139,11 @@ public sealed class Rampager : RoleBase, IImpostor, IUsePhantomButton
     {
         if (!rampaging || !AmongUsClient.Instance.AmHost) return;
         if (!Player.IsAlive()) { EndRampage(release: true); return; }
+        if (chilling && Time.realtimeSinceStartup >= chillUntil)
+        {
+            chilling = false;
+            Utils.NotifyRoles();
+        }
         float left = endAt - Time.realtimeSinceStartup;
         if (left <= 0f) { EndRampage(release: true); return; }
         if (float.IsPositiveInfinity(left)) return;
@@ -149,6 +157,7 @@ public sealed class Rampager : RoleBase, IImpostor, IUsePhantomButton
     {
         if (!rampaging) return;
         rampaging = false;
+        chilling = false;
         endAt = float.PositiveInfinity;
         PlayerSpeed.Remove(Player.PlayerId, SpeedKey);
         if (release) SeekerBody.Release(Player);
@@ -164,12 +173,22 @@ public sealed class Rampager : RoleBase, IImpostor, IUsePhantomButton
 
     public override void OnStartMeeting() => EndRampage(release: true);
 
+    // 暴走鬼以外の人の画面で、自分の名前の下に出す
+    private string GetLowerTextOthers(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
+    {
+        seen ??= seer;
+        if (!chilling || isForMeeting || seer != seen || seer == Player || !seer.IsAlive()) return "";
+        return "\n<color=#a8d8ff>" + GetString("RampagerChill") + "</color>";
+    }
+
     public override string GetAbilityButtonText() => GetString("RampagerButtonText");
 
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
     {
         seen ??= seer;
-        if (!rampaging || isForMeeting || seer != Player || seen != Player || float.IsPositiveInfinity(endAt)) return "";
+        if (!rampaging || isForMeeting || seer != Player || seen != Player) return "";
+        if (float.IsPositiveInfinity(endAt))
+            return chilling ? Utils.ColorString(RoleInfo.RoleColor, GetString("RampagerTransform")) : "";
         int seconds = Mathf.Max(0, Mathf.CeilToInt(endAt - Time.realtimeSinceStartup));
         return Utils.ColorString(RoleInfo.RoleColor, string.Format(GetString("RampagerRemaining"), seconds));
     }

@@ -198,6 +198,12 @@ namespace TownOfHostL.Modules
                 opt.SetFloat(FloatOptionNames.CrewLightMod, 0f);
                 opt.SetFloat(FloatOptionNames.ImpostorLightMod, 0f);
             }
+            // 鬼の体の差し替えの間は、自分の周りだけが見えるまで暗くする
+            if (SeekerBody.IsDimmed(player.PlayerId))
+            {
+                opt.SetFloat(FloatOptionNames.CrewLightMod, Mathf.Min(opt.GetFloat(FloatOptionNames.CrewLightMod), SeekerBody.DimVision));
+                opt.SetFloat(FloatOptionNames.ImpostorLightMod, Mathf.Min(opt.GetFloat(FloatOptionNames.ImpostorLightMod), SeekerBody.DimVision));
+            }
             MeetingTimeManager.ApplyGameOptions(opt);
             // 視界の値が決まった後 (暗転・会議の時間より後) に、懐中電灯の半径のずれを足す
             Flashlight.ApplyGameOptions(player, opt);
