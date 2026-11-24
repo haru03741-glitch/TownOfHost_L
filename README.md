@@ -31,6 +31,11 @@
   - TOH_Y の役職と機能を元に、作りを大きく組み直しています。役職を多く追加したほか、ホストの操作盤・役職辞典・チャットの便利機能・配信向けの機能 (観客席・コメントの板・視聴者の干渉) などを足しています。
   - TOH_Y と同じ名前の役職・機能でも、挙動が変わっている所があります。
 
+## ★見どころ: 通常の試合に、かくれんぼの鬼と懐中電灯
+- **役職「バーサーカー」**: 通常モードの試合の途中で、インポスターが本編のかくれんぼの鬼の姿 (マスク姿) に変わります。Mod を入れていない参加者の画面にも鬼の姿で映ります。
+- **懐中電灯モード・属性「ライティング」**: 通常モードの試合で、かくれんぼの懐中電灯の視界を出します。こちらも Mod を入れていない参加者の画面で動きます。
+- かくれんぼの鬼と懐中電灯を通常モードの試合に出すのは、私たちの知る限り、ホストだけで動く Mod では初めての試みです。
+
 ## ★この Mod について
 
 この Mod は非公式のものであり、この Mod の開発に関して Among Us の開発元である"Innersloth"は一切関与していません。<br>
@@ -50,6 +55,8 @@ We also use a translator for all in-game translations into English. If there is 
 TownOfHost-L is a host-only mod: only the host needs to install it. Players who have TownOfHost-L installed can also join other rooms. If the host runs the same version of TownOfHost-L, they see the lobby settings list, their role in the intro and the task list, and every player's role on the results screen. In any other room, the mod's features are turned off and they play as normal players. Public lobbies are supported.<br>
 
 TownOfHost-L is a modified version of [TownOfHost_Y](https://github.com/Yumenopai/TownOfHost_Y), which is itself based on [TownOfHost](https://github.com/tukasa0001/TownOfHost). It has been modified by haru, waffle and other TownOfHost-L contributors since November 2026, and is licensed under GPL-3.0, the same as the original ([LICENSE](LICENSE)).<br>
+
+Highlight: TownOfHost-L brings the Hide and Seek Seeker (the Berserker role) and the Hide and Seek flashlight (Flashlight Mode and the Lighting add-on) into normal-mode games, and players without the mod see them too. As far as we know, no host-only mod has done this before.<br>
 
 Thank you for finding and using TOH_L!<br>
 
@@ -112,6 +119,7 @@ Thank you for finding and using TOH_L!<br>
   - 起動直後のメニューでアカウント表示を止め、ログインを待たずにメニューを使えるようにする方法 (More Roles Plus 経由)
   - 設定の検索の一致判定 (More Roles Plus 経由)
   - 波動砲のためとビームを偽の PlayerControl の名前で描く方法
+  - 通常モードの試合で、Mod を入れていない参加者にもかくれんぼの鬼の体と懐中電灯を出す仕組み
 - [Endless Host Roles](https://github.com/Gurge44/EndlessHostRoles)
   - バスカー (一時的に幽霊になって戻る仕組み・戻る時にマップの外かどうかを見る判定)
   - 配布物に入れる Unity Doorstop
