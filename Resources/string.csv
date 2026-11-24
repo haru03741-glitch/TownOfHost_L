@@ -6505,7 +6505,7 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "BerserkerKillsForTrance","Kills Until Frenzy (0 = never)","忘我までのキル数 (0 で忘我にならない)"
 "BerserkerButtonText","Rampage","暴走"
 "BerserkerRemaining","<color=#ff3030>Rampage: {0}s</color>","<color=#ff3030>暴走中 あと{0}秒</color>"
-"BerserkerChill","...a chill runs down your spine","……背筋が凍った"
+"BerserkerChill","...you shiver","……背筋が凍った"
 "BerserkerTransform","Rampage...","暴走……"
 "BerserkerTrance","<color=#ff3030>Frenzy</color>","<color=#ff3030>忘我</color>"
 "SettingsUI.Sec.AfterGame","After the game","試合の後の表示","","","","",""
