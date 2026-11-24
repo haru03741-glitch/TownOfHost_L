@@ -19,6 +19,7 @@ namespace TownOfHostL
     {
         private static float timer = 600f;
         internal static void SyncTimer(float seconds) => timer = Mathf.Max(0f, seconds);
+        internal static float LobbyTimer => timer;
         private static TextMeshPro warningText;
         public static TextMeshPro HideName;
         private static PassiveButton cancelButton;
