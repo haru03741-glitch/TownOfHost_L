@@ -83,7 +83,7 @@ Thank you for finding and using TOH_L!<br>
   - シュレディンガーの猫・イビルトラッカーのアイデア
 - [Nebula on the Ship](https://github.com/Dolly1016/Nebula)
   - タイトル画面から見れるInfoアナウンス画面
-  - ドクター・スナイパーのアイデア
+  - ドクター・スナイパー・バーサーカーのアイデア
   - incremental GC を実行時に切る方法 ([Nebula-Public](https://github.com/Dolly1016/Nebula-Public))
   - 設定画面の部品 (本編の絵で組む窓・スクロールする欄・ボタン) と、役職のカードの一覧と役職ごとの頁の設定画面 ([Nebula-Public](https://github.com/Dolly1016/Nebula-Public)・More Roles Plus 経由)
 - [Foolers Mod](https://github.com/MengTube/Foolers-Mod)

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using AmongUs.GameOptions;
 using UnityEngine;
 using TownOfHostL.Modules;
@@ -8,8 +9,10 @@ using static TownOfHostL.Translator;
 namespace TownOfHostL.Roles.Impostor;
 
 // バーサーカー: ファントムのボタンで暴走する。暴走の間は本編のかくれんぼの鬼の体 (マスク) になって全員に正体が見えるが、
-// キルクールが短く、足が速く、視界が広い。決めた時間が過ぎるか会議が始まると元に戻る。
-public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton
+// キルクールが短く、足が速く、視界が広い。決めた時間が過ぎるか、会議が始まるか、もう一度ボタンを押す (鎮静化) と元に戻る。
+// 1 回の暴走で決めた人数をキルすると忘我になり、仲間のインポスターもキルできるようになる。
+// 役職の発想は Nebula on the Ship のバーサーカー (コードは自前)。
+public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammateKiller
 {
     public static readonly SimpleRoleInfo RoleInfo =
         SimpleRoleInfo.Create(
@@ -32,6 +35,8 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton
         rampageKillCooldown = OptionRampageKillCooldown.GetFloat();
         rampageSpeed = OptionRampageSpeed.GetFloat();
         rampageVision = OptionRampageVision.GetFloat();
+        canCalmDown = OptionCanCalmDown.GetBool();
+        killsForTrance = OptionKillsForTrance.GetInt();
     }
 
     private static OptionItem OptionKillCooldown;
@@ -40,18 +45,24 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton
     private static OptionItem OptionRampageKillCooldown;
     private static OptionItem OptionRampageSpeed;
     private static OptionItem OptionRampageVision;
+    private static OptionItem OptionCanCalmDown;
+    private static OptionItem OptionKillsForTrance;
     private static float killCooldown;
     private static float cooldown;
     private static float duration;
     private static float rampageKillCooldown;
     private static float rampageSpeed;
     private static float rampageVision;
+    private static bool canCalmDown;
+    private static int killsForTrance;
 
     private enum OptionName
     {
         BerserkerRampageKillCooldown,
         BerserkerRampageSpeed,
         BerserkerRampageVision,
+        BerserkerCanCalmDown,
+        BerserkerKillsForTrance,
     }
 
     private const string SpeedKey = nameof(Berserker);
@@ -66,6 +77,14 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton
     // 変身の暗転の間 (と明けた少し後) か。バーサーカー以外の人の名前の下に「背筋が凍った」を出す
     private bool chilling;
     private float chillUntil = float.PositiveInfinity;
+    // 今の暴走でキルした数
+    private int rampageKills;
+    // 忘我か (仲間もキルできる)
+    private bool trance;
+    // 忘我の見え方を、窓 (SetRole を送れない間) が明けたら送る
+    private bool tranceSendPending;
+    // 忘我で見え方を替えた仲間と、替える前の見え方 (自分の画面で)
+    private readonly Dictionary<byte, RoleTypes> tranceViews = new();
 
     private static void SetupOptionItem()
     {
@@ -81,9 +100,14 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton
             .SetValueFormat(OptionFormat.Multiplier);
         OptionRampageVision = FloatOptionItem.Create(RoleInfo, OptionName.BerserkerRampageVision, new(0.25f, 5f, 0.25f), 2f, false)
             .SetValueFormat(OptionFormat.Multiplier);
+        OptionCanCalmDown = BooleanOptionItem.Create(RoleInfo, OptionName.BerserkerCanCalmDown, true, false);
+        // 0 で忘我にならない
+        OptionKillsForTrance = IntegerOptionItem.Create(RoleInfo, OptionName.BerserkerKillsForTrance, new(0, 5, 1), 2, false)
+            .SetValueFormat(OptionFormat.Players);
     }
 
     public bool IsRampaging => rampaging;
+    public bool CanKillTeammates => trance && rampaging;
 
     public override void Add() => CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
     public override void OnDestroy() => CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
@@ -96,13 +120,24 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton
         if (rampaging) opt.SetFloat(FloatOptionNames.ImpostorLightMod, rampageVision);
     }
 
-    // 暴走の間に押しても何もしない。ボタンのクールは暴走が終わった時の送り直しで始め直す
+    // 暴走の間に押すと鎮静化する (変身中と窓の間は何もしない)。
+    // ボタンを戻す SetRole は鬼の体を外すので送らない。ボタンのクールは窓の SetRole で始め直される
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
         AdjustKillCooldown = false;
         ResetCooldown = null;
-        if (rampaging || !Player.IsAlive()) return;
+        if (!Player.IsAlive()) return;
+        if (rampaging)
+        {
+            if (canCalmDown && !float.IsPositiveInfinity(endAt) && !SeekerBody.InWindow)
+            {
+                Logger.Info($"鎮静化: {Player.GetNameWithRole()}", nameof(Berserker));
+                EndRampage(release: true);
+            }
+            return;
+        }
         rampaging = true;
+        rampageKills = 0;
         endAt = float.PositiveInfinity;
         lastShownSeconds = -1;
         chilling = true;
@@ -128,16 +163,65 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton
         }
         float remaining = Mathf.Max(0f, rampageKillCooldown - (now - lastKillAt));
         Player.SetKillCooldown(remaining);
+        if (tranceSendPending) SendTranceViews();
     }
 
     public void OnMurderPlayerAsKiller(MurderInfo info)
     {
-        if (rampaging && !info.IsSuicide) lastKillAt = Time.realtimeSinceStartup;
+        if (!rampaging || info.IsSuicide) return;
+        lastKillAt = Time.realtimeSinceStartup;
+        rampageKills++;
+        if (trance || killsForTrance <= 0 || rampageKills < killsForTrance) return;
+        trance = true;
+        tranceSendPending = true;
+        Logger.Info($"忘我: {Player.GetNameWithRole()}", nameof(Berserker));
+        if (!SeekerBody.InWindow) SendTranceViews();
+        Utils.NotifyRoles(SpecifySeer: Player);
+    }
+
+    // 自分の画面で、生きている仲間 (キルを持つ人に見えている人) を、キルの対象にできる見え方にする
+    private void SendTranceViews()
+    {
+        tranceSendPending = false;
+        if (!trance || !Player.IsAlive()) return;
+        bool sent = false;
+        foreach (var pc in Main.AllAlivePlayerControls)
+        {
+            if (pc.PlayerId == Player.PlayerId || tranceViews.ContainsKey(pc.PlayerId)) continue;
+            if (!pc.Is(CustomRoleTypes.Impostor)) continue;
+            var current = RoleView.Living(pc, Player);
+            if (!RoleView.IsKillerRole(current)) continue;
+            tranceViews[pc.PlayerId] = current;
+            RoleView.Send(pc, Player, RoleTypes.Scientist);
+            sent = true;
+        }
+        if (sent) Revive.BeginSettling();
+    }
+
+    // 忘我の見え方を戻す。窓の間は送れないので、窓が明けてから (OnFixedUpdate) 戻す
+    private void RestoreTranceViews()
+    {
+        if (tranceViews.Count == 0) return;
+        if (SeekerBody.InWindow) return;
+        foreach (var (id, role) in tranceViews)
+        {
+            var pc = Utils.GetPlayerById(id);
+            if (pc == null || !pc.IsAlive()) continue;
+            RoleView.Send(pc, Player, role);
+        }
+        tranceViews.Clear();
+        Revive.BeginSettling();
     }
 
     public override void OnFixedUpdate(PlayerControl player)
     {
-        if (!rampaging || !AmongUsClient.Instance.AmHost) return;
+        if (!AmongUsClient.Instance.AmHost) return;
+        if (!rampaging)
+        {
+            if (tranceViews.Count > 0) RestoreTranceViews();
+            return;
+        }
+        if (tranceSendPending && !SeekerBody.InWindow) SendTranceViews();
         if (!Player.IsAlive()) { EndRampage(release: true); return; }
         if (chilling && Time.realtimeSinceStartup >= chillUntil)
         {
@@ -158,7 +242,10 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton
         if (!rampaging) return;
         rampaging = false;
         chilling = false;
+        trance = false;
+        tranceSendPending = false;
         endAt = float.PositiveInfinity;
+        RestoreTranceViews();
         PlayerSpeed.Remove(Player.PlayerId, SpeedKey);
         if (release) SeekerBody.Release(Player);
         if (Player.IsAlive())
@@ -171,7 +258,17 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton
         Logger.Info($"暴走が終わった: {Player.GetNameWithRole()}", nameof(Berserker));
     }
 
-    public override void OnStartMeeting() => EndRampage(release: true);
+    public override void OnStartMeeting()
+    {
+        EndRampage(release: true);
+        // 会議の前に戻せなかった (窓の間だった) 見え方は、会議の後の配り直しが表から引くので、表だけ戻しておく
+        foreach (var (id, role) in tranceViews)
+        {
+            var pc = Utils.GetPlayerById(id);
+            if (pc != null) RoleView.Record(Player, pc, role);
+        }
+        tranceViews.Clear();
+    }
 
     // バーサーカー以外の人の画面で、自分の名前の下に出す
     private string GetLowerTextOthers(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
@@ -190,6 +287,9 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton
         if (float.IsPositiveInfinity(endAt))
             return chilling ? Utils.ColorString(RoleInfo.RoleColor, GetString("BerserkerTransform")) : "";
         int seconds = Mathf.Max(0, Mathf.CeilToInt(endAt - Time.realtimeSinceStartup));
-        return Utils.ColorString(RoleInfo.RoleColor, string.Format(GetString("BerserkerRemaining"), seconds));
+        var text = Utils.ColorString(RoleInfo.RoleColor, string.Format(GetString("BerserkerRemaining"), seconds));
+        if (trance) text += " " + GetString("BerserkerTrance");
+        else if (killsForTrance > 0) text += $" ({rampageKills}/{killsForTrance})";
+        return text;
     }
 }
