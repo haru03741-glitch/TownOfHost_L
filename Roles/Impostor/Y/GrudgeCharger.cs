@@ -132,6 +132,8 @@ public sealed class GrudgeCharger : RoleBase, IImpostor
         var target = KillWaitPlayer;
         float targetDistance = Vector2.Distance(GCpos, target.transform.position);
 
+        // 鬼の体の差し替えの窓の間は GameManager が無い
+        if (!GameManager.Instance) return;
         var KillRange = GameManager.Instance.LogicOptions.GetKillDistance();
         if (targetDistance <= KillRange && Player.CanMove && target.CanMove)
         {

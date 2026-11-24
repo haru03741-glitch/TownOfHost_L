@@ -621,6 +621,17 @@ static partial class ExtendedPlayerControl
     public static void NoCheckStartMeeting(this PlayerControl reporter, NetworkedPlayerInfo target)
     { /*サボタージュ中でも関係なしに会議を起こせるメソッド
         targetがnullの場合はボタンとなる*/
+        // 鬼の体は会議の前に外し、外す SetRole が落ち着いてから会議を開く (本編の客は SetRole の直後の会議で画面が壊れる)
+        if (AmongUsClient.Instance.AmHost && SeekerBody.Active)
+        {
+            SeekerBody.ReleaseAllForMeeting();
+            _ = new LateTask(() =>
+            {
+                if (reporter == null || GameStates.IsMeeting || !GameStates.IsInGame) return;
+                reporter.NoCheckStartMeeting(target);
+            }, Revive.SettleTime + 0.1f, "SeekerBody hold meeting");
+            return;
+        }
         MeetingRoomManager.Instance.AssignSelf(reporter, target);
         DestroyableSingleton<HudManager>.Instance.OpenMeetingRoom(reporter);
         reporter.RpcStartMeeting(target);

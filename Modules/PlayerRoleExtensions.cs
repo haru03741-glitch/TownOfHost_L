@@ -210,6 +210,8 @@ public static class PlayerRoleExtensions
     // ===== キルの相手 =====
     public static PlayerControl TryGetKilltarget(this PlayerControl pc, bool IsOneclick = false)
     {
+        // 鬼の体の差し替えの窓の間は GameManager が無い (キルも止めている)
+        if (!GameManager.Instance) return null;
         float killdis = NormalGameOptionsV12.KillDistances[Mathf.Clamp(GameManager.Instance.LogicOptions.currentGameOptions.GetInt(Int32OptionNames.KillDistance), 0, 2)];
         if (pc.Data.IsDead || pc.inVent) return null;
         var roletype = pc.GetCustomRole().GetCustomRoleTypes();

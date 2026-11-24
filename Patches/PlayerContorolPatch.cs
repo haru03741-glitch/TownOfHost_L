@@ -585,8 +585,10 @@ public static class PhantomRoleUseAbilityPatch
 
     private static float GetPhantomDuration()
     {
-        var options = GameManager.Instance.LogicOptions;
         float duration = 5f;
+        // 鬼の体の差し替えの窓の間は GameManager が無い
+        if (!GameManager.Instance) return duration;
+        var options = GameManager.Instance.LogicOptions;
         try
         {
             var field = options.GetType().GetField("_phantomDuration", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
