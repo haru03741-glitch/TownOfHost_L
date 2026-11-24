@@ -63,6 +63,13 @@ namespace TownOfHostL
                 }
                 return true;
             }
+            if (command == null && FirstMeetingChatBlock.ShouldBlock(text))
+            {
+                Main.isChatCommand = false;
+                __instance.freeChatField.textArea.Clear();
+                FirstMeetingChatBlock.ShowLocalNotice();
+                return false;
+            }
             if (AmongUsClient.Instance.AmHost && command == null) ChatPushOut.Record(PlayerControl.LocalPlayer, text);
             if (AmongUsClient.Instance.AmHost && command == null) Modules.LobbyPoll.TryVote(PlayerControl.LocalPlayer, text);
 

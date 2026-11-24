@@ -20,7 +20,7 @@ public static class PlayerTraits
 
     /// <summary>投票で追放された時に誰かを道連れにする</summary>
     public static bool RevengesOnExile(PlayerControl pc)
-        => (pc.Is(CustomRoles.SKMadmate) && Options.MadmateRevengeCrewmate.GetBool())
+        => HamoMadmate.RevengesOnExile(pc)
            || (pc.GetRoleClass()?.RevengesOnExile ?? false)
            || Has(pc, RoleFlags.RevengesOnExile);
 
@@ -79,7 +79,7 @@ public static class PlayerTraits
     }
 
     /// <summary>役職か、付いている属性のどれかがその印を持つ</summary>
-    private static bool Has(PlayerControl pc, RoleFlags flag)
+    public static bool Has(PlayerControl pc, RoleFlags flag)
     {
         if (pc == null) return false;
         if (pc.GetCustomRole().HasRoleFlag(flag)) return true;

@@ -39,13 +39,18 @@ namespace TownOfHostL
                         try { reason = WinnerResolver.Resolve(reason); }
                         catch (System.Exception ex2) { Logger.Exception(ex2, "GameEndChecker.Resolve"); }
                     }
-                    if (CustomWinnerHolder.WinnerTeam != CustomWinner.Crewmate
-                        && (reason.Equals(GameOverReason.CrewmatesByTask) || reason.Equals(GameOverReason.CrewmatesByVote)))
-                        reason = GameOverReason.ImpostorsByVote;
-                    StartEndGame(reason);
+                    StartEndGame(OutroReason(reason));
                 }
                 return false;
             }
+        }
+        /// <summary>本編の終わりの画面に渡す理由。クルーの勝ち以外 (と勝因を変える設定の時) は、クルーの勝ちの理由をインポスターの投票勝ちに替える</summary>
+        private static GameOverReason OutroReason(GameOverReason reason)
+        {
+            bool crewReason = reason is GameOverReason.CrewmatesByTask or GameOverReason.CrewmatesByVote;
+            if (crewReason && (CustomWinnerHolder.WinnerTeam != CustomWinner.Crewmate || HamoConvenient.OutroCrew))
+                return GameOverReason.ImpostorsByVote;
+            return reason;
         }
         private static bool PrefixCore()
         {
@@ -78,12 +83,10 @@ namespace TownOfHostL
             Modules.Net.OutfitSync.SendAllNow();
 
             reason = WinnerResolver.Resolve(reason);
+            HamoSabotage.AfterResolve(reason);
             ShipStatus.Instance.enabled = false;
 
-            if (CustomWinnerHolder.WinnerTeam != CustomWinner.Crewmate
-                && (reason.Equals(GameOverReason.CrewmatesByTask) || reason.Equals(GameOverReason.CrewmatesByVote)))
-                reason = GameOverReason.ImpostorsByVote;
-            StartEndGame(reason);
+            StartEndGame(OutroReason(reason));
             predicate = null;
             return false;
         }

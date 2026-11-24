@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
@@ -23,6 +24,9 @@ public static class DeviceTimer
     static OptionItem cameraLimit;
     static OptionItem vitalLimit;
     static OptionItem showInMeeting;
+    static OptionItem turnLimit, turnAdmin, turnCamera, turnVital;
+    static OptionItem reviveCount, reviveAdmin, reviveCamera, reviveVital;
+    static OptionItem canSee, canSeeImp, canSeeMad, canSeeCrew, canSeeNeu;
 
     public static void SetupCustomOption()
     {
@@ -42,6 +46,29 @@ public static class DeviceTimer
             .SetGameMode(CustomGameMode.Standard);
         showInMeeting = StringOptionItem.Create("DeviceTimeLimitShowInMeeting", new string[] { "ColoredOff", "ColoredOn" }, 1, TabGroup.ModMainSettings, false).SetParent(Enabled)
             .SetGameMode(CustomGameMode.Standard);
+        SetupHamoOptions();
+    }
+
+    static OptionItem Sec(string key, float def, OptionItem parent) => FloatOptionItem.Create(key, new(0f, 300f, 5f), def, TabGroup.ModMainSettings, false).SetParent(parent)
+        .SetValueFormat(OptionFormat.Seconds).SetZeroNotation(OptionZeroNotation.Infinity).SetGameMode(CustomGameMode.Standard);
+    static OptionItem Flag(string key, bool def, OptionItem parent) => BooleanOptionItem.Create(key, def, TabGroup.ModMainSettings, false).SetParent(parent).SetGameMode(CustomGameMode.Standard);
+
+    static void SetupHamoOptions()
+    {
+        turnLimit = Flag("TurnTimeLimitDevice", false, Enabled);
+        turnAdmin = Sec("TurnTimeLimitAdmin", 20f, turnLimit);
+        turnCamera = Sec("TurnTimeLimitCamAndLog", 20f, turnLimit);
+        turnVital = Sec("TurnTimeLimitVital", 20f, turnLimit);
+        reviveCount = IntegerOptionItem.Create("ReviveTimelimitplayercount", new(0, 15, 1), 0, TabGroup.ModMainSettings, false).SetParent(Enabled)
+            .SetValueFormat(OptionFormat.Players).SetZeroNotation(OptionZeroNotation.Off).SetGameMode(CustomGameMode.Standard);
+        reviveAdmin = FloatOptionItem.Create("ReviveAddAdmin", new(0f, 300f, 5f), 15f, TabGroup.ModMainSettings, false).SetParent(reviveCount).SetValueFormat(OptionFormat.Seconds).SetGameMode(CustomGameMode.Standard);
+        reviveCamera = FloatOptionItem.Create("ReviveAddCamAndLog", new(0f, 300f, 5f), 15f, TabGroup.ModMainSettings, false).SetParent(reviveCount).SetValueFormat(OptionFormat.Seconds).SetGameMode(CustomGameMode.Standard);
+        reviveVital = FloatOptionItem.Create("ReviveAddVital", new(0f, 300f, 5f), 15f, TabGroup.ModMainSettings, false).SetParent(reviveCount).SetValueFormat(OptionFormat.Seconds).SetGameMode(CustomGameMode.Standard);
+        canSee = Flag("CanSeeTimeLimit", false, showInMeeting);
+        canSeeImp = Flag("CanseeImpTimeLimit", true, canSee);
+        canSeeMad = Flag("CanseeMadTimeLimit", true, canSee);
+        canSeeCrew = Flag("CanseeCrewTimeLimit", true, canSee);
+        canSeeNeu = Flag("CanseeNeuTimeLimit", true, canSee);
     }
 
     public static bool IsActive => Enabled != null && Enabled.GetBool() && Options.CurrentGameMode == CustomGameMode.Standard;
@@ -54,22 +81,69 @@ public static class DeviceTimer
     static readonly bool[] announced = new bool[3];
 
     [GameModuleInitializer]
-    public static void Init() => ResetAll();
+    public static void Init()
+    {
+        for (var i = 0; i < bonus.Length; i++) bonus[i] = 0f;
+        bonusAdded = false;
+        lastBonusCheck = 0f;
+        ResetAll();
+    }
+
+    static readonly float[] turnUsed = new float[3];
+    static readonly float[] bonus = new float[3];
+    static bool bonusAdded;
+    static float lastBonusCheck;
 
     static void ResetAll()
     {
-        for (var i = 0; i < used.Length; i++) { used[i] = 0f; announced[i] = false; }
+        for (var i = 0; i < used.Length; i++) { used[i] = 0f; announced[i] = false; turnUsed[i] = 0f; }
         lastSeen.Clear();
     }
 
-    static float Limit(Kind kind) => (kind switch { Kind.Admin => adminLimit, Kind.Camera => cameraLimit, _ => vitalLimit }).GetFloat();
+    static float BaseLimit(Kind kind) => (kind switch { Kind.Admin => adminLimit, Kind.Camera => cameraLimit, _ => vitalLimit }).GetFloat();
+    static float Limit(Kind kind) => BaseLimit(kind) <= 0f ? 0f : BaseLimit(kind) + bonus[(int)kind];
+    static float TurnLimit(Kind kind) => turnLimit == null || !turnLimit.GetBool() ? 0f
+        : (kind switch { Kind.Admin => turnAdmin, Kind.Camera => turnCamera, _ => turnVital }).GetFloat();
+
+    static bool GameExhausted(Kind kind)
+    {
+        var limit = Limit(kind);
+        return limit > 0f && used[(int)kind] >= limit;
+    }
+
+    static bool TurnExhausted(Kind kind)
+    {
+        var limit = TurnLimit(kind);
+        return limit > 0f && turnUsed[(int)kind] >= limit;
+    }
 
     /// <summary>上限が有り、使い切った</summary>
     public static bool IsExhausted(Kind kind)
     {
         if (!IsActive) return false;
-        var limit = Limit(kind);
-        return limit > 0f && used[(int)kind] >= limit;
+        return GameExhausted(kind) || TurnExhausted(kind);
+    }
+
+    static void CheckBonus()
+    {
+        if (bonusAdded || reviveCount == null) return;
+        var n = reviveCount.GetInt();
+        if (n <= 0 || Main.AllAlivePlayerControls.Count() > n) return;
+        bonusAdded = true;
+        bonus[(int)Kind.Admin] += reviveAdmin.GetFloat();
+        bonus[(int)Kind.Camera] += reviveCamera.GetFloat();
+        bonus[(int)Kind.Vital] += reviveVital.GetFloat();
+        for (var i = 0; i < announced.Length; i++) announced[i] = GameExhausted((Kind)i);
+    }
+
+    static bool CanSeeInMeeting(PlayerControl pc)
+    {
+        if (canSee == null || !canSee.GetBool()) return true;
+        if (pc == null) return false;
+        return (pc.Is(Roles.Core.CustomRoleTypes.Impostor) && canSeeImp.GetBool())
+            || (pc.Is(Roles.Core.CustomRoleTypes.Madmate) && canSeeMad.GetBool())
+            || (pc.Is(Roles.Core.CustomRoleTypes.Crewmate) && canSeeCrew.GetBool())
+            || (pc.Is(Roles.Core.CustomRoleTypes.Neutral) && canSeeNeu.GetBool());
     }
 
     static float Remaining(Kind kind) => Mathf.Max(0f, Limit(kind) - used[(int)kind]);
@@ -110,6 +184,11 @@ public static class DeviceTimer
     public static bool Track(PlayerControl pc, Vector2 pos)
     {
         if (!IsActive || pc == null || !pc.IsAlive()) return false;
+        if (Time.time - lastBonusCheck >= 1f)
+        {
+            lastBonusCheck = Time.time;
+            CheckBonus();
+        }
         var kind = NearKind(pos);
         if (kind == null)
         {
@@ -129,7 +208,8 @@ public static class DeviceTimer
             && !pc.inVent && GameStates.IsInTask && !Utils.IsActive(SystemTypes.Comms))
         {
             used[(int)k] += now - last.at;
-            if (IsExhausted(k) && !announced[(int)k])
+            turnUsed[(int)k] += now - last.at;
+            if (GameExhausted(k) && !announced[(int)k])
             {
                 announced[(int)k] = true;
                 Utils.SendMessageAutoSplit(string.Format(GetString("DeviceTimeLimit.Exhausted"), KindName(k)), true, GetString("DeviceTimeLimit.Title"));
@@ -175,16 +255,27 @@ public static class DeviceTimer
         {
             if (!AmongUsClient.Instance.AmHost || !IsActive) return;
             lastSeen.Clear();
+            CheckBonus();
+            for (var i = 0; i < turnUsed.Length; i++) turnUsed[i] = 0f;
             if (showInMeeting.GetBool())
             {
                 var lines = new List<string>();
                 foreach (var k in new[] { Kind.Admin, Kind.Camera, Kind.Vital })
                 {
                     if (Limit(k) <= 0f) continue;
-                    lines.Add($"{KindName(k)}: {(IsExhausted(k) ? "×" : $"{Mathf.CeilToInt(Remaining(k))}s")}");
+                    lines.Add($"{KindName(k)}: {(GameExhausted(k) ? "×" : $"{Mathf.CeilToInt(Remaining(k))}s")}");
                 }
                 if (lines.Count > 0)
-                    Utils.SendMessageAutoSplit(string.Join("\n", lines), true, GetString("DeviceTimeLimit.Title"));
+                {
+                    var text = string.Join("\n", lines);
+                    if (canSee != null && canSee.GetBool())
+                    {
+                        foreach (var pc in Main.AllPlayerControls)
+                            if (CanSeeInMeeting(pc))
+                                Utils.SendMessageAutoSplit(text, true, GetString("DeviceTimeLimit.Title"), pc.PlayerId);
+                    }
+                    else Utils.SendMessageAutoSplit(text, true, GetString("DeviceTimeLimit.Title"));
+                }
             }
             // 会議ごとに戻す時は、会議の後の分として数え直す
             if (resetMode.GetValue() == (int)ResetMode.PerMeeting) ResetAll();

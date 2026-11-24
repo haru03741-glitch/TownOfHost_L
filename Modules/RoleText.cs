@@ -33,6 +33,7 @@ public static class RoleText
             seenRole.OverrideDisplayRoleNameAsSeen(seer, isMeeting, ref view);
         }
         view.Enabled |= Revealer.ShowsRoleTo(seen);
+        view.Enabled |= SpecialMode.KnowsRole(seer, seen);
 
         //seer側による変更
         if (seer.GetRoleClass() is { } seerRole)

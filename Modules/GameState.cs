@@ -308,7 +308,7 @@ public static partial class MeetingStates
     {
         if (dayEnded) return false;
         dayEnded = true;
-        Day++;
+        if (!FirstTurnMeeting.InFirst) Day++;
         return true;
     }
     /// <summary>

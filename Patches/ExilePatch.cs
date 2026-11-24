@@ -132,6 +132,8 @@ namespace TownOfHostL
             FallFromLadder.Reset();
             Utils.CountAlivePlayers(true);
             Utils.AfterMeetingTasks();
+            HamoExperimental.AfterExile();
+            FirstTurnMeeting.OnExileFinished();
             // 会議と追放の間に客の画面で名前の色が役職の色 (インポスターの赤) に塗り直されることがある。
             // 会議中と同じ名前だと送り済みと見なされて色が残るので、覚え書きを見ずに全員分を送り直す
             Utils.NotifyRoles(NoCache: true);

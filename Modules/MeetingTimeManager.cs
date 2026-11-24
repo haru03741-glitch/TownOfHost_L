@@ -72,6 +72,7 @@ namespace TownOfHostL.Modules
             int BonusMeetingTime = 0;
             int MeetingTimeMin = 0;
             int MeetingTimeMax = 300;
+            HamoMeeting.ApplyLimits(ref MeetingTimeMin, ref MeetingTimeMax);
 
             foreach (var role in CustomRoleManager.AllActiveRoles.Values.ToArray())
             {

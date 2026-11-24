@@ -77,6 +77,14 @@ namespace TownOfHostL
             };
         }
 
+        /// <summary>機器の無効化の除外の条件 (陣営・タスクを終えたクルー・誰かが死んだ後) に当たる。客の判定とホストの手元の判定で同じ物を使う</summary>
+        public static bool IgnoredByConditions(PlayerControl pc)
+            => ((Options.DisableDevicesIgnoreImpostors?.GetBool() ?? false) && pc.Is(CustomRoleTypes.Impostor))
+            || ((Options.DisableDevicesIgnoreMadmates?.GetBool() ?? false) && pc.Is(CustomRoleTypes.Madmate))
+            || ((Options.DisableDevicesIgnoreNeutrals?.GetBool() ?? false) && pc.Is(CustomRoleTypes.Neutral))
+            || HamoDevices.CrewIgnored(pc)
+            || ((Options.DisableDevicesIgnoreAfterAnyoneDied?.GetBool() ?? false) && GameStates.AlreadyDied);
+
         public static bool IsInfoPoor(PlayerControl pc)
         {
             // 抜けた直後の破棄済みの PlayerControl でも止まらないように
@@ -122,12 +130,7 @@ namespace TownOfHostL
                 {
                     bool doComms = false;
                     Vector2 PlayerPos = pc.GetTruePosition();
-                    bool ignore =
-                        ((Options.DisableDevicesIgnoreImpostors?.GetBool() ?? false) && pc.Is(CustomRoleTypes.Impostor)) ||
-                        ((Options.DisableDevicesIgnoreMadmates?.GetBool() ?? false) && pc.Is(CustomRoleTypes.Madmate)) ||
-                        ((Options.DisableDevicesIgnoreNeutrals?.GetBool() ?? false) && pc.Is(CustomRoleTypes.Neutral)) ||
-                        ((Options.DisableDevicesIgnoreCrewmates?.GetBool() ?? false) && pc.Is(CustomRoleTypes.Crewmate)) ||
-                        ((Options.DisableDevicesIgnoreAfterAnyoneDied?.GetBool() ?? false) && GameStates.AlreadyDied);
+                    bool ignore = IgnoredByConditions(pc);
 
                     // 使える時間の上限 (ホストも数える。ホストの画面は DeviceTimer が閉じる)
                     bool timeUp = !ignore && Modules.DeviceTimer.Track(pc, PlayerPos);
@@ -178,6 +181,7 @@ namespace TownOfHostL
                         }
                     }
                     doComms &= !ignore;
+                    if (pc.IsAlive() && !Utils.IsActive(SystemTypes.Comms)) doComms |= HamoDevices.NearRecords(PlayerPos);
                     if (doComms && !pc.inVent && GameStates.IsInTask)
                     {
                         // 入った時に送り、居続ける間は 1 秒ごとの再送だけにする (4 フレームごとに送ると同種 Reliable の連射になる)
@@ -226,11 +230,7 @@ namespace TownOfHostL
 
             bool ignore = player.GetCustomRole().IsSpectator() ||
                 !player.IsAlive() ||
-                ((Options.DisableDevicesIgnoreImpostors?.GetBool() ?? false) && player.Is(CustomRoleTypes.Impostor)) ||
-                ((Options.DisableDevicesIgnoreMadmates?.GetBool() ?? false) && player.Is(CustomRoleTypes.Madmate)) ||
-                ((Options.DisableDevicesIgnoreNeutrals?.GetBool() ?? false) && player.Is(CustomRoleTypes.Neutral)) ||
-                ((Options.DisableDevicesIgnoreCrewmates?.GetBool() ?? false) && player.Is(CustomRoleTypes.Crewmate)) ||
-                ((Options.DisableDevicesIgnoreAfterAnyoneDied?.GetBool() ?? false) && GameStates.AlreadyDied);
+                DisableDevice.IgnoredByConditions(player);
 
             var admins = GameObject.FindObjectsOfType<MapConsole>(true);
             var consoles = GameObject.FindObjectsOfType<SystemConsole>(true);
@@ -270,7 +270,7 @@ namespace TownOfHostL
                         if (((Options.DisableCockpitAdmin_Airship?.GetBool() ?? false) || PcIsPoor) && x.name == "panel_cockpit_map")
                             x.gameObject.GetComponent<BoxCollider2D>().enabled = ignore;
                         if (((Options.DisableRecordsAdmin_Airship?.GetBool() ?? false) || PcIsPoor) && x.name == "records_admin_map")
-                            x.gameObject.GetComponent<BoxCollider2D>().enabled = ignore;
+                            x.gameObject.GetComponent<BoxCollider2D>().enabled = ignore && !HamoDevices.ForceRecords;
                     });
                     if ((Options.DisableCamera_Airship?.GetBool() ?? false) || PcIsPoor)
                         consoles.DoIf(x => x.name == "task_cams", x => x.gameObject.GetComponent<BoxCollider2D>().enabled = ignore);

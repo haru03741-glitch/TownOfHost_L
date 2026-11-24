@@ -160,6 +160,7 @@ namespace TownOfHostL.Modules
             noisemaker?.GetRoleClass()?.ApplyGameOptions(opt);
             foreach (var subRole in player.GetCustomSubRoles())
                 AddOnList.Get(subRole)?.ApplyGameOptions?.Invoke(opt);
+            HamoMadmate.ApplyVision(player, opt);
             Blinder.ApplyGameOptionsByOther(player.PlayerId, opt);
             Streaming.Audience.ApplyGameOptions(player.PlayerId, opt);
 

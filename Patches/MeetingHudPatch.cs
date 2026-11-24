@@ -39,6 +39,12 @@ public static partial class MeetingHudPatch
             if (voter == null) return false;
             // 締めた後 (結果の表示の間) に遅れて届いた票で、役職の能力 (ゲッサーの撃ちなど) を走らせない
             if (AmongUsClient.Instance.AmHost && __instance.state is MeetingHud.MeetingStates.Results or MeetingHud.MeetingStates.Proceeding) return false;
+            // 初手会議で能力を使えない時は、誰に入れても飛ばしとして数える
+            if (AmongUsClient.Instance.AmHost && FirstTurnMeeting.CantAbilityNow)
+            {
+                MeetingVoteManager.Instance?.SetVote(srcPlayerId, MeetingVoteManager.Skip);
+                return true;
+            }
             if (voter.GetRoleClass()?.CheckVoteAsVoter(voted) == false)
             {
                 __instance.RpcClearVote(voter.PlayerId);
@@ -523,6 +529,12 @@ public static partial class MeetingHudPatch
         foreach (var candidate in Main.AllAlivePlayerControls)
         {
             if (candidate == exiledplayer || Main.AfterMeetingDeathPlayers.ContainsKey(candidate.PlayerId)) continue;
+
+            if (HamoMadmate.UsesRevengeFilter(exiledplayer, deathReason))
+            {
+                if (HamoMadmate.RevengeTargetOk(candidate) && !PlayerTraits.NotRevengeTarget(candidate)) TargetList.Add(candidate);
+                continue;
+            }
 
             ///対象とならない人を判定
             // インポスター陣営の場合

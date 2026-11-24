@@ -470,11 +470,14 @@ public static partial class Options
         MadmateCanSeeDeathReason = StringOptionItem.Create("MadmateCanSeeDeathReason", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard);
         MadmateRevengeCrewmate = StringOptionItem.Create("MadmateExileCrewmate", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard);
 
+        SetupHamoMadmateOptions();
+
         TextOptionItem.Create("Head.CommonMadmate", TabGroup.MadmateRoles);
         MadmateVentCooldown = FloatOptionItem.Create("MadmateVentCooldown", new(0f, 180f, 5f), 0f, TabGroup.MadmateRoles, false)
             .SetValueFormat(OptionFormat.Seconds);
         MadmateVentMaxTime = FloatOptionItem.Create("MadmateVentMaxTime", new(0f, 180f, 5f), 0f, TabGroup.MadmateRoles, false)
             .SetValueFormat(OptionFormat.Seconds);
+        SetupHamoCommonMadmateOptions();
 
         // Add-Ons
         //TextOptionItem.Create("Head.NewAddOn", TabGroup.Addons).SetColor(Color.green);
@@ -751,6 +754,7 @@ public static partial class Options
         DisableDevicesIgnoreNeutrals = StringOptionItem.Create("IgnoreNeutrals", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableDevicesIgnoreConditions);
         DisableDevicesIgnoreCrewmates = StringOptionItem.Create("IgnoreCrewmates", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableDevicesIgnoreConditions);
         DisableDevicesIgnoreAfterAnyoneDied = StringOptionItem.Create("IgnoreAfterAnyoneDied", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableDevicesIgnoreConditions);
+        SetupHamoDeviceOptions();
         // ランダムマップ
         RandomMapsMode = StringOptionItem.Create("RandomMapsMode", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetHeader(true)
@@ -789,7 +793,10 @@ public static partial class Options
         DeadImpostorCannotSabotage = StringOptionItem.Create("DeadImpostorCannotSabotage", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetColor(Color.magenta).SetGameMode(CustomGameMode.All);
 
+        SetupHamoSabotageOptions();
+
         TextOptionItem.Create("Head.Meeting", TabGroup.ModMainSettings).SetColor(Color.cyan).SetGameMode(CustomGameMode.All);
+        SetupHamoMeetingOptions();
         // 会議収集理由表示
         ShowReportReason = StringOptionItem.Create("ShowReportReason", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, true)
             .SetColor(Color.cyan)
@@ -859,6 +866,8 @@ public static partial class Options
         GhostIgnoreTasks = StringOptionItem.Create("GhostIgnoreTasks", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, true)
             .SetColor(Color.green);
 
+        SetupHamoGhostIgnoreTasksOptions();
+
         TextOptionItem.Create("Head.Ghost", TabGroup.ModMainSettings).SetColor(Palette.LightBlue).SetGameMode(CustomGameMode.All);
         // 幽霊
         GhostCantSeeOtherRoles = StringOptionItem.Create("GhostCantSeeOtherRoles", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, true)
@@ -877,6 +886,8 @@ public static partial class Options
             .SetColor(Palette.LightBlue)
             .SetGameMode(CustomGameMode.All);
 
+        SetupHamoGhostOptions();
+
         TextOptionItem.Create("Head.Other", TabGroup.ModMainSettings).SetColor(Palette.CrewmateBlue).SetGameMode(CustomGameMode.All);
         KillFlashDuration = FloatOptionItem.Create("KillFlashDuration", new(0.1f, 0.45f, 0.05f), 0.3f, TabGroup.ModMainSettings, true)
             .SetColor(Palette.ImpostorRed)
@@ -889,12 +900,14 @@ public static partial class Options
         // 初手キルクール調整
         FixFirstKillCooldown = StringOptionItem.Create("FixFirstKillCooldown", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetColor(Palette.CrewmateBlue);
+        SetupHamoMainOptions();
 
         // 転落死
         LadderDeath = StringOptionItem.Create("LadderDeath", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetColor(Palette.CrewmateBlue)
             .SetGameMode(CustomGameMode.All);
         LadderDeathChance = StringOptionItem.Create("LadderDeathChance", rates[1..], 0, TabGroup.ModMainSettings, false).SetParent(LadderDeath).SetGameMode(CustomGameMode.All);
+        SetupHamoLadderOptions();
 
         // スキン設定
         SkinControle = StringOptionItem.Create("SkinControle", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, true)
