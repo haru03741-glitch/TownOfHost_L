@@ -47,6 +47,8 @@ public static class PetAbility
         lastPressAt[pc.PlayerId] = now;
 
         if (FirstTurnMeeting.BeforeFirstMeeting) return;
+        try { Kedoro.OnPet(pc); }
+        catch (Exception ex) { Logger.Exception(ex, "PetAbility"); }
         try { VanillaHnsPortalMaker.OnPet(pc); }
         catch (Exception ex) { Logger.Exception(ex, "PetAbility"); }
 

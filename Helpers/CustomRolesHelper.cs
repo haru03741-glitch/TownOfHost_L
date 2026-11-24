@@ -122,6 +122,8 @@ static partial class CustomRolesHelper
             CustomRoles.MaxMain or
             CustomRoles.ONStart or
             CustomRoles.MaxON or
+            CustomRoles.HamoModeStart or
+            CustomRoles.MaxHamoMode or
             CustomRoles.CCStart or
             CustomRoles.MaxCC or
             CustomRoles.HASStart or

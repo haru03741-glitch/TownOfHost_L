@@ -810,6 +810,12 @@ public enum CustomRoles
     ONStart = 400,
 
     MaxON,
+
+    // TownOfHost-hamo のゲームモード
+    HamoModeStart = 420,
+    MMArcher,
+    TaskPlayerB,
+    MaxHamoMode,
     /************/
 
     //CC

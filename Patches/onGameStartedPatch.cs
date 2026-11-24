@@ -562,6 +562,7 @@ class SelectRolesPatch
 
         GameEndChecker.SetPredicateToNormal();
         SkinChangeMode.ChangeSkin();
+        HamoModes.AfterStandardAssign();
 
         GameOptionsSender.AllSenders.Clear();
         foreach (var pc in Main.AllPlayerControls)

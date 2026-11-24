@@ -84,6 +84,7 @@ namespace TownOfHostL
             if (roleInfo?.TaskCount?.Invoke(pc) is { } roleTaskCount)
                 (hasCommonTasks, NumLongTasks, NumShortTasks) = roleTaskCount;
             bool onlyVentCleaning = roleInfo?.OnlyVentCleaningTask == true;
+            TaskBattle.OverrideTaskCount(ref hasCommonTasks, ref numCommonTasks, ref NumLongTasks, ref NumShortTasks);
 
             if (taskTypeIds.Count == 0) hasCommonTasks = false;
             if (!hasCommonTasks && NumLongTasks == 0 && NumShortTasks == 0) NumShortTasks = 1;
@@ -93,6 +94,7 @@ namespace TownOfHostL
                 && NumLongTasks == Main.NormalOptions.NumLongTasks
                 && NumShortTasks == Main.NormalOptions.NumShortTasks
                 && !HamoMapTask.UploadDataIsLong
+                && !TaskBattle.ForcesReassign
                 && !HamoConvenient.CommonReset)
             {
                 taskIds[__instance.PlayerId] = taskTypeIds;
@@ -164,6 +166,7 @@ namespace TownOfHostL
                 ShortTasks
             );
 
+            TaskBattle.Align(TasksList);
             taskTypeIds = new Il2CppStructArray<byte>(TasksList.Count);
             for (int i = 0; i < TasksList.Count; i++)
             {

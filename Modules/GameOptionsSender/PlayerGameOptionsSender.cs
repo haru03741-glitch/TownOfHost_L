@@ -161,6 +161,7 @@ namespace TownOfHostL.Modules
             foreach (var subRole in player.GetCustomSubRoles())
                 AddOnList.Get(subRole)?.ApplyGameOptions?.Invoke(opt);
             HamoMadmate.ApplyVision(player, opt);
+            HamoModes.ApplyGameOptions(player, opt);
             Blinder.ApplyGameOptionsByOther(player.PlayerId, opt);
             Streaming.Audience.ApplyGameOptions(player.PlayerId, opt);
 

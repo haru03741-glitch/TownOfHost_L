@@ -835,7 +835,9 @@ class CoEnterVentPatch
                 _ = new LateTask(() => __instance.RpcBootFromVent(id), 0.5f, "FirstTurnMeeting.BootVent");
                 return true;
             }
-            if (ModeCatalog.Current.BootsFromVents)
+            if (!Kedoro.TryUseVent(__instance.myPlayer))
+                __instance.RpcBootFromVent(id);
+            else if (ModeCatalog.Current.BootsFromVents)
                 __instance.RpcBootFromVent(id);
             // ベントの制限 (押し出す時も、ベントを能力のボタンにしている役職のために、役職の「ベントに入った」は起こす)
             else if (RpcEnterVentPatch.Depth == 0)
@@ -945,6 +947,7 @@ class PlayerControlCompleteTaskPatch
         CompreteCrew.OnCompleteTask(pc);
 
         if (ModeCatalog.IsCatchCat) CatchCat.CatPlayer.OnCompleteTask(pc, taskState);
+        HamoModes.OnCompleteTask(pc, taskState);
 
         Utils.NotifyRoles();
         return ret;

@@ -260,6 +260,7 @@ namespace TownOfHostL.Roles
             foreach (var role in AllMainRoles.OrderBy(x => Guid.NewGuid())) //確定枠が偏らないようにシャッフル
             {
                 if (!role.IsAssignable()) continue;
+                if (Options.CustomRoleSpawnChances.TryGetValue(role, out var ticketOption) && !ModeCatalog.Current.ShowsOption(ticketOption)) continue;
 
                 var chance = role.GetChance();
                 var count = role.GetAssignCount();

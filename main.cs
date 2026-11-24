@@ -350,6 +350,8 @@ public enum CustomWinner
     YellowL = CustomRoles.CCYellowLeader,
 
     HASTroll = CustomRoles.HASTroll,
+    TaskPlayerB = CustomRoles.TaskPlayerB,
+    Kedoro = 9006,
 
     // TownOfHost-hamo から移植
     Pavlov = CustomRoles.PavlovDog,
