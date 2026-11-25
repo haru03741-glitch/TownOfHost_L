@@ -1,4 +1,3 @@
-using System.Linq;
 using AmongUs.GameOptions;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
@@ -31,13 +30,10 @@ namespace TownOfHostL.Roles.Impostor
         }
         public static OptionItem OptionTairoDeathReason;
         public static OptionItem OptionTairouNotify;
-        public static OptionItem OptionTellResult;
-        CustomRoles? disguise;
         enum OptionName
         {
             TairoDeathReason,
-            TairouNotify,
-            TairouTellResult
+            TairouNotify
         }
         public static bool TairoDeathReason;
         public static bool TairouNotify;
@@ -45,21 +41,10 @@ namespace TownOfHostL.Roles.Impostor
         {
             OptionTairoDeathReason = BooleanOptionItem.Create(RoleInfo, OptionName.TairoDeathReason, true, false);
             OptionTairouNotify = BooleanOptionItem.Create(RoleInfo, OptionName.TairouNotify, true, false);
-            OptionTellResult = StringOptionItem.Create(RoleInfo, OptionName.TairouTellResult, new[] { "TellResultCrewmate", "TellResultRandomRole" }, 0, false);
         }
         public override CustomRoles TellResults(PlayerControl player)
         {
-            return disguise ??= PickDisguise(OptionTellResult.GetValue() == 1);
-        }
-        /// <summary>占いで見せる役職。random なら、この試合で出るクルーの役職から 1 つ (無ければクルーメイト)</summary>
-        static CustomRoles PickDisguise(bool random)
-        {
-            if (!random) return CustomRoles.Crewmate;
-            var roles = Options.CustomRoleCounts.Keys
-                .Where(r => r is not CustomRoles.Tairou && r.GetRoleInfo() != null
-                    && r.GetCustomRoleTypes() == CustomRoleTypes.Crewmate && r.IsEnable())
-                .ToArray();
-            return roles.Length == 0 ? CustomRoles.Crewmate : roles[IRandom.Instance.Next(roles.Length)];
+            return CustomRoles.Crewmate;
         }
         public override bool OnCheckMurderAsTarget(MurderInfo info)
         {

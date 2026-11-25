@@ -423,10 +423,11 @@ public static partial class Utils
             NonCompleteColor = Workhorse.RoleColor;
 
         var NormalColor = state.taskState.IsTaskFinished ? TaskCompleteColor : NonCompleteColor;
+        if (state.taskState.GetNeedCountOrAll() <= state.taskState.CompletedTasksCount) NormalColor = TaskCompleteColor;
 
         TextColor = comms ? ColorGray : NormalColor;
         string Completed = comms ? "?" : $"{state.taskState.CompletedTasksCount}";
-        return ColorString(TextColor, $"({Completed}/{state.taskState.AllTasksCount})");
+        return ColorString(TextColor, $"({Completed}/{state.taskState.GetNeedCountOrAll()})");
 
     }
     // Color.yellow などの static プロパティは呼ぶたびにゲーム側を通るので、値で持っておく (Unity の定義と同じ値)

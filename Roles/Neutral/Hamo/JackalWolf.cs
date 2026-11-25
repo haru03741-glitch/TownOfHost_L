@@ -93,37 +93,7 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
     public static bool CanUseSabotage;
 
     public static FilterOptionItem OptionHaveRole; static CustomRoles haverole;
-    public static FilterOptionItem OptionHaveRole2;
-    static CustomRoles pickedRole = CustomRoles.NotAssigned;
-    static List<CustomRoles> HaveRoleCandidates()
-    {
-        var list = new List<CustomRoles>();
-        if (OptionHaveRole?.GetBool() == true) list.Add(OptionHaveRole.GetRole());
-        if (OptionHaveRole2?.GetBool() == true && !list.Contains(OptionHaveRole2.GetRole())) list.Add(OptionHaveRole2.GetRole());
-        return list;
-    }
-    static CustomRoles CurrentHaveRole()
-    {
-        if (pickedRole is not CustomRoles.NotAssigned) return pickedRole;
-        var list = HaveRoleCandidates();
-        return list.Count > 0 ? list[0] : CustomRoles.Impostor;
-    }
-    [HarmonyLib.HarmonyPatch(typeof(AmongUsClient), nameof(AmongUsClient.CoStartGame))]
-    static class PickHaveRolePatch
-    {
-        public static void Prefix()
-        {
-            try
-            {
-                pickedRole = CustomRoles.NotAssigned;
-                if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
-                var list = HaveRoleCandidates();
-                pickedRole = list.Count > 0 ? list[IRandom.Instance.Next(list.Count)] : CustomRoles.Impostor;
-                if (list.Count > 1) Logger.Info($"付与役職を {string.Join(" / ", list)} から {pickedRole} に決定", "JackalWolf");
-            }
-            catch (Exception e) { Logger.Warn($"付与役職の抽選に失敗: {e.Message}", "JackalWolf"); }
-        }
-    }
+    static CustomRoles CurrentHaveRole() => OptionHaveRole?.GetBool() == true ? OptionHaveRole.GetRole() : CustomRoles.Impostor;
 
     RoleBase AddRole;
 
@@ -176,9 +146,6 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
     {
 
         OptionHaveRole = FilterOptionItem.Create(RoleInfo, OptionName.AssassinHaveRole, 0, false, null, true, false, false, false, false, () => InvalidRoles());
-        OptionHaveRole2 = FilterOptionItem.Create(RoleInfo, OptionName.AssassinHaveRole, 0, false, null, true, false, false, false, false, () => InvalidRoles());
-        OptionHaveRole2.SetKeyName("AssassinHaveRole2");
-        OptionHaveRole2.SetOptionName(() => "付与する役職(2つ目・ランダムでどちらか)");
 
 
 

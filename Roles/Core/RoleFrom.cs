@@ -64,7 +64,7 @@ public static class RoleFrom
         [CustomRoles.CandleLighter] = From.TownOfHost_Y,
         [CustomRoles.ChainShifter] = From.TownOfHost_Y,
         [CustomRoles.Chairman] = From.TownOfHost_Y,
-        [CustomRoles.Chameleon] = From.TownOfHost_K,
+        [CustomRoles.Chameleon] = From.Speyrp,
         [CustomRoles.Charger] = From.TownOfHost_Y,
         [CustomRoles.CharismaStar] = From.TownOfHost_Y,
         [CustomRoles.Chaser] = From.TownOfHost_Y,

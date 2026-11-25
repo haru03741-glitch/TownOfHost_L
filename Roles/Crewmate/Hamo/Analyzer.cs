@@ -277,13 +277,24 @@ public sealed class Analyzer : RoleBase
             GetArrow.Add(Player.PlayerId, Neutralvent.transform.position);
         }
     }
+    // 覚醒するまでは、自分にもクルーメイトに見える
+    public override CustomRoles? DisplayedRole => Awakened ? null : CustomRoles.Crewmate;
     public override bool OnCompleteTask()
     {
         if (MyTaskState.HasCompletedEnoughCountOfTasks(cantaskcount))
         {
-            if (Player.IsAlive() && !Awakened)
-                Player.RpcSetRoleDesync(RoleTypes.Engineer, Player.GetClientId());
+            if (!Awakened)
+            {
+                // 次の会議で、本当の役職の説明を送る
+                Main.ShowRoleInfoAtMeeting.Add(Player.PlayerId);
+                if (Player.IsAlive())
+                    Player.RpcSetRoleDesync(RoleTypes.Engineer, Player.GetClientId());
+                Awakened = true;
+                // MOD を入れた本人へ、見せる役職が変わったことを送り直す
+                Modules.Net.ModClientSync.MarkRolesDirty();
+            }
             Awakened = true;
+            Utils.NotifyRoles(SpecifySeer: Player);
         }
         return true;
     }

@@ -61,6 +61,8 @@ public sealed class Fox : RoleBase, ISystemTypeUpdateHook, IRoomTasker
         CompleteRoomTask = false;
         Taskcount = 0;
         Guard = 0;
+        // K と同じく、タスクの表示は次のガードまでの数にする
+        MyTaskState.NeedTaskCount = GiveGuardTaskCount;
         NowMeter = Maxmeter;
         IsShowMyRole = false;
         isnotice = false;
@@ -205,6 +207,7 @@ public sealed class Fox : RoleBase, ISystemTypeUpdateHook, IRoomTasker
         {
             Taskcount = 0;
             Guard++;
+            MyTaskState.NeedTaskCount += GiveGuardTaskCount;
             Logger.Info($"ガード追加:{Guard}", "Fox");
         }
         return true;
