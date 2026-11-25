@@ -29,10 +29,12 @@ internal sealed class ScrollView : Widget
     private float _nextFull;
     private static readonly List<ScrollView> Live = new();
 
-    // 1 つの SortingGroup の中の描く物が 4096 個ほどを超えると、その組の描く順と切り抜きが壊れて、欄が真っ黒になる
-    // (2026-11-26 実機: 3992 個は正常・4368 個で崩れる。組んだ後に数を減らしても戻らない)。
-    // 中身が多い時は中身を行のまとまりに分け、見えている所の前後のまとまりだけを有効にして、描く前から数を少なく保つ
-    private const int SplitAbove = 2000;
+    // 欄の中身の描く物が 4096 個ほどを超えると、欄の描く順と切り抜きが壊れて、欄が真っ黒になる
+    // (2026-11-26 実機: 描いた後に数えて 3989 個は正常・4365 個で崩れる。組んだ後に数を減らしても戻らない)。
+    // 中身が多い時は中身を行のまとまりに分け、見えている所の前後のまとまりだけを有効にして、描く前から数を少なく保つ。
+    // 組んだ直後に数えると、字の網の分かれ (TMP の SubMesh) が描く時に後から足される分だけ少ない (同じ日の実機で 0.55〜0.6 倍。
+    // 字によって分かれは増える) ので、分ける境目は低く取る
+    private const int SplitAbove = 600;
     private const int CellMax = 300;
     private Transform _content;
     private readonly List<Transform> _cells = new();
@@ -262,6 +264,7 @@ internal sealed class ScrollView : Widget
         var p = s.Inner.localPosition;
         s.Inner.localPosition = new Vector3(p.x, Math.Clamp(y, b.min, b.max), p.z);
         s.UpdateScrollBars();
+        ApplyCells();
     }
 
     // 今のスクロールの位置を控える (画面を閉じる前に呼ぶ)
