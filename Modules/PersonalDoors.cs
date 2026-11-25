@@ -24,10 +24,14 @@ public static class PersonalDoors
     static bool resendPending;
     static float nextKeepAlive;
     static float nextResendAllowed;
+    // 全員への送りの直後に送り直した後の、念押しの送り直しの時刻 (0 = なし)
+    static float followUpAt;
     // スケルドの AutoOpenDoor は客の手元でも閉めてから 10 秒で開く。閉めた状態を受け取るたびに 10 秒へ戻るので、10 秒より短い間隔で送り直す。
     const float KeepAliveInterval = 5f;
     // 全員向けの送り直しが続いた時に、同じ人へ毎フレーム送らないための間隔。
     const float MinResendInterval = 0.2f;
+    // 全員への送りの直後の送り直しが、届く順の入れ替わりで負けた時の念押しまで
+    const float FollowUpDelay = 0.05f;
     // AutoDoorsSystemType の印は 32 ビット。
     const int AutoDoorsMax = 32;
 
@@ -82,6 +86,7 @@ public static class PersonalDoors
         closedFor.Clear();
         taskLocked.Clear();
         resendPending = false;
+        followUpAt = 0f;
     }
 
     /// <summary>会議の後など、客の手元のドアが替わった後に閉めた状態を送り直す。</summary>
@@ -190,8 +195,8 @@ public static class PersonalDoors
     }
 
     // 閉めた人がドアの操作 (ポーラス以降の開ける作業) で開けたら、その人の閉めを解く。
-    // 作業でも開けられないように閉めた人は解かない。ホストの手元のドアが開いていれば本編の処理も止め、
-    // 全員への送り直し (その人の画面で一瞬開く) を起こさない。閉まっていれば (全員向けのサボタージュ) 本編どおり開け、その人へは閉めを送り直す。
+    // 作業でも開けられないように閉めた人の作業は、本編の処理ごと止める。全員向けのサボタージュでも閉まっているドアも開けない。
+    // 本編どおり開けると全員へ「開」が送られ、閉めの送り直しが届くまでの間 (2026-11-25 実機で約 0.1〜0.17 秒) その人の画面でドアが開いて通れてしまう。
     // 役職の都合で本編の処理が止められた時 (別の Prefix が false を返した時) は解かない。
     [HarmonyPatch(typeof(DoorsSystemType), nameof(DoorsSystemType.UpdateSystem))]
     static class OpenByMinigamePatch
@@ -205,17 +210,16 @@ public static class PersonalDoors
             __state = copy.ReadByte();
             copy.Recycle();
             if ((__state & DoorsSystemType.OpenDoor) == 0 || !taskLocked.Contains(player.PlayerId)) return true;
-            var door = FindDoor(__state & DoorsSystemType.IdMask, set);
-            if (door < 0) return true;
-            var hostDoor = ShipStatus.Instance.AllDoors[door];
-            if (hostDoor != null && hostDoor.IsOpen) { __state = -1; return false; }
-            return true;
+            if (FindDoor(__state & DoorsSystemType.IdMask, set) < 0) return true;
+            __state = -1;
+            return false;
         }
 
         public static void Postfix([HarmonyArgument(0)] PlayerControl player, int __state, bool __runOriginal)
         {
             if (__state < 0 || !__runOriginal || (__state & DoorsSystemType.OpenDoor) == 0) return;
             if (!closedFor.TryGetValue(player.PlayerId, out var set)) return;
+            // 作業でも開けられない人の、閉めていないドアの作業はここに来る (閉めは解かない)
             if (!taskLocked.Contains(player.PlayerId))
             {
                 var doorId = __state & DoorsSystemType.IdMask;
@@ -236,6 +240,25 @@ public static class PersonalDoors
         }
     }
 
+    // 全員へのドアの状態は SendAllStreamedObjects の中で書かれる (上の Serialize の Prefix/Postfix が送り直しの印を立てる)。
+    // 同じフレームのうちに閉めた人へ送り直し、閉めた人の画面でドアが開いて見える間を縮める。
+    // 全員への送りと閉めた人への送りは別の電文なので、届く順が入れ替わることがある (2026-11-25 実機で、開いたまま 2 秒余り残った)。
+    // 入れ替わっても閉め直せるよう、FollowUpDelay の後にもう一度送る (この 1 回は MinResendInterval で間引かない)。
+    [HarmonyPatch(typeof(InnerNet.InnerNetClient), nameof(InnerNet.InnerNetClient.SendAllStreamedObjects))]
+    static class AfterStreamPatch
+    {
+        public static void Postfix()
+        {
+            if (!resendPending || !HasAny) return;
+            var now = UnityEngine.Time.time;
+            if (now < nextResendAllowed) return;
+            nextKeepAlive = now + KeepAliveInterval;
+            nextResendAllowed = now + MinResendInterval;
+            followUpAt = now + FollowUpDelay;
+            ResendAll();
+        }
+    }
+
     [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.FixedUpdate))]
     static class ResendPatch
     {
@@ -243,7 +266,9 @@ public static class PersonalDoors
         {
             if (!HasAny || __instance != PlayerControl.LocalPlayer) return;
             var now = UnityEngine.Time.time;
-            if (!(resendPending && now >= nextResendAllowed) && now < nextKeepAlive) return;
+            var followUp = followUpAt > 0f && now >= followUpAt;
+            if (!followUp && !(resendPending && now >= nextResendAllowed) && now < nextKeepAlive) return;
+            followUpAt = 0f;
             nextKeepAlive = now + KeepAliveInterval;
             nextResendAllowed = now + MinResendInterval;
             ResendAll();
