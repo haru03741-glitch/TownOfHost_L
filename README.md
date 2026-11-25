@@ -164,7 +164,7 @@ Thank you for finding and using TOH_L!<br>
 - [TownOfHost-hamo](https://github.com/rar006/TownOfHost-hamo)
   - hamo から移した役職 (役職の From ごと):
     - TownOfHost-hamo: 守護者・ナイスハッカー・リピーター・イビルコマンダー・フレーマー・マエストロ・サロゲート・マッドカイザー・アンチヒーロー・マッドマジック
-    - [TownOfHost-K](https://github.com/KYMario/TownOfHost-K): アナライザー・ナイスアドナー・ウルトラスター・アンチレポーター・バルーナー・爆弾魔・ドライバー・イビルアドナー・イビルブレンダー・マジシャン・大狼・マッドアベンジャー・化け狐・ジャッカルウルフ・ブレイド・カメレオン
+    - [TownOfHost-K](https://github.com/KYMario/TownOfHost-K): アナライザー・ナイスアドナー・ウルトラスター・アンチレポーター・バルーナー・爆弾魔・ドライバー・イビルアドナー・イビルブレンダー・マジシャン・大狼・マッドアベンジャー・化け狐・ジャッカルウルフ・ブレイド
     - [SuperNewRoles](https://github.com/ykundesu/SuperNewRoles): 天秤・ミーティングシェリフ・賢者・村長・イビルギャンブラー・波動砲・ペンギン・突き落とし師・侍・フリーター・波動砲ジャッカル・弾・陰陽師・式神・パブロフの犬・スペランカー・マグロ・ノヴァ (波動砲が元)
     - [TownOfHost-Pko](https://github.com/satokazoku/TownOfHost-Pko): ナイスワーカホリック・波動砲シェリフ・ワルキューレ・イビルリンカー・ヘイトキラー・タイムリーパー・スタンドマスター・スタンド・ゾンビ
     - [ExtremeRoles](https://github.com/yukieiji/ExtremeRoles): アサシン・マーリン・エボルバー・イーター

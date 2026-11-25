@@ -1,3 +1,4 @@
+using System.Linq;
 using AmongUs.GameOptions;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
@@ -7,7 +8,7 @@ namespace TownOfHostL.Roles.Impostor
 {
     public sealed class Tairou : RoleBase, IImpostor
     {
-        // 役職の元: TownOfHost_K (TownOfHost-hamo 経由)
+        // 役職の元: TownOfHost-hamo (TownOfHost_K の大狼に占い結果の設定を足した版)
         public static readonly SimpleRoleInfo RoleInfo =
             SimpleRoleInfo.Create(
             typeof(Tairou),
@@ -30,10 +31,13 @@ namespace TownOfHostL.Roles.Impostor
         }
         public static OptionItem OptionTairoDeathReason;
         public static OptionItem OptionTairouNotify;
+        public static OptionItem OptionTellResult;
+        CustomRoles? disguise;
         enum OptionName
         {
             TairoDeathReason,
-            TairouNotify
+            TairouNotify,
+            TairouTellResult
         }
         public static bool TairoDeathReason;
         public static bool TairouNotify;
@@ -41,10 +45,21 @@ namespace TownOfHostL.Roles.Impostor
         {
             OptionTairoDeathReason = BooleanOptionItem.Create(RoleInfo, OptionName.TairoDeathReason, true, false);
             OptionTairouNotify = BooleanOptionItem.Create(RoleInfo, OptionName.TairouNotify, true, false);
+            OptionTellResult = StringOptionItem.Create(RoleInfo, OptionName.TairouTellResult, new[] { "TellResultCrewmate", "TellResultRandomRole" }, 0, false);
         }
         public override CustomRoles TellResults(PlayerControl player)
         {
-            return CustomRoles.Crewmate;
+            return disguise ??= PickDisguise(OptionTellResult.GetValue() == 1);
+        }
+        /// <summary>占いで見せる役職。random なら、この試合で出るクルーの役職から 1 つ (無ければクルーメイト)</summary>
+        static CustomRoles PickDisguise(bool random)
+        {
+            if (!random) return CustomRoles.Crewmate;
+            var roles = Options.CustomRoleCounts.Keys
+                .Where(r => r is not CustomRoles.Tairou && r.GetRoleInfo() != null
+                    && r.GetCustomRoleTypes() == CustomRoleTypes.Crewmate && r.IsEnable())
+                .ToArray();
+            return roles.Length == 0 ? CustomRoles.Crewmate : roles[IRandom.Instance.Next(roles.Length)];
         }
         public override bool OnCheckMurderAsTarget(MurderInfo info)
         {
