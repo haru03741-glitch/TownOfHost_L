@@ -791,13 +791,13 @@ public enum CustomRoles
 
     // TownOfHost-hamo から移植
     Evilgambler, Samurai, HadouHo, Pusher, HateKiller, Framer, Surrogate, Maestro, TimeSleeper, Bomber,
-    EvilLinker, Tairou, EvilBlender, Ballooner, AntiReporter, EvilAddoer, Driver, Assassin, EvilCommander,
+    EvilLinker, Tairou, EvilBlender, Ballooner, AntiReporter, EvilAddoer, SlaveDriver, Assassin, EvilCommander,
     Magician, Evolver, Destroyer, Nova, Reloader,
-    MadMagic, MadKaiser, MadAvenger, Braid,
+    MadMagic, MadKaiser, MadAvenger,
     Sage, MeetingSheriff, Balancer, VillageChief, NiceHacker, Guardian, Walkure, Repeater, NiceWorkaholic,
     SheriffHadouHo, Analyzer, UltraStar, NiceAddoer, Merlin,
     Spelunker, Tuna, Vulture, PavlovDog, PavlovOwner, PavlovDogImprint, JackalHadouHo, Tama, Onmyoji, Shikigami,
-    Freeter, AntiHero, StandMaster, Stand, Zombie, JackalWolf, Eater, Fox, PlagueDoctor,
+    Freeter, AntiHero, StandMaster, Stand, Zombie, JackalWolf, Eater, Spectre, SpectreFollower, SpectreImmoralist, PlagueDoctor,
 
     // 他の mod から移した役職
     EvilBusker, Busker, JackalBusker,

@@ -147,7 +147,7 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
 
             if (data.Key is CustomRoles.AlienHijack or CustomRoles.EvilSatellite or CustomRoles.ConnectSaver
 
-            or CustomRoles.Limiter or CustomRoles.Assassin or CustomRoles.Amnesiac or CustomRoles.Driver)
+            or CustomRoles.Limiter or CustomRoles.Assassin or CustomRoles.Amnesiac)
 
             {
 
