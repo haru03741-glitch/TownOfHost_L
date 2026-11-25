@@ -70,6 +70,9 @@ internal static class RolePage
         return new UiScreen(go.transform) { Anchor = Align.Start, MaxWidth = w, BaseOrder = 1 };
     }
 
+    // 頁の部品だけを捨てる (区分と検索の語は残す)。次に出す時に作り直す
+    public static void Unbuild() => Teardown();
+
     private static void Teardown()
     {
         Browser.Detach();

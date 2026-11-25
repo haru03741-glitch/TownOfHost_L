@@ -9,8 +9,8 @@ using UnityEngine;
 
 namespace TownOfHostL.SettingsUI;
 
-// 設定画面の「ゲーム」(本編の設定と TOHL のゲームのルール) と「全般」(TOHL の表示・参加の制限など) の頁。
-// 本編の設定か TOHL の設定かでは分けず、話題で分ける
+// 設定画面の「ゲーム」(本編の設定と TOHL のゲームのルール)・「全般」(TOHL の表示・参加の制限など)・
+// モードの頁 (かくれんぼなど、今のモードだけの決まりと役職) の頁。本編の設定か TOHL の設定かでは分けず、話題で分ける
 internal static class SettingsPages
 {
     public static readonly SectionPage General = new("generalpage", () => Translator.GetString("MenuCat.ModMainSettings"),
@@ -19,7 +19,10 @@ internal static class SettingsPages
     public static readonly SectionPage Game = new("gamepage", () => Translator.GetString("MenuCat.Game"),
         GameSettingMenuPatch.CatColor(null), GameGroups, MapTop, VanillaGame.Rebuild, TopKey) { HeroSub = MapName, HasPreview = true };
 
-    public static bool AnyBuilt => General.Built || Game.Built || RolePage.Built;
+    // 今のモードだけの設定の頁。題と色は今のモードで替わる (通常モードでは出す設定が無く、左の列にも出さない)
+    public static readonly SectionPage Mode = new("modepage", ModeTitle, ModeColor, ModeGroups);
+
+    public static bool AnyBuilt => General.Built || Game.Built || Mode.Built || RolePage.Built;
 
     // ゲームの頁を作った本編の画面 (マップの絵を借りる)
     public static GameOptionsMenu GameTab;
@@ -31,6 +34,7 @@ internal static class SettingsPages
         GameTab = null;
         General.Forget();
         Game.Forget();
+        Mode.Forget();
         RolePage.Forget();
         PresetPage.Forget();
         Footage.ReleaseAll();
@@ -44,6 +48,7 @@ internal static class SettingsPages
     {
         General.RefreshMarks();
         Game.RefreshMarks();
+        Mode.RefreshMarks();
     }
 
     // 外 (プリセット・コマンド・取り消し) で値を変えた後
@@ -59,6 +64,7 @@ internal static class SettingsPages
     {
         General.RefreshFromOutside();
         Game.RefreshFromOutside();
+        Mode.RefreshFromOutside();
     }
 
     // 値をまとめて書き換える間 (設定の文字列の読み込みなど) は値ごとに頁を書き直さず、終わった後に 1 回だけ書き直す
@@ -146,6 +152,31 @@ internal static class SettingsPages
 
     private static bool IsGeneral(OptionItem head) => head != null && GeneralHeads.Contains(head.Name);
 
+    // モードの頁に置く節: 見出しが特定のモードだけの設定の節 (かくれんぼの決まり・専用の役職・タスクバトルなど)。
+    // どのモードの節も同じ頁に入れておき、今のモードの物だけが出る (モードを変えても節の組み分けは変わらない)
+    private static bool IsModeOnly(OptionItem head)
+        => head != null && head.GameMode != CustomGameMode.All && head.GameMode != CustomGameMode.Standard;
+
+    internal static List<SectionPage.Group> ModeGroups()
+    {
+        var list = new List<SectionPage.Group>();
+        foreach (var (g, head) in TohlSections())
+            if (!IsGeneral(head) && IsModeOnly(head)) list.Add(g);
+        return list;
+    }
+
+    internal static string ModeTitle()
+    {
+        var label = TownOfHostL.Core.Modes.ModeCatalog.Current.Label;
+        return label.HasValue ? Translator.GetString(label.Value.Key).RemoveHtmlTags() : Translator.GetString("MenuCat.Mode");
+    }
+
+    internal static Color ModeColor()
+    {
+        var label = TownOfHostL.Core.Modes.ModeCatalog.Current.Label;
+        return label.HasValue ? label.Value.Color : GameSettingMenuPatch.CatColor(null);
+    }
+
     internal static List<SectionPage.Group> GeneralGroups()
     {
         var list = new List<SectionPage.Group>();
@@ -171,7 +202,7 @@ internal static class SettingsPages
         var rest = new List<SectionPage.Group>();
         foreach (var (g, head) in tohl)
         {
-            if (IsGeneral(head)) continue;
+            if (IsGeneral(head) || IsModeOnly(head)) continue;
             if (head == Options.GameMode) list.Add(g);
             else rest.Add(g);
         }
@@ -266,6 +297,7 @@ internal static class SettingsPagesTick
         ScrollView.TickAll();
         SettingsPages.Game.Tick();
         SettingsPages.General.Tick();
+        SettingsPages.Mode.Tick();
         RolePage.Tick();
         SettingsCover.Tick();
         JumpMenu.Tick();

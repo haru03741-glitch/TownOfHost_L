@@ -31,7 +31,7 @@ internal sealed class SectionPage
 
     private readonly string _tag;
     private readonly Func<string> _title;
-    private readonly Color _color;
+    private readonly Func<Color> _color;
     private readonly Func<List<Group>> _groups;
     private readonly Func<bool, Widget> _top;   // 節の前に置く物 (編集できるか)。null = 無し
     private readonly Action _onBuild;           // 組む前に呼ぶ (項目の作り直しなど)
@@ -69,6 +69,10 @@ internal sealed class SectionPage
     private IntPtr _menu;
 
     public SectionPage(string tag, Func<string> title, Color color, Func<List<Group>> groups, Func<bool, Widget> top = null, Action onBuild = null, Func<int> topKey = null)
+        : this(tag, title, () => color, groups, top, onBuild, topKey) { }
+
+    // 色が今の状態で替わる頁 (モードの頁)。色は組み直す時に読む
+    public SectionPage(string tag, Func<string> title, Func<Color> color, Func<List<Group>> groups, Func<bool, Widget> top = null, Action onBuild = null, Func<int> topKey = null)
     {
         _tag = tag;
         _title = title;
@@ -218,7 +222,7 @@ internal sealed class SectionPage
     private Widget Side(bool edit)
     {
         var col = new Stack(false) { Gap = 0.06f, Width = SideW };
-        col.Add(Hero(SideW, _color, _title(), HeroSub?.Invoke() ?? ""));
+        col.Add(Hero(SideW, _color(), _title(), HeroSub?.Invoke() ?? ""));
         if (HasPreview)
         {
             _preview = new GamePreview(SideW, PreviewH);

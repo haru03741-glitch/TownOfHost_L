@@ -985,6 +985,11 @@ internal sealed class RoleBrowser
         foreach (var g in SettingsPages.GameGroups())
             yield return (Join(game, g.Title), g.Color == Color.white ? gameColor : g.Color, g.Opts);
 
+        string mode = SettingsPages.ModeTitle();
+        var modeColor = SettingsPages.ModeColor();
+        foreach (var g in SettingsPages.ModeGroups())
+            yield return (Join(mode, g.Title), g.Color == Color.white ? modeColor : g.Color, g.Opts);
+
         string general = Tr("MenuCat.ModMainSettings");
         var generalColor = GameSettingMenuPatch.CatColor(TabGroup.ModMainSettings);
         foreach (var g in SettingsPages.GeneralGroups())

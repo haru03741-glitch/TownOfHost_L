@@ -12,10 +12,11 @@ namespace TownOfHostL;
 
 public static class ModGameOptionsMenu
 {
-    // タブの番号: 本編は 0〜2、TOHL の区分は 3 から TabGroup の順、その次が検索の結果
+    // タブの番号: 本編は 0〜2、TOHL の区分は 3 から TabGroup の順、その次が検索の結果・プリセット・モードの頁
     public const int FirstModTab = 3;
     public static readonly int SearchTab = FirstModTab + Enum.GetValues(typeof(TabGroup)).Length;
     public static readonly int PresetTab = SearchTab + 1;
+    public static readonly int ModeTab = PresetTab + 1;
     public static int TabIndex = 0;
     public static bool IsModTab(int tabNum) => tabNum >= FirstModTab;
 }
@@ -65,6 +66,7 @@ public static class GameOptionsMenuPatch
             if (GameSettingMenuPatch.IsPresetHost(__instance)) SettingsUI.PresetPage.Build(__instance);
             else if (GameSettingMenuPatch.IsRoleHost(__instance)) SettingsUI.RolePage.Build(__instance);
             else if (GameSettingMenuPatch.IsModTabMenu(__instance)) SettingsUI.SettingsPages.General.Build(__instance);
+            else if (GameSettingMenuPatch.IsModeHost(__instance)) SettingsUI.SettingsPages.Mode.Build(__instance);
             else return true;
         }
         catch (Exception e) { Logger.Exception(e, "GameOptionsMenuPatch.Page"); }

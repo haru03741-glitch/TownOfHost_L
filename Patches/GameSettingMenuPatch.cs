@@ -57,6 +57,7 @@ public class GameSettingMenuPatch
     static GameOptionsMenu ModTab;
     static GameOptionsMenu RoleHost;
     static GameOptionsMenu PresetHost;
+    static GameOptionsMenu ModeHost;
     static SettingsSearchBox SearchBox;
     // 検索欄の今の語 (検索の結果の頁を出している間だけ頁に渡す)
     static string searchQuery = "";
@@ -83,6 +84,7 @@ public class GameSettingMenuPatch
         public int TabNum;
         public TabGroup? Tab; // null = 本編のゲーム設定 (Presets の時はプリセット)
         public bool Presets;
+        public bool Mode; // 今のモードだけの設定の頁
         public TextMeshPro Label;
         public string Shown; // 字に書いた今の文
         public Transform Art;
@@ -102,6 +104,9 @@ public class GameSettingMenuPatch
         [TabGroup.Addons] = "#ff9ae8",
     };
     const string GameCategoryColor = "#8aa2ff";
+
+    // モードの頁のボタンの字 (今のモードで替わる)
+    static string ModeLabel() => SettingsUI.SettingsPages.ModeTitle();
 
     internal static Color CatColor(TabGroup? tab)
     {
@@ -129,11 +134,17 @@ public class GameSettingMenuPatch
     public static void RefreshCategoryLabels()
     {
         if (OpenMenu == null) return;
+        // モードを変えると出す区分が変わる (左の列を組み直す)
+        if (ShownCatsKey() != builtCatsKey)
+        {
+            BuildCats(OpenMenu);
+            return;
+        }
         foreach (var cat in Cats)
         {
             if (cat.Label == null || cat.Presets) continue;
             // 書き込みは字の組み直しを伴うので、変わった時だけ
-            var text = CategoryLabel(cat.Tab);
+            var text = cat.Mode ? ModeLabel() : CategoryLabel(cat.Tab);
             if (text == cat.Shown) continue;
             cat.Shown = text;
             cat.Label.text = text;
@@ -144,7 +155,8 @@ public class GameSettingMenuPatch
     internal static bool IsRoleHost(GameOptionsMenu menu) => menu && RoleHost && menu.Pointer == RoleHost.Pointer;
     internal static bool IsModTabMenu(GameOptionsMenu menu) => menu && ModTab && menu.Pointer == ModTab.Pointer;
     internal static bool IsPresetHost(GameOptionsMenu menu) => menu && PresetHost && menu.Pointer == PresetHost.Pointer;
-    internal static bool IsPageHost(GameOptionsMenu menu) => IsRoleHost(menu) || IsModTabMenu(menu) || IsPresetHost(menu);
+    internal static bool IsModeHost(GameOptionsMenu menu) => menu && ModeHost && menu.Pointer == ModeHost.Pointer;
+    internal static bool IsPageHost(GameOptionsMenu menu) => IsRoleHost(menu) || IsModTabMenu(menu) || IsPresetHost(menu) || IsModeHost(menu);
 
     // 左の列の一番下のボタンのすぐ下 (世界座標の左上と幅)。役職の区分ではここに絞り込みの札を置く
     internal static bool CatFoot(out Vector3 topLeft, out float width)
@@ -162,11 +174,11 @@ public class GameSettingMenuPatch
     }
 
     // 左の列のボタン 1 つ (本編のゲーム設定のボタンの複製・押す音と当てた時の見た目は本編のまま)
-    static void AddCat(GameSettingMenu menu, TabGroup? tab, int tabNum, float step, float scaleY, bool presets = false)
+    static void AddCat(GameSettingMenu menu, TabGroup? tab, int tabNum, float step, float scaleY, bool presets = false, bool mode = false)
     {
         var proto = templateGameSettingsButton;
         var btn = Object.Instantiate(proto, menu.GameSettingsButton.transform.parent);
-        string key = presets ? "Presets" : tab?.ToString() ?? "Game";
+        string key = presets ? "Presets" : mode ? "Mode" : tab?.ToString() ?? "Game";
         btn.name = "Cat_" + key;
         btn.gameObject.SetActive(true);
         var z = proto.transform.localPosition.z;
@@ -187,14 +199,14 @@ public class GameSettingMenuPatch
         label.fontSizeMin = 1f;
         label.fontSizeMax = label.fontSize;
         label.alignment = TextAlignmentOptions.Center;
-        label.text = presets ? Translator.GetString("MenuCat.Presets") : CategoryLabel(tab);
+        label.text = presets ? Translator.GetString("MenuCat.Presets") : mode ? ModeLabel() : CategoryLabel(tab);
 
-        var c = presets ? SettingsUI.PresetPage.TabColor : CatColor(tab);
+        var c = presets ? SettingsUI.PresetPage.TabColor : mode ? SettingsUI.SettingsPages.ModeColor() : CatColor(tab);
         btn.inactiveSprites.GetComponent<SpriteRenderer>().color = new Color(c.r * 0.6f, c.g * 0.6f, c.b * 0.6f, 1f);
         btn.activeSprites.GetComponent<SpriteRenderer>().color = c;
         btn.selectedSprites.GetComponent<SpriteRenderer>().color = c;
 
-        var cat = new Cat { Button = btn, TabNum = tabNum, Tab = tab, Presets = presets, Label = label, Shown = label.text };
+        var cat = new Cat { Button = btn, TabNum = tabNum, Tab = tab, Presets = presets, Mode = mode, Label = label, Shown = label.text };
         AddCatArt(cat, $"TownOfHost_L.Resources.MenuCat_{key}.png");
 
         btn.OnMouseOver = new UnityEngine.Events.UnityEvent();
@@ -414,24 +426,11 @@ public class GameSettingMenuPatch
             Translator.GetString("MenuSearch.Hint"), OnSearchChanged);
         SettingsUI.JumpMenu.Create(buttonParent, new Vector3(JumpButtonPosition.x, JumpButtonPosition.y, searchPos.z), __instance.gameObject.layer);
 
-        // 左の列: ゲームと、全般・役職の区分。本編のかくれんぼでは、出す設定が 1 つも無い区分は出さない
-        // (ModMainSettings の設定は、全般の頁に置く節の物だけを数える。残りはゲームの頁に出る)
+        // 左の列: プリセット・ゲーム・モードの頁と、全般・役職の区分 (出す設定のある物だけ)
         Cats.Clear();
-        var generalOpts = TownOfHostL.Core.VanillaHideAndSeek.IsSuspended
-            ? SettingsUI.SettingsPages.GeneralGroups().SelectMany(g => g.Opts).Select(o => o.Item).ToHashSet()
-            : null;
-        var groups = EnumHelper.GetAllValues<TabGroup>()
-            .Where(tab => generalOpts == null || OptionItem.AllOptions.Any(o => o.Tab == tab && ModeCatalog.IsShown(o) && (tab != TabGroup.ModMainSettings || generalOpts.Contains(o))))
-            .ToList();
-        int catCount = 2 + groups.Count;
-        float fit = catCount > CatFitCount ? (CatFitCount - 1f) / (catCount - 1f) : 1f;
-        AddCat(__instance, null, ModGameOptionsMenu.PresetTab, CatStepY * fit, CatScaleY * fit, presets: true);
-        AddCat(__instance, null, 1, CatStepY * fit, CatScaleY * fit);
-        foreach (var tab in groups)
-            AddCat(__instance, tab, (int)tab + ModGameOptionsMenu.FirstModTab, CatStepY * fit, CatScaleY * fit);
-        __instance.DefaultButtonSelected = Cats[1].Button;
-        PlaceDescription(__instance);
-        HighlightCat(ModGameOptionsMenu.TabIndex == ModGameOptionsMenu.SearchTab ? -1 : ModGameOptionsMenu.TabIndex);
+        generalSet = SettingsUI.SettingsPages.GeneralGroups().SelectMany(g => g.Opts).Select(o => o.Item).ToHashSet();
+        modeSet = SettingsUI.SettingsPages.ModeGroups().SelectMany(g => g.Opts).Select(o => o.Item).ToHashSet();
+        BuildCats(__instance);
 
         // 頁の置き場にする画面を作る (ゲーム設定の画面の複製)。全般の頁用と、役職の区分・検索の結果用
         ModTab = Object.Instantiate(templateGameOptionsMenu, __instance.GameSettingsTab.transform.parent);
@@ -443,6 +442,87 @@ public class GameSettingMenuPatch
         PresetHost = Object.Instantiate(templateGameOptionsMenu, __instance.GameSettingsTab.transform.parent);
         PresetHost.name = "PresetPage";
         PresetHost.gameObject.SetActive(false);
+        ModeHost = Object.Instantiate(templateGameOptionsMenu, __instance.GameSettingsTab.transform.parent);
+        ModeHost.name = "ModePage";
+        ModeHost.gameObject.SetActive(false);
+    }
+
+    // 全般の頁・モードの頁に置く TOHL の設定 (TabGroup.ModMainSettings の残りはゲームの頁)。並びは起動後に変わらないので画面を開く時に 1 回求める
+    static HashSet<OptionItem> generalSet = new(), modeSet = new();
+    static string builtCatsKey;
+
+    // 出す区分 (出す設定が 1 つでもある区分)。全部の設定を 1 回なめ、区分ごとに 1 つ見つかったら後はその区分を見ない
+    static (bool mode, bool general, HashSet<TabGroup> tabs) ShownCats()
+    {
+        bool mode = false, general = false;
+        var tabs = new HashSet<TabGroup>();
+        foreach (var o in OptionItem.AllOptions)
+        {
+            if (o.Tab == TabGroup.ModMainSettings)
+            {
+                bool g = !general && generalSet.Contains(o), m = !mode && modeSet.Contains(o);
+                if ((!g && !m) || !o.IsShown()) continue;
+                general |= g;
+                mode |= m;
+            }
+            else if (!tabs.Contains(o.Tab) && o.IsShown()) tabs.Add(o.Tab);
+        }
+        return (mode, general, tabs);
+    }
+
+    static string KeyOf(bool mode, bool general, HashSet<TabGroup> tabs)
+    {
+        var sb = new System.Text.StringBuilder(mode ? "M" : "-").Append(general ? 'G' : '-');
+        foreach (var tab in tabs.OrderBy(t => t)) sb.Append((int)tab).Append(',');
+        return sb.ToString();
+    }
+
+    static string ShownCatsKey()
+    {
+        var (mode, general, tabs) = ShownCats();
+        return KeyOf(mode, general, tabs);
+    }
+
+    // 左の列を (組み直して) 並べる。ボタンの数で間隔と高さが変わるので、出す区分が変わったら全部作り直す
+    static void BuildCats(GameSettingMenu menu)
+    {
+        if (menu == null) return;
+        bool rebuilt = Cats.Count > 0;
+        foreach (var old in Cats)
+        {
+            if (old.Button == null) continue;
+            try { old.Button.OnClick?.RemoveAllListeners(); } catch { }
+            menu.ControllerSelectable.Remove(old.Button);
+            Object.Destroy(old.Button.gameObject);
+        }
+        Cats.Clear();
+
+        var (mode, general, tabs) = ShownCats();
+        builtCatsKey = KeyOf(mode, general, tabs);
+        var groups = EnumHelper.GetAllValues<TabGroup>()
+            .Where(tab => tab == TabGroup.ModMainSettings ? general : tabs.Contains(tab))
+            .ToList();
+        int catCount = 2 + (mode ? 1 : 0) + groups.Count;
+        float fit = catCount > CatFitCount ? (CatFitCount - 1f) / (catCount - 1f) : 1f;
+        float step = CatStepY * fit, scaleY = CatScaleY * fit;
+        AddCat(menu, null, ModGameOptionsMenu.PresetTab, step, scaleY, presets: true);
+        AddCat(menu, null, 1, step, scaleY);
+        if (mode) AddCat(menu, null, ModGameOptionsMenu.ModeTab, step, scaleY, mode: true);
+        foreach (var tab in groups)
+            AddCat(menu, tab, (int)tab + ModGameOptionsMenu.FirstModTab, step, scaleY);
+        menu.DefaultButtonSelected = Cats[1].Button;
+        PlaceDescription(menu);
+        int cur = ModGameOptionsMenu.TabIndex;
+        HighlightCat(cur == ModGameOptionsMenu.SearchTab ? -1 : cur);
+        if (!rebuilt) return;
+
+        // 役職の頁の絞り込みの札は左の列の一番下に合わせて置くので、役職の頁が隠れている間なら次に出す時に作り直させる
+        bool onRolePage = cur == ModGameOptionsMenu.SearchTab
+            || (cur >= ModGameOptionsMenu.FirstModTab && cur < ModGameOptionsMenu.SearchTab && cur != ModGameOptionsMenu.FirstModTab + (int)TabGroup.ModMainSettings);
+        if (!onRolePage) SettingsUI.RolePage.Unbuild();
+        // 開いている区分が消えたら、ゲームの頁へ (値を書き換えている最中に頁を替えないよう、後で)
+        if (cur != ModGameOptionsMenu.SearchTab && !Cats.Any(c => c.TabNum == cur))
+            _ = new LateTask(() => { if (OpenMenu == menu && menu) menu.ChangeTab(1, false); }, 0f, "", outlivesSession: true);
     }
     private static void SetDefaultButton(GameSettingMenu __instance)
     {
@@ -490,6 +570,7 @@ public class GameSettingMenuPatch
             if (ModTab != null) ModTab.gameObject.SetActive(false);
             if (RoleHost != null) RoleHost.gameObject.SetActive(false);
             if (PresetHost != null) PresetHost.gameObject.SetActive(false);
+            if (ModeHost != null) ModeHost.gameObject.SetActive(false);
             HighlightCat(isSearch ? -1 : tabNum);
         }
 
@@ -523,6 +604,15 @@ public class GameSettingMenuPatch
                     PresetHost.gameObject.SetActive(true);
                     SettingsUI.PresetPage.Show();
                     SetDescription(__instance, Translator.GetString("MenuDescriptionText.Presets"));
+                }
+            }
+            else if (tabNum == ModGameOptionsMenu.ModeTab)
+            {
+                if (ModeHost != null)
+                {
+                    ModeHost.gameObject.SetActive(true);
+                    SettingsUI.SettingsPages.RefreshFromOutside();
+                    SetDescription(__instance, Translator.GetString("MenuDescriptionText.Mode") + "\n\n" + Translator.GetString("GameSettingHelpText.Page"));
                 }
             }
             else if (shown != null)
@@ -616,9 +706,12 @@ public class GameSettingMenuPatch
         if (ModTab != null) UnityEngine.Object.Destroy(ModTab);
         if (RoleHost != null) UnityEngine.Object.Destroy(RoleHost);
         if (PresetHost != null) UnityEngine.Object.Destroy(PresetHost);
+        if (ModeHost != null) UnityEngine.Object.Destroy(ModeHost);
         ModTab = null;
         RoleHost = null;
         PresetHost = null;
+        ModeHost = null;
+        builtCatsKey = null;
         SearchBox = null;
         searchSeq++;
         SettingsSearchBox.Forget();
