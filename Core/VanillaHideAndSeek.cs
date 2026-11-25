@@ -233,6 +233,8 @@ public static class VanillaHideAndSeek
         if (LateTask.Tasks.Count > 0) Logger.Info($"休む前に LateTask を {LateTask.Tasks.Count} 件捨てます", "VanillaHideAndSeek");
         LateTask.Tasks.Clear();
         Modes.PatchBundleSet.Apply(Modes.ModeCatalog.Vanilla.LiveBundles);
+        // 左上の設定の一覧は、書き直しと隠す処理が通常モードの束にある。出したままだと通常モードの古い一覧が試合中の画面に残る
+        HudManagerPatch.HideOptionShower();
         // 今あるロビーにはかくれんぼの束の Start の後置が走らないので、ここで開始人数を合わせる
         if (GameStartManager.InstanceExists) GameStartManager.Instance.MinPlayers = 1;
         state = State.Suspended;
