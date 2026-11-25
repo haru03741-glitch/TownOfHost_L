@@ -64,11 +64,12 @@ public static partial class Options
     };
 
     // MapActive
-    public static bool IsActiveSkeld => AddedTheSkeld?.GetValue() == 1 || Main.NormalOptions?.MapId is 0 or null;
-    public static bool IsActiveMiraHQ => AddedMiraHQ?.GetValue() == 1 || Main.NormalOptions?.MapId is 1 or null;
-    public static bool IsActivePolus => AddedPolus?.GetValue() == 1 || Main.NormalOptions?.MapId is 2 or null;
-    public static bool IsActiveAirship => AddedTheAirship?.GetValue() == 1 || Main.NormalOptions?.MapId is 4 or null;
-    public static bool IsActiveFungle => AddedTheFungle?.GetValue() == 1 || Main.NormalOptions?.MapId is 5 or null;
+    // 反転スケルドの決まりはスケルドの設定を使う
+    public static bool IsActiveSkeld => AddedTheSkeld?.GetValue() == 1 || AddedDleks?.GetValue() == 1 || Main.NormalOptions == null || GameMap.IsSkeld;
+    public static bool IsActiveMiraHQ => AddedMiraHQ?.GetValue() == 1 || Main.NormalOptions == null || GameMap.Current == MapNames.MiraHQ;
+    public static bool IsActivePolus => AddedPolus?.GetValue() == 1 || Main.NormalOptions == null || GameMap.Current == MapNames.Polus;
+    public static bool IsActiveAirship => AddedTheAirship?.GetValue() == 1 || Main.NormalOptions == null || GameMap.Current == MapNames.Airship;
+    public static bool IsActiveFungle => AddedTheFungle?.GetValue() == 1 || Main.NormalOptions == null || GameMap.Current == MapNames.Fungle;
 
     // 役職数・確率
     public static Dictionary<CustomRoles, OptionItem> CustomRoleCounts;
@@ -155,6 +156,7 @@ public static partial class Options
     public static OptionItem RandomMapsMode;
     public static OptionItem AddedTheSkeld;
     public static OptionItem AddedMiraHQ;
+    public static OptionItem AddedDleks;
     public static OptionItem AddedPolus;
     public static OptionItem AddedTheAirship;
     public static OptionItem AddedTheFungle;
@@ -750,6 +752,7 @@ public static partial class Options
         AddedTheSkeld = StringOptionItem.Create("AddedTheSkeld", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(RandomMapsMode).SetColor(new Color32(102, 102, 102, 255)).SetGameMode(CustomGameMode.All);
         AddedMiraHQ = StringOptionItem.Create("AddedMIRAHQ", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(RandomMapsMode).SetColor(new Color32(255, 102, 51, 255)).SetGameMode(CustomGameMode.All);
         AddedPolus = StringOptionItem.Create("AddedPolus", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(RandomMapsMode).SetColor(new Color32(152, 0, 152, 255)).SetGameMode(CustomGameMode.All);
+        AddedDleks = StringOptionItem.Create("AddedDleks", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(RandomMapsMode).SetColor(new Color32(102, 102, 102, 255)).SetGameMode(CustomGameMode.All);
         AddedTheAirship = StringOptionItem.Create("AddedTheAirship", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(RandomMapsMode).SetColor(new Color32(255, 51, 0, 255)).SetGameMode(CustomGameMode.All);
         AddedTheFungle = StringOptionItem.Create("AddedTheFungle", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(RandomMapsMode).SetColor(new Color32(255, 153, 0, 255)).SetGameMode(CustomGameMode.All);
 

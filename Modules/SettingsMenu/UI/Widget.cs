@@ -175,6 +175,7 @@ internal sealed class Picture : Widget
     public Color Color = Color.white;
     public bool Fit;
     public Material Material;   // null = 絵の既定の材質 (クルーの絵は本編の人の材質で色を付ける)
+    public bool FlipX;          // 左右を裏返して描く (反転スケルドの札はスケルドの絵を裏返して使う)
 
     public Picture(Sprite sprite, float w, float h)
     {
@@ -190,6 +191,7 @@ internal sealed class Picture : Widget
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sprite = Sprite;
         sr.color = Color;
+        sr.flipX = FlipX;
         if (Material) sr.sharedMaterial = Material;
         // 絵の元の大きさから Size に合わせる (Fit = 縦横比を保って Size の中に収める)
         var b = Sprite.bounds.size;

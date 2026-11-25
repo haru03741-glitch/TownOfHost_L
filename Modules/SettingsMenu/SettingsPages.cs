@@ -224,7 +224,7 @@ internal static class SettingsPages
     private static IGameOptions GameOpts => GameOptionsManager.Instance?.CurrentGameOptions;
 
     // 上の段の見た目が変わる値 (外で変えた時に組み直すかを決める)
-    private static int TopKey() => GameOpts != null ? GameOpts.MapId : -1;
+    private static int TopKey() => GameOpts != null ? (int)GameMap.Current : -1;
 
     private static Widget MapTop(bool edit)
     {
@@ -233,21 +233,32 @@ internal static class SettingsPages
         var picker = GameTab ? GameTab.MapPicker : null;
         var icons = picker ? picker.AllMapIcons : null;
         if (icons == null || icons.Count == 0) return null;
-        int cur = GameOpts != null ? GameOpts.MapId : -1;
+        int cur = GameOpts != null ? (int)GameMap.Current : -1;
         // マップは名前の札を付けず、行の幅いっぱいに並べる (選んだマップの名前は右の見出しに出す)
-        var line = new Stack(true) { Gap = 0.1f };
-        foreach (var icon in icons)
+        const float gap = 0.1f;
+        var line = new Stack(true) { Gap = gap };
+        // 本編の一覧に反転スケルドを足した数が行に収まる大きさ
+        int count = 1;
+        foreach (var icon in icons) if (icon != null && icon.MapIcon) count++;
+        float btn = Mathf.Min(MapBtn, (rowW - gap * (count - 1)) / count);
+        void Add(Sprite sprite, int id, bool flip)
         {
-            if (icon == null || !icon.MapIcon) continue;
-            int id = (int)icon.Name;
             bool on = id == cur;
-            line.Add(new Button(new Picture(icon.MapIcon, MapBtn - 0.1f, MapBtn - 0.1f) { Fit = true }, () => SelectMap(id))
+            line.Add(new Button(new Picture(sprite, btn - 0.1f, btn - 0.1f) { Fit = true, FlipX = flip }, () => SelectMap(id))
             {
-                Size = new Vector2(MapBtn, MapBtn),
+                Size = new Vector2(btn, btn),
                 Padding = Vector2.zero,
                 Color = on ? Accent : OptEditor.Dim,
                 Fill = on ? Color.Lerp(Color.black, Accent, 0.35f) : null,
             });
+        }
+        foreach (var icon in icons)
+        {
+            if (icon == null || !icon.MapIcon) continue;
+            int id = (int)icon.Name;
+            Add(icon.MapIcon, id, false);
+            // 本編の一覧に反転スケルドは無いので、スケルドの絵を裏返してスケルドの隣に置く
+            if (icon.Name == MapNames.Skeld) Add(icon.MapIcon, DleksMap.MapId, true);
         }
         return new Stack(true, line) { Width = rowW };
     }
@@ -257,6 +268,7 @@ internal static class SettingsPages
     {
         var o = GameOpts;
         if (o == null || !TranslationController.Instance) return "";
+        if (GameMap.Current == MapNames.Dleks) return Translator.GetString("MapNameDleks");
         StringNames? n = o.MapId switch
         {
             0 => StringNames.MapNameSkeld,
@@ -276,8 +288,8 @@ internal static class SettingsPages
     private static void SelectMap(int id)
     {
         var o = GameOpts;
-        if (o == null || !CanEdit() || o.MapId == id) return;
-        o.SetByte(ByteOptionNames.MapId, (byte)id);
+        if (o == null || !CanEdit() || (int)GameMap.Current == id) return;
+        DleksMap.SetLobbyMap(o, (byte)id);
         VanillaGame.Dirty = true;
         RefreshAll();
     }

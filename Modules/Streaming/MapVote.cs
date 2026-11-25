@@ -17,6 +17,7 @@ public static class MapVote
     public static readonly MapChoice[] Maps =
     {
         new(0, "Skeld", new[] { "skeld", "スケルド" }),
+        new(3, "dlekS", new[] { "dleks", "反転", "反転スケルド", "はんてん" }),
         new(1, "MIRA HQ", new[] { "mira", "mirahq", "ミラ" }),
         new(2, "Polus", new[] { "polus", "ポーラス" }),
         new(4, "Airship", new[] { "airship", "エアシップ" }),
@@ -104,8 +105,8 @@ public static class MapVote
         var pick = Maps[top[IRandom.Instance.Next(top.Count)]];
         Logger.Info($"配信のマップ投票で {pick.Name} に決めた ({max}/{votes.Count} 票)", nameof(MapVote));
         Clear();
-        if (Main.NormalOptions.MapId == pick.MapId) return false;
-        Main.NormalOptions.MapId = pick.MapId;
+        if ((byte)GameMap.Current == pick.MapId) return false;
+        DleksMap.SetLobbyMap(Main.NormalOptions.Cast<IGameOptions>(), pick.MapId);
         return true;
     }
 

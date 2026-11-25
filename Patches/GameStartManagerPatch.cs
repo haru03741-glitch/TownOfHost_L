@@ -266,12 +266,13 @@ namespace TownOfHostL
                     if (Options.AddedTheSkeld.GetBool()) randomMaps.Add(0);
                     if (Options.AddedMiraHQ.GetBool()) randomMaps.Add(1);
                     if (Options.AddedPolus.GetBool()) randomMaps.Add(2);
+                    if (Options.AddedDleks.GetBool()) randomMaps.Add(DleksMap.MapId);
                     if (Options.AddedTheAirship.GetBool()) randomMaps.Add(4);
                     if (Options.AddedTheFungle.GetBool()) randomMaps.Add(5);
 
                     if (randomMaps.Count <= 0) return;
                     var mapsId = randomMaps[rand.Next(randomMaps.Count)];
-                    if (Main.NormalOptions != null) Main.NormalOptions.MapId = mapsId;
+                    if (Main.NormalOptions != null) DleksMap.SetLobbyMap(Main.NormalOptions.Cast<IGameOptions>(), mapsId);
                 }
                 catch (Exception ex)
                 {

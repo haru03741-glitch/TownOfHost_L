@@ -22,10 +22,15 @@ public static class GameMap
             if (gm.currentGameMode == GameModes.HideNSeek)
             {
                 var hns = gm.currentHideNSeekGameOptions;
-                return hns != null ? (MapNames)hns.MapId : MapNames.Skeld;
+                if (hns == null) return MapNames.Skeld;
+                var hmap = (MapNames)hns.MapId;
+                return hmap == MapNames.Skeld && DleksMap.Pending ? MapNames.Dleks : hmap;
             }
             var normal = gm.currentNormalGameOptions;
-            return normal != null ? (MapNames)normal.MapId : MapNames.Skeld;
+            if (normal == null) return MapNames.Skeld;
+            var map = (MapNames)normal.MapId;
+            // ロビーの間、反転スケルドは MapId 0 と印で持つ (DleksMap)
+            return map == MapNames.Skeld && DleksMap.Pending ? MapNames.Dleks : map;
         }
     }
 
