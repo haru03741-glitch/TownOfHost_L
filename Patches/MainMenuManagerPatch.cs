@@ -155,7 +155,6 @@ namespace TownOfHostL
         [HarmonyPatch(nameof(MainMenuManager.OpenOnlineMenu)), HarmonyPostfix]
         public static void OpenOnlineMenuPrefix(MainMenuManager __instance)
         {
-            if (__instance.findGameButton) __instance.findGameButton.gameObject.SetActive(false);
             if (VersionChecker.IsSupported && Main.AllowPublicRoom && Main.IsPublicAvailableOnThisVersion) return;
 
             // 部屋作成ボタン

@@ -80,6 +80,8 @@ namespace TownOfHostL
                 if (!GameStates.IsModHost && !(AmongUsClient.Instance && AmongUsClient.Instance.AmHost)) sb.Append($"\r\n").Append(Utils.ColorString(Color.red, GetString("Warning.NoModHost")));
                 if (DebugModeManager.IsDebugMode) sb.Append("\r\n").Append(Utils.ColorString(Color.green, "デバッグモード"));
 
+                if (GameStates.IsLobby) sb.Append("\r\n").Append(LobbyClock.Text);
+
                 if (GameStates.IsLobby && !asClient)
                 {
                     // 役職が宣言したロビーの警告 (SimpleRoleInfo.LobbyWarning)
