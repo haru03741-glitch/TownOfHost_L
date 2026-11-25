@@ -316,7 +316,7 @@ public enum CustomDeathReason
     Retaliation,
     RuleViolation,
     MagicC,
-    // 化け狐 (Nebula の妖狐) の餓死
+    // 妖狐 (Nebula) の餓死
     Starved,
 
     Win,
@@ -345,7 +345,6 @@ public enum CustomWinner
     LoveCutter = CustomRoles.LoveCutter,
     Lawyer = CustomRoles.Lawyer,
     God = CustomRoles.God,
-    FoxSpirit = CustomRoles.FoxSpirit,
     Pirate = CustomRoles.Pirate,
 
     //CC

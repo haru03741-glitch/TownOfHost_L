@@ -12,7 +12,7 @@ using static TownOfHostL.Translator;
 namespace TownOfHostL.Roles.Neutral;
 
 /// <summary>
-/// 化け狐 (Nebula on the Ship の妖狐 / Spectre)<br/>
+/// 妖狐 (Nebula on the Ship の Spectre)<br/>
 /// お揚げを食べて満腹度を保ちながら生き残る。満腹度が勝利に必要な量より多いまま生きていれば、
 /// サボタージュ以外の勝ちを乗っ取る。満腹度が尽きると餓死する。満腹度を使って透明化できる。<br/>
 /// 素の客で遊べるよう、皿は名前の文字で描いた物 (CNO) で置き、食べるのは皿のそばに少し立つことで行う。
@@ -188,7 +188,7 @@ public sealed class Spectre : RoleBase, IKiller, IUsePhantomButton
         paired = false;
         SpectreDishes.Init();
     }
-    /// <summary>化け狐 1 人ごとに配る役職の組 (設定で子狐・背徳者を付ける)</summary>
+    /// <summary>妖狐 1 人ごとに配る役職の組 (設定で子狐・背徳者を付ける)</summary>
     static CustomRoles[] GetAssignUnit()
     {
         CustomRoles? follower = (ImmoralistVariation)OptionImmoralistVariation.GetValue() switch
@@ -204,10 +204,10 @@ public sealed class Spectre : RoleBase, IKiller, IUsePhantomButton
         return follower is CustomRoles f ? [CustomRoles.Spectre, f] : [CustomRoles.Spectre];
     }
 
-    /// <summary>子狐・背徳者 → その親の化け狐</summary>
+    /// <summary>子狐・背徳者 → その親の妖狐</summary>
     static readonly Dictionary<byte, byte> PairMap = new();
     static bool paired;
-    /// <summary>子狐・背徳者を親の化け狐と組にする (ホスト。全員の役職ができた後に 1 回)</summary>
+    /// <summary>子狐・背徳者を親の妖狐と組にする (ホスト。全員の役職ができた後に 1 回)</summary>
     static void EnsurePaired()
     {
         if (paired || !AmongUsClient.Instance.AmHost) return;
@@ -222,13 +222,13 @@ public sealed class Spectre : RoleBase, IKiller, IUsePhantomButton
             var spectre = spectres[i % spectres.Count];
             i++;
             PairMap[follower.PlayerId] = spectre.PlayerId;
-            // 化け狐と仲間は、互いを化け狐の色で見る
+            // 妖狐と仲間は、互いを妖狐の色で見る
             NameColorManager.Add(spectre.PlayerId, follower.PlayerId, RoleInfo.RoleColorCode);
             NameColorManager.Add(follower.PlayerId, spectre.PlayerId, RoleInfo.RoleColorCode);
             Logger.Info($"{follower.GetNameWithRole()} => {spectre.GetNameWithRole()}", "Spectre.Pair");
         }
     }
-    /// <summary>この子狐・背徳者の親の化け狐</summary>
+    /// <summary>この子狐・背徳者の親の妖狐</summary>
     internal static Spectre GetMySpectre(byte followerId)
     {
         EnsurePaired();
@@ -374,7 +374,7 @@ public sealed class Spectre : RoleBase, IKiller, IUsePhantomButton
     }
 
     #region 透明化 (ファントムのボタン)
-    // 素の客の手元では化け狐はクルーメイトなので、ファントムの消える電文が効かない。
+    // 素の客の手元では妖狐はクルーメイトなので、ファントムの消える電文が効かない。
     // 隠れんぼの鬼 (VanillaHnsHiddenSeeker) と同じく、ほかの人にだけ「一番近いベントに入った」と送って姿を消し、
     // 効果が切れたらベントから出して本当の位置へ戻す
     float vanishTimer;
@@ -541,7 +541,7 @@ public sealed class Spectre : RoleBase, IKiller, IUsePhantomButton
     #endregion
 }
 
-/// <summary>化け狐のお揚げの皿 (ホストのみ)。皿は誰にでも見える (CNO)</summary>
+/// <summary>妖狐のお揚げの皿 (ホストのみ)。皿は誰にでも見える (CNO)</summary>
 public static class SpectreDishes
 {
     public sealed class Dish
@@ -630,7 +630,7 @@ public static class SpectreDishes
             if (role is Spectre or SpectreFollower or SpectreImmoralist) Utils.NotifyRoles(SpecifySeer: role.Player);
     }
 
-    /// <summary>1 フレームに 1 回だけ進める (化け狐が何人いても)</summary>
+    /// <summary>1 フレームに 1 回だけ進める (妖狐が何人いても)</summary>
     public static void Update()
     {
         if (!spawned) Spawn();

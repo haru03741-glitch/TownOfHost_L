@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace TownOfHostL.Roles.Neutral;
 
-/// <summary>化け狐の仲間が、親の化け狐が死んだら後を追う処理 (子狐・背徳者で共通)</summary>
+/// <summary>妖狐の仲間が、親の妖狐が死んだら後を追う処理 (子狐・背徳者で共通)</summary>
 static class SpectreTeam
 {
     /// <summary>作業中に親が死んでいたら、自分も死ぬ (ホスト)</summary>
@@ -19,7 +19,7 @@ static class SpectreTeam
         if (state != null) state.DeathReason = CustomDeathReason.FollowingSuicide;
         me.SetRealKiller(spectre.Player);
         me.RpcMurderPlayerV2(me);
-        Logger.Info($"{me.GetNameWithRole()}: 化け狐の後を追った", "SpectreTeam");
+        Logger.Info($"{me.GetNameWithRole()}: 妖狐の後を追った", "SpectreTeam");
     }
     /// <summary>会議で親が死んだ (追放・推察) 時は、会議明けに一緒に死ぬ</summary>
     public static void AfterMeeting(PlayerControl me)
@@ -34,7 +34,7 @@ static class SpectreTeam
 
 /// <summary>
 /// 子狐 (Nebula on the Ship の SpectreFollower)<br/>
-/// 化け狐の仲間。お揚げを食べると、親の化け狐の満腹度が増える。親が勝てば勝ち、親が死ぬと後を追う。
+/// 妖狐の仲間。お揚げを食べると、親の妖狐の満腹度が増える。親が勝てば勝ち、親が死ぬと後を追う。
 /// </summary>
 public sealed class SpectreFollower : RoleBase
 {
@@ -91,8 +91,8 @@ public sealed class SpectreFollower : RoleBase
 }
 
 /// <summary>
-/// 化け狐の背徳者 (Nebula on the Ship の SpectreImmoralist)<br/>
-/// 化け狐の仲間。生きている間は空の皿にお揚げを供え、死んだ後は皿のお揚げを消せる (親が生きている間)。
+/// 背徳者 (Nebula on the Ship の SpectreImmoralist)<br/>
+/// 妖狐の仲間。生きている間は空の皿にお揚げを供え、死んだ後は皿のお揚げを消せる (親が生きている間)。
 /// 好きな時に自決できる (ペットをなでる)。親が勝てば勝ち、親が死ぬと後を追う。
 /// </summary>
 public sealed class SpectreImmoralist : RoleBase, IKillFlashSeeable, IUsePetButton

@@ -11,7 +11,7 @@ public enum WinTakeOverStage
     BaseTeamWin,
     /// <summary>終了判定で勝者が決まった直後 (毎フレームの判定の中。ゾンビ・陰陽師)</summary>
     OnGameEnd,
-    /// <summary>勝者を決める段 (WinnerResolver) の、単独勝利の上書きの後・追加勝利の前 (化け狐・マグロ・スペランカー・ゾンビ)</summary>
+    /// <summary>勝者を決める段 (WinnerResolver) の、単独勝利の上書きの後・追加勝利の前 (妖狐・マグロ・スペランカー・ゾンビ)</summary>
     AfterSoloWins,
 }
 
@@ -35,7 +35,7 @@ public sealed class WinTakeOver
 
 /// <summary>
 /// 役職が宣言した勝ちの乗っ取りを、段ごとに順に呼ぶ。
-/// 今の order: BaseTeamWin = エゴイスト 100 / OnGameEnd = ゾンビ 100・陰陽師 200 / AfterSoloWins = 化け狐 100・マグロ 200・スペランカー 300・ゾンビ 400
+/// 今の order: BaseTeamWin = エゴイスト 100 / OnGameEnd = ゾンビ 100・陰陽師 200 / AfterSoloWins = 妖狐 100・マグロ 200・スペランカー 300・ゾンビ 400
 /// </summary>
 public static class WinTakeOvers
 {

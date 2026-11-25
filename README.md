@@ -168,7 +168,7 @@ Thank you for finding and using TOH_L!<br>
     - [SuperNewRoles](https://github.com/ykundesu/SuperNewRoles): 天秤・ミーティングシェリフ・賢者・村長・イビルギャンブラー・波動砲・ペンギン・突き落とし師・侍・フリーター・波動砲ジャッカル・弾・陰陽師・式神・パブロフの犬・スペランカー・マグロ・ノヴァ (波動砲が元)
     - [TownOfHost-Pko](https://github.com/satokazoku/TownOfHost-Pko): ナイスワーカホリック・波動砲シェリフ・ワルキューレ・イビルリンカー・ヘイトキラー・タイムリーパー・スタンドマスター・スタンド・ゾンビ
     - [ExtremeRoles](https://github.com/yukieiji/ExtremeRoles): アサシン・マーリン・エボルバー・イーター・マジシャン・スレイヴドライバー
-    - [Nebula on the Ship](https://github.com/Dolly1016/Nebula-Public): デストロイヤー・化け狐・子狐・狐の背徳者
+    - [Nebula on the Ship](https://github.com/Dolly1016/Nebula-Public): デストロイヤー・妖狐・子狐・背徳者
     - [Revolutionary Host Roles](https://github.com/sansaaaaai/Revolutionary-host-roles): リローダー
     - [The Other Roles: GM Edition](https://github.com/yukinogatari/TheOtherRoles-GM): ペスト医師
     - [TheOtherRoles](https://github.com/TheOtherRolesAU/TheOtherRoles): ヴァルチャー
