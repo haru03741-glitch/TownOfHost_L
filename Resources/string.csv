@@ -739,6 +739,7 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "DisableSabotage.Comms","Comms","通信","通讯","通訊","Связь","Comunicações","Comunicações"
 "DisableSabotage.Mushroom","Mushroom Mixup","キノコカオス","蘑菇混乱","蘑菇混亂","Грибная путаница","Confusão de Cogumelos","Confusão de Cogumelos"
 "DisableSabotage.Doors","Doors","ドア","门","門","Двери","Portas","Portas"
+"DoorSabotageDuration","Door Sabotage Duration (The Skeld)","ドアのサボタージュで閉まる時間 (スケルド)"
 "DeadImpostorCannotSabotage","Dead Impostors Cannot Sabotage","死んだインポスターはサボタージュできない","死亡的内鬼无法破坏","死亡的內鬼無法破壞","Мёртвые предатели не могут саботировать","Impostores Mortos Não Podem Sabotar","Impostores Mortos Não Podem Sabotar"
 "DeadImpostorCannotSabotageInfoLong","","死んだインポスターがサボタージュを押しても起こさない機能。","","","","",""
 "AutoAbortOnDisconnect","Auto Abort on Disconnects","切断が続いたら廃村にする","断线过多时自动废村","斷線過多時自動廢村","Автоотмена при отключениях","Encerrar ao Haver Desconexões","Encerrar ao Haver Desconexões"

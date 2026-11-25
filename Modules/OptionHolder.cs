@@ -297,6 +297,7 @@ public static partial class Options
     public static OptionItem DisableSabotageComms;
     public static OptionItem DisableSabotageMushroom;
     public static OptionItem DisableSabotageDoors;
+    public static OptionItem DoorSabotageDuration;
     public static OptionItem DeadImpostorCannotSabotage;
 
     public static OptionItem SkinControle;
@@ -797,6 +798,9 @@ public static partial class Options
         DisableSabotageComms = StringOptionItem.Create("DisableSabotage.Comms", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableSabotage).SetGameMode(CustomGameMode.All);
         DisableSabotageMushroom = StringOptionItem.Create("DisableSabotage.Mushroom", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableSabotage).SetGameMode(CustomGameMode.All);
         DisableSabotageDoors = StringOptionItem.Create("DisableSabotage.Doors", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableSabotage).SetGameMode(CustomGameMode.All);
+        // スケルドのドアのサボタージュで閉まっている時間 (本編は 10 秒)
+        DoorSabotageDuration = FloatOptionItem.Create("DoorSabotageDuration", new(10f, 120f, 5f), 10f, TabGroup.ModMainSettings, false)
+            .SetValueFormat(OptionFormat.Seconds).SetGameMode(CustomGameMode.All);
         // 死んだインポスターのサボタージュを受け付けない
         DeadImpostorCannotSabotage = StringOptionItem.Create("DeadImpostorCannotSabotage", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetColor(Color.magenta).SetGameMode(CustomGameMode.All);
