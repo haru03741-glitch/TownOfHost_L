@@ -633,6 +633,8 @@ static partial class ExtendedPlayerControl
             }, Revive.SettleTime + 0.1f, "SeekerBody hold meeting");
             return;
         }
+        // ベントに閉じ込めた人も会議の前に出す
+        if (AmongUsClient.Instance.AmHost) VentCage.ReleaseAllForMeeting();
         MeetingRoomManager.Instance.AssignSelf(reporter, target);
         DestroyableSingleton<HudManager>.Instance.OpenMeetingRoom(reporter);
         reporter.RpcStartMeeting(target);

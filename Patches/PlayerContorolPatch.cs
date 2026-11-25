@@ -640,6 +640,8 @@ partial class ReportDeadBodyPatch
         if (AmongUsClient.Instance.AmHost) TempGhost.ReturnAllForMeeting();
         // 鬼の体も会議の前に外す (外す SetRole が落ち着くまで、下で通報を預かる)
         if (AmongUsClient.Instance.AmHost) SeekerBody.ReleaseAllForMeeting();
+        // ベントに閉じ込めた人も会議の前に出す
+        if (AmongUsClient.Instance.AmHost) VentCage.ReleaseAllForMeeting();
         // 復活の SetRole が落ち着く前に会議を開くと、本編の客の会議の画面が壊れる。1 件だけ預かり、落ち着いてから通す
         if (AmongUsClient.Instance.AmHost && Revive.HoldReport(__instance, target)) return false;
         // 役職の能力で確認なしに会議を開く
@@ -844,6 +846,8 @@ class CoEnterVentPatch
     {
         if (AmongUsClient.Instance.AmHost)
         {
+            // ベントへの閉じ込めは、押し出しも役職の「ベントに入った」も起こさない
+            if (Modules.VentCage.Forcing) return true;
             if (FirstTurnMeeting.BeforeFirstMeeting)
             {
                 // 待つ間に会議が始まったり死んだりした時は押し出さない

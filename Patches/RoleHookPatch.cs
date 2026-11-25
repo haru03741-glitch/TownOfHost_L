@@ -240,7 +240,9 @@ static class ExitVentHookPatch
 {
     public static void Prefix(PlayerPhysics __instance)
     {
-        if (__instance?.myPlayer != null) RoleHooks.NowVentId.Remove(__instance.myPlayer.PlayerId);
+        if (__instance?.myPlayer == null) return;
+        RoleHooks.NowVentId.Remove(__instance.myPlayer.PlayerId);
+        if (AmongUsClient.Instance.AmHost) Modules.VentCage.OnExitVent(__instance);
     }
 }
 
