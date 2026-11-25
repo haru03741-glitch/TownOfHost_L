@@ -299,6 +299,13 @@ public static class ChatCommandTable
             Host = Modules.Whisper.Command,
             Remote = Modules.Whisper.Command,
         },
+        new("/time")
+        {
+            // 打った人が分かると役職が割れるので、他の人のチャット欄から押し出す
+            Hidden = true,
+            Host = c => Modules.MeetingTimeManager.UseRoleAbility(c.Player),
+            Remote = c => Modules.MeetingTimeManager.UseRoleAbility(c.Player),
+        },
         new("/tc", "/teamchat")
         {
             Usage = "CommandUsage.TeamChat",

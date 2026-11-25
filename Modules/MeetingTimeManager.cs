@@ -17,6 +17,9 @@ namespace TownOfHostL.Modules
         private static int DefaultDiscussionTime;
         private static int DefaultVotingTime;
 
+        /// <summary>今の会議の時間を役職の設定で決めている (天秤会議・アサシン会議)。会議中の増減を受けない</summary>
+        private static bool FixedTimeMeeting;
+
         /// <summary>話し合いを飛ばして、投票の時間だけにする (天秤の会議)</summary>
         public static void VotingOnly(int time)
         {
@@ -43,19 +46,30 @@ namespace TownOfHostL.Modules
         /// 投票の時間だけを動かす (話し合いの時間を動かすと、話し合いから投票へ移る時刻がずれる)。
         /// 縮めて残りが無くなった時は、ホストの時計が次のフレームで締める。
         /// </summary>
+        /// <param name="maxTotal">話し合いと投票を合わせた長さの上限 (秒)。今の長さがもう超えていれば延ばさない</param>
+        /// <param name="minTotal">合わせた長さの下限 (秒)</param>
+        /// <param name="minRemaining">縮めた後に残す投票の時間 (秒)。0 なら経過まで縮めてすぐ締められる</param>
         /// <returns>実際に動いた秒数</returns>
-        public static int AdjustDuringMeeting(int deltaSeconds)
+        public static int AdjustDuringMeeting(int deltaSeconds, int maxTotal = 3600, int minTotal = 0, int minRemaining = 0)
         {
             if (!AmongUsClient.Instance.AmHost || deltaSeconds == 0) return 0;
             var meetingHud = MeetingHud.Instance;
             if (meetingHud == null || GameStates.ExiledAnimate) return 0;
+            if (meetingHud.state is MeetingHud.MeetingStates.Results or MeetingHud.MeetingStates.Proceeding) return 0;
             // 無制限の会議は延ばす意味が無く、縮めると時間切れが生まれて意味が変わるので触らない
             if (VotingTime <= 0) return 0;
 
-            float elapsedVoting = meetingHud.discussionTimer - DiscussionTime;
-            // 0 は無制限の意味になるので 1 秒より下げない。経過より短くすれば、ホストの時計がすぐ締める
-            int floor = Math.Max(1, (int)Math.Ceiling(Math.Max(0f, elapsedVoting)));
-            int next = Math.Clamp(VotingTime + deltaSeconds, Math.Min(floor, VotingTime), 3600);
+            float elapsedVoting = Math.Max(0f, meetingHud.discussionTimer - DiscussionTime);
+            int next = VotingTime + deltaSeconds;
+            if (deltaSeconds > 0)
+                next = Math.Min(next, Math.Max(VotingTime, maxTotal - DiscussionTime));
+            else
+            {
+                // 0 は無制限の意味になるので 1 秒より下げない。経過より短くすれば、ホストの時計がすぐ締める
+                int floor = Math.Max(1, Math.Max(minTotal - DiscussionTime, (int)Math.Ceiling(elapsedVoting) + minRemaining));
+                next = Math.Max(next, Math.Min(floor, VotingTime));
+            }
+            next = Math.Min(next, 3600);
             int moved = next - VotingTime;
             if (moved == 0) return 0;
             VotingTime = next;
@@ -65,6 +79,51 @@ namespace TownOfHostL.Modules
             return moved;
         }
 
+        /// <summary>チャットの /time。打った人の役職の、会議中に時間を動かす力を使う</summary>
+        public static void UseRoleAbility(PlayerControl player)
+        {
+            if (player == null) return;
+            if (player.GetRoleClass() is IMeetingTimeActive active) active.UseMeetingTimeAbility();
+            else Utils.SendMessage(Translator.GetString("MeetingTime.NoAbility"), player.PlayerId);
+        }
+
+        /// <summary>
+        /// 役職の力で会議の時間を動かす共通の手順。使えない時は理由を本人へ送り、使えたら回数を 1 減らして全員へ (名前は伏せて) 知らせる
+        /// </summary>
+        /// <returns>時間が動いたか</returns>
+        public static bool TryRoleAdjust(PlayerControl player, ref int remainingUses, int deltaSeconds, int maxTotal = 3600, int minTotal = 0, int minRemaining = 0)
+        {
+            if (player == null) return false;
+            if (MeetingHud.Instance == null || GameStates.ExiledAnimate)
+            {
+                Utils.SendMessage(Translator.GetString("MeetingTime.NotInMeeting"), player.PlayerId);
+                return false;
+            }
+            if (player.IsAlive() && remainingUses <= 0)
+            {
+                Utils.SendMessage(Translator.GetString("MeetingTime.NoUsesLeft"), player.PlayerId);
+                return false;
+            }
+            // 天秤会議・アサシン会議は役職の設定で時間を決めているので崩さない。無制限の会議と結果の表示中も動かせない
+            if (!player.IsAlive() || !SelfVoteManager.Canuseability() || FixedTimeMeeting || VotingTime <= 0
+                || MeetingHud.Instance.state is MeetingHud.MeetingStates.Results or MeetingHud.MeetingStates.Proceeding)
+            {
+                Utils.SendMessage(Translator.GetString("MeetingTime.CannotUse"), player.PlayerId);
+                return false;
+            }
+            int moved = AdjustDuringMeeting(deltaSeconds, maxTotal, minTotal, minRemaining);
+            if (moved == 0)
+            {
+                Utils.SendMessage(Translator.GetString("MeetingTime.AtLimit"), player.PlayerId);
+                return false;
+            }
+            remainingUses--;
+            Utils.SendMessage(string.Format(Translator.GetString(moved > 0 ? "MeetingTime.Extended" : "MeetingTime.Shortened"), Math.Abs(moved)));
+            Utils.SendMessage(string.Format(Translator.GetString("MeetingTime.UsesLeft"), remainingUses), player.PlayerId);
+            Logger.Info($"{player.GetNameWithRole()} が会議の時間を {moved:+#;-#;0} 秒 (残り {remainingUses} 回)", "MeetingTimeManager.TryRoleAdjust");
+            return true;
+        }
+
         public static void ApplyGameOptions(IGameOptions opt)
         {
             opt.SetInt(Int32OptionNames.DiscussionTime, DiscussionTime);
@@ -72,11 +131,14 @@ namespace TownOfHostL.Modules
         }
         private static void ResetMeetingTime()
         {
+            FixedTimeMeeting = false;
             DiscussionTime = DefaultDiscussionTime;
             VotingTime = DefaultVotingTime;
         }
         public static void OnReportDeadBody()
         {
+            // 全員生存の会議の分岐は ResetMeetingTime を通らないので、前の会議の印をここで下ろす
+            FixedTimeMeeting = false;
             // 天秤会議とアサシン会議は、それぞれの役職の設定の投票時間だけにする
             if (Roles.Crewmate.Balancer.Id != byte.MaxValue
                 && Roles.Crewmate.Balancer.target1 != byte.MaxValue
@@ -85,12 +147,14 @@ namespace TownOfHostL.Modules
                 // 天秤会議が開いたので、会議明けの処理を止めておく予約を外す
                 Roles.Crewmate.Balancer.Scheduled = false;
                 VotingOnly(Roles.Crewmate.Balancer.meetingtime);
+                FixedTimeMeeting = true;
                 return;
             }
             if (Roles.Impostor.Assassin.assassin?.NowState is Roles.Impostor.Assassin.AssassinMeeting.Guessing
                 or Roles.Impostor.Assassin.AssassinMeeting.CallMetting)
             {
                 VotingOnly(Roles.Impostor.Assassin.OptionAssassinMeetingTime.GetInt());
+                FixedTimeMeeting = true;
                 return;
             }
             if (Options.AllAliveMeeting.GetBool() && Utils.IsAllAlive)
