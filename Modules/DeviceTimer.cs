@@ -45,7 +45,7 @@ public static class DeviceTimer
             .SetValueFormat(OptionFormat.Seconds).SetZeroNotation(OptionZeroNotation.Infinity)
             .SetGameMode(CustomGameMode.Standard);
         showInMeeting = StringOptionItem.Create("DeviceTimeLimitShowInMeeting", new string[] { "ColoredOff", "ColoredOn" }, 1, TabGroup.ModMainSettings, false).SetParent(Enabled)
-            .SetGameMode(CustomGameMode.Standard);
+            .SetGameMode(CustomGameMode.Standard).SetTopic(OptionTopic.Meeting);
         SetupHamoOptions();
     }
 

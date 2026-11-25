@@ -17,7 +17,7 @@ public static partial class Options
     static void SetupHamoConvenientOptions()
     {
         CommnTaskResetAssing = BooleanOptionItem.Create("CommnTaskResetAssing", false, TabGroup.ModMainSettings, false).SetGameMode(CustomGameMode.Standard);
-        CanseeVoteresult = BooleanOptionItem.Create("CanseeVoteresult", false, TabGroup.ModMainSettings, false).SetGameMode(CustomGameMode.Standard);
+        CanseeVoteresult = BooleanOptionItem.Create("CanseeVoteresult", false, TabGroup.ModMainSettings, false).SetGameMode(CustomGameMode.Standard).SetTopic(OptionTopic.Meeting);
         OutroCrewWinreasonchenge = BooleanOptionItem.Create("OutroCrewWinreasonchenge", false, TabGroup.ModMainSettings, false).SetGameMode(CustomGameMode.Standard);
 
         OptionBatchSetting = BooleanOptionItem.Create("OptionBatchSetting", false, TabGroup.ModMainSettings, false)

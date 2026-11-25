@@ -14,7 +14,7 @@ public static partial class Options
         ExperimentalMode = BooleanOptionItem.Create("ExperimentalMode", false, TabGroup.ModMainSettings, false)
             .SetHeader(true)
             .SetColor(Palette.CrewmateSettingChangeText);
-        ExAftermeetingflash = BooleanOptionItem.Create("ExAftermeetingflash", false, TabGroup.ModMainSettings, false).SetParent(ExperimentalMode);
+        ExAftermeetingflash = BooleanOptionItem.Create("ExAftermeetingflash", false, TabGroup.ModMainSettings, false).SetParent(ExperimentalMode).SetTopic(OptionTopic.Meeting);
         ExChatMonochrome = BooleanOptionItem.Create("ExChatMonochrome", false, TabGroup.ModMainSettings, false).SetParent(ExperimentalMode);
     }
 }

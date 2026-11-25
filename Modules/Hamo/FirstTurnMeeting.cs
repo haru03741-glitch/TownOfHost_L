@@ -19,7 +19,7 @@ public static partial class Options
     static void SetupFirstTurnMeetingOptions()
     {
         FirstTurnMeeting = BooleanOptionItem.Create("FirstTurnMeeting", false, TabGroup.ModMainSettings, false)
-            .SetColorcode("#4fd6a7");
+            .SetColorcode("#4fd6a7").SetTopic(OptionTopic.Meeting);
         FirstTurnMeetingCantability = BooleanOptionItem.Create("FirstTurnMeetingCantability", false, TabGroup.ModMainSettings, false)
             .SetParent(FirstTurnMeeting);
         FirstTurnMeetingChatBlock = new ChatBlockSecondsOptionItem("FirstTurnMeetingChatBlock", 0, TabGroup.ModMainSettings)

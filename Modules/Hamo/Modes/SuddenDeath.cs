@@ -78,6 +78,7 @@ public sealed class SuddenDeathMode : GameMode
     public override bool AllowsDoorSabotage => false;
     public override bool AllowsSabotage => false;
     public override bool AllowsReport(PlayerControl reporter, NetworkedPlayerInfo target) => false;
+    public override bool HasMeetings => false;
     public override bool ShowsOption(OptionItem option) => option.GameMode == CustomGameMode.Standard || base.ShowsOption(option);
     public override (string Key, Color Color)? Label => ("SuddenDeathMode", SuddenDeath.ModeColor);
 }

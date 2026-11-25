@@ -7,6 +7,21 @@ using UnityEngine;
 
 namespace TownOfHostL
 {
+    /// <summary>設定が前提にする試合の仕組み。モードがその仕組みを持たない時は、設定を画面に出さない。</summary>
+    [Flags]
+    public enum OptionTopic
+    {
+        None = 0,
+        /// <summary>通報・緊急会議・投票</summary>
+        Meeting = 1,
+        /// <summary>ドア以外のサボタージュ</summary>
+        Sabotage = 2,
+        /// <summary>ドアのサボタージュ</summary>
+        DoorSabotage = 4,
+        /// <summary>ドアかドア以外か、どちらかのサボタージュ</summary>
+        AnySabotage = 8,
+    }
+
     public abstract class OptionItem
     {
         #region static
@@ -43,6 +58,8 @@ namespace TownOfHostL
         public bool IsHidden { get; protected set; }
         public bool IsFixValue { get; protected set; }
         public bool IsText { get; protected set; }
+        /// <summary>この設定が前提にする試合の仕組み。その仕組みの無いモードでは画面に出さない (子は親の分も受け継ぐ)。</summary>
+        public OptionTopic Topic { get; protected set; }
 
         public Dictionary<string, string> ReplacementDictionary
         {
@@ -128,6 +145,23 @@ namespace TownOfHostL
         public OptionItem SetGameMode(CustomGameMode value) => Do(i => i.GameMode = value);
         public OptionItem SetHeader(bool value, string str = "") => Do(i => { i.IsHeader = value; if (str != "") i.IsHeaderName = str; });
         public OptionItem SetHidden(bool value) => Do(i => i.IsHidden = value);
+        public OptionItem SetTopic(OptionTopic value) => Do(i => i.Topic = value);
+        /// <summary>自分と親の話題を合わせた物。</summary>
+        public OptionTopic AllTopics
+        {
+            get
+            {
+                var t = OptionTopic.None;
+                for (var o = this; o != null; o = o.Parent) t |= o.Topic;
+                return t;
+            }
+        }
+        /// <summary>index 以降に作った設定のうち、話題がまだ無い物に付ける (見出しの節をまとめて印す)。</summary>
+        public static void SetTopicFrom(int index, OptionTopic value)
+        {
+            for (int i = index; i < _allOptions.Count; i++)
+                if (_allOptions[i].Topic == OptionTopic.None) _allOptions[i].Topic = value;
+        }
         public Func<bool> EnabledCondition { get; private set; }
         public OptionItem SetEnabled(Func<bool> condition) => Do(i => i.EnabledCondition = condition);
         public OptionItem SetFixValue(bool value) => Do(i => i.IsFixValue = value);

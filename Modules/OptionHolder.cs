@@ -469,11 +469,11 @@ public static partial class Options
             .SetColor(Palette.ImpostorRed)
             .SetHeader(true, Translator.GetString("SKMadmateInfo"))
             .SetValueFormat(OptionFormat.Players);
-        MadmateCanFixLightsOut = StringOptionItem.Create("MadmateCanFixLightsOut", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard);
-        MadmateCanFixComms = StringOptionItem.Create("MadmateCanFixComms", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard);
+        MadmateCanFixLightsOut = StringOptionItem.Create("MadmateCanFixLightsOut", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard).SetTopic(OptionTopic.Sabotage);
+        MadmateCanFixComms = StringOptionItem.Create("MadmateCanFixComms", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard).SetTopic(OptionTopic.Sabotage);
         MadmateCanSeeKillFlash = StringOptionItem.Create("MadmateCanSeeKillFlash", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard);
         MadmateCanSeeDeathReason = StringOptionItem.Create("MadmateCanSeeDeathReason", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard);
-        MadmateRevengeCrewmate = StringOptionItem.Create("MadmateExileCrewmate", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard);
+        MadmateRevengeCrewmate = StringOptionItem.Create("MadmateExileCrewmate", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetParent(CanMakeMadmateCount).SetGameMode(CustomGameMode.Standard).SetTopic(OptionTopic.Meeting);
 
         SetupHamoMadmateOptions();
 
@@ -484,7 +484,7 @@ public static partial class Options
             .SetValueFormat(OptionFormat.Seconds);
         // 視界と票の見え方はサイドキックに限らず全部のマッドメイトに効くので、共通の欄に置く
         MadmateHasImpostorVision = StringOptionItem.Create("MadmateHasImpostorVision", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetGameMode(CustomGameMode.Standard);
-        MadmateCanSeeOtherVotes = StringOptionItem.Create("MadmateCanSeeOtherVotes", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetGameMode(CustomGameMode.Standard);
+        MadmateCanSeeOtherVotes = StringOptionItem.Create("MadmateCanSeeOtherVotes", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.MadmateRoles, false).SetGameMode(CustomGameMode.Standard).SetTopic(OptionTopic.Meeting);
         SetupHamoCommonMadmateOptions();
 
         // Add-Ons
@@ -593,7 +593,7 @@ public static partial class Options
         DisableCamera_Skeld = StringOptionItem.Create("DisableCamera", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableDevices_Skeld).SetGameMode(CustomGameMode.All);
         // サボタージュの時間制御
         SabotageTimeControl_Skeld = StringOptionItem.Create("SabotageTimeControl", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(MapOption_Skeld)
-            .SetColor(Color.yellow).SetGameMode(CustomGameMode.All);
+            .SetColor(Color.yellow).SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Sabotage);
         SkeldReactorTimeLimit = FloatOptionItem.Create("ReactorTimeLimit", new(1f, 60f, 1f), 30f, TabGroup.ModMainSettings, false).SetParent(SabotageTimeControl_Skeld)
             .SetValueFormat(OptionFormat.Seconds).SetGameMode(CustomGameMode.All);
         SkeldO2TimeLimit = FloatOptionItem.Create("O2TimeLimit", new(1f, 60f, 1f), 30f, TabGroup.ModMainSettings, false).SetParent(SabotageTimeControl_Skeld)
@@ -623,7 +623,7 @@ public static partial class Options
         DisableDoorLog_MiraHQ = StringOptionItem.Create("DisableMiraHQDoorLog", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableDevices_MiraHQ).SetGameMode(CustomGameMode.All);
         // サボタージュの時間制御
         SabotageTimeControl_MiraHQ = StringOptionItem.Create("SabotageTimeControl", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(MapOption_MiraHQ)
-            .SetColor(Color.yellow).SetGameMode(CustomGameMode.All);
+            .SetColor(Color.yellow).SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Sabotage);
         MiraHQReactorTimeLimit = FloatOptionItem.Create("ReactorTimeLimit", new(1f, 60f, 1f), 45f, TabGroup.ModMainSettings, false).SetParent(SabotageTimeControl_MiraHQ)
             .SetValueFormat(OptionFormat.Seconds).SetGameMode(CustomGameMode.All);
         MiraHQO2TimeLimit = FloatOptionItem.Create("O2TimeLimit", new(1f, 60f, 1f), 45f, TabGroup.ModMainSettings, false).SetParent(SabotageTimeControl_MiraHQ)
@@ -654,12 +654,12 @@ public static partial class Options
         DisableVital_Polus = StringOptionItem.Create("DisableVital", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableDevices_Polus).SetGameMode(CustomGameMode.All);
         // ドアリセット
         ResetDoorsEveryTurns_Polus = StringOptionItem.Create("ResetDoorsEveryTurns", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(MapOption_Polus)
-            .SetColor(Color.yellow).SetGameMode(CustomGameMode.All);
+            .SetColor(Color.yellow).SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Meeting);
         DoorsResetMode_Polus = StringOptionItem.Create("DoorsResetMode", EnumHelper.GetAllNames<DoorsReset.ResetMode>(), 0, TabGroup.ModMainSettings, false).SetParent(ResetDoorsEveryTurns_Polus).SetGameMode(CustomGameMode.All);
         // リアクターの時間制御
         SabotageTimeControl_Polus = StringOptionItem.Create("SabotageTimeControl", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(MapOption_Polus)
             .SetColor(Color.magenta)
-            .SetGameMode(CustomGameMode.All);
+            .SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Sabotage);
         PolusReactorTimeLimit = FloatOptionItem.Create("ReactorTimeLimit", new(1f, 60f, 1f), 30f, TabGroup.ModMainSettings, false).SetParent(SabotageTimeControl_Polus)
             .SetValueFormat(OptionFormat.Seconds).SetGameMode(CustomGameMode.All);
 
@@ -687,7 +687,7 @@ public static partial class Options
         DisableVital_Airship = StringOptionItem.Create("DisableVital", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableDevices_Airship).SetGameMode(CustomGameMode.All);
         // ドアリセット
         ResetDoorsEveryTurns_Airship = StringOptionItem.Create("ResetDoorsEveryTurns", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(MapOption_Airship)
-            .SetColor(Color.yellow).SetGameMode(CustomGameMode.All);
+            .SetColor(Color.yellow).SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Meeting);
         DoorsResetMode_Airship = StringOptionItem.Create("DoorsResetMode", EnumHelper.GetAllNames<DoorsReset.ResetMode>(), 0, TabGroup.ModMainSettings, false).SetParent(ResetDoorsEveryTurns_Airship).SetGameMode(CustomGameMode.All);
         // エレキ構造の変化
         AirShipVariableElectrical = StringOptionItem.Create("AirShipVariableElectrical", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(MapOption_Airship)
@@ -698,12 +698,12 @@ public static partial class Options
         // リアクターの時間制御
         SabotageTimeControl_Airship = StringOptionItem.Create("SabotageTimeControl", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(MapOption_Airship)
             .SetColor(Color.magenta)
-            .SetGameMode(CustomGameMode.All);
+            .SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Sabotage);
         AirshipReactorTimeLimit = FloatOptionItem.Create("ReactorTimeLimit", new(1f, 90f, 1f), 60f, TabGroup.ModMainSettings, false).SetParent(SabotageTimeControl_Airship)
             .SetValueFormat(OptionFormat.Seconds).SetGameMode(CustomGameMode.All);
         // 停電解除場所の制限
         LightsOutSpecialSettings_Airship = StringOptionItem.Create("LightsOutSpecialSettings_Airship", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(MapOption_Airship)
-            .SetColor(Color.magenta).SetGameMode(CustomGameMode.All);
+            .SetColor(Color.magenta).SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Sabotage);
         DisableAirshipViewingDeckLightsPanel = StringOptionItem.Create("DisableAirshipViewingDeckLightsPanel", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(LightsOutSpecialSettings_Airship).SetGameMode(CustomGameMode.All);
         DisableAirshipGapRoomLightsPanel = StringOptionItem.Create("DisableAirshipGapRoomLightsPanel", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(LightsOutSpecialSettings_Airship).SetGameMode(CustomGameMode.All);
         DisableAirshipCargoLightsPanel = StringOptionItem.Create("DisableAirshipCargoLightsPanel", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(LightsOutSpecialSettings_Airship).SetGameMode(CustomGameMode.All);
@@ -731,7 +731,7 @@ public static partial class Options
         DisableVital_Fungle = StringOptionItem.Create("DisableVital", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableDevices_Fungle).SetGameMode(CustomGameMode.All);
         // ドアリセット
         ResetDoorsEveryTurns_Fungle = StringOptionItem.Create("ResetDoorsEveryTurns", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(MapOption_Fungle)
-            .SetColor(Color.yellow).SetGameMode(CustomGameMode.All);
+            .SetColor(Color.yellow).SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Meeting);
         DoorsResetMode_Fungle = StringOptionItem.Create("DoorsResetMode", EnumHelper.GetAllNames<DoorsReset.ResetMode>(), 0, TabGroup.ModMainSettings, false).SetParent(ResetDoorsEveryTurns_Fungle).SetGameMode(CustomGameMode.All);
         // ジップラインの方向制限
         FungleCanUseZipline = StringOptionItem.Create("FungleCanUseZipline", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(MapOption_Fungle)
@@ -744,14 +744,14 @@ public static partial class Options
         // リアクターの時間制御
         SabotageTimeControl_Fungle = StringOptionItem.Create("SabotageTimeControl", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(MapOption_Fungle)
             .SetColor(Color.magenta)
-            .SetGameMode(CustomGameMode.All);
+            .SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Sabotage);
         FungleReactorTimeLimit = FloatOptionItem.Create("ReactorTimeLimit", new(1f, 60f, 1f), 50f, TabGroup.ModMainSettings, false).SetParent(SabotageTimeControl_Fungle)
             .SetValueFormat(OptionFormat.Seconds).SetGameMode(CustomGameMode.All);
         FungleMushroomMixupDuration = FloatOptionItem.Create("FungleMushroomMixupDuration", new(1f, 20f, 1f), 10f, TabGroup.ModMainSettings, false).SetParent(SabotageTimeControl_Fungle)
             .SetValueFormat(OptionFormat.Seconds).SetGameMode(CustomGameMode.All);
         // キノコカオスサボ時のボタン無効
         DisableButtonInMushroomMixup = StringOptionItem.Create("DisableButtonInMushroomMixup", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(MapOption_Fungle)
-            .SetColor(Color.magenta).SetGameMode(CustomGameMode.All);
+            .SetColor(Color.magenta).SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Sabotage);
 
         // マップ設定：マップ共通
         TextOptionItem.Create("Head.MapCommon", TabGroup.ModMainSettings).SetColor(Color.yellow).SetGameMode(CustomGameMode.All);
@@ -775,7 +775,8 @@ public static partial class Options
         AddedTheAirship = StringOptionItem.Create("AddedTheAirship", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(RandomMapsMode).SetColor(new Color32(255, 51, 0, 255)).SetGameMode(CustomGameMode.All);
         AddedTheFungle = StringOptionItem.Create("AddedTheFungle", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(RandomMapsMode).SetColor(new Color32(255, 153, 0, 255)).SetGameMode(CustomGameMode.All);
 
-        // サボタージュ：マップ共通
+        // サボタージュ：マップ共通 (サボタージュの無いモードでは出さない。ドアの分はドアのサボタージュがあれば出す)
+        int sabotageStart = OptionItem.AllOptions.Count;
         TextOptionItem.Create("Head.Sabotage", TabGroup.ModMainSettings).SetColor(Color.magenta).SetGameMode(CustomGameMode.All);
         // サボタージュのクールダウン変更
         ModifySabotageCooldown = StringOptionItem.Create("ModifySabotageCooldown", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
@@ -789,24 +790,29 @@ public static partial class Options
         CommsCamouflage = StringOptionItem.Create("CommsCamouflage", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetColor(Color.magenta)
             .SetGameMode(CustomGameMode.All);
-        // サボタージュを種類ごとに無効化 (ホストが受け付けない)
+        OptionItem.SetTopicFrom(sabotageStart, OptionTopic.Sabotage);
+        // サボタージュを種類ごとに無効化 (ホストが受け付けない)。親はドアだけの時も出し、子で分ける
         DisableSabotage = StringOptionItem.Create("DisableSabotage", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
-            .SetColor(Color.magenta).SetGameMode(CustomGameMode.All);
-        DisableSabotageReactor = StringOptionItem.Create("DisableSabotage.Reactor", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableSabotage).SetGameMode(CustomGameMode.All);
-        DisableSabotageO2 = StringOptionItem.Create("DisableSabotage.O2", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableSabotage).SetGameMode(CustomGameMode.All);
-        DisableSabotageLights = StringOptionItem.Create("DisableSabotage.Lights", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableSabotage).SetGameMode(CustomGameMode.All);
-        DisableSabotageComms = StringOptionItem.Create("DisableSabotage.Comms", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableSabotage).SetGameMode(CustomGameMode.All);
-        DisableSabotageMushroom = StringOptionItem.Create("DisableSabotage.Mushroom", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableSabotage).SetGameMode(CustomGameMode.All);
-        DisableSabotageDoors = StringOptionItem.Create("DisableSabotage.Doors", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableSabotage).SetGameMode(CustomGameMode.All);
+            .SetColor(Color.magenta).SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.AnySabotage);
+        DisableSabotageReactor = StringOptionItem.Create("DisableSabotage.Reactor", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableSabotage).SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Sabotage);
+        DisableSabotageO2 = StringOptionItem.Create("DisableSabotage.O2", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableSabotage).SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Sabotage);
+        DisableSabotageLights = StringOptionItem.Create("DisableSabotage.Lights", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableSabotage).SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Sabotage);
+        DisableSabotageComms = StringOptionItem.Create("DisableSabotage.Comms", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableSabotage).SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Sabotage);
+        DisableSabotageMushroom = StringOptionItem.Create("DisableSabotage.Mushroom", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableSabotage).SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Sabotage);
+        DisableSabotageDoors = StringOptionItem.Create("DisableSabotage.Doors", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(DisableSabotage).SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.DoorSabotage);
         // スケルドのドアのサボタージュで閉まっている時間 (本編は 10 秒)
         DoorSabotageDuration = FloatOptionItem.Create("DoorSabotageDuration", new(10f, 120f, 5f), 10f, TabGroup.ModMainSettings, false)
-            .SetValueFormat(OptionFormat.Seconds).SetGameMode(CustomGameMode.All);
+            .SetValueFormat(OptionFormat.Seconds).SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.DoorSabotage);
+        int sabotageRest = OptionItem.AllOptions.Count;
         // 死んだインポスターのサボタージュを受け付けない
         DeadImpostorCannotSabotage = StringOptionItem.Create("DeadImpostorCannotSabotage", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetColor(Color.magenta).SetGameMode(CustomGameMode.All);
 
         SetupHamoSabotageOptions();
+        OptionItem.SetTopicFrom(sabotageRest, OptionTopic.Sabotage);
 
+        // 会議の節 (会議の無いモードでは出さない)
+        int meetingStart = OptionItem.AllOptions.Count;
         TextOptionItem.Create("Head.Meeting", TabGroup.ModMainSettings).SetColor(Color.cyan).SetGameMode(CustomGameMode.All);
         SetupHamoMeetingOptions();
         // 会議収集理由表示
@@ -849,6 +855,7 @@ public static partial class Options
             .SetValueFormat(OptionFormat.Players);
         AdditionalEmergencyCooldownTime = FloatOptionItem.Create("AdditionalEmergencyCooldownTime", new(1f, 60f, 1f), 1f, TabGroup.ModMainSettings, false).SetParent(AdditionalEmergencyCooldown)
             .SetValueFormat(OptionFormat.Seconds);
+        OptionItem.SetTopicFrom(meetingStart, OptionTopic.Meeting);
 
         TextOptionItem.Create("Head.Revenge", TabGroup.ModMainSettings).SetColor(Palette.Orange).SetGameMode(CustomGameMode.Standard);
         // 道連れ人表記
@@ -890,7 +897,7 @@ public static partial class Options
             .SetGameMode(CustomGameMode.All);
         GhostCantSeeOtherVotes = StringOptionItem.Create("GhostCantSeeOtherVotes", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, true)
             .SetColor(Palette.LightBlue)
-            .SetGameMode(CustomGameMode.All);
+            .SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Meeting);
         GhostCanSeeOtherTeams = StringOptionItem.Create("GhostCanSeeOtherTeams", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, true)
             .SetColor(Palette.LightBlue)
             .SetGameMode(CustomGameMode.All);
@@ -957,7 +964,7 @@ public static partial class Options
             .SetColor(Color.yellow)
             .SetGameMode(CustomGameMode.Standard);
         SCM_NothingMeetingNameColor = StringOptionItem.Create("SCM_NothingMeetingNameColor", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(SyncColorModeSelect)
-            .SetGameMode(CustomGameMode.Standard);
+            .SetGameMode(CustomGameMode.Standard).SetTopic(OptionTopic.Meeting);
         SCM_RestoredDeadPlayer = StringOptionItem.Create("SCM_RestoredDeadPlayer", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false).SetParent(SyncColorModeSelect)
             .SetGameMode(CustomGameMode.Standard);
         // 懐中電灯モード: 全員の視界を本編のかくれんぼの懐中電灯にする (Modules/Flashlight)
@@ -982,7 +989,7 @@ public static partial class Options
         NoGameEndByTask = StringOptionItem.Create("NoGameEnd.ByTask", new string[] { "ColoredOff", "ColoredOn" }, 1, TabGroup.ModMainSettings, false).SetParent(NoGameEnd)
             .SetGameMode(CustomGameMode.All);
         NoGameEndBySabotage = StringOptionItem.Create("NoGameEnd.BySabotage", new string[] { "ColoredOff", "ColoredOn" }, 1, TabGroup.ModMainSettings, false).SetParent(NoGameEnd)
-            .SetGameMode(CustomGameMode.All);
+            .SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Sabotage);
         NoGameEndByRole = StringOptionItem.Create("NoGameEnd.ByRole", new string[] { "ColoredOff", "ColoredOn" }, 1, TabGroup.ModMainSettings, false).SetParent(NoGameEnd)
             .SetGameMode(CustomGameMode.All);
         AutoDisplayLastResult = StringOptionItem.Create("AutoDisplayLastResult", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, true)

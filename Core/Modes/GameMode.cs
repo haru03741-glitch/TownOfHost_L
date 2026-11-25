@@ -29,6 +29,8 @@ public abstract class GameMode
     public virtual bool AllowsSabotage => true;
     /// <summary>死体の通報と緊急会議を開けるか。</summary>
     public virtual bool AllowsReport(PlayerControl reporter, NetworkedPlayerInfo target) => true;
+    /// <summary>会議が開くことがあるか。無いモードでは、会議と投票の設定を画面に出さない。</summary>
+    public virtual bool HasMeetings => true;
     public virtual bool BootsFromVents => false;
     public virtual bool DisablesDevices => false;
     /// <summary>試合中に色を変えたプレイヤーを死なせるか (色で陣営を見分けるモード)。</summary>
@@ -37,6 +39,17 @@ public abstract class GameMode
     /// <summary>この設定をメニューや設定の一覧に出すか。</summary>
     public virtual bool ShowsOption(OptionItem option)
         => option.GameMode == CustomGameMode.All || option.GameMode == Id;
+
+    /// <summary>設定が前提にする仕組み (<see cref="OptionItem.Topic"/>) が、このモードにあるか。</summary>
+    public bool HasTopics(OptionTopic topics)
+    {
+        if (topics == OptionTopic.None) return true;
+        if ((topics & OptionTopic.Meeting) != 0 && !HasMeetings) return false;
+        if ((topics & OptionTopic.Sabotage) != 0 && !AllowsSabotage) return false;
+        if ((topics & OptionTopic.DoorSabotage) != 0 && !AllowsDoorSabotage) return false;
+        if ((topics & OptionTopic.AnySabotage) != 0 && !AllowsSabotage && !AllowsDoorSabotage) return false;
+        return true;
+    }
 
     /// <summary>
     /// 通常の役職の仕組みを使わないモードの割り当て。<see cref="UsesStandardRoles"/> が false の時だけ呼ばれる。

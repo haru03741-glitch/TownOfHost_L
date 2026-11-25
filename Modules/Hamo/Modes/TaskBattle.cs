@@ -65,6 +65,7 @@ public sealed class TaskBattleMode : GameMode
     public override bool AllowsDoorSabotage => false;
     public override bool AllowsSabotage => false;
     public override bool AllowsReport(PlayerControl reporter, NetworkedPlayerInfo target) => false;
+    public override bool HasMeetings => false;
     public override void SelectRoles() => TaskBattle.Assign();
     public override (string Key, Color Color)? Label => ("TaskBattle", new Color32(135, 207, 250, 255));
 }

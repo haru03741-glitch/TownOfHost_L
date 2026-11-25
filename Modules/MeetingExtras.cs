@@ -23,9 +23,9 @@ public static class MeetingExtras
     public static void SetupCustomOption()
     {
         AnnounceVotingTime = StringOptionItem.Create("AnnounceVotingTime", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
-            .SetGameMode(CustomGameMode.All);
+            .SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Meeting);
         AnnounceMvp = StringOptionItem.Create("AnnounceMvp", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
-            .SetGameMode(CustomGameMode.Standard);
+            .SetGameMode(CustomGameMode.Standard).SetTopic(OptionTopic.Meeting);
         SettingChangeNotice.SetupCustomOption();
         AnnounceWinStreak = StringOptionItem.Create("AnnounceWinStreak", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
             .SetGameMode(CustomGameMode.Standard);

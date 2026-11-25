@@ -32,7 +32,7 @@ public static partial class Options
     {
         GhostCanSeeKillerColor = BooleanOptionItem.Create("GhostCanSeeKillerColor", false, TabGroup.ModMainSettings, true).SetParent(GhostCanSeeDeathReason);
         GhostCanSeeAllTasks = BooleanOptionItem.Create("GhostCanSeeAllTasks", false, TabGroup.ModMainSettings, true).SetColor(Palette.LightBlue).SetGameMode(CustomGameMode.All);
-        GhostCanSeeNumberOfButtonsOnOthers = BooleanOptionItem.Create("GhostCanSeeNumberOfButtonsOnOthers", false, TabGroup.ModMainSettings, true).SetColor(Palette.LightBlue).SetGameMode(CustomGameMode.All);
+        GhostCanSeeNumberOfButtonsOnOthers = BooleanOptionItem.Create("GhostCanSeeNumberOfButtonsOnOthers", false, TabGroup.ModMainSettings, true).SetColor(Palette.LightBlue).SetGameMode(CustomGameMode.All).SetTopic(OptionTopic.Meeting);
         GhostCanSeeKillflash = BooleanOptionItem.Create("GhostCanSeeKillflash", false, TabGroup.ModMainSettings, true).SetColor(Palette.LightBlue).SetGameMode(CustomGameMode.All);
     }
 
