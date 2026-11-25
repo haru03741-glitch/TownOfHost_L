@@ -292,6 +292,9 @@ internal static class SettingsPagesTick
     public static void Postfix()
     {
         if (!SettingsPages.AnyBuilt) return;
+        GameSettingMenuPatch.Tick();
+        // 画面を閉じた (本編のモードが変わった) 時は、ここで終わり
+        if (!SettingsPages.AnyBuilt) return;
         TextField.Tick();
         UiFx.Tick();
         ScrollView.TickAll();

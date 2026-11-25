@@ -404,6 +404,7 @@ public class GameSettingMenuPatch
         ModGameOptionsMenu.TabIndex = 1;
         PresetChanged = false;
         OpenMenu = __instance;
+        openVanillaMode = GameOptionsManager.Instance != null ? GameOptionsManager.Instance.currentGameMode : default;
         ReturnTab = 1;
         searchQuery = "";
 
@@ -499,6 +500,7 @@ public class GameSettingMenuPatch
 
         var (mode, general, tabs) = ShownCats();
         builtCatsKey = KeyOf(mode, general, tabs);
+        shownMode = ModeCatalog.Current;
         var groups = EnumHelper.GetAllValues<TabGroup>()
             .Where(tab => tab == TabGroup.ModMainSettings ? general : tabs.Contains(tab))
             .ToList();
@@ -520,9 +522,37 @@ public class GameSettingMenuPatch
         bool onRolePage = cur == ModGameOptionsMenu.SearchTab
             || (cur >= ModGameOptionsMenu.FirstModTab && cur < ModGameOptionsMenu.SearchTab && cur != ModGameOptionsMenu.FirstModTab + (int)TabGroup.ModMainSettings);
         if (!onRolePage) SettingsUI.RolePage.Unbuild();
-        // 開いている区分が消えたら、ゲームの頁へ (値を書き換えている最中に頁を替えないよう、後で)
-        if (cur != ModGameOptionsMenu.SearchTab && !Cats.Any(c => c.TabNum == cur))
-            _ = new LateTask(() => { if (OpenMenu == menu && menu) menu.ChangeTab(1, false); }, 0f, "", outlivesSession: true);
+        // 開いている区分が消えたら、ゲームの頁へ。値を書き換えている最中に頁を替えないよう、次のフレームで
+        // (LateTask は本編のモードの切り替えでまとめて捨てられることがあるので使わない)
+        if (cur != ModGameOptionsMenu.SearchTab && !Cats.Any(c => c.TabNum == cur)) backToGame = true;
+    }
+
+    static bool backToGame;
+    static GameMode shownMode;
+    static AmongUs.GameOptions.GameModes openVanillaMode;
+
+    // 毎フレーム (設定画面の頁がある間)
+    internal static void Tick()
+    {
+        if (!OpenMenu) return;
+        // 本編の設定画面は開いた時の本編のモード (通常 / かくれんぼ) で組まれているので、開いたまま本編のモードが変わったら閉じる
+        var vanillaMode = GameOptionsManager.Instance != null ? GameOptionsManager.Instance.currentGameMode : openVanillaMode;
+        if (vanillaMode != openVanillaMode)
+        {
+            OpenMenu.Close();
+            return;
+        }
+        // 設定の値を通らないモードの切り替えでも、出す区分と頁を今のモードに合わせる
+        var mode = ModeCatalog.Current;
+        if (mode != shownMode)
+        {
+            shownMode = mode;
+            SettingsUI.SettingsPages.RefreshAllSafe();
+        }
+        if (!backToGame) return;
+        backToGame = false;
+        int cur = ModGameOptionsMenu.TabIndex;
+        if (OpenMenu && cur != ModGameOptionsMenu.SearchTab && !Cats.Any(c => c.TabNum == cur)) OpenMenu.ChangeTab(1, false);
     }
     private static void SetDefaultButton(GameSettingMenu __instance)
     {
@@ -712,6 +742,7 @@ public class GameSettingMenuPatch
         PresetHost = null;
         ModeHost = null;
         builtCatsKey = null;
+        backToGame = false;
         SearchBox = null;
         searchSeq++;
         SettingsSearchBox.Forget();
