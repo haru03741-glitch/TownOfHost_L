@@ -166,7 +166,6 @@ public static class OptionSerializer
                 option.SetValue(parsed.TryGetValue(option, out var value) ? value : option.DefaultValue, false);
             }
         });
-        OptionItem.SyncAllOptions();
     }
     /// <summary>
     /// <see cref="GenerateVanillaOptionsString"/>で生成された形式の文字列を読み込んで適用します

@@ -263,8 +263,6 @@ namespace TownOfHostL
 
             CallUpdateValueEvent(beforeValue, afterValue);
             if (beforeValue != afterValue) Modules.Net.ModClientSync.OnOptionChanged(this);
-            if (doSync)
-                SyncAllOptions();
             if (doSave)
                 OptionSaver.RequestSave();
             if (beforeText != null && beforeValue != afterValue) Modules.SettingChangeNotice.OnChanged(this, beforeText, GetString());
@@ -373,19 +371,7 @@ namespace TownOfHostL
         {
             CurrentPreset = Math.Clamp(newPreset, 0, NumPresets - 1);
             Modules.Net.ModClientSync.OnOptionsReloaded();
-            SyncAllOptions();
             SettingsUI.SettingsPages.RefreshAllSafe();
-        }
-        public static void SyncAllOptions()
-        {
-            // 同期無効化: ホスト専用モードでは他プレイヤーへオプションを送信しない
-            //if (
-            //    Main.AllPlayerControls.Count() <= 1 ||
-            //    AmongUsClient.Instance.AmHost == false ||
-            //    PlayerControl.LocalPlayer == null
-            //) return;
-
-            //RPC.SyncCustomSettingsRPC();
         }
 
         // EventArgs

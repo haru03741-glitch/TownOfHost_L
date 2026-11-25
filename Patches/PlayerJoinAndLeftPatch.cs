@@ -256,7 +256,6 @@ namespace TownOfHostL
             {
                 if (!AmongUsClient.Instance.AmHost) return;
                 if (client == null) return;
-                OptionItem.SyncAllOptions();
                 _ = new LateTask(() =>
                 {
                     try
