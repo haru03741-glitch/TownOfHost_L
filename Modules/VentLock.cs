@@ -158,22 +158,29 @@ public static class VentLock
             next++;
         }
 
+        // 書く途中で例外が出ても、借りた書き手を必ず返す
         var w = MessageWriter.Get(SendOption.Reliable);
-        w.StartMessage(6);
-        w.Write(AmongUsClient.Instance.GameId);
-        w.WritePacked(target.OwnerId);
-        w.StartMessage(1);
-        w.WritePacked(ShipStatus.Instance.NetId);
-        w.StartMessage((byte)SystemTypes.Ventilation);
-        w.WritePacked(cleaning.Count);
-        foreach (var kv in cleaning) { w.Write(kv.Key); w.Write(kv.Value); }
-        w.WritePacked(vs.PlayersInsideVents.Count);
-        foreach (var kv in vs.PlayersInsideVents) { w.Write(kv.Key); w.Write(kv.Value); }
-        w.EndMessage();
-        w.EndMessage();
-        w.EndMessage();
-        AmongUsClient.Instance.SendOrDisconnect(w);
-        w.Recycle();
+        try
+        {
+            w.StartMessage(6);
+            w.Write(AmongUsClient.Instance.GameId);
+            w.WritePacked(target.OwnerId);
+            w.StartMessage(1);
+            w.WritePacked(ShipStatus.Instance.NetId);
+            w.StartMessage((byte)SystemTypes.Ventilation);
+            w.WritePacked(cleaning.Count);
+            foreach (var kv in cleaning) { w.Write(kv.Key); w.Write(kv.Value); }
+            w.WritePacked(vs.PlayersInsideVents.Count);
+            foreach (var kv in vs.PlayersInsideVents) { w.Write(kv.Key); w.Write(kv.Value); }
+            w.EndMessage();
+            w.EndMessage();
+            w.EndMessage();
+            AmongUsClient.Instance.SendOrDisconnect(w);
+        }
+        finally
+        {
+            w.Recycle();
+        }
     }
 
     [HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.Start))]
