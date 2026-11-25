@@ -66,6 +66,46 @@ public static class DleksMap
         catch (Exception ex) { Logger.Warn($"ロビーの MapId の戻しに失敗: {ex.Message}", nameof(DleksMap)); }
     }
 
+    /// <summary>
+    /// メニューで、保存された設定の MapId 3 を 0 と印に戻す (反転スケルドで試合を終えると本編が 3 を保存する)。
+    /// 本編の部屋を作る画面とロビーは 3 の札を持たないので、そこへ 3 を持ち込まない
+    /// </summary>
+    static void NormalizeSaved()
+    {
+        try
+        {
+            var gm = GameOptionsManager.Instance;
+            if (gm == null) return;
+            var normal = gm.currentNormalGameOptions;
+            if (normal != null && normal.MapId == MapId)
+            {
+                normal.MapId = 0;
+                pending = true;
+                Logger.Info("保存された通常モードの MapId 3 を 0 と反転スケルドの印に戻した", nameof(DleksMap));
+            }
+            var hns = gm.currentHideNSeekGameOptions;
+            if (hns != null && hns.MapId == MapId)
+            {
+                hns.MapId = 0;
+                Logger.Info("保存されたかくれんぼの MapId 3 を 0 に戻した", nameof(DleksMap));
+            }
+        }
+        catch (Exception ex) { Logger.Warn($"保存された MapId の戻しに失敗: {ex.Message}", nameof(DleksMap)); }
+    }
+
+    [HarmonyPatch(typeof(MainMenuManager), nameof(MainMenuManager.Start))]
+    static class MenuPatch
+    {
+        static void Postfix() => NormalizeSaved();
+    }
+
+    [HarmonyPatch(typeof(CreateGameOptions), nameof(CreateGameOptions.Start))]
+    static class CreateGamePatch
+    {
+        [HarmonyPriority(Priority.First)]
+        static void Prefix() => NormalizeSaved();
+    }
+
     // 試合を始める電文を送る直前。秒読み (自動スタートも) の終わりはここを通る。
     // GameStartManager.FinallyBegin は本編の Update に畳み込まれていて、前置きが呼ばれない (2026-11-26 実機)
     [HarmonyPatch(typeof(AmongUsClient), nameof(AmongUsClient.StartGame))]
@@ -92,20 +132,27 @@ public static class DleksMap
         }
     }
 
-    // 本編はスケルドの船を左右反転するかをここで決める。ホストの手元で、始まった試合の MapId が 3 なら反転させる。
-    // メニューでも呼ばれ、保存された設定が 3 のまま true を返すとメニューの立ち上げが終わらずログインできない (2026-11-26 実機)。
-    // なのでオンラインの試合が始まってからだけ見る
+    // ホストの手元は MapId 3 でもスケルドの船 (SkeldShip) を出してしまい、客だけが反転した船 (AprilShip) を出して位置が全部ずれる。
+    // ホストが出す船は、試合を始めるホストのコルーチンの中で AprilFoolsMode.ShouldFlipSkeld を見て決まるので、その間だけ true を返す。
+    // ShouldFlipSkeld は他の所でも呼ばれ、ずっと true にすると、メニューの立ち上げが終わらずログインできない・ホストの画面で人が
+    // 縦に伸びる・ホストのタスクの判定が毎フレーム例外を出す (どれも 2026-11-26 実機)
+    static bool inHostStart;
+
+    [HarmonyPatch(typeof(AmongUsClient._CoStartGameHost_d__28), nameof(AmongUsClient._CoStartGameHost_d__28.MoveNext))]
+    static class HostStartPatch
+    {
+        static void Prefix() => inHostStart = true;
+        static void Finalizer() => inHostStart = false;
+    }
+
     [HarmonyPatch(typeof(AprilFoolsMode), nameof(AprilFoolsMode.ShouldFlipSkeld))]
     static class ShouldFlipSkeldPatch
     {
         static void Postfix(ref bool __result)
         {
-            if (__result) return;
+            if (__result || !inHostStart) return;
             try
             {
-                var client = AmongUsClient.Instance;
-                if (!client || !client.AmHost || client.NetworkMode == NetworkModes.FreePlay
-                    || client.GameState != InnerNet.InnerNetClient.GameStates.Started) return;
                 var o = Opts;
                 if (o != null && o.MapId == MapId) __result = true;
             }
