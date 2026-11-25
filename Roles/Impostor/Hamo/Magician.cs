@@ -1,30 +1,24 @@
-﻿using AmongUs.GameOptions;
-
-using System.Linq;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
+using AmongUs.GameOptions;
 using UnityEngine;
 
-
-
 using TownOfHostL.Roles.Core;
-
 using TownOfHostL.Roles.Core.Interfaces;
 using static TownOfHostL.Translator;
 
-
-
 namespace TownOfHostL.Roles.Impostor;
 
-
-
+/// <summary>
+/// マジシャン (ExtremeRoles の Magician)<br/>
+/// 能力「ジャグリング」で、動ける生存者の一部を、生存者のいる場所 (とスポーン地点) へランダムに飛ばす。
+/// </summary>
 public sealed class Magician : RoleBase, IImpostor, IUsePhantomButton
-
 {
-
-    // 役職の元: TownOfHost_K (TownOfHost-hamo 経由)
+    // 役職の元: ExtremeRoles
     public static readonly SimpleRoleInfo RoleInfo =
-
         SimpleRoleInfo.Create(
             typeof(Magician),
             player => new Magician(player),
@@ -37,465 +31,129 @@ public sealed class Magician : RoleBase, IImpostor, IUsePhantomButton
         );
 
     public Magician(PlayerControl player)
-
     : base(
-
         RoleInfo,
-
         player
-
     )
-
     {
-
-        DefaultCooldown = OptionMagicCooldown.GetFloat();
-
-        Maximum = OptionMaximum.GetFloat();
-
-        Radius = OptionRadius.GetFloat();
-
-        ShowDeadbody = OptionShowDeadbody.GetBool();
-
-        MagicUseKillCount = OptionMagicUseKillCount.GetInt();
-
-        ResetKillCount = OptionResetKillCount.GetBool();
-
-        ResetMagicTarget = OptionResetMagicTarget.GetBool();
-
-        MagicCooldown = DefaultCooldown;
-
-        MagicCount = 0;
-
-        HaveKillCount = 0;
-
-        MagicTarget = new();
-
-        magiccount = 0;
-
-
-
-        if (OptionMettingMark.GetBool())
-
-        {
-
-            CustomRoleManager.MarkOthers.Add(GetMarkOthers);
-
-        }
-
+        Cooldown = OptionCooldown.GetFloat();
+        TeleportTargetRate = OptionTeleportTargetRate.GetInt() / 100f;
+        DupeTeleportTarget = OptionDupeTeleportTargetTo.GetBool();
+        IncludeSpawnPoint = OptionIncludeSpawnPoint.GetBool();
+        IncludeRolePlayer = OptionIncludeRolePlayer.GetBool();
+        AbilityCount = OptionAbilityCount.GetInt();
     }
 
-
-
-    static OptionItem OptionMagicCooldown;
-
-    static OptionItem OptionMaximum;
-
-    static OptionItem OptionRadius;
-
-    static OptionItem OptionShowDeadbody;
-
-    static OptionItem OptionMagicUseKillCount;
-
-    static OptionItem OptionResetKillCount;
-
-    static OptionItem OptionResetMagicTarget;
-
-    static OptionItem OptionMettingMark;
-
-
-
-    static float DefaultCooldown;
-
-    static float Maximum;
-
-    static float Radius;
-
-    static bool ShowDeadbody; //会議で死亡してるかを表示するか
-
-    static int MagicUseKillCount; //必要なキル数
-
-    static bool ResetKillCount; //←↓会議後リセットするかの設定 | キル数
-
-
-
-    float MagicCooldown;
-
-    bool ResetMagicTarget;// マジックで消す予定の人
-
-
-
-    int MagicCount;
-
-    int HaveKillCount;
-
-    List<byte> MagicTarget;
-
-
-
-    enum Option
-
+    static OptionItem OptionCooldown;
+    static OptionItem OptionAbilityCount;
+    static OptionItem OptionTeleportTargetRate;
+    static OptionItem OptionDupeTeleportTargetTo;
+    static OptionItem OptionIncludeSpawnPoint;
+    static OptionItem OptionIncludeRolePlayer;
+    enum OptionName
     {
-
-        MagicianMaximum,
-
-        MagicianRadius,
-
-        MagicianShowDeadbody,
-
-        MagicianMagicUseKillCount,
-
-        MagicianResetKillCount,
-
-        MagicianResetMagicTarget,
-
-        MagicianMeetingMark,
-
+        MagicianAbilityCount,
+        MagicianTeleportTargetRate,
+        MagicianDupeTeleportTargetTo,
+        MagicianIncludeSpawnPoint,
+        MagicianIncludeRolePlayer,
     }
 
+    static float Cooldown;
+    static float TeleportTargetRate;
+    static bool DupeTeleportTarget;
+    static bool IncludeSpawnPoint;
+    static bool IncludeRolePlayer;
+    int AbilityCount;
 
+    // エアシップの湧き場所を選ぶ前の待ち位置
+    static readonly Vector2 AirshipWaitPos = new(-25f, 40f);
 
-    public static void SetupOptionItem()
-
+    private static void SetupOptionItem()
     {
-
-        OptionMagicCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.Cooldown, new FloatValueRule(0, 120, 1), 15, false)
-
+        OptionAbilityCount = IntegerOptionItem.Create(RoleInfo, OptionName.MagicianAbilityCount, new(1, 10, 1), 1, false)
+            .SetValueFormat(OptionFormat.Times);
+        OptionCooldown = FloatOptionItem.Create(RoleInfo, GeneralOption.Cooldown, new(0.5f, 120f, 0.5f), 30f, false)
             .SetValueFormat(OptionFormat.Seconds);
-
-        OptionMaximum = IntegerOptionItem.Create(RoleInfo, Option.MagicianMaximum, new(0, 99, 1), 3, false)
-
-            .SetValueFormat(OptionFormat.Times).SetZeroNotation(OptionZeroNotation.Infinity);
-
-        OptionRadius = FloatOptionItem.Create(RoleInfo, Option.MagicianRadius, new(0.5f, 3f, 0.5f), 1.5f, false)
-
-            .SetValueFormat(OptionFormat.Multiplier);
-
-        OptionMagicUseKillCount = IntegerOptionItem.Create(RoleInfo, Option.MagicianMagicUseKillCount, new(0, 99, 1), 1, false)
-
-        .SetValueFormat(OptionFormat.Players);
-
-        OptionShowDeadbody = BooleanOptionItem.Create(RoleInfo, Option.MagicianShowDeadbody, false, false);
-
-        OptionResetKillCount = BooleanOptionItem.Create(RoleInfo, Option.MagicianResetKillCount, true, false);
-
-        OptionResetMagicTarget = BooleanOptionItem.Create(RoleInfo, Option.MagicianResetMagicTarget, false, false);
-
-        OptionMettingMark = BooleanOptionItem.Create(RoleInfo, Option.MagicianMeetingMark, false, false);
-
+        OptionTeleportTargetRate = IntegerOptionItem.Create(RoleInfo, OptionName.MagicianTeleportTargetRate, new(10, 100, 10), 100, false)
+            .SetValueFormat(OptionFormat.Percent);
+        OptionDupeTeleportTargetTo = BooleanOptionItem.Create(RoleInfo, OptionName.MagicianDupeTeleportTargetTo, true, false);
+        OptionIncludeSpawnPoint = BooleanOptionItem.Create(RoleInfo, OptionName.MagicianIncludeSpawnPoint, false, false);
+        OptionIncludeRolePlayer = BooleanOptionItem.Create(RoleInfo, OptionName.MagicianIncludeRolePlayer, false, false);
     }
-
-
-
-    public override void OnDestroy()
-
-    {
-
-        CustomRoleManager.MarkOthers.Remove(GetMarkOthers);
-
-    }
-
-
-
-    public override void OnStartMeeting()
-
-    {
-
-        if (Player.IsAlive()) return;
-
-        MagicTarget.Clear();
-
-    }
-
-
-
-    public override void AfterMeetingTasks()
-
-    {
-
-        if (ResetKillCount) HaveKillCount = 0;
-
-        if (ResetMagicTarget) MagicTarget.Clear(); //↓死亡している対象を削除
-
-        else MagicTarget.RemoveAll(id => PlayerState.GetByPlayerId(id).IsDead);
-
-
-
-        //クールダウンリセット
-
-        if (Maximum <= MagicCount && Maximum > 0)
-
-            MagicCooldown = 999;
-
-        else
-
-            MagicCooldown = DefaultCooldown;
-
-    }
-
-
-
-    public void OnMurderPlayerAsKiller(MurderInfo info)
-
-    {
-
-        HaveKillCount++;
-
-    }
-
-
-
-    bool IUsePhantomButton.IsPhantomRole => MagicCount < Maximum || Maximum is 0;
-
-    bool IUsePhantomButton.IsresetAfterKill => false;
 
     public void OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
-
     {
-
+        // 能力はキルクールに関係しない
         AdjustKillCooldown = true;
-
-        ResetCooldown = false;
-
-        if (Maximum <= MagicCount && Maximum > 0) return;
-
+        if (AbilityCount <= 0 || !Player.IsAlive()) return;
+        // 飛ばす人がいない時は回数もクールも使わない
+        if (!Juggling()) { ResetCooldown = false; return; }
         ResetCooldown = true;
 
+        AbilityCount--;
+        Logger.Info($"{Player.GetNameWithRole()}: ジャグリング (残り {AbilityCount})", "Magician");
+        if (AbilityCount <= 0) Player.MarkDirtySettings();
+        Utils.NotifyRoles(SpecifySeer: Player);
+    }
 
+    /// <summary>ジャグリング。テレポートする人がいなければ false (回数を使わない)</summary>
+    bool Juggling()
+    {
+        // テレポート先にもなる、動ける生存者
+        var validPlayer = Main.AllAlivePlayerControls.Where(pc =>
+            !pc.inVent &&
+            !pc.inMovingPlat &&
+            !pc.onLadder &&
+            !pc.GetCustomRole().IsSpectator() &&
+            (pc.PlayerId != Player.PlayerId || IncludeRolePlayer)).ToArray();
 
-        bool check = false;
+        var teleportPlayer = validPlayer.OrderBy(_ => IRandom.Instance.Next(int.MaxValue))
+            .Take((int)Math.Ceiling(validPlayer.Length * TeleportTargetRate)).ToList();
+        if (teleportPlayer.Count == 0) return false;
 
-        float minDis = Radius * Radius;
+        var targetPos = validPlayer
+            .Select(pc => (Vector2)pc.transform.position)
+            .Where(pos => Vector2.Distance(pos, AirshipWaitPos) > 3f)
+            .ToList();
 
-        PlayerControl target = null;
-
-
-
-        var myPos = Player.transform.position;
-
-        foreach (var pc in Main.AllAlivePlayerControls)
-
+        if (IncludeSpawnPoint)
         {
-
-            //自分と相方以外で、近くにいて既にターゲットにされていないか
-
-            if (pc.Is(CustomRoles.King) || pc.Is(CustomRoles.Autocrat)) continue;
-
-            if (Is(pc) || MagicTarget.Contains(pc.PlayerId)) continue;
-
-            if (pc.IsTeammate(Player)) continue;
-
-
-
-            var dis = Vector2.SqrMagnitude(myPos - pc.transform.position);
-
-            if (dis < minDis)
-
-            {
-
-                target = pc;
-
-                minDis = dis;
-
-            }
-
+            var map = GetSpawnMap();
+            if (map != null) targetPos.AddRange(map.Positions.Values);
         }
+        if (targetPos.Count == 0) return false;
 
-        if (target != null)
-
+        if (DupeTeleportTarget)
         {
-
-            MagicCount++;
-
-            check = (Maximum <= MagicCount && Maximum > 0) || MagicCooldown != DefaultCooldown;
-
-            MagicTarget.Add(target.PlayerId);
-
-            Player.SetKillCooldown(ForceProtect: true, target: target);
-
-            MagicCooldown = (Maximum <= MagicCount && Maximum > 0) ? 999 : DefaultCooldown;
-
-            _ = new LateTask(() => Utils.NotifyRoles(), 0.1f);
-
+            foreach (var pc in teleportPlayer)
+                pc.RpcSnapTo(targetPos[IRandom.Instance.Next(targetPos.Count)]);
         }
-
         else
-
         {
-
-            check = MagicCooldown != 0;
-
-            MagicCooldown = 0;
-
+            teleportPlayer = teleportPlayer.OrderBy(_ => IRandom.Instance.Next(int.MaxValue)).ToList();
+            for (int i = 0; i < targetPos.Count && i < teleportPlayer.Count; i++)
+                teleportPlayer[i].RpcSnapTo(targetPos[i]);
         }
-
-        if (check)
-
-        {
-
-            Player.MarkDirtySettings();
-
-            Player.RpcResetAbilityCooldown();
-
-        }
-
+        return true;
     }
 
-
-
-    public override void OnFixedUpdate(PlayerControl player)
-
+    static RandomSpawn.SpawnMap GetSpawnMap() => Main.NormalOptions.MapId switch
     {
+        0 => new RandomSpawn.SkeldSpawnMap(),
+        1 => new RandomSpawn.MiraHQSpawnMap(),
+        2 => new RandomSpawn.PolusSpawnMap(),
+        4 => new RandomSpawn.AirshipSpawnMap(),
+        5 => new RandomSpawn.FungleSpawnMap(),
+        _ => null,
+    };
 
-        if (!AmongUsClient.Instance.AmHost) return;
-
-        if (MagicTarget.Count == 0 || HaveKillCount < MagicUseKillCount) return;
-
-        // キルクールの始め直しは 1 回だけ (相手ごとに送ると、本人宛ての同じ通信が人数ぶん重なる)
-        Player.SetKillCooldown(ForceProtect: true, target: MagicTarget.Select(Utils.GetPlayerById).FirstOrDefault(pc => pc.IsAlive()));
-
-        foreach (var id in MagicTarget)
-
-        {
-
-            var target = Utils.GetPlayerById(id);
-
-            if (!target.IsAlive()) continue;
-
-            var state = PlayerState.GetByPlayerId(target.PlayerId);
-            state.DeathReason = CustomDeathReason.Magic;
-
-
-            if (ShowDeadbody)
-
-            {
-
-                var position = target.transform.position;
-
-                // 飛ばしと戻しは対で送る (予算で戻しだけ落ちると、マップの外に取り残される)
-                target.RpcSnapTo(new Vector2(9999f, 9999f), force: true);
-
-                target.RpcMurderPlayer(target, true);
-
-                _ = new LateTask(() => target.RpcSnapTo(position, force: true), 0.5f);
-
-            }
-
-            else
-
-            {
-
-                target.RpcExileV3(CustomDeathReason.Magic);
-
-            }
-
-            if (false)
-
-            {
-
-
-            }
-
-            magiccount++;
-
-            state.SetDead(CustomDeathReason.Magic);
-
-            var roomName = target.GetShipRoomName();
-
-
-            Utils.AddGameLog($"Magic", $"{(target.PlayerId).ColoredName()}({RoleText.GetRoleNameText(target.PlayerId, showSubRole: false).RemoveSizeTags()}) [{Utils.GetVitalText(target.PlayerId, true)}]〔{roomName}〕");
-
-            Utils.AddGameLog("", $"\n\t⇐ {(Player.PlayerId).ColoredName()}({RoleText.GetRoleNameText(Player.PlayerId, showSubRole: false)})");
-
-        }
-
-        MagicTarget.Clear();
-
-        HaveKillCount -= MagicUseKillCount;
-
-        Player.SetKillCooldown(ForceProtect: true);
-
-        _ = new LateTask(() => Utils.NotifyRoles(), 0.1f);
-
-    }
-
-
-
-    public override string GetAbilityButtonText() => GetString("MagicButtonText");
-
-
-
-
-    public override string GetProgressText(bool comms = false)
-
-    {
-
-        if (Maximum == 0 && MagicUseKillCount == 0) return "";
-
-        var text = "(";
-
-        if (Maximum != 0) text += Maximum - MagicCount;
-
-        if (MagicUseKillCount > 0) text += (Maximum > 0 ? " | " : "") + $"{HaveKillCount}/{MagicUseKillCount}";
-
-        var color = HaveKillCount < MagicUseKillCount ? Color.yellow : MagicCount < Maximum && Maximum > 0 ? Color.red : Color.gray;
-
-        return Utils.ColorString(color, text + ")");
-
-    }
-
+    bool IUsePhantomButton.IsPhantomRole => AbilityCount > 0;
     public override void ApplyGameOptions(IGameOptions opt)
-
     {
-
-        AURoleOptions.PhantomCooldown = MagicCooldown;
-
+        AURoleOptions.PhantomCooldown = AbilityCount <= 0 ? 200f : Cooldown;
     }
-
-    public override string GetLowerText(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
-
-    {
-
-        seen ??= seer;
-
-        if (seen.PlayerId != seer.PlayerId || isForMeeting || !Player.IsAlive()) return "";
-
-
-
-        if (isForHud) return GetString("PhantomButtonLowertext");
-
-        return $"<size=50%>{GetString("PhantomButtonLowertext")}</size>";
-
-    }
-
-
-
-    public string GetMarkOthers(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)
-
-    {
-
-        seen ??= seer;
-
-        if (isForMeeting && Player.IsAlive() && MagicTarget.Contains(seen.PlayerId))
-
-        {
-
-            return Utils.ColorString(Palette.ImpostorRed, "♢");
-
-        }
-
-        return "";
-
-    }
-
-    public override void CheckWinner(GameOverReason reason)
-
-    {
-
-
-
-    }
-
-    int magiccount;
-
+    public override string GetProgressText(bool comms = false)
+        => Utils.ColorString(0 < AbilityCount ? RoleInfo.RoleColor : Color.gray, $"({AbilityCount})");
+    public override string GetAbilityButtonText() => GetString("MagicianAbilityText");
 }
-

@@ -316,6 +316,8 @@ public enum CustomDeathReason
     Retaliation,
     RuleViolation,
     MagicC,
+    // 妖狐 (Nebula) の餓死
+    Starved,
 
     Win,
     etc = -1
@@ -343,7 +345,6 @@ public enum CustomWinner
     LoveCutter = CustomRoles.LoveCutter,
     Lawyer = CustomRoles.Lawyer,
     God = CustomRoles.God,
-    FoxSpirit = CustomRoles.FoxSpirit,
     Pirate = CustomRoles.Pirate,
 
     //CC
@@ -358,7 +359,7 @@ public enum CustomWinner
     Pavlov = CustomRoles.PavlovDog,
     StandMaster = CustomRoles.StandMaster,
     Eater = CustomRoles.Eater,
-    Fox = CustomRoles.Fox,
+    Spectre = CustomRoles.Spectre,
     Spelunker = CustomRoles.Spelunker,
     Tuna = CustomRoles.Tuna,
     Vulture = CustomRoles.Vulture,

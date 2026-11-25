@@ -932,8 +932,11 @@ class SetNamePatch
 [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.CompleteTask))]
 class PlayerControlCompleteTaskPatch
 {
+    /// <summary>true の間の完了は数えない (タスクを配り直した後、済んでいた物を済みに戻す時)</summary>
+    public static bool Silent = false;
     public static bool Prefix(PlayerControl __instance, [HarmonyArgument(0)] uint idx)
     {
+        if (Silent) return true;
         var pc = __instance;
 
         // 済んだタスク・持っていないタスクの完了は本編も数えない。こちらの数え (役ごとのタスク数) も進めない。

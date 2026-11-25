@@ -137,20 +137,16 @@ public sealed class UltraStar : RoleBase, IKiller, ISchrodingerCatOwner
         if (!AmongUsClient.Instance.AmHost || GameStates.Intro || !GameStates.IsInTask || !player.IsAlive() || GameStates.CalledMeeting || GameStates.ExiledAnimate || !MyState.HasSpawned) return;
 
         {//参考→https://github.com/Yumenopai/TownOfHost_Y/releases/tag/v514.20.3
-            // カモフラ中は送らない (送るとカモフラの色を上書きする)。明けたらすぐ送り直す
-            if (Camouflage.IsCamouflage) lastSentColor = -1;
-            else
+            // K と同じく、カモフラ中も色を変え続ける
+            colorchange %= RainbowColors.Length;
+            // 色が変わった時だけ送る (毎フレーム送ると同種 Reliable の連射で公式鯖に切断される)
+            int color = RainbowColors[(int)colorchange];
+            if (color != lastSentColor)
             {
-                colorchange %= RainbowColors.Length;
-                // 色が変わった時だけ送る (毎フレーム送ると同種 Reliable の連射で公式鯖に切断される)
-                int color = RainbowColors[(int)colorchange];
-                if (color != lastSentColor)
-                {
-                    lastSentColor = color;
-                    player.RpcSetColor((byte)color);
-                }
-                colorchange += Time.fixedDeltaTime * 1.5f;
+                lastSentColor = color;
+                player.RpcSetColor((byte)color);
             }
+            colorchange += Time.fixedDeltaTime * 1.5f;
         }
 
         if (cankill)

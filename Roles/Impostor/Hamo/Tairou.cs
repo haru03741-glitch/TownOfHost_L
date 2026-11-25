@@ -8,7 +8,7 @@ namespace TownOfHostL.Roles.Impostor
 {
     public sealed class Tairou : RoleBase, IImpostor
     {
-        // 役職の元: TownOfHost_K (TownOfHost-hamo 経由)
+        // 役職の元: TownOfHost-hamo (TownOfHost_K の大狼に占い結果の設定を足した版)
         public static readonly SimpleRoleInfo RoleInfo =
             SimpleRoleInfo.Create(
             typeof(Tairou),

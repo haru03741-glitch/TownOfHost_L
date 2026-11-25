@@ -204,13 +204,17 @@ public partial class TaskState
 {
     public static int InitialTotalTasks;
     public int AllTasksCount;
+    /// <summary>表示する必要なタスク数 (K の NeedTaskCount)。負なら全タスク数を出す</summary>
+    public int NeedTaskCount;
     public int CompletedTasksCount;
     public bool hasTasks;
     public int RemainingTasksCount => AllTasksCount - CompletedTasksCount;
     public bool IsTaskFinished => RemainingTasksCount <= 0 && hasTasks;
+    public int GetNeedCountOrAll() => NeedTaskCount < 0 ? AllTasksCount : NeedTaskCount;
     public TaskState()
     {
         this.AllTasksCount = -1;
+        this.NeedTaskCount = -1;
         this.CompletedTasksCount = 0;
         this.hasTasks = false;
     }

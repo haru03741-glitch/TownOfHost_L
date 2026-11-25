@@ -353,7 +353,8 @@ namespace TownOfHostL.Roles
         ///両陣営役職、コンビ役職向け
         ///</summary>
         private static CustomRoles[] GetAssignUnitRolesArray(this CustomRoles role)
-            => role.GetRoleAssignInfo()?.AssignUnitRoles ??
+            => role.GetRoleAssignInfo()?.AssignUnitRolesGetter?.Invoke() ??
+            role.GetRoleAssignInfo()?.AssignUnitRoles ??
             role switch
             {
                 CustomRoles.Lovers => new CustomRoles[2] { CustomRoles.Lovers, CustomRoles.Lovers },
@@ -396,5 +397,9 @@ namespace TownOfHostL.Roles
         /// 実際にアサインされる役職の内訳
         /// </summary>
         public CustomRoles[] AssignUnitRoles { get; init; }
+        /// <summary>
+        /// 配る役職の内訳を、配る時に決める (設定で組の相手が変わる役職)。あれば AssignUnitRoles より先に使う
+        /// </summary>
+        public Func<CustomRoles[]> AssignUnitRolesGetter { get; init; }
     }
 }

@@ -25,7 +25,7 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
 
 {
 
-    // 役職の元: TownOfHost_K (TownOfHost-hamo 経由)
+    // 役職の元: TownOfHost-hamo (TownOfHost_K のジャッカルウルフに 2 つ目の付与役職を足した版)
     public static readonly SimpleRoleInfo RoleInfo =
 
         SimpleRoleInfo.Create(
@@ -147,7 +147,7 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
 
             if (data.Key is CustomRoles.AlienHijack or CustomRoles.EvilSatellite or CustomRoles.ConnectSaver
 
-            or CustomRoles.Limiter or CustomRoles.Assassin or CustomRoles.Amnesiac or CustomRoles.Driver)
+            or CustomRoles.Limiter or CustomRoles.Assassin or CustomRoles.Amnesiac)
 
             {
 
