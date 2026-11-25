@@ -36,7 +36,7 @@ namespace TownOfHostL
                         state.IsBlackOut = false;
                         Utils.SyncAllSettings();
 
-                        if (Main.NormalOptions.MapId != 4) return; //マップがエアシップじゃなかったらreturn
+                        if (!GameMap.IsAirship) return; //マップがエアシップじゃなかったらreturn
                         RoleHooks.OnAirshipSpawn(player);
                         player.RpcResetAbilityCooldown();
                         if (Options.FixFirstKillCooldown.GetBool() && MeetingStates.FirstMeeting)
@@ -47,6 +47,18 @@ namespace TownOfHostL
                 }
             }
         }
+        /// <summary>マップの湧き場所の表 (反転スケルドはスケルドの表を鏡に映した物)。表の無いマップは null</summary>
+        public static SpawnMap ForMap(MapNames map) => GameMap.ToBase(map) switch
+        {
+            MapNames.Skeld => new SkeldSpawnMap(),
+            MapNames.MiraHQ => new MiraHQSpawnMap(),
+            MapNames.Polus => new PolusSpawnMap(),
+            MapNames.Airship => new AirshipSpawnMap(),
+            MapNames.Fungle => new FungleSpawnMap(),
+            _ => null,
+        };
+        public static SpawnMap ForCurrentMap() => ForMap(GameMap.Current);
+
         public static void TP(CustomNetworkTransform nt, Vector2 location)
         {
             if (!Modules.Net.SnapToBudget.CanSend()) return;
@@ -92,6 +104,12 @@ namespace TownOfHostL
                 ["Security"] = new(-13.5f, -5.5f),
                 ["Reactor"] = new(-20.5f, -5.5f)
             };
+            // 反転スケルドでは表を鏡に映して持つ (湧く位置も部屋の選び方もそのまま使える)
+            public SkeldSpawnMap()
+            {
+                if (!GameMap.IsMirrored) return;
+                foreach (var key in positions.Keys.ToArray()) positions[key] = GameMap.Fix(positions[key]);
+            }
             public override int MapId => 0;
             public override Dictionary<string, Vector2> Positions => positions;
             protected override IEnumerable<KeyValuePair<string, Vector2>> DefaultPool()

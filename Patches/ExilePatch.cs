@@ -100,7 +100,7 @@ namespace TownOfHostL
             {
                 if (CustomWinnerHolder.WinnerTeam is not CustomWinner.Default) return;
                 // ランダムスポーン
-                switch ((MapNames)Main.NormalOptions.MapId)
+                switch (GameMap.Base)
                 {
                     case MapNames.Skeld:
                         if (Options.RandomSpawn_Skeld.GetBool())

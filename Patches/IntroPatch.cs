@@ -383,11 +383,9 @@ class IntroCutsceneDestroyPatch
         Main.introDestroyed = true;
         Main.IntroEndTime = DateTime.Now;
         if (AmongUsClient.Instance.AmHost) Modules.Net.OutfitSync.FlushPending();
-        var mapId = Main.NormalOptions.MapId;
-
         if (AmongUsClient.Instance.AmHost)
         {
-            if (mapId != 4)
+            if (!GameMap.IsAirship)
             {
                 Main.AllPlayerControls.Do(pc => pc.RpcResetAbilityCooldown());
                 if (Options.FixFirstKillCooldown.GetBool())
@@ -405,7 +403,7 @@ class IntroCutsceneDestroyPatch
                 PlayerState.GetByPlayerId(PlayerControl.LocalPlayer.PlayerId).SetDead(CustomDeathReason.etc);
             }
 
-            switch ((MapNames)mapId)
+            switch (GameMap.Base)
             {
                 case MapNames.Skeld:
                     if (Options.RandomSpawn_Skeld.GetBool() && !Options.FirstFixedSpawn_Skeld.GetBool())

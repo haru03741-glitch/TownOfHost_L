@@ -28,7 +28,7 @@ public static class HamoExperimental
         if (!AmongUsClient.Instance.AmHost) return;
         if (!On(Options.ExAftermeetingflash)) return;
         if (CustomWinnerHolder.WinnerTeam != CustomWinner.Default || FirstTurnMeeting.InFirst) return;
-        if (Main.NormalOptions.MapId is 4)
+        if (GameMap.IsAirship)
             _ = new LateTask(() => Utils.AllPlayerKillFlash(), 3f, "AftermeetingFlash");
         else
             Utils.AllPlayerKillFlash();

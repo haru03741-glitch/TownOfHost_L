@@ -14,7 +14,7 @@ public static class DoorsReset
     public static void Initialize()
     {
         // AirshipとPolusとFungle以外は非対応
-        switch ((MapNames)Main.NormalOptions.MapId)
+        switch (GameMap.Base)
         {
             case MapNames.Skeld:
                 isEnabled = false;

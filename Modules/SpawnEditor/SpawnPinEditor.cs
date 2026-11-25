@@ -66,7 +66,7 @@ public class SpawnPinEditor : MonoBehaviour
         dragging = -1;
         if (value)
         {
-            int cur = TohlSpawnEditor.ToStorageMapId(Main.NormalOptions?.MapId ?? 0);
+            int cur = TohlSpawnEditor.ToStorageMapId((int)GameMap.Current);
             for (int i = 0; i < Sheets.Length; i++) if (Sheets[i].Id == cur) sheet = i;
             SpawnStore.Load();
         }

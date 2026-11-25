@@ -41,7 +41,7 @@ public static class SwitchSystemUpdateSystemPatch
             return false;
         }
         //Airshipの特定の停電を直せないならキャンセル
-        if ((MapNames)Main.NormalOptions.MapId == MapNames.Airship)
+        if (GameMap.IsAirship)
         {
             var truePosition = player.GetTruePosition();
             if (Options.DisableAirshipViewingDeckLightsPanel.GetBool() && Vector2.Distance(truePosition, new(-12.93f, -11.28f)) <= 2f) return false;

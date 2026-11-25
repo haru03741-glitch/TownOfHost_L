@@ -46,7 +46,7 @@ public sealed class PlagueDoctor : RoleBase, IKiller
             InfectDistance = OptionInfectDistance.GetFloat();
             InfectInactiveTime = OptionInfectInactiveTime.GetFloat();
             // エアシップはリスポーンの選択の分だけ固定で遅らせる (医師が何人いても 1 回だけ足す)
-            if (Main.NormalOptions.MapId == 4) InfectInactiveTime += 5f;
+            if (GameMap.IsAirship) InfectInactiveTime += 5f;
             CanInfectSelf = OptionInfectCanInfectSelf.GetBool();
             CanInfectVent = OptionInfectCanInfectVent.GetBool();
             DestroyPlague = OptionDestroyPlague.GetBool();

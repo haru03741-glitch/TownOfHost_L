@@ -218,9 +218,9 @@ public static class TempGhost
         int floors = Physics2D.OverlapPointNonAlloc(pos, overlapBuffer, Constants.ShipOnlyMask);
         // 幽霊の体は当たり判定が切れているので、体の当たりではなく位置で部屋を引く
         bool inRoom = pos.GetPlainShipRoom() != null;
-        return (MapNames)Main.NormalOptions.MapId switch
+        return GameMap.Base switch
         {
-            MapNames.Skeld or MapNames.Dleks => inRoom,
+            MapNames.Skeld => inRoom,
             MapNames.MiraHQ => floors >= 1 || inRoom,
             MapNames.Polus => floors >= 1 || (pos.y is >= -26.11f and <= -6.41f && pos.x is >= 3.56f and <= 32.68f),
             MapNames.Airship => floors >= 1,

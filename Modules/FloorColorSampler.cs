@@ -84,7 +84,7 @@ public static class FloorColorSampler
 
     private static Color MapFallback()
     {
-        var hex = Main.NormalOptions.MapId switch
+        var hex = (int)GameMap.Current switch
         {
             0 or 3 => "#7C8494",
             1 => "#A9B0BA",

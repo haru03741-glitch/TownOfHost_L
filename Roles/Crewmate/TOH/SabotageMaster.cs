@@ -80,7 +80,7 @@ public sealed class SabotageMaster : RoleBase, ISystemTypeUpdateHook
         if (amount.HasAnyBit(ReactorSystemType.AddUserOp))
         {
             //片方を直したタイミング
-            ShipStatus.Instance.UpdateSystem((MapNames)Main.NormalOptions.MapId == MapNames.Polus ? SystemTypes.Laboratory : SystemTypes.Reactor, Player, ReactorSystemType.ClearCountdown);
+            ShipStatus.Instance.UpdateSystem(GameMap.Current == MapNames.Polus ? SystemTypes.Laboratory : SystemTypes.Reactor, Player, ReactorSystemType.ClearCountdown);
             UsedSkillCount++;
         }
         return true;
@@ -162,7 +162,7 @@ public sealed class SabotageMaster : RoleBase, ISystemTypeUpdateHook
         if (!FixesDoors) return true;
         if (DoorsProgressing) return true;
 
-        int mapId = Main.NormalOptions.MapId;
+        int mapId = (int)GameMap.Base;
         if (AmongUsClient.Instance.NetworkMode == NetworkModes.FreePlay) mapId = AmongUsClient.Instance.TutorialMapId;
         var shipStatus = ShipStatus.Instance;
 

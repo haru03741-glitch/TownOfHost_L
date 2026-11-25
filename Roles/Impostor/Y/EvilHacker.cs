@@ -20,7 +20,7 @@ public sealed class EvilHacker : RoleBase, IImpostor
             "イビルハッカー",
             assignInfo: new(CustomRoles.EvilHacker, CustomRoleTypes.Impostor)
             {
-                IsInitiallyAssignableCallBack = () => (MapNames)Main.NormalOptions.MapId is not MapNames.Fungle
+                IsInitiallyAssignableCallBack = () => GameMap.Current is not MapNames.Fungle
             }
         );
     public EvilHacker(PlayerControl player)
@@ -57,14 +57,13 @@ public sealed class EvilHacker : RoleBase, IImpostor
         OptionAdminCooldown = FloatOptionItem.Create(RoleInfo, OptionName.EvilHackerAdminCooldown, new(2.5f, 180f, 2.5f), 30f, false)
                 .SetValueFormat(OptionFormat.Seconds);
     }
-    // アドミンの前の位置。Dleks はスケルドを左右に反転した形なので x を反転する。
+    // アドミンの前の位置 (スケルドは反転前の船で測った位置を、反転スケルドでは鏡に映す)。
     // ファングルは IsInitiallyAssignableCallBack で配らない。
     private static Vector2? GetAdminPosition()
     {
-        return (MapNames)Main.NormalOptions.MapId switch
+        return GameMap.Current switch
         {
-            MapNames.Skeld => new Vector2(2.96f, -8.62f),
-            MapNames.Dleks => new Vector2(-2.96f, -8.62f),
+            MapNames.Skeld or MapNames.Dleks => GameMap.Fix(new Vector2(2.96f, -8.62f)),
             MapNames.MiraHQ => new Vector2(22.22f, 18.77f),
             MapNames.Polus => new Vector2(22.63f, -21.75f),
             MapNames.Airship => new Vector2(-22.13f, 0.56f),

@@ -444,12 +444,7 @@ static partial class ExtendedPlayerControl
     {
         if (pc == null || !AmongUsClient.Instance.AmHost || pc.AmOwner) return;
 
-        var systemtypes = (MapNames)Main.NormalOptions.MapId switch
-        {
-            MapNames.Polus => SystemTypes.Laboratory,
-            MapNames.Airship => SystemTypes.HeliSabotage,
-            _ => SystemTypes.Reactor,
-        };
+        var systemtypes = Utils.GetCriticalSabotageSystemType();
 
         _ = new LateTask(() =>
         {
@@ -464,7 +459,7 @@ static partial class ExtendedPlayerControl
         _ = new LateTask(() =>
         {
             pc.RpcDesyncUpdateSystem(systemtypes, 16);
-            if (Main.NormalOptions.MapId == 4) //Airship用
+            if (GameMap.IsAirship) //Airship用
                 pc.RpcDesyncUpdateSystem(systemtypes, 17);
         }, 0.4f + delay, "Fix Desync Reactor");
     }
@@ -481,7 +476,7 @@ static partial class ExtendedPlayerControl
         {
             pc.RpcDesyncUpdateSystem(systemtypes, 16);
 
-            if ((MapNames)Main.NormalOptions.MapId == MapNames.Airship)
+            if (GameMap.IsAirship)
                 pc.RpcDesyncUpdateSystem(systemtypes, 17);
         }, FlashDuration + delay, "Fix Desync Reactor");
     }

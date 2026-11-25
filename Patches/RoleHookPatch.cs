@@ -62,7 +62,7 @@ public static class RoleHooks
                 {
                     (pc.GetRoleClass() as IUsePhantomButton)?.Init(pc);
                     // エアシップは湧き位置を選んだ時に呼ぶ
-                    if (Main.NormalOptions.MapId != 4) pc.GetRoleClass()?.OnSpawn(true);
+                    if (!GameMap.IsAirship) pc.GetRoleClass()?.OnSpawn(true);
                 }
                 catch (System.Exception ex) { Logger.Exception(ex, "OnIntroEnd.OnSpawn"); }
             }

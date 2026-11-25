@@ -30,7 +30,7 @@ public static class ReactorSystemTypeUpdateSystemPatch
         // サボタージュ発動時
         if (__state && __runOriginal && __instance.IsActive)
         {
-            var duration = (MapNames)Main.NormalOptions.MapId switch
+            var duration = GameMap.Base switch
             {
                 MapNames.Skeld when Options.SabotageTimeControl_Skeld.GetBool() => Options.SkeldReactorTimeLimit.GetFloat(),
                 MapNames.MiraHQ when Options.SabotageTimeControl_MiraHQ.GetBool() => Options.MiraHQReactorTimeLimit.GetFloat(),

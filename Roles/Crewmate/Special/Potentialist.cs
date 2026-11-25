@@ -156,7 +156,7 @@ public sealed class Potentialist : RoleBase
 
                 Rand.Add(CustomRoles.Totocalcio);
             }
-            if ((MapNames)Main.NormalOptions.MapId is not MapNames.Polus and not MapNames.Fungle)
+            if (GameMap.Current is not MapNames.Polus and not MapNames.Fungle)
             {
                 Rand.Add(CustomRoles.VentManager);
             }

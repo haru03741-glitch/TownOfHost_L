@@ -36,7 +36,7 @@ static class StartGameLoadWaitPatch
 
             var now = Il2CppSystem.DateTime.Now;
             double elapsed = (now.Ticks - realStart.Ticks) / (double)TimeSpan.TicksPerSecond;
-            byte mapId = Main.NormalOptions.MapId;
+            byte mapId = (byte)GameMap.Current;
             double limit = mapId is 4 or 5 ? WaitSecondsLargeMap : WaitSeconds;
             if (!loggedOverVanilla && elapsed >= (mapId is 4 or 5 ? 15 : 10))
             {

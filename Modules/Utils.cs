@@ -40,19 +40,8 @@ public static partial class Utils
         if (ShipStatus.Instance == null) return false;
         if (ShipStatus.Instance.Systems == null) return false;
 
-        MapNames map = MapNames.Skeld;
-        try
-        {
-            if (Main.NormalOptions != null)
-            {
-                map = (MapNames)Main.NormalOptions.MapId;
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.Warn($"Main.NormalOptions.MapId の取得で例外: {ex.Message}", "Utils");
-            map = MapNames.Skeld;
-        }
+        // 反転スケルドはスケルドと同じサボタージュを持つ
+        MapNames map = GameMap.Base;
 
         switch (type)
         {
@@ -149,7 +138,7 @@ public static partial class Utils
 
         return false;
     }
-    public static SystemTypes GetCriticalSabotageSystemType() => (Main.NormalOptions == null) ? SystemTypes.Reactor : (MapNames)Main.NormalOptions.MapId switch
+    public static SystemTypes GetCriticalSabotageSystemType() => GameMap.Current switch
     {
         MapNames.Polus => SystemTypes.Laboratory,
         MapNames.Airship => SystemTypes.HeliSabotage,
@@ -693,7 +682,6 @@ public static partial class Utils
         string formatTag = $"<size={ActiveSettingsSize}>";
 
         var title = $"【{GetString("Settings")}】".Color(Color.yellow);
-        var mapId = Main.NormalOptions.MapId;
         if (Options.HideGameSettings.GetBool() && PlayerId != byte.MaxValue)
         {
             SendMessageAutoSplit(GetString("Message.HideGameSettings"), true, title, PlayerId);

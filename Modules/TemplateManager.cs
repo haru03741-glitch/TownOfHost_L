@@ -20,7 +20,7 @@ namespace TownOfHostL
             ["PlayerName"] = () => DataManager.Player.Customization.Name,
             ["AmongUsVersion"] = () => UnityEngine.Application.version,
             ["ModVersion"] = () => Main.PluginVersion,
-            ["Map"] = () => Constants.MapNames[Main.NormalOptions.MapId],
+            ["Map"] = () => Constants.MapNames[(int)GameMap.Current],
             ["NumEmergencyMeetings"] = () => Main.NormalOptions.NumEmergencyMeetings.ToString(),
             ["EmergencyCooldown"] = () => Main.NormalOptions.EmergencyCooldown.ToString(),
             ["DiscussionTime"] = () => Main.NormalOptions.DiscussionTime.ToString(),

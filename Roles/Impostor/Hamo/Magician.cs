@@ -138,15 +138,7 @@ public sealed class Magician : RoleBase, IImpostor, IUsePhantomButton
         return true;
     }
 
-    static RandomSpawn.SpawnMap GetSpawnMap() => Main.NormalOptions.MapId switch
-    {
-        0 => new RandomSpawn.SkeldSpawnMap(),
-        1 => new RandomSpawn.MiraHQSpawnMap(),
-        2 => new RandomSpawn.PolusSpawnMap(),
-        4 => new RandomSpawn.AirshipSpawnMap(),
-        5 => new RandomSpawn.FungleSpawnMap(),
-        _ => null,
-    };
+    static RandomSpawn.SpawnMap GetSpawnMap() => RandomSpawn.ForCurrentMap();
 
     bool IUsePhantomButton.IsPhantomRole => AbilityCount > 0;
     public override void ApplyGameOptions(IGameOptions opt)

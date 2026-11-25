@@ -85,7 +85,7 @@ public static class DiscordWebhook
             var sb = new StringBuilder();
             sb.Append("**").Append(GetString("LastResult")).Append("**  ")
               .Append(DateTime.Now.ToString("yyyy-MM-dd HH:mm")).Append("  ")
-              .Append(Main.NormalOptions != null && Main.NormalOptions.MapId < Constants.MapNames.Length ? Constants.MapNames[Main.NormalOptions.MapId] : "").Append('\n');
+              .Append(Main.NormalOptions != null && (int)GameMap.Current < Constants.MapNames.Length ? Constants.MapNames[(int)GameMap.Current] : "").Append('\n');
             sb.Append(Plain(SetEverythingUpPatch.LastWinsText)).Append('\n');
             var others = new List<byte>(PlayerState.AllPlayerStates.Keys);
             foreach (var id in Main.winnerList)

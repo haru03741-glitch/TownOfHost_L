@@ -106,7 +106,7 @@ public static class GmAutoPossessTiming
     public static float LastMeetingEnd = -999f;
     static float? roundStartAt;
 
-    static float Delay => Main.NormalOptions != null && Main.NormalOptions.MapId == 4 ? AirshipDelay : OtherDelay;
+    static float Delay => Main.NormalOptions != null && GameMap.IsAirship ? AirshipDelay : OtherDelay;
 
     public static bool CanStart()
     {

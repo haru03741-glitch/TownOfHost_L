@@ -145,7 +145,7 @@ public sealed class CharismaStar : RoleBase, IImpostor
 
             // ターゲットが梯子またはヌーンを使っている
             if ((target.MyPhysics.Animations.IsPlayingAnyLadderAnimation()
-                || ((MapNames)Main.NormalOptions.MapId == MapNames.Airship && Vector2.Distance(target.GetTruePosition(), LiftPosition) <= 1.9f))
+                || (GameMap.IsAirship && Vector2.Distance(target.GetTruePosition(), LiftPosition) <= 1.9f))
                 && !target.Is(CustomRoleTypes.Impostor))
             {
                 // 集まらないプレイヤーをキルするがONの時

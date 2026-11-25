@@ -117,7 +117,7 @@ public sealed class Pusher : RoleBase, IImpostor, IUsePhantomButton
     {
         if (!AmongUsClient.Instance.AmHost || player != Player || Time.time < nextCheckAt) return;
         nextCheckAt = Time.time + CheckInterval;
-        var map = (MapNames)Main.NormalOptions.MapId;
+        var map = GameMap.Base;
         var now = Player.IsAlive() && GameStates.IsInTask && !GameStates.IsMeeting && !Player.inVent
             && PushCandidates().Any(pc => TryGetPushSpot(map, pc, out _) || GetTopLadder(pc) != null);
         if (now == canPush) return;
@@ -130,7 +130,7 @@ public sealed class Pusher : RoleBase, IImpostor, IUsePhantomButton
         AdjustKillCooldown = false;
         ResetCooldown = false;
         if (!AmongUsClient.Instance.AmHost || !Player.IsAlive()) return;
-        var map = (MapNames)Main.NormalOptions.MapId;
+        var map = GameMap.Base;
         foreach (var target in PushCandidates())
         {
             if (TryGetPushSpot(map, target, out var pushPos))
@@ -157,8 +157,9 @@ public sealed class Pusher : RoleBase, IImpostor, IUsePhantomButton
         var pos = (Vector2)target.transform.position;
         foreach (var spot in spots)
         {
-            if (Vector2.Distance(spot.Position, pos) > spot.Radius) continue;
-            pushPos = spot.PushPosition;
+            // スケルドの位置は反転前の船で測った物
+            if (Vector2.Distance(GameMap.Fix(spot.Position), pos) > spot.Radius) continue;
+            pushPos = GameMap.Fix(spot.PushPosition);
             return true;
         }
         return false;
@@ -203,7 +204,7 @@ public sealed class Pusher : RoleBase, IImpostor, IUsePhantomButton
     {
         seen ??= seer;
         if (isForMeeting || seer.PlayerId != Player.PlayerId || seen.PlayerId != Player.PlayerId || !Player.IsAlive()) return "";
-        if (!PushPositions.ContainsKey((MapNames)Main.NormalOptions.MapId) && (ShipStatus.Instance?.Ladders?.Length ?? 0) == 0)
+        if (!PushPositions.ContainsKey(GameMap.Base) && (ShipStatus.Instance?.Ladders?.Length ?? 0) == 0)
             return Utils.ColorString(Palette.DisabledGrey, GetString("PusherNoSpot"));
         return canPush ? Utils.ColorString(RoleInfo.RoleColor, "◯") : "";
     }

@@ -31,7 +31,7 @@ public static class LifeSuppSystemUpdateSystemPatch
     public static void Postfix(LifeSuppSystemType __instance, bool __state, bool __runOriginal)
     {
         if (!__state || !__runOriginal || !__instance.IsActive || !AmongUsClient.Instance.AmHost) return;
-        var duration = (MapNames)Main.NormalOptions.MapId switch
+        var duration = GameMap.Base switch
         {
             MapNames.Skeld when Options.SabotageTimeControl_Skeld.GetBool() => Options.SkeldO2TimeLimit.GetFloat(),
             MapNames.MiraHQ when Options.SabotageTimeControl_MiraHQ.GetBool() => Options.MiraHQO2TimeLimit.GetFloat(),

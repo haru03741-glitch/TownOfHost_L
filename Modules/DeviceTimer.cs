@@ -151,7 +151,7 @@ public static class DeviceTimer
     /// <summary>その位置の近くにある装置。無ければ null</summary>
     static Kind? NearKind(Vector2 pos)
     {
-        var map = Main.NormalOptions.MapId;
+        var map = (int)GameMap.Current;
         if (map != devicesMap) BuildDevices(map);
         var distance = DisableDevice.UsableDistance();
         foreach (var (devicePos, kind) in devices)
@@ -167,10 +167,12 @@ public static class DeviceTimer
     {
         devicesMap = map;
         devices.Clear();
-        var prefix = ((MapNames)map).ToString();
-        foreach (var (name, devicePos) in DisableDevice.DevicePos)
+        // 反転スケルドはスケルドの装置を鏡に映した位置で持つ
+        var prefix = GameMap.ToBase((MapNames)map).ToString();
+        foreach (var (name, _) in DisableDevice.DevicePos)
         {
             if (!name.StartsWith(prefix)) continue;
+            var devicePos = DisableDevice.Pos(name);
             if (name.EndsWith("Admin")) devices.Add((devicePos, Kind.Admin));
             else if (name.EndsWith("Camera") || name.EndsWith("DoorLog")) devices.Add((devicePos, Kind.Camera));
             else if (name.EndsWith("Vital")) devices.Add((devicePos, Kind.Vital));

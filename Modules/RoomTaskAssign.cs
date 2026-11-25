@@ -182,7 +182,7 @@ public class RoomTaskAssign
 
         RoomArrow = TaskPSR.transform.position;
 
-        if (Main.NormalOptions.MapId is 4)//矢印が変なところにある場所の応急手当。
+        if (GameMap.IsAirship)//矢印が変なところにある場所の応急手当。
 
         {
 

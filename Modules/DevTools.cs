@@ -218,7 +218,7 @@ public static class DevCommands
         string phase = !GameStates.IsInGame ? (GameStates.IsLobby ? "ロビー" : "試合外") : GameStates.IsMeeting ? "会議" : "タスク中";
         sb.Append("---- 状態 ----\n");
         sb.Append($"フェーズ: {phase} / 試合: {(GameSession.Current != null ? $"#{GameSession.Current.Id}" : "なし")} / モード: {ModeCatalog.Current.GetType().Name}");
-        if (Main.NormalOptions != null) sb.Append($" / マップ: {(MapNames)Main.NormalOptions.MapId}");
+        if (Main.NormalOptions != null) sb.Append($" / マップ: {GameMap.Current}");
         sb.Append($" / ホスト: {client?.AmHost} / 通信: {client?.NetworkMode}\n");
         if (GameStates.IsInGame && Main.IntroEndTime != DateTime.MinValue)
             sb.Append($"イントロ後の経過: {(DateTime.Now - Main.IntroEndTime).TotalSeconds:F0} 秒\n");

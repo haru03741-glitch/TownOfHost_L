@@ -223,12 +223,7 @@ public static class Audience
             ok = req.Kind switch
             {
                 Kind.Blackout => Sabotage(SystemTypes.Electrical),
-                Kind.Reactor => Sabotage((MapNames)Main.NormalOptions.MapId switch
-                {
-                    MapNames.Polus => SystemTypes.Laboratory,
-                    MapNames.Airship => SystemTypes.HeliSabotage,
-                    _ => SystemTypes.Reactor,
-                }),
+                Kind.Reactor => Sabotage(Utils.GetCriticalSabotageSystemType()),
                 Kind.Comms => Sabotage(SystemTypes.Comms),
                 Kind.Doors => CloseDoors(),
                 Kind.Curse => Curse(req.Target),

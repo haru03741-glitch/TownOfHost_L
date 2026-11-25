@@ -571,15 +571,7 @@ public static class SpectreDishes
         Spectre.Eating.Clear();
     }
 
-    static RandomSpawn.SpawnMap GetSpawnMap() => Main.NormalOptions.MapId switch
-    {
-        0 or 3 => new RandomSpawn.SkeldSpawnMap(),
-        1 => new RandomSpawn.MiraHQSpawnMap(),
-        2 => new RandomSpawn.PolusSpawnMap(),
-        4 => new RandomSpawn.AirshipSpawnMap(),
-        5 => new RandomSpawn.FungleSpawnMap(),
-        _ => null,
-    };
+    static RandomSpawn.SpawnMap GetSpawnMap() => RandomSpawn.ForCurrentMap();
 
     /// <summary>皿を置く (試合で 1 回)。部屋の湧き場所から、互いに 7.5 以上離れた所を選ぶ</summary>
     static void Spawn()
@@ -588,7 +580,6 @@ public static class SpectreDishes
         var map = GetSpawnMap();
         if (map == null || Spectre.NumOfDishes <= 0) return;
         var pool = map.Positions.Values
-            .Select(p => Main.NormalOptions.MapId == 3 ? new Vector2(-p.x, p.y) : p)
             .OrderBy(_ => IRandom.Instance.Next(int.MaxValue)).ToList();
         var picked = new List<Vector2>();
         foreach (var p in pool)

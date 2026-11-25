@@ -18,7 +18,7 @@ public sealed class VentManager : RoleBase
             "#00ffff",
             assignInfo: new(CustomRoles.VentManager, CustomRoleTypes.Crewmate)
             {
-               IsInitiallyAssignableCallBack = () => (MapNames)Main.NormalOptions.MapId is not MapNames.Polus and not MapNames.Fungle
+               IsInitiallyAssignableCallBack = () => GameMap.Current is not MapNames.Polus and not MapNames.Fungle
             },
             // ワークホースになった後は、ワークホースの数のまま
             taskCount: pc => pc.Is(CustomRoles.Workhorse) ? null : TaskData,

@@ -139,7 +139,7 @@ static class VentEnterTask
         Vent vent = new();
         if (!AmongUsClient.Instance.AmHost) return vent;
 
-        switch ((MapNames)Main.NormalOptions.MapId)
+        switch (GameMap.Base)
         {
             case MapNames.Skeld:
                 vent = new SkeldSpecialVentTask().SetVentTask(pc);

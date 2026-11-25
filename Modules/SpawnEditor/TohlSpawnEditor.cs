@@ -26,15 +26,7 @@ internal static class TohlSpawnEditor
         _ => -1
     };
 
-    public static RandomSpawn.SpawnMap MapOf(int mapId) => mapId switch
-    {
-        0 or 3 => new RandomSpawn.SkeldSpawnMap(),
-        1 => new RandomSpawn.MiraHQSpawnMap(),
-        2 => new RandomSpawn.PolusSpawnMap(),
-        4 => new RandomSpawn.AirshipSpawnMap(),
-        5 => new RandomSpawn.FungleSpawnMap(),
-        _ => null
-    };
+    public static RandomSpawn.SpawnMap MapOf(int mapId) => RandomSpawn.ForMap((MapNames)mapId);
 
     public static (OptionItem map, OptionItem random, OptionItem custom, OptionItem only)? Opts(int mapId) => mapId switch
     {
@@ -68,7 +60,7 @@ internal static class TohlSpawnEditor
     public static bool TryPick(RandomSpawn.SpawnMap map, out Vector2 position)
     {
         position = default;
-        int mapId = Main.NormalOptions.MapId;
+        int mapId = (int)GameMap.Current;
         int storageId = ToStorageMapId(mapId);
         if (storageId < 0 || Opts(mapId) is not { } o || !o.custom.GetBool()) return false;
 

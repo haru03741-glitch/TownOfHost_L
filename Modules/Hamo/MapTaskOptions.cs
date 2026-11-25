@@ -28,7 +28,7 @@ public static class HamoMapTask
     public static void SetPlatform()
     {
         if (!AmongUsClient.Instance.AmHost || !Mod) return;
-        if (Main.NormalOptions.MapId is not 4) return;
+        if (!GameMap.IsAirship) return;
         var airship = Object.FindObjectOfType<AirshipStatus>();
         if (!airship || airship.GapPlatform == null) return;
         switch (Options.AirShipPlatform.GetValue())

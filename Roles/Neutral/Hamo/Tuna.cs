@@ -77,7 +77,7 @@ public sealed class Tuna : RoleBase
     {
         if (pc.MyPhysics.Animations.IsPlayingAnyLadderAnimation()) return true;
         if (pc.onLadder) return true;
-        if ((MapNames)Main.NormalOptions.MapId == MapNames.Airship
+        if (GameMap.IsAirship
             && Vector2.Distance(pc.GetTruePosition(), new Vector2(7.76f, 8.56f)) <= 1.9f) return true;
         if (pc.MyPhysics.Animations.Animator.GetCurrentAnimation()?.name?.Contains("Zipline") == true) return true;
         if (pc.MyPhysics.Animations.Animator.GetCurrentAnimation()?.name?.Contains("Platform") == true) return true;

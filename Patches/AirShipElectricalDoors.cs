@@ -10,7 +10,7 @@ namespace TownOfHostL
 
         public static void Initialize()
         {
-            if (Main.NormalOptions.MapId != 4) return;
+            if (!GameMap.IsAirship) return;
             Instance.Initialize();
         }
         public static byte[] GetClosedDoors()
