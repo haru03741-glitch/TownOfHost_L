@@ -640,8 +640,6 @@ partial class ReportDeadBodyPatch
         if (AmongUsClient.Instance.AmHost) TempGhost.ReturnAllForMeeting();
         // 鬼の体も会議の前に外す (外す SetRole が落ち着くまで、下で通報を預かる)
         if (AmongUsClient.Instance.AmHost) SeekerBody.ReleaseAllForMeeting();
-        // ベントに閉じ込めた人も会議の前に出す
-        if (AmongUsClient.Instance.AmHost) VentCage.ReleaseAllForMeeting();
         // 復活の SetRole が落ち着く前に会議を開くと、本編の客の会議の画面が壊れる。1 件だけ預かり、落ち着いてから通す
         if (AmongUsClient.Instance.AmHost && Revive.HoldReport(__instance, target)) return false;
         // 役職の能力で確認なしに会議を開く
@@ -734,6 +732,9 @@ partial class ReportDeadBodyPatch
         }
 
     confirmed:
+        // ベントに閉じ込めた人を出す。会議が開くと決まってから送る (捨てる通報で出さない)。
+        // MeetingCalled を立てた後だと、VentCage は会議中と見て送らずに記録だけ消す
+        if (AmongUsClient.Instance.AmHost) VentCage.ReleaseAllForMeeting();
         MeetingStates.MeetingCalled = true;
 
         foreach (var pc in Main.AllPlayerControls)
