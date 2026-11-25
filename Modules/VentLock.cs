@@ -89,11 +89,16 @@ public static class VentLock
         Dictionary<byte, byte> cleaning = new();
         foreach (var kv in vs.PlayersCleaningVents) cleaning[kv.Key] = kv.Value;
 
-        byte id = 250;
+        // 掃除している人には、部屋にいる人の番号を借りる (本人以外)。本編の客は、いない人の番号の掃除を読み捨てる
+        var next = 0;
+        var players = GameData.Instance.AllPlayers;
         foreach (var vent in fake)
         {
-            while (cleaning.ContainsKey(id) || id == target.PlayerId) id--;
-            cleaning[id] = vent;
+            while (next < players.Count && (players[next] == null || players[next].Disconnected
+                || players[next].PlayerId == target.PlayerId || cleaning.ContainsKey(players[next].PlayerId))) next++;
+            if (next >= players.Count) break;
+            cleaning[players[next].PlayerId] = vent;
+            next++;
         }
 
         var w = MessageWriter.Get(SendOption.Reliable);
