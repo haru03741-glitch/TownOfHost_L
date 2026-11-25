@@ -197,13 +197,13 @@ public static class VentCage
         }
     }
 
-    /// <summary>ベントのボタンを持つ人が自分で出た時は、閉じ込めを終える (出口はその人が選んだベント)</summary>
+    /// <summary>ベントから出た時 (ベントのボタンを持つ人が自分で出た・ほかの処理が BootFromVent で出した) は、閉じ込めを終える</summary>
     public static void OnExitVent(PlayerPhysics physics)
     {
         // Release と死んだ時の出しは記録を消してから送るので、ここでは拾わない
         if (caged.Count == 0 || physics?.myPlayer == null) return;
         if (!caged.Remove(physics.myPlayer.PlayerId, out var entry)) return;
-        Logger.Info($"自分で出た: {physics.myPlayer.GetNameWithRole()}", nameof(VentCage));
+        Logger.Info($"ベントから出た: {physics.myPlayer.GetNameWithRole()}", nameof(VentCage));
         InvokeReleased(physics.myPlayer, entry);
     }
 
