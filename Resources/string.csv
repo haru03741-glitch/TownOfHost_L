@@ -4657,6 +4657,8 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "HostPanel.You","(you)","(自分)"
 "HostPanel.Kick","Kick","キック"
 "HostPanel.Ban","Ban","BAN"
+"HostPanel.Unstick","Move a stuck player to a vent","はまった人をベントへ出す"
+"HostPanel.UnstickClose","Close the list","並びを閉じる"
 "HostPanel.Confirm","Press again","もう一度押す"
 "HostPanel.ShowLog","Show game log","ゲームログを見る"
 "HostPanel.HideLog","Hide game log","ゲームログを閉じる"

@@ -31,6 +31,8 @@ public class HostPanel : MonoBehaviour
     bool dragging;
     float dragDx, dragDy;
     bool showLog;
+    // 試合中の「ベントへ出す」の名前の並びを開いているか
+    bool showUnstick;
     float scrollY;
     // 中身を描く枠 (画面の座標)
     float vx, vy, vw, vh;
@@ -525,6 +527,8 @@ public class HostPanel : MonoBehaviour
             // 緊急会議として開く (ボタンの回数やサボタージュに関係なく開く)
             Button(ref y, w, GetString("HostPanel.CallMeeting"), sHost, () => PlayerControl.LocalPlayer.NoCheckStartMeeting(null));
         }
+        if (GameStates.IsInTask && Main.IsSetRoleFinished)
+            UnstickButtons(ref y, w);
         if (HudManager.InstanceExists && HudManager.Instance.Chat && !HudManager.Instance.Chat.IsOpenOrOpening)
             Button(ref y, w, GetString("HostPanel.OpenChat"), sAction, () => { if (HudManager.InstanceExists) HudManager.Instance.Chat.SetVisible(true); });
         if (Main.IsSetRoleFinished)
@@ -533,6 +537,26 @@ public class HostPanel : MonoBehaviour
                 CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Draw);
                 GameManager.Instance.LogicFlow.CheckEndCriteria();
             }));
+    }
+
+    // 壁にはまった人を一番近いベントから出す。開くと生きている人の名前が 2 列で並び、2 度押しで送る
+    void UnstickButtons(ref float y, float w)
+    {
+        Button(ref y, w, GetString(showUnstick ? "HostPanel.UnstickClose" : "HostPanel.Unstick"), showUnstick ? sOn : sAction, () => showUnstick = !showUnstick);
+        if (!showUnstick) return;
+        (string, GUIStyle, Action) pending = default;
+        var hasPending = false;
+        foreach (var pc in PlayerControl.AllPlayerControls)
+        {
+            if (pc == null || pc.Data == null || pc.Data.Disconnected || !pc.IsAlive()) continue;
+            var target = pc;
+            var key = $"unstick{pc.PlayerId}";
+            var cell = (Armed(key, pc.GetPlainName() ?? pc.Data.PlayerName), sAction, (Action)(() => Arm(key, () => VentCage.BootToNearestVent(target))));
+            if (!hasPending) { pending = cell; hasPending = true; continue; }
+            Row(ref y, w, pending, cell);
+            hasPending = false;
+        }
+        if (hasPending) Row(ref y, w, pending, ("", sSmall, null));
     }
 
     void PlayersSection(ref float y, float w)

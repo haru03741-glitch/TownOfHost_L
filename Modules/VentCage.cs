@@ -110,6 +110,25 @@ public static class VentCage
         }
     }
 
+    /// <summary>
+    /// 一番近いベントから出す (壁にはまった人を戻す)。本人の画面ごとベントの位置へ移る。送ったら true。
+    /// 梯子・動く床の途中は本編の動きと競るので送らない。閉じ込めている人は、ここで閉じ込めを解く
+    /// </summary>
+    public static bool BootToNearestVent(PlayerControl pc)
+    {
+        if (pc == null || !AmongUsClient.Instance.AmHost || ShipStatus.Instance == null || !GameStates.IsInTask) return false;
+        if (MeetingHud.Instance || ExileController.Instance || MeetingStates.MeetingCalled || AntiBlackout.IsCached || AntiBlackout.IsRevertPending) return false;
+        if (!pc.IsAlive() || pc.Data == null || pc.Data.Disconnected) return false;
+        if (pc.onLadder || pc.inMovingPlat || pc.MyPhysics.Animations.IsPlayingAnyLadderAnimation()) return false;
+        var vent = NearestVent(pc.GetTruePosition());
+        if (vent == null) return false;
+        caged.Remove(pc.PlayerId, out var entry);
+        Logger.Info($"一番近いベントから出す: {pc.GetNameWithRole()} → {vent.name}({vent.Id})", nameof(VentCage));
+        pc.MyPhysics.RpcBootFromVent(vent.Id);
+        if (entry != null) InvokeReleased(pc, entry);
+        return true;
+    }
+
     private static void InvokeReleased(PlayerControl pc, Entry entry)
     {
         try { entry.OnReleased?.Invoke(pc); }
