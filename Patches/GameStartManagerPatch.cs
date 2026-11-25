@@ -25,6 +25,17 @@ namespace TownOfHostL
         private static PassiveButton cancelButton;
 
         /// <summary>TOHL を休ませている間に作られたロビーなら、Start の後置で足す物を今のロビーに足す。</summary>
+        /// <summary>
+        /// 通常モードのロビーの表示 (開始ボタンの残り時間・警告) は、この束の Update だけが書き直す。
+        /// 本編のかくれんぼへ休む時に、止まった時刻のまま残さないよう本編の形に戻す
+        /// </summary>
+        public static void ResetLobbyUiForSuspend(GameStartManager instance)
+        {
+            if (instance && instance.StartButton != null && instance.StartButton.buttonText != null)
+                instance.StartButton.buttonText.text = GetString("Start");
+            if (warningText != null) warningText.gameObject.SetActive(false);
+        }
+
         public static void EnsureLobbyUi(GameStartManager instance)
         {
             if (instance == null) return;
