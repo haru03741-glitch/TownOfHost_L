@@ -32,6 +32,9 @@ public static class VentLock
     static readonly Dictionary<byte, string> LastSent = new();
     static float nextRefresh;
     public static bool ResendAll;
+    // 全員への送りの直後に送り直した後の、念押しの送り直しの時刻 (0 = なし)
+    static float followUpAt;
+    const float FollowUpDelay = 0.05f;
 
     public static bool IsActive() =>
         enabled != null && enabled.GetBool() && Options.CurrentGameMode == CustomGameMode.Standard
@@ -48,6 +51,7 @@ public static class VentLock
     {
         LastSent.Clear();
         nextRefresh = 0f;
+        followUpAt = 0f;
     }
 
     public static void Update()
@@ -122,12 +126,27 @@ public static class VentLock
         public static void Postfix() => ResendAll = true;
     }
 
+    // 全員へのベントの状態は SendAllStreamedObjects の中で書かれる。同じフレームのうちに偽の状態を送り直し、
+    // 客の画面でふさいだベントが開いて見える間を縮める。2 つは別の電文で届く順が入れ替わることがあるので、少し後にもう一度送る。
+    [HarmonyPatch(typeof(InnerNet.InnerNetClient), nameof(InnerNet.InnerNetClient.SendAllStreamedObjects))]
+    static class AfterStreamPatch
+    {
+        public static void Postfix()
+        {
+            if (!ResendAll || ShipStatus.Instance == null || !AmongUsClient.Instance.AmHost || !GameStates.IsInTask || !IsActive()) return;
+            followUpAt = Time.time + FollowUpDelay;
+            try { Update(); }
+            catch (System.Exception e) { Logger.Warn($"ベントの区切りでエラー: {e.Message}", nameof(VentLock)); }
+        }
+    }
+
     [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.FixedUpdate))]
     static class UpdatePatch
     {
         public static void Postfix(PlayerControl __instance)
         {
             if (__instance != PlayerControl.LocalPlayer || !AmongUsClient.Instance.AmHost || !GameStates.IsInTask || !IsActive()) return;
+            if (followUpAt > 0f && Time.time >= followUpAt) { followUpAt = 0f; ResendAll = true; }
             try { Update(); }
             catch (System.Exception e) { Logger.Warn($"ベントの区切りでエラー: {e.Message}", nameof(VentLock)); }
         }
