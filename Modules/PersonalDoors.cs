@@ -19,6 +19,8 @@ namespace TownOfHostL.Modules;
 public static class PersonalDoors
 {
     static readonly Dictionary<byte, HashSet<int>> closedFor = new();
+    // ドアの作業でも開けられないように閉めた人
+    static readonly HashSet<byte> taskLocked = new();
     static bool resendPending;
     static float nextKeepAlive;
     static float nextResendAllowed;
@@ -32,18 +34,19 @@ public static class PersonalDoors
     public static bool HasAny => closedFor.Count > 0;
 
     /// <summary>その部屋のドアを、target の画面でだけ閉める。閉めたドアの数を返す。</summary>
-    public static int CloseRoomFor(PlayerControl target, SystemTypes room)
+    /// <param name="lockAgainstTask">true なら、その人がドアの作業 (ポーラス以降) をしても開かない。</param>
+    public static int CloseRoomFor(PlayerControl target, SystemTypes room, bool lockAgainstTask = false)
     {
         var ship = ShipStatus.Instance;
         if (ship == null) return 0;
         List<int> doors = new();
         for (var i = 0; i < ship.AllDoors.Count; i++)
             if (ship.AllDoors[i] != null && ship.AllDoors[i].Room == room) doors.Add(i);
-        return CloseFor(target, doors);
+        return CloseFor(target, doors, lockAgainstTask);
     }
 
     /// <summary>AllDoors の番号で、target の画面でだけドアを閉める。閉めたドアの数を返す。</summary>
-    public static int CloseFor(PlayerControl target, IEnumerable<int> doorIndexes)
+    public static int CloseFor(PlayerControl target, IEnumerable<int> doorIndexes, bool lockAgainstTask = false)
     {
         if (!CanSend(target)) return 0;
         var ship = ShipStatus.Instance;
@@ -52,7 +55,12 @@ public static class PersonalDoors
         List<int> touched = new();
         foreach (var i in doorIndexes)
             if (i >= 0 && i < max && ship.AllDoors[i] != null && set.Add(i)) touched.Add(i);
-        if (set.Count > 0) closedFor[target.PlayerId] = set;
+        if (set.Count > 0)
+        {
+            closedFor[target.PlayerId] = set;
+            if (lockAgainstTask) taskLocked.Add(target.PlayerId);
+            else taskLocked.Remove(target.PlayerId);
+        }
         if (touched.Count > 0) Send(target, touched);
         return touched.Count;
     }
@@ -60,7 +68,9 @@ public static class PersonalDoors
     /// <summary>target の画面でだけ閉めたドアを、ホストの手元の状態へ戻す。</summary>
     public static void ClearFor(PlayerControl target)
     {
-        if (target == null || !closedFor.Remove(target.PlayerId, out var set) || set.Count == 0) return;
+        if (target == null) return;
+        taskLocked.Remove(target.PlayerId);
+        if (!closedFor.Remove(target.PlayerId, out var set) || set.Count == 0) return;
         if (CanSend(target)) Send(target, set);
     }
 
@@ -70,6 +80,7 @@ public static class PersonalDoors
     public static void Reset()
     {
         closedFor.Clear();
+        taskLocked.Clear();
         resendPending = false;
     }
 
@@ -142,7 +153,7 @@ public static class PersonalDoors
         foreach (var (id, set) in new List<KeyValuePair<byte, HashSet<int>>>(closedFor))
         {
             var pc = Utils.GetPlayerById(id);
-            if (pc == null || pc.Data == null || pc.Data.Disconnected) { closedFor.Remove(id); continue; }
+            if (pc == null || pc.Data == null || pc.Data.Disconnected) { closedFor.Remove(id); taskLocked.Remove(id); continue; }
             if (!CanSend(pc)) continue;
             try { Send(pc, set); }
             catch (System.Exception e) { Logger.Warn($"人ごとのドアの送り直しでエラー ({id}): {e.Message}", nameof(PersonalDoors)); }
@@ -179,30 +190,49 @@ public static class PersonalDoors
     }
 
     // 閉めた人がドアの操作 (ポーラス以降の開ける作業) で開けたら、その人の閉めを解く。
+    // 作業でも開けられないように閉めた人は解かない。ホストの手元のドアが開いていれば本編の処理も止め、
+    // 全員への送り直し (その人の画面で一瞬開く) を起こさない。閉まっていれば (全員向けのサボタージュ) 本編どおり開け、その人へは閉めを送り直す。
     // 役職の都合で本編の処理が止められた時 (別の Prefix が false を返した時) は解かない。
     [HarmonyPatch(typeof(DoorsSystemType), nameof(DoorsSystemType.UpdateSystem))]
     static class OpenByMinigamePatch
     {
         [HarmonyPriority(Priority.First)]
-        public static void Prefix([HarmonyArgument(0)] PlayerControl player, [HarmonyArgument(1)] MessageReader msgReader, out int __state)
+        public static bool Prefix([HarmonyArgument(0)] PlayerControl player, [HarmonyArgument(1)] MessageReader msgReader, out int __state)
         {
             __state = -1;
-            if (!HasAny || player == null || msgReader == null || !closedFor.ContainsKey(player.PlayerId)) return;
+            if (!HasAny || player == null || msgReader == null || !closedFor.TryGetValue(player.PlayerId, out var set)) return true;
             var copy = MessageReader.Get(msgReader);
             __state = copy.ReadByte();
             copy.Recycle();
+            if ((__state & DoorsSystemType.OpenDoor) == 0 || !taskLocked.Contains(player.PlayerId)) return true;
+            var door = FindDoor(__state & DoorsSystemType.IdMask, set);
+            if (door < 0) return true;
+            var hostDoor = ShipStatus.Instance.AllDoors[door];
+            if (hostDoor != null && hostDoor.IsOpen) { __state = -1; return false; }
+            return true;
         }
 
         public static void Postfix([HarmonyArgument(0)] PlayerControl player, int __state, bool __runOriginal)
         {
             if (__state < 0 || !__runOriginal || (__state & DoorsSystemType.OpenDoor) == 0) return;
             if (!closedFor.TryGetValue(player.PlayerId, out var set)) return;
-            var doorId = __state & DoorsSystemType.IdMask;
-            var ship = ShipStatus.Instance;
-            for (var i = 0; i < ship.AllDoors.Count; i++)
-                if (ship.AllDoors[i] != null && ship.AllDoors[i].Id == doorId) set.Remove(i);
-            if (set.Count == 0) closedFor.Remove(player.PlayerId);
+            if (!taskLocked.Contains(player.PlayerId))
+            {
+                var doorId = __state & DoorsSystemType.IdMask;
+                var ship = ShipStatus.Instance;
+                for (var i = 0; i < ship.AllDoors.Count; i++)
+                    if (ship.AllDoors[i] != null && ship.AllDoors[i].Id == doorId) set.Remove(i);
+                if (set.Count == 0) closedFor.Remove(player.PlayerId);
+            }
             resendPending = true;
+        }
+
+        static int FindDoor(int doorId, HashSet<int> set)
+        {
+            var ship = ShipStatus.Instance;
+            foreach (var i in set)
+                if (i < ship.AllDoors.Count && ship.AllDoors[i] != null && ship.AllDoors[i].Id == doorId) return i;
+            return -1;
         }
     }
 

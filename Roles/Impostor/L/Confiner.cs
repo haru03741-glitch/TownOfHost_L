@@ -28,16 +28,20 @@ public sealed class Confiner : RoleBase, IImpostor
     {
         cooldown = OptionCooldown.GetFloat();
         duration = OptionDuration.GetFloat();
+        cannotOpenByTask = OptionCannotOpenByTask.GetBool();
     }
 
     private static OptionItem OptionCooldown;
     private static OptionItem OptionDuration;
+    private static OptionItem OptionCannotOpenByTask;
     private static float cooldown;
     private static float duration;
+    private static bool cannotOpenByTask;
 
     private enum OptionName
     {
         ConfinerDuration,
+        ConfinerCannotOpenByTask,
     }
 
     private byte targetId = byte.MaxValue;
@@ -53,6 +57,7 @@ public sealed class Confiner : RoleBase, IImpostor
             .SetValueFormat(OptionFormat.Seconds);
         OptionDuration = FloatOptionItem.Create(RoleInfo, OptionName.ConfinerDuration, new(2f, 30f, 1f), 8f, false)
             .SetValueFormat(OptionFormat.Seconds);
+        OptionCannotOpenByTask = BooleanOptionItem.Create(RoleInfo, OptionName.ConfinerCannotOpenByTask, false, false);
     }
 
     public override void ApplyGameOptions(IGameOptions opt)
@@ -80,7 +85,7 @@ public sealed class Confiner : RoleBase, IImpostor
         // 同じ人の別の部屋なら、前の部屋のドアを先に戻す。別の人なら、新しい人を閉めてから前の人を戻す
         if (room != null && previous == target.PlayerId) Release();
         // ホスト本人の画面のドアは全員のドアそのものなので閉められない (PersonalDoors が 0 を返す)
-        var closed = room == null ? 0 : PersonalDoors.CloseRoomFor(target, room.RoomId);
+        var closed = room == null ? 0 : PersonalDoors.CloseRoomFor(target, room.RoomId, cannotOpenByTask);
         if (closed == 0)
         {
             Logger.Info($"{Player.GetNameWithRole()} → {target.GetNameWithRole()}: 閉められるドアが無い ({(room == null ? "部屋の外" : room.RoomId)})", nameof(Confiner));
