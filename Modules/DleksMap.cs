@@ -20,7 +20,9 @@ public static class DleksMap
     static int ModeIndex => GameOptionsManager.Instance != null && GameOptionsManager.Instance.currentGameMode == GameModes.HideNSeek ? 1 : 0;
 
     /// <summary>今のモードのロビーの MapId 0 が反転スケルドを指している</summary>
-    public static bool Pending => pending[ModeIndex];
+    /// ホストとしてオンラインの部屋にいる間だけ効く (客として他の部屋に入った時やフリープレイの MapId 0 はスケルド)
+    public static bool Pending => pending[ModeIndex] && AmongUsClient.Instance && AmongUsClient.Instance.AmHost
+        && AmongUsClient.Instance.NetworkMode != NetworkModes.FreePlay;
 
     /// <summary>ホストが選んだ (ロビーで 0 の代わりに反転スケルドを指す)</summary>
     public static void Select(bool on)
@@ -98,6 +100,22 @@ public static class DleksMap
             {
                 var o = Opts;
                 if (o != null && o.MapId == MapId) __result = true;
+            }
+            catch { }
+        }
+    }
+
+    // 反転させる所が本編の更新で別の道を通るようになると、黙って反転しない船で始まる。その時はログに残す
+    [HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.Start))]
+    static class CheckMirrorPatch
+    {
+        static void Postfix(ShipStatus __instance)
+        {
+            try
+            {
+                var o = Opts;
+                if (__instance && o != null && o.MapId == MapId && __instance.transform.lossyScale.x > 0f)
+                    Logger.Error("MapId 3 なのに船が反転していない", nameof(DleksMap));
             }
             catch { }
         }

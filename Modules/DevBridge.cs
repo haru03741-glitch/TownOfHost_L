@@ -83,8 +83,8 @@ static class DevBridge
                     break;
                 }
             case "map":
-                GameOptionsManager.Instance.CurrentGameOptions.SetByte(AmongUs.GameOptions.ByteOptionNames.MapId, byte.Parse(a[1]));
-                sb.AppendLine("MAP " + Main.NormalOptions.MapId);
+                DleksMap.SetLobbyMap(GameOptionsManager.Instance.CurrentGameOptions, byte.Parse(a[1]));
+                sb.AppendLine("MAP " + GameMap.Current);
                 break;
             case "start":
                 if (GameStartManager.InstanceExists) GameStartManager.Instance.BeginGame();
