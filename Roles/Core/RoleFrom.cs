@@ -36,7 +36,7 @@ public enum From
 public static class RoleFrom
 {
     /// <summary>
-    /// 役職ごとの出どころ。TownOfHost-hamo で From を持つ役職はそれを使い、From の無い役職は役職の冒頭コメントと README のクレジットに合わせ、
+    /// 役職ごとの出どころ。TownOfHost-hamo から移した役職で hamo が From を持つ物はそれを使い、From の無い役職は役職の冒頭コメントと README のクレジットに合わせ、
     /// hamo に無い役職は TownOfHost_Y (L のフォーク元) の分け方 (TOH / Y / Default) から決めた。
     /// 表に無い役職 (L で生まれた役職など) は出さない。
     /// </summary>
@@ -103,7 +103,7 @@ public static class RoleFrom
         [CustomRoles.Executioner] = From.TownOfUs,
         [CustomRoles.Express] = From.TownOfHost_Y,
         [CustomRoles.FireWorks] = From.TownOfHost,
-        [CustomRoles.FortuneTeller] = From.TownOfHost_K,
+        [CustomRoles.FortuneTeller] = From.TownOfHost_Y,
         [CustomRoles.Fox] = From.TownOfHost_K,
         [CustomRoles.FoxSpirit] = From.TownOfHost_Y,
         [CustomRoles.Framer] = From.TownOfHost_hamo,
@@ -193,7 +193,7 @@ public static class RoleFrom
         [CustomRoles.PlagueDoctor] = From.TOR_GM_Edition,
         [CustomRoles.PlatonicLover] = From.TownOfHost_Y,
         [CustomRoles.Potentialist] = From.TownOfHost_Y,
-        [CustomRoles.Psychic] = From.TownOfHost_K,
+        [CustomRoles.Psychic] = From.TownOfHost_Y,
         [CustomRoles.Puppeteer] = From.TownOfHost,
         [CustomRoles.Pursuer] = From.TheOtherRoles,
         [CustomRoles.Pusher] = From.SuperNewRoles,
