@@ -238,7 +238,8 @@ internal static class SettingsPages
         const float gap = 0.1f;
         var line = new Stack(true) { Gap = gap };
         // 本編の一覧に反転スケルドを足した数が行に収まる大きさ
-        int count = 1;
+        bool dleks = DleksMap.Available;
+        int count = dleks ? 1 : 0;
         foreach (var icon in icons) if (icon != null && icon.MapIcon) count++;
         float btn = Mathf.Min(MapBtn, (rowW - gap * (count - 1)) / count);
         void Add(Sprite sprite, int id, bool flip)
@@ -257,8 +258,8 @@ internal static class SettingsPages
             if (icon == null || !icon.MapIcon) continue;
             int id = (int)icon.Name;
             Add(icon.MapIcon, id, false);
-            // 本編の一覧に反転スケルドは無いので、スケルドの絵を裏返してスケルドの隣に置く
-            if (icon.Name == MapNames.Skeld) Add(icon.MapIcon, DleksMap.MapId, true);
+            // 本編の一覧に反転スケルドは無いので、スケルドの絵を裏返してスケルドの隣に置く (通常モードだけ)
+            if (dleks && icon.Name == MapNames.Skeld) Add(icon.MapIcon, DleksMap.MapId, true);
         }
         return new Stack(true, line) { Width = rowW };
     }

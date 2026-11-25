@@ -10,26 +10,30 @@ namespace TownOfHostL;
 /// (2026-11-26 実機)。なのでロビーの間は設定の MapId を 0 (スケルド) のまま持ち、「0 は反転スケルドを指す」印を立てておく。
 /// 試合を始める電文の直前 (AmongUsClient.StartGame) に 3 へ書き換えて全員へ送り、ロビーへ戻ったら 0 と印に戻す。
 /// 船は本編の物をそのまま使うので、素の客もそのまま反転した船で遊べる。
+/// 本編のかくれんぼでは選べない (本編も出さず、MapId 3 で始めると開始の直後に全員が死んで鬼の切断で終わる・2026-11-26 実機)。
+/// 保存された設定の 3 は、かくれんぼのロビーでも 0 に戻すので、どのモードでも当てる束に入れる。
 /// </summary>
+[TownOfHostL.Core.Modes.PatchBundle(TownOfHostL.Core.Modes.PatchBundles.Core)]
 public static class DleksMap
 {
     public const byte MapId = 3;
 
-    // 印は本編のモード (通常・かくれんぼ) ごとに持つ。マップの設定もモードごとに別の物なので
-    static readonly bool[] pending = new bool[2];
-    static int ModeIndex => GameOptionsManager.Instance != null && GameOptionsManager.Instance.currentGameMode == GameModes.HideNSeek ? 1 : 0;
+    // 通常モードのマップの印。かくれんぼのマップの設定は別の物なので、かくれんぼの間は見ない
+    static bool pending;
 
-    /// <summary>今のモードのロビーの MapId 0 が反転スケルドを指している</summary>
-    /// ホストとしてオンラインの部屋にいる間だけ効く (客として他の部屋に入った時やフリープレイの MapId 0 はスケルド)
-    public static bool Pending => pending[ModeIndex] && AmongUsClient.Instance && AmongUsClient.Instance.AmHost
+    /// <summary>今のモードで選べる (本編の通常モード)</summary>
+    public static bool Available => GameOptionsManager.Instance == null || GameOptionsManager.Instance.currentGameMode != GameModes.HideNSeek;
+
+    /// <summary>ロビーの MapId 0 が反転スケルドを指している。</summary>
+    /// ホストとしてオンラインの通常モードの部屋にいる間だけ効く (客として他の部屋に入った時やフリープレイの MapId 0 はスケルド)
+    public static bool Pending => pending && Available && AmongUsClient.Instance && AmongUsClient.Instance.AmHost
         && AmongUsClient.Instance.NetworkMode != NetworkModes.FreePlay;
 
     /// <summary>ホストが選んだ (ロビーで 0 の代わりに反転スケルドを指す)</summary>
     public static void Select(bool on)
     {
-        int i = ModeIndex;
-        if (pending[i] == on) return;
-        pending[i] = on;
+        if (!Available || pending == on) return;
+        pending = on;
         Logger.Info(on ? "反転スケルドを選んだ" : "反転スケルドを外した", nameof(DleksMap));
     }
 
@@ -55,7 +59,7 @@ public static class DleksMap
             var o = Opts;
             if (o == null || o.MapId != MapId) return;
             o.SetByte(ByteOptionNames.MapId, 0);
-            pending[ModeIndex] = true;
+            if (Available) pending = true;
             GameManager.Instance?.LogicOptions?.SyncOptions();
             Logger.Info("ロビーの MapId 3 を 0 と反転スケルドの印に戻した", nameof(DleksMap));
         }
