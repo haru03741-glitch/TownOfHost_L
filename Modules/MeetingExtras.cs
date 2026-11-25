@@ -81,10 +81,10 @@ public static class MeetingExtras
             if (AnnounceVotingTime == null || !AnnounceVotingTime.GetBool() || !AmongUsClient.Instance.AmHost) return;
             if (__instance == null || GameStates.ExiledAnimate) return;
             if (announcedFor != __instance) { announcedFor = __instance; nextMark = 0; }
-            var votingTime = Main.NormalOptions.VotingTime;
+            var votingTime = MeetingTimeManager.CurrentVotingTime;
             if (votingTime <= 0 || nextMark >= marks.Length) return;
             // MeetingVoteManager と同じ数え方: 話し合いの時間を過ぎてからの経過で残りを出す
-            var remaining = votingTime - (__instance.discussionTimer - Main.NormalOptions.DiscussionTime);
+            var remaining = votingTime - (__instance.discussionTimer - MeetingTimeManager.CurrentDiscussionTime);
             // 初めから 30 秒より短い時などは、過ぎた区切りを飛ばす
             while (nextMark < marks.Length && remaining <= marks[nextMark] - 1) nextMark++;
             if (nextMark >= marks.Length || remaining > marks[nextMark]) return;

@@ -32,6 +32,39 @@ namespace TownOfHostL.Modules
             Logger.Info($"DefaultDiscussionTime:{DefaultDiscussionTime}, DefaultVotingTime{DefaultVotingTime}", "MeetingTimeManager.Init");
             ResetMeetingTime();
         }
+        /// <summary>今の会議に配っている話し合いの時間 (秒)。会議中に時間を変えた直後も、設定を送り直す前の古い値を読まないよう、締めの判定や残り時間の表示はこちらを見る</summary>
+        public static int CurrentDiscussionTime => DiscussionTime;
+        /// <summary>今の会議に配っている投票の時間 (秒・0 は無制限)</summary>
+        public static int CurrentVotingTime => VotingTime;
+
+        /// <summary>
+        /// 会議の途中で残り時間を増減する。客の会議の時計は毎フレーム受け取った設定の時間を読むので、
+        /// 設定を送り直せば Mod の無い客の画面の残りも変わる。締めるのはホストの時計 (ホストの設定も同じ値に替える)。
+        /// 投票の時間だけを動かす (話し合いの時間を動かすと、話し合いから投票へ移る時刻がずれる)。
+        /// 縮めて残りが無くなった時は、ホストの時計が次のフレームで締める。
+        /// </summary>
+        /// <returns>実際に動いた秒数</returns>
+        public static int AdjustDuringMeeting(int deltaSeconds)
+        {
+            if (!AmongUsClient.Instance.AmHost || deltaSeconds == 0) return 0;
+            var meetingHud = MeetingHud.Instance;
+            if (meetingHud == null || GameStates.ExiledAnimate) return 0;
+            // 無制限の会議は延ばす意味が無く、縮めると時間切れが生まれて意味が変わるので触らない
+            if (VotingTime <= 0) return 0;
+
+            float elapsedVoting = meetingHud.discussionTimer - DiscussionTime;
+            // 0 は無制限の意味になるので 1 秒より下げない。経過より短くすれば、ホストの時計がすぐ締める
+            int floor = Math.Max(1, (int)Math.Ceiling(Math.Max(0f, elapsedVoting)));
+            int next = Math.Clamp(VotingTime + deltaSeconds, Math.Min(floor, VotingTime), 3600);
+            int moved = next - VotingTime;
+            if (moved == 0) return 0;
+            VotingTime = next;
+            Logger.Info($"会議中に時間を {moved:+#;-#;0} 秒: DiscussionTime:{DiscussionTime}, VotingTime:{VotingTime}, 経過:{meetingHud.discussionTimer:0.0}", "MeetingTimeManager.AdjustDuringMeeting");
+            // 1 人 1 本 (0.2 秒ごとのまとめ送りに乗せる)。ホスト自身の分は手元の LogicOptions に入る
+            PlayerGameOptionsSender.SetDirtyToAll();
+            return moved;
+        }
+
         public static void ApplyGameOptions(IGameOptions opt)
         {
             opt.SetInt(Int32OptionNames.DiscussionTime, DiscussionTime);

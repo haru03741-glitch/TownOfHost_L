@@ -170,8 +170,8 @@ public class MeetingVoteManager
         // 役職がその場で決めた締めを待たせていれば、そちらで締める
         if (PendingEnd is { } end) { end(); return; }
         // 投票時間 0 は無制限 (時間切れで締めない)
-        bool timeExpired = Main.NormalOptions.VotingTime > 0
-            && meetingHud.discussionTimer - (float)Main.NormalOptions.DiscussionTime >= Main.NormalOptions.VotingTime;
+        bool timeExpired = MeetingTimeManager.CurrentVotingTime > 0
+            && meetingHud.discussionTimer - (float)MeetingTimeManager.CurrentDiscussionTime >= MeetingTimeManager.CurrentVotingTime;
         bool allVoted = AllVotes.Values.All(vote => vote.HasVoted);
         if (timeExpired || allVoted)
         {
@@ -575,7 +575,7 @@ public class MeetingVoteManager
         MeetingHud meetingHud = MeetingHud.Instance;
         if (meetingHud == null) return;
         HudManager hudManager = DestroyableSingleton<HudManager>.Instance;
-        bool resetVote = (meetingHud.discussionTimer - (float)Main.NormalOptions.DiscussionTime - (float)Main.NormalOptions.VotingTime) < 3;
+        bool resetVote = (meetingHud.discussionTimer - (float)MeetingTimeManager.CurrentDiscussionTime - (float)MeetingTimeManager.CurrentVotingTime) < 3;
 
         foreach (var x in meetingHud.playerStates) x.MaskArea.gameObject.SetActive(false);
         hudManager.KillOverlay.ShowKillAnimation(pc.Data, pc.Data);
