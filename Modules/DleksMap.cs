@@ -88,8 +88,9 @@ public static class DleksMap
         }
     }
 
-    // 本編はスケルドの船を左右反転するかをここで決める。ホストの手元で試合の MapId が 3 なら反転させる。
-    // ロビーは MapId 0 で持つので、ロビーの間は反転しない
+    // 本編はスケルドの船を左右反転するかをここで決める。ホストの手元で、始まった試合の MapId が 3 なら反転させる。
+    // メニューでも呼ばれ、保存された設定が 3 のまま true を返すとメニューの立ち上げが終わらずログインできない (2026-11-26 実機)。
+    // なのでオンラインの試合が始まってからだけ見る
     [HarmonyPatch(typeof(AprilFoolsMode), nameof(AprilFoolsMode.ShouldFlipSkeld))]
     static class ShouldFlipSkeldPatch
     {
@@ -98,6 +99,9 @@ public static class DleksMap
             if (__result) return;
             try
             {
+                var client = AmongUsClient.Instance;
+                if (!client || !client.AmHost || client.NetworkMode == NetworkModes.FreePlay
+                    || client.GameState != InnerNet.InnerNetClient.GameStates.Started) return;
                 var o = Opts;
                 if (o != null && o.MapId == MapId) __result = true;
             }
