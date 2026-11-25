@@ -41,6 +41,7 @@ public sealed class Confiner : RoleBase, IImpostor
     }
 
     private byte targetId = byte.MaxValue;
+    private SystemTypes targetRoom;
     // 閉めを解く時刻 (Time.time)
     private float releaseAt;
     // 閉められなかった時に、名前の下へ出す知らせを消す時刻
@@ -68,22 +69,31 @@ public sealed class Confiner : RoleBase, IImpostor
         if (!Player.IsAlive() || Is(target) || !target.IsAlive()) return false;
 
         var room = target.GetPlainShipRoom();
-        var closed = 0;
-        // ホスト本人の画面のドアは全員のドアそのものなので閉められない (PersonalDoors が 0 を返す)
-        if (room != null)
+        if (room != null && target.PlayerId == targetId && room.RoomId == targetRoom)
         {
-            Release();
-            closed = PersonalDoors.CloseRoomFor(target, room.RoomId);
+            // 同じ人を同じ部屋で選び直した時は、時間だけ延ばす (開けて閉め直すと客の画面でドアが一瞬開く)
+            releaseAt = Time.time + duration;
+            Player.RpcResetAbilityCooldown();
+            return false;
         }
+        var previous = targetId;
+        // 同じ人の別の部屋なら、前の部屋のドアを先に戻す。別の人なら、新しい人を閉めてから前の人を戻す
+        if (room != null && previous == target.PlayerId) Release();
+        // ホスト本人の画面のドアは全員のドアそのものなので閉められない (PersonalDoors が 0 を返す)
+        var closed = room == null ? 0 : PersonalDoors.CloseRoomFor(target, room.RoomId);
         if (closed == 0)
         {
             Logger.Info($"{Player.GetNameWithRole()} → {target.GetNameWithRole()}: 閉められるドアが無い ({(room == null ? "部屋の外" : room.RoomId)})", nameof(Confiner));
+            // 連打された時に、知らせを出している間は名前の送り直しを重ねない
+            var showing = failNoticeUntil > 0f;
             failNoticeUntil = Time.time + 3f;
-            Utils.NotifyRoles(SpecifySeer: Player);
+            if (!showing) Utils.NotifyRoles(SpecifySeer: Player);
             return false;
         }
+        if (previous != target.PlayerId) Release();
 
         targetId = target.PlayerId;
+        targetRoom = room.RoomId;
         releaseAt = Time.time + duration;
         Logger.Info($"{Player.GetNameWithRole()} → {target.GetNameWithRole()}: {room.RoomId} のドア {closed} 枚を {duration} 秒閉める", nameof(Confiner));
         Player.RpcResetAbilityCooldown();
@@ -103,7 +113,11 @@ public sealed class Confiner : RoleBase, IImpostor
     }
 
     // 会議の後に閉めた状態を持ち越さない
-    public override void OnStartMeeting() => Release();
+    public override void OnStartMeeting()
+    {
+        failNoticeUntil = 0f;
+        Release();
+    }
 
     public override void OnDestroy() => Release();
 
