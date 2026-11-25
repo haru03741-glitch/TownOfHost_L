@@ -27,7 +27,6 @@ public sealed class GameEndRuleSet
     }
 
     public static readonly GameEndRuleSet Normal = new(GameEndRules.ByLivingPlayers, GameEndRules.ByTask, GameEndRules.BySabotage);
-    public static readonly GameEndRuleSet HideAndSeek = new(GameEndRules.ByLivingPlayersHideAndSeek, GameEndRules.ByTask);
 }
 
 /// <summary>
@@ -178,26 +177,6 @@ public static class GameEndRules
         return false;
     }
 
-    public static bool ByLivingPlayersHideAndSeek(out GameOverReason reason)
-    {
-        reason = GameOverReason.ImpostorsByKill;
-        if (Options.NoGameEndByCount.GetBool()) return false;
-
-        int imp = Utils.AlivePlayersCount(CountTypes.Impostor);
-        int crew = Utils.AlivePlayersCount(CountTypes.Crew);
-
-        if (imp == 0 && crew == 0) //全滅
-            CustomWinnerHolder.ResetAndSetWinner(CustomWinner.None);
-        else if (crew <= 0) //インポスター勝利
-            CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Impostor);
-        else if (imp == 0) //クルー勝利(インポスター切断など)
-        {
-            reason = GameOverReason.CrewmatesByVote;
-            CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Crewmate);
-        }
-        else return false;
-        return true;
-    }
 
     /// <summary>GameData の TotalTasks と CompletedTasks から、タスク勝利を調べる。</summary>
     public static bool ByTask(out GameOverReason reason)

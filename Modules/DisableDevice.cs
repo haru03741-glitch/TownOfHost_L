@@ -29,7 +29,7 @@ namespace TownOfHostL
                         (map == MapNames.Airship && (Options.DisableDevices_Airship?.GetBool() ?? false)) ||
                         (map == MapNames.Fungle && (Options.DisableDevices_Fungle?.GetBool() ?? false));
 
-                    return byMap || Core.Modes.ModeCatalog.Current.DisablesDevices || IsPoorEnableSafe() || Modules.DeviceTimer.IsActive;
+                    return byMap || IsPoorEnableSafe() || Modules.DeviceTimer.IsActive;
                 }
                 catch (Exception ex)
                 {

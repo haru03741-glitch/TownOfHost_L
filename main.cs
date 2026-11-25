@@ -351,7 +351,6 @@ public enum CustomWinner
     BlueL = CustomRoles.CCBlueLeader,
     YellowL = CustomRoles.CCYellowLeader,
 
-    HASTroll = CustomRoles.HASTroll,
     TaskPlayerB = CustomRoles.TaskPlayerB,
     SuddenDeathRed = 9010, SuddenDeathBlue = 9011, SuddenDeathYellow = 9012, SuddenDeathGreen = 9013, SuddenDeathPurple = 9014,
 

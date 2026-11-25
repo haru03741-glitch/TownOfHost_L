@@ -186,14 +186,6 @@ namespace TownOfHostL.Modules
             {
                 opt.SetInt(Int32OptionNames.EmergencyCooldown, 3600);
             }
-            if (Core.Modes.ModeCatalog.Current.IsHideAndSeek && Options.HideAndSeekKillDelayTimer > 0)
-            {
-                opt.SetFloat(FloatOptionNames.ImpostorLightMod, 0f);
-                if (player.Is(CountTypes.Impostor))
-                {
-                    AURoleOptions.PlayerSpeedMod = Main.MinSpeed;
-                }
-            }
             // 暗転 (キルの閃光・通報・ステルス) は、視界を書き換える役職や属性 (ライター・ブラインダー・サングラスなど) より後に書く
             if (state.IsBlackOut)
             {

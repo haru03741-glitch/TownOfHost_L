@@ -310,12 +310,7 @@ public static partial class Utils
         if (p.Role.IsImpostor)
             hasTasks = false;
         //タスクはCustomRoleを元に判定する
-        if (ModeCatalog.IsHideAndSeekWithOwnRoles)
-        {
-            if (p.IsDead) hasTasks = false;
-            if (States.GetNowMainRole().HasRoleFlag(RoleFlags.NoTasks)) hasTasks = false;
-        }
-        else if (ModeCatalog.IsCatchCat)
+        if (ModeCatalog.IsCatchCat)
         {
             if (States.GetNowMainRole().IsCCLeaderRoles()) hasTasks = false;
         }
@@ -578,14 +573,7 @@ public static partial class Utils
     {
         string formatTag = "<size=65%><line-height=1.5pic>";
 
-        if (ModeCatalog.IsHideAndSeekWithOwnRoles)
-        {
-            SendMessageAutoSplit(GetString("CurrentActiveSettingsHelp") + ":", true, sendTo: PlayerId);
-            SendMessageAutoSplit(GetString("HideAndSeekInfo"), true, sendTo: PlayerId);
-            foreach (var role in CustomRolesHelper.AllHASRoles)
-                if (role.IsEnable()) SendMessageAutoSplit(GetRoleName(role) + GetString($"{role}InfoLong"), true, sendTo: PlayerId);
-        }
-        else if (ModeCatalog.IsCatchCat)
+        if (ModeCatalog.IsCatchCat)
         {
             CatchCat.Infomation.ShowSettingHelp(PlayerId);
         }
@@ -608,10 +596,6 @@ public static partial class Utils
             if (Options.RandomMapsMode.GetBool())
             {
                 SendMessageAutoSplit($"{formatTag}{GetString("RandomMapsModeInfo")}", false, "", PlayerId, formatTag);
-            }
-            if (ModeCatalog.IsHideAndSeekWithStandardRoles)
-            {
-                SendMessageAutoSplit($"{formatTag}{GetString("StandardHASInfo")}", false, "", PlayerId, formatTag);
             }
             if (Options.EnableGM.GetBool())
             {
@@ -715,17 +699,7 @@ public static partial class Utils
             return;
         }
         var sb = new StringBuilder();
-        if (ModeCatalog.IsHideAndSeekWithOwnRoles)
-        {
-            sb.Append(GetString("Roles")).Append(':');
-            foreach (var role in CustomRolesHelper.AllHASRoles)
-                if (role.IsEnable()) sb.AppendFormat("\n{0}:{1}", GetRoleName(role), role.GetCount());
-            SendMessageAutoSplit(sb.ToString(), true, title, PlayerId);
-            sb.Clear().Append(GetString("Settings")).Append(':');
-            sb.Append(GetString("HideAndSeek"));
-            SendMessageAutoSplitAndClearSB(PlayerId, sb, title, formatTag);
-        }
-        else if (ModeCatalog.IsCatchCat)
+        if (ModeCatalog.IsCatchCat)
         {
             CatchCat.Infomation.ShowSetting(sb);
             SendMessageAutoSplitAndClearSB(PlayerId, sb, title, formatTag);
@@ -879,8 +853,7 @@ public static partial class Utils
         if (!ModeCatalog.Current.UsesStandardRoles)
         {
             CustomRoles[] targetRoles = Array.Empty<CustomRoles>();
-            if (ModeCatalog.IsHideAndSeekWithOwnRoles) targetRoles = CustomRolesHelper.AllHASRoles;
-            else if (ModeCatalog.IsCatchCat) targetRoles = CustomRolesHelper.AllCCRoles.Where(role => role.IsCCLeaderRoles()).ToArray();
+            if (ModeCatalog.IsCatchCat) targetRoles = CustomRolesHelper.AllCCRoles.Where(role => role.IsCCLeaderRoles()).ToArray();
             //else if (Options.IsONMode) targetRoles = CustomRolesHelper.AllONRoles;
 
             sb.Append(formatTag);

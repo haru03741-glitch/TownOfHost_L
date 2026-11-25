@@ -212,13 +212,6 @@ class ChangeRoleSettings
             }
 
             Main.VisibleTasksCount = true;
-            if (__instance.AmHost)
-            {
-                if (ModeCatalog.Current.IsHideAndSeek)
-                {
-                    Options.HideAndSeekKillDelayTimer = ModeCatalog.Current.StartWaitTime;
-                }
-            }
 
             IRandom.SetInstanceById(Options.RoleAssigningAlgorithm.GetValue());
 
@@ -541,16 +534,6 @@ class SelectRolesPatch
                 }
             }
 
-            // 通常モードでかくれんぼをする人用
-            if (ModeCatalog.IsHideAndSeekWithStandardRoles)
-            {
-                foreach (var seer in Main.AllPlayerControls)
-                {
-                    if (seer == pc) continue;
-                    if (pc.GetCustomRole().IsImpostor() || pc.IsCountedNeutralKiller())
-                        NameColorManager.Add(seer.PlayerId, pc.PlayerId);
-                }
-            }
             foreach (var seer in Main.AllPlayerControls)
             {
                 if (seer == pc) continue;

@@ -189,7 +189,7 @@ internal sealed class VanillaMenuOpt : MenuOpt
     public override bool Fixed => false;
     public override bool WrapsAround => _check != null || _string != null || _player != null;
     public override Color NameColor => Color.white;
-    // 会議の無いモード (TOHL のかくれんぼなど) では、本編の会議の設定を出さない
+    // 会議の無いモード (タスクバトルなど) では、本編の会議の設定を出さない
     public override bool Shown => !IsMeetingSetting || Core.Modes.ModeCatalog.Current.HasMeetings;
     private bool IsMeetingSetting => _setting != null && _setting.Title is StringNames.GameNumMeetings or StringNames.GameEmergencyCooldown
         or StringNames.GameDiscussTime or StringNames.GameVotingTime or StringNames.GameConfirmImpostor or StringNames.GameAnonymousVotes;

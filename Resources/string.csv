@@ -842,8 +842,6 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 
 
 "## モード説明"
-"HideAndSeekInfo","Hide and Seek:\nNo emergency meetings. Crewmates (Blue) can only win by finishing tasks\nand impostors (Red) can only win by killing all crewmates.","かくれんぼ:\n会議を開くことはできず、クルーはタスク完了、インポスターは全クルー殺害でのみ勝利することができる。\nインポスターは赤、クルーは青に体の色が変更される。","躲猫猫:\n不能开会；船员只能通过完成任务获得胜利；\n内鬼需要杀死所有船员来获得胜利；\n内鬼的皮肤颜色将变为红色，船员变为蓝色，以示区分。","躲貓貓:\n不能拍桌或舉報，船員只能做任務\n偽裝者的勝利條件為殺光所有船員\n狼人的顏色會轉變為紅色，船員則會變為藍色。","Прятки:\nНикто не может созвать срочное собрание, Члены Экипажа могут победить, только выполняя задания. \nПредатели меняют цвет тела на красный, а экипажи на синий.","Esconde-Esconde:\nNão há reuniões de emergência. Tripulantes (Azul) podem ganhar apenas ao completar todas as tarefas,\ne Impostores (Vermelho) ganham apenas quando matarem todos os tripulantes."
-"StandardHASInfo","Hide and Seek with Roles:\nNo emergency meetings. Crewmates can only win by finishing tasks and impostors can only win by killing all crewmates.","役職入りでかくれんぼ:\n会議を開くことはできず、クルーはタスク完了、インポスターは全クルー殺害でのみ勝利することができる。","躲猫猫（模组）:\n没有会议阶段；船员只能完成任务；\n内鬼需要杀死所有船员来获得胜利。","躲貓貓(附加普通模式職業):\n不能拍桌或舉報，船員只能做任務\n偽裝者的勝利條件為殺光所有船員\n偽裝者的顏色會轉變為紅色，船員則會變為藍色。","Прятки с Ролями:\nНикто не может созвать срочное собрание, Члены Экипажа могут победить, только выполнив задания, А Предатели могут победить, только убив всех Членов Экипажа.","Esconde-Esconde com Classes:\nNão há reuniões de emergência. Tripulantes podem ganhar apenas ao completar todas as tarefas, e Impostores ganham apenas quando matarem todos os tripulantes."
 "NoGameEndInfo","NoGameEnd:\nA mode for debugging with no victory. The only way to end the game is to have the host SHIFT+L+ENTER.","ゲームを終了しない:\n勝利判定が存在しないデバッグ用のモード。ホストのSHIFT+L+ENTER以外でのゲーム終了ができない。","测试模式:\n本模式用于进行测试。本模式没有游戏结束判定，房主按下shift+L+enter可以结束游戏。","遊戲不會結束模式:\n該模式僅限用來測試,這裡沒有勝利條件\n該模式無法通過正常勝利條件結束,僅能讓房主使用SHIFT+L+ENTER或指令/dis來結束遊戲。","Игра Не Заканчивается:\nРежим отладки, в котором нет основы для выигрыша.\nИгра не может быть завершена, если Хосту не использует команду в лобби SHIFT+L+ENTER.","Jogo Sem Fim:\nUm modo para testes, sem vitória. A única forma de finalizar o jogo é o anfitrião usar SHIFT+L+ENTER."
 "SyncButtonModeInfo","SyncButtonMode:\nA mode where all players share the total buttons available.","ボタン回数同期モード:\nプレイヤー全員のボタン回数が同期されているモード。(設定有)","所有船员共享会议次数:\n游戏中存在全员共有的最大紧急会议次数。(可以进行设置)","全場拍桌數同步模式:\n該模式會讓全場玩家的拍桌數同步。(可以設定拍桌數)","Синхронизация Кнопки:\nЭтот режим ограничивает максимальное количество срочных собраний, которые можно созвать в целом. (в настройках)","Modo de Botão Sincronizado:\nUm modo em que os jogadores dividem o número total de botões disponíveis. (configurável)"
 "SabotageTimeControlInfo","Sabotage Duration Control:\nCan alter the duration of certain sabotages.","サボタージュの時間制御:\n一部サボタージュの制限時間を変更することができる。(設定有)","破坏调整:\n可以调整一部分破坏的限制时间。(可以进行设置)","控制緊急任務時間:\n該模式可以讓某些地圖的破壞時間重新設定。 (可以設定)","Изменить Время Саботажа:\nВозможность изменить время саботажа реактора. (в настройках)","Controle de Duração da Sabotagem:\nPode alterar a duração de algumas sabotagens. (configurável)"
@@ -1270,14 +1268,8 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 
 "## かくれんぼ設定"
 "HideAndSeekOptions","Hide and Seek Settings","かくれんぼの設定","躲猫猫设置","躲貓貓設定","Настройки Пряток","Configurações do Esconde-Esconde"
-"AllowCloseDoors","Allow Door Sabotage","ドア閉鎖を許可する","允许关门","可以關門","Разрешить закрытие дверей","Permitir Sabotar Portas"
 "TrapperBlockMoveTime","Trapped Duration","移動を封じる時間","陷阱师技能封锁凶手移动时长","設陷者封鎖兇手移動時間","Продолжительность заморозки","Tempo Preso"
-"HideAndSeekWaitingTime","Impostor Standby Time(S)","インポスターの待機時間(秒)","内鬼阵营在游戏开始后的等待时间","偽裝者在遊戲開始後的等待時間(秒)","Время ожидания Предателей(Секунды)","Tempo de Espera do Impostor (S)"
-"IgnoreVent","Disable Vents","ベントの使用を禁止する","禁止使用管道","禁止使用管道","Отключить Вентиляцию","Desativar Dutos"
 "HideAndSeekRoles","Hide and Seek Roles","かくれんぼの役職","躲猫猫职业","躲貓貓職業","Роли в Прятках","Classes do Esconde-Esconde"
-"HideAndSeekRolePool","Roles","配る役職","职业","職業","Роли","Classes","Funções"
-"HideAndSeekRolePool.Own","Hide and Seek Roles","かくれんぼ専用の役職","躲猫猫专用职业","躲貓貓專用職業","Роли Пряток","Classes do Esconde-Esconde","Funções do Escondidas"
-"HideAndSeekRolePool.Standard","Standard Roles","通常モードの役職","普通模式的职业","一般模式的職業","Обычные роли","Classes do Modo Padrão","Funções do Modo Normal"
 
 "## 死因"
 "DeathReason.Kill","Kill","キル","被杀","被殺","Убит","Abatido"
@@ -1530,7 +1522,6 @@ PanAlive25,\nBread was served by the bakery.\nㅤ,\nパン屋は{0}に向けて�
 "RevealerExiledText","[Revealer]{0} {1}","[リヴェラー]{0}の{1}",
 
 "## 警告"
-"Warning.EgoistCannotWin","Egoist cannot win","エゴイストが勝利できません","野心家无法获胜","利己主義者無法獲勝","Эгоист не может победить!","Egoísta não pode vencer"
 "Warning.OverrideExiledPlayer","All ejects will be displayed as a tie now.","今回の追放はすべて同数投票として表示されます。"
 "Warning.NoModHost","No mod installed on the host","ホストにMODが導入されていません","该房主并未安装mod","該房房主沒有安裝Town Of Host模組","У Хоста Лобби не установлен Town of Host",""
 "Warning.AutoExitAtMismatchedVersion","The host has no or a different version of {0}\nYou will be kicked in {1}","{0} のバージョンがホストと合致しません。\nあと {1} 秒で切断されます。","{0} 的版本与主机不符。\n 将在 {1} 秒后被踢出。","","Версия {0} не соответствует Хосту лобби. \nВы будете исключены через {1} секунды",""
@@ -1602,7 +1593,6 @@ PanAlive25,\nBread was served by the bakery.\nㅤ,\nパン屋は{0}に向けて�
 "FireworksWaitPhase","Wait for it...","時を待て...","耐心等待....","等待時機...","Подожди время...","Espere o momento certo..."
 "FireworksReadyFirePhase","Fire!","打ち上げろ！","烟花来咯，大型烟花秀开始！","準備就緒，煙火秀開始!","Огонь!","Lançar!"
 "SelfBomberFirePhase","Fire by Vanish","消えるで自爆","","","",""
-"StandardHAS","Hide And Seek with Roles","役職入りでかくれんぼ","在躲猫猫模式中加入职业","在躲貓貓中加入多職業模式中的職業","Прятки с Ролями","Esconde-Esconde com Classes"
 "Prerelease","Pre-release","プレリリース","","","","",""
 "InvalidArgs","Invalid Args","無効な引数","无效参数","無效的參數","Недопустимые Аргументы","Argumento Inválido"
 "On","ON","オン","开启","開啟","ВКЛ","Ativado"

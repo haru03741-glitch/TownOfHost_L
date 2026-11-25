@@ -20,19 +20,6 @@ namespace TownOfHostL
             //ここより上、全員が実行する
             if (!AmongUsClient.Instance.AmHost) return;
             //ここより下、ホストのみが実行する
-            if (ModeCatalog.Current.IsHideAndSeek && Main.introDestroyed)
-            {
-                if (Options.HideAndSeekKillDelayTimer > 0)
-                {
-                    Options.HideAndSeekKillDelayTimer -= Time.fixedDeltaTime;
-                }
-                else if (!float.IsNaN(Options.HideAndSeekKillDelayTimer))
-                {
-                    Utils.MarkEveryoneDirtySettings();
-                    Options.HideAndSeekKillDelayTimer = float.NaN;
-                    Logger.Info("キル能力解禁", "HideAndSeek");
-                }
-            }
         }
     }
 

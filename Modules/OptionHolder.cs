@@ -21,7 +21,6 @@ namespace TownOfHostL;
 public enum CustomGameMode
 {
     Standard,
-    HideAndSeek,
     CatchCat,
     //OneNight,
     HideMenu,
@@ -56,12 +55,12 @@ public static partial class Options
     public static CustomGameMode CurrentGameMode => GameMode == null ? CustomGameMode.Standard : gameModeIds[System.Math.Clamp(GameMode.GetValue(), 0, gameModeIds.Length - 1)];
     static readonly CustomGameMode[] gameModeIds =
     {
-        CustomGameMode.Standard, CustomGameMode.HideAndSeek, CustomGameMode.TaskBattle, CustomGameMode.SuddenDeath,
+        CustomGameMode.Standard, CustomGameMode.TaskBattle, CustomGameMode.SuddenDeath,
     };
 
     public static readonly string[] gameModes =
     {
-         "Standard", "HideAndSeek", "TaskBattle", "SuddenDeath",
+         "Standard", "TaskBattle", "SuddenDeath",
     };
 
     // MapActive
@@ -103,9 +102,6 @@ public static partial class Options
 
     public static OptionItem KillFlashDuration;
 
-    // HideAndSeek
-    /// <summary>0 = かくれんぼ専用の役職、1 = 通常モードの役職</summary>
-    public static OptionItem HideAndSeekRolePool;
     // 本編のかくれんぼ (/mode hns) の決まり
     public static OptionItem VanillaHnsSeekers;
     public static OptionItem VanillaHnsTimeOnKill;
@@ -119,11 +115,6 @@ public static partial class Options
     public static OptionItem FlashlightMode;
     public static OptionItem FlashlightCrewSize;
     public static OptionItem FlashlightImpostorSize;
-    public static OptionItem AllowCloseDoors;
-    public static OptionItem KillDelay;
-    // public static OptionItem IgnoreCosmetics;
-    public static OptionItem IgnoreVent;
-    public static float HideAndSeekKillDelayTimer = 0f;
 
     // タスク無効化
     public static OptionItem DisableTasks;
@@ -412,7 +403,9 @@ public static partial class Options
     {
 
         // ゲームモード
+        // 選択肢の並びを変えた時は、保存済みの番号が別のモードを指さないよう鍵の名前を替える
         GameMode = StringOptionItem.Create("GameMode", gameModes, 0, TabGroup.ModMainSettings, false)
+            .SetKeyName("GameMode2")
             .SetColor(new Color32(204, 204, 0, 255))
             .SetHeader(true)
             .SetGameMode(CustomGameMode.All);
@@ -515,25 +508,6 @@ public static partial class Options
             .SetColor(Palette.LightBlue);
         RoleAssignManager.SetupOptionItem();
 
-        // HideAndSeek
-        HideAndSeekRolePool = StringOptionItem.Create("HideAndSeekRolePool", new string[] { "HideAndSeekRolePool.Own", "HideAndSeekRolePool.Standard" }, 0, TabGroup.ModMainSettings, false)
-            .SetHeader(true)
-            .SetColor(Color.yellow)
-            .SetGameMode(CustomGameMode.HideAndSeek);
-        SetupRoleOptions(TabGroup.ModMainSettings, CustomRoles.HASFox, customGameMode: CustomGameMode.HideAndSeek);
-        SetupRoleOptions(TabGroup.ModMainSettings, CustomRoles.HASTroll, customGameMode: CustomGameMode.HideAndSeek);
-        // 本編のかくれんぼ (/mode hns) でだけ配る
-        SetupRoleOptions(TabGroup.ModMainSettings, CustomRoles.HASPortalMaker, customGameMode: CustomGameMode.HideAndSeek);
-
-        AllowCloseDoors = StringOptionItem.Create("AllowCloseDoors", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
-            .SetHeader(true)
-            .SetGameMode(CustomGameMode.HideAndSeek);
-        KillDelay = FloatOptionItem.Create("HideAndSeekWaitingTime", new(0f, 180f, 5f), 10f, TabGroup.ModMainSettings, false)
-            .SetValueFormat(OptionFormat.Seconds)
-            .SetGameMode(CustomGameMode.HideAndSeek);
-        IgnoreVent = StringOptionItem.Create("IgnoreVent", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
-            .SetGameMode(CustomGameMode.HideAndSeek);
-
         SetupHamoModeOptions();
         // 本編のかくれんぼ (/mode hns) の決まり。本編の勝敗のまま、鬼の人数・残り時間・鬼と死んだ隠れる側の役職を変える
         VanillaHnsSeekers = IntegerOptionItem.Create("VanillaHnsSeekers", new(1, 5, 1), 1, TabGroup.ModMainSettings, false)
@@ -564,6 +538,10 @@ public static partial class Options
         // 鬼の正体を隠れる側から隠す (Core/Modes/VanillaHnsHiddenSeeker)
         VanillaHnsHiddenSeeker = BooleanOptionItem.Create("VanillaHnsHiddenSeeker", false, TabGroup.ModMainSettings, false)
             .SetGameMode(CustomGameMode.VanillaHideAndSeek);
+        // 本編のかくれんぼで隠れる側に載せる役職 (Core/Modes/VanillaHideAndSeekRoles)
+        SetupRoleOptions(TabGroup.ModMainSettings, CustomRoles.HASFox, customGameMode: CustomGameMode.VanillaHideAndSeek);
+        SetupRoleOptions(TabGroup.ModMainSettings, CustomRoles.HASTroll, customGameMode: CustomGameMode.VanillaHideAndSeek);
+        SetupRoleOptions(TabGroup.ModMainSettings, CustomRoles.HASPortalMaker, customGameMode: CustomGameMode.VanillaHideAndSeek);
 
         // CC: 今の試合開始の流れ (StandardIntroHelper) に載っておらず、客にイントロが届かず暗転するので選べないままにする
         //CatchCat.Option.SetupCustomOption();

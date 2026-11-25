@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
 
-using TownOfHostL.Core.Modes;
 using TownOfHostL.Core.Win;
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Interfaces;
@@ -34,10 +33,7 @@ public sealed class Egoist : RoleBase, ISidekickable, IKiller, ISchrodingerCatOw
             flags: RoleFlags.NeutralKiller | RoleFlags.CountedAsKiller | RoleFlags.ImpostorTeammate,
             introTeam: CustomRoles.Egoist,
             // インポスターの勝ちのうち、インポスターが全滅していてエゴイスト (かエゴイストの猫) が生きている時は、エゴイストの勝ちにする
-            winTakeOvers: [new(WinTakeOverStage.BaseTeamWin, 100, (ref GameOverReason _, CustomWinner team) => team == CustomWinner.Impostor && CheckWin())],
-            // 役職ありのかくれんぼで、エゴイストを倒せる役職が無いと勝てない
-            lobbyWarning: () => ModeCatalog.IsHideAndSeekWithStandardRoles && !CustomRoles.Sheriff.IsEnable() && !CustomRoles.SerialKiller.IsEnable()
-                ? "Warning.EgoistCannotWin" : null
+            winTakeOvers: [new(WinTakeOverStage.BaseTeamWin, 100, (ref GameOverReason _, CustomWinner team) => team == CustomWinner.Impostor && CheckWin())]
         );
     public Egoist(PlayerControl player)
     : base(

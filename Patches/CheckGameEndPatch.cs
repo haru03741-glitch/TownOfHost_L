@@ -299,7 +299,6 @@ namespace TownOfHostL
         private const int PostEndGameResendCount = 8;
 
         public static void SetPredicateToNormal() => SetPredicate(GameEndRuleSet.Normal);
-        public static void SetPredicateToHideAndSeek() => SetPredicate(GameEndRuleSet.HideAndSeek);
         public static void SetPredicateToCatchCat() => SetPredicate(CatchCat.GameEnd.Rules);
         public static void SetPredicateTo(GameEndRuleSet rules) => SetPredicate(rules);
         private static void SetPredicate(GameEndRuleSet rules) { predicate = rules; errorLogCount = 0; GameEndRules.ResetForNewGame(); }

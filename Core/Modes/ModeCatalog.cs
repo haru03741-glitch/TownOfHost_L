@@ -8,7 +8,6 @@ namespace TownOfHostL.Core.Modes;
 public static class ModeCatalog
 {
     public static readonly StandardMode Standard = new();
-    public static readonly HideAndSeekMode HideAndSeek = new();
     public static readonly CatchCatMode CatchCat = new();
     public static readonly VanillaHideAndSeekMode Vanilla = new();
     public static readonly TaskBattleMode TaskBattle = new();
@@ -22,7 +21,6 @@ public static class ModeCatalog
             if (VanillaHideAndSeek.IsSuspended) return Vanilla;
             return Options.CurrentGameMode switch
             {
-                CustomGameMode.HideAndSeek => HideAndSeek,
                 CustomGameMode.CatchCat => CatchCat,
                 CustomGameMode.TaskBattle => TaskBattle,
                 CustomGameMode.SuddenDeath => SuddenDeath,
@@ -31,10 +29,6 @@ public static class ModeCatalog
         }
     }
 
-    /// <summary>かくれんぼ専用の役職 (狐・荒らし) で遊んでいるか。</summary>
-    public static bool IsHideAndSeekWithOwnRoles => Current is HideAndSeekMode { UsesStandardRoles: false };
-    /// <summary>通常の役職を入れてかくれんぼをしているか。</summary>
-    public static bool IsHideAndSeekWithStandardRoles => Current is HideAndSeekMode { UsesStandardRoles: true };
     public static bool IsCatchCat => Current is CatchCatMode;
 
     /// <summary>設定をメニューや一覧に出すか (どのモードでも隠す設定を含めて見る)。</summary>
@@ -49,93 +43,6 @@ public static class ModeCatalog
 public sealed class StandardMode : GameMode
 {
     public override CustomGameMode Id => CustomGameMode.Standard;
-}
-
-/// <summary>
-/// TOHL のかくれんぼ。会議とサボタージュが無く、インポスターは開始から待ってからキルできる。
-/// 役職はかくれんぼ専用の物 (狐・荒らし) か、通常モードの役職かを設定で選ぶ。
-/// </summary>
-public sealed class HideAndSeekMode : GameMode
-{
-    public override CustomGameMode Id => CustomGameMode.HideAndSeek;
-
-    public override bool UsesStandardRoles => Options.HideAndSeekRolePool.GetValue() == 1;
-    public override bool IsHideAndSeek => true;
-    public override float StartWaitTime => Options.KillDelay.GetFloat();
-
-    public override bool AllowsDoorSabotage => Options.AllowCloseDoors.GetBool();
-    public override bool AllowsSabotage => false;
-    public override bool AllowsReport(PlayerControl reporter, NetworkedPlayerInfo target) => false;
-    public override bool HasMeetings => false;
-    public override bool BootsFromVents => Options.IgnoreVent.GetBool();
-    // 通常の役職ではアドミンなどで隠れ場所が割れるので、道具を使えなくする
-    public override bool DisablesDevices => UsesStandardRoles;
-    // 専用の役職では色で陣営を見分ける
-    public override bool KillsOnColorChange => !UsesStandardRoles;
-
-    public override bool ShowsOption(OptionItem option)
-    {
-        if (!UsesStandardRoles) return base.ShowsOption(option);
-        if (option.GameMode == CustomGameMode.Standard) return true;
-        // 通常の役職で遊ぶ時は、専用の役職の設定を出さない
-        return base.ShowsOption(option) && !IsOwnRoleOption(option);
-    }
-
-    private static HashSet<OptionItem> ownRoleOptions;
-    /// <summary>かくれんぼ専用の役職 (狐・トロールなど) の設定か (子の設定を含む)。</summary>
-    public static bool IsOwnRoleOption(OptionItem option)
-    {
-        if (ownRoleOptions == null)
-        {
-            ownRoleOptions = new();
-            foreach (var role in CustomRolesHelper.AllHASRoles)
-                if (Options.CustomRoleSpawnChances.TryGetValue(role, out var spawn)) ownRoleOptions.Add(spawn);
-        }
-        while (option.Parent != null) option = option.Parent;
-        return ownRoleOptions.Contains(option);
-    }
-
-    public override void SelectRoles() => HideAndSeekRoleAssign.Assign();
-
-    /// <summary>
-    /// 専用の役職では、陣営の勝ちに加えて、殺された荒らしの単独勝ちと、荒らしが勝たずに生き残った狐の追加勝利を見る。
-    /// 人を順に見るので、荒らしより前に見た狐は勝つ役職に足されたまま残る
-    /// </summary>
-    public override List<PlayerControl> ResolveOutroWinners(List<PlayerControl> winners)
-    {
-        if (UsesStandardRoles) return winners;
-        winners = new();
-        foreach (var pc in Main.AllPlayerControls)
-        {
-            var role = PlayerState.GetByPlayerId(pc.PlayerId).GetNowMainRole();
-            if (role.GetCustomRoleTypes() == CustomRoleTypes.Impostor)
-            {
-                if (CustomWinnerHolder.WinnerTeam == CustomWinner.Impostor)
-                    winners.Add(pc);
-            }
-            else if (role.GetCustomRoleTypes() == CustomRoleTypes.Crewmate)
-            {
-                if (CustomWinnerHolder.WinnerTeam == CustomWinner.Crewmate)
-                    winners.Add(pc);
-            }
-            else if (role == CustomRoles.HASTroll && pc.Data.IsDead)
-            {
-                // 荒らしが殺されていれば単独勝ち
-                winners = new() { pc };
-                break;
-            }
-            else if (role == CustomRoles.HASFox && CustomWinnerHolder.WinnerTeam != CustomWinner.HASTroll && !pc.Data.IsDead)
-            {
-                winners.Add(pc);
-                // 勝者は結果を送る時と結果画面の時の 2 回求めるので、追加の勝者を重ねない
-                if (!CustomWinnerHolder.AdditionalWinnerRoles.Contains(CustomRoles.HASFox))
-                    CustomWinnerHolder.AdditionalWinnerRoles.Add(CustomRoles.HASFox);
-            }
-        }
-        return winners;
-    }
-
-    public override (string Key, Color Color)? Label => UsesStandardRoles ? ("StandardHAS", Color.yellow) : ("HideAndSeek", Color.red);
 }
 
 /// <summary>CatchCat (選択肢には出していない)。</summary>
@@ -162,6 +69,6 @@ public sealed class VanillaHideAndSeekMode : GameMode
     public override PatchBundles LiveBundles => PatchBundles.Core | PatchBundles.Settings | PatchBundles.VanillaHideAndSeek;
     public override bool UsesStandardRoles => false;
     // 本編のかくれんぼで効くのは、本編のかくれんぼの決まり (VanillaHnsRules)・TOHL が載せるかくれんぼの役職の設定・「ゲームを終了しない」(親だけ。終わり方ごとの子は通常モード用)
-    public override bool ShowsOption(OptionItem option) => option.GameMode == Id || HideAndSeekMode.IsOwnRoleOption(option) || option == Options.NoGameEnd;
+    public override bool ShowsOption(OptionItem option) => option.GameMode == Id || option == Options.NoGameEnd;
     public override (string Key, Color Color)? Label => ("VanillaHideAndSeekLabel", Color.cyan);
 }

@@ -22,7 +22,6 @@ namespace TownOfHostL
     {
         public static void Postfix(EmergencyMinigame __instance)
         {
-            if (Core.Modes.ModeCatalog.Current.IsHideAndSeek) __instance.Close();
         }
     }
     [HarmonyPatch(typeof(Vent), nameof(Vent.CanUse))]

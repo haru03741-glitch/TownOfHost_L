@@ -14,7 +14,7 @@ namespace TownOfHostL.Core.Modes;
 /// 本編のかくれんぼ (TOHL が休んでいる間) で、隠れる側に狐とトロールを載せる。
 /// 本編の役職 (鬼 = Impostor・隠れる側 = Engineer) と勝敗はそのままにし、TOHL は誰がどの役職かを覚えて帽子で印を付け、
 /// ロビーに戻ってきた人ごとに、狐とトロールを含めた勝者をチャットで知らせる。
-/// 人数と確率は TOHL のかくれんぼの狐・トロールの設定を使う。
+/// 人数と確率は、本編のかくれんぼの設定にある各役職の設定を使う。
 /// </summary>
 [PatchBundle(PatchBundles.VanillaHideAndSeek)]
 public static class VanillaHideAndSeekRoles

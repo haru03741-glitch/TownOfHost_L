@@ -19,20 +19,12 @@ public abstract class GameMode
     /// <summary>通常モードの役職の仕組み (デシンクの割り当て・イントロ・会議中の名前の保留・通常の勝敗) で試合を回すか。</summary>
     public virtual bool UsesStandardRoles => true;
 
-    /// <summary>かくれんぼの共通の決まり (開始時の待機・会議とサボタージュ無し) を使うか。</summary>
-    public virtual bool IsHideAndSeek => false;
-
-    /// <summary>試合の開始から、インポスターがキルできるようになるまでの秒数。</summary>
-    public virtual float StartWaitTime => 0f;
-
     public virtual bool AllowsDoorSabotage => true;
     public virtual bool AllowsSabotage => true;
     /// <summary>死体の通報と緊急会議を開けるか。</summary>
     public virtual bool AllowsReport(PlayerControl reporter, NetworkedPlayerInfo target) => true;
     /// <summary>会議が開くことがあるか。無いモードでは、会議と投票の設定を画面に出さない。</summary>
     public virtual bool HasMeetings => true;
-    public virtual bool BootsFromVents => false;
-    public virtual bool DisablesDevices => false;
     /// <summary>試合中に色を変えたプレイヤーを死なせるか (色で陣営を見分けるモード)。</summary>
     public virtual bool KillsOnColorChange => false;
 

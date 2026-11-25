@@ -183,12 +183,6 @@ class CheckMurderPatch
         }
         TimeSinceLastKill[killer.PlayerId] = 0f;
 
-        // HideAndSeek_キルボタンが使用可能か
-        if (ModeCatalog.Current.IsHideAndSeek && Options.HideAndSeekKillDelayTimer > 0)
-        {
-            Logger.Info("HideAndSeekの待機時間中だったため、キルをキャンセルしました。", "CheckMurder");
-            return false;
-        }
         // キルが可能なプレイヤーか(遠隔は除く)
         if (!info.IsFakeSuicide && !killer.CanUseKillButton())
         {
@@ -858,10 +852,8 @@ class CoEnterVentPatch
                 }, 0.5f, "FirstTurnMeeting.BootVent");
                 return true;
             }
-            if (ModeCatalog.Current.BootsFromVents)
-                __instance.RpcBootFromVent(id);
             // ベントの制限 (押し出す時も、ベントを能力のボタンにしている役職のために、役職の「ベントに入った」は起こす)
-            else if (RpcEnterVentPatch.Depth == 0)
+            if (RpcEnterVentPatch.Depth == 0)
                 Modules.VentLimit.OnEnterVent(__instance, id);
 
             // ホストが RpcEnterVent を呼んだ時は、その中で CoEnterVent も走る。役職へは RpcEnterVent の後置処理から 1 回だけ渡す
