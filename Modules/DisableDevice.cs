@@ -38,9 +38,17 @@ namespace TownOfHostL
             }
         }
 
-        private static List<byte> DesyncComms = new();
+        private static readonly List<byte> DesyncComms = new();
         private static readonly Dictionary<byte, float> LastCommsSent = new();
         private static int frame = 0;
+
+        // 前の試合で装置の前にいたまま終わった人の印を、次の試合 (番号を使い回す) へ持ち越さない
+        [Attributes.GameModuleInitializer]
+        public static void Init()
+        {
+            DesyncComms.Clear();
+            LastCommsSent.Clear();
+        }
         // スケルドの位置は反転前の船で測った物。使う時は Pos で今のマップの位置にする
         public static readonly Dictionary<string, Vector2> DevicePos = new()
         {
