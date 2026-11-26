@@ -6107,6 +6107,7 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "VillainImpostorVisionAfterAwaken","Impostor Vision After Awakening","覚醒後はインポスターの視界になる"
 "ErasedBodyRemovePet","Remove the Pet of Erased Bodies","死体を消した時にペットも消す"
 "ErasedBodyCover","Cover Erased Bodies for Players Without the Mod","MODなしの人の画面では消した死体をかぶせて隠す"
+"ErasedBodySyncVanilla","Truly Remove Erased Bodies for Players Without the Mod When Possible","MODなしの人の画面でも、条件が合えば消した死体そのものを消す"
 "DeathBurst","Show an Effect Where Someone Dies (Explosion, Shot, Fire, Poison, Magic, Blood)","死んだ所に死因ごとの演出を出す(爆発・狙撃・炎・毒・魔法・血しぶき)"
 "ClientEffects","Special effects for players with the mod","MODを入れている人には専用の演出を出す"
 "ClientEffectsBeam","Draw the Nova / Hadou-ho beam locally (no dummies)","ノヴァ・波動砲のビームを専用の描画で出す(MOD無し向けのダミーは隠す)"

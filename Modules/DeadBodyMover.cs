@@ -74,6 +74,36 @@ public static class DeadBodyMover
     /// <summary>この人の死体を作り直している途中か (終わるまで次は動かせない)</summary>
     public static bool IsMoving(byte parentId) => inFlight.ContainsKey(parentId);
 
+    /// <summary>作り直しの途中の死体があるか</summary>
+    public static bool IsBusy => inFlight.Count > 0;
+
+    /// <summary>画面の死体を合わせ直せた客から、元の所の覆いを外す (その客の画面には、元の所の死体がもう無い)</summary>
+    public static void HideCoversFrom(int clientId)
+    {
+        foreach (var c in covers) c?.HideFromClient(clientId);
+    }
+
+    /// <summary>
+    /// 客の手元で <paramref name="parent"/> の死体を <paramref name="standPos"/> に作る 2 つの電文を書く:
+    /// 持ち主の幽霊を SnapTo で寄せ、殺し手の CNO (<paramref name="killerNetId"/>) に持ち主を殺させる。
+    /// 殺し手 1 体に、同じ包みで 2 人を殺させない (キルの演出が終わらず、死体が通報できないまま残る)。
+    /// </summary>
+    public static void WriteRecreate(MessageWriter m, PlayerControl parent, Vector2 standPos, ushort seq, uint killerNetId)
+    {
+        m.StartMessage(2);
+        m.WritePacked(parent.NetTransform.NetId);
+        m.Write((byte)RpcCalls.SnapTo);
+        NetHelpers.WriteVector2(standPos, m);
+        m.Write(seq);
+        m.EndMessage();
+        m.StartMessage(2);
+        m.WritePacked(killerNetId);
+        m.Write((byte)RpcCalls.MurderPlayer);
+        m.WriteNetObject(parent);
+        m.Write((int)MurderResultFlags.Succeeded);
+        m.EndMessage();
+    }
+
     /// <summary>
     /// <paramref name="parentId"/> の死体を、<paramref name="standPos"/> に立っていた人が殺された時の場所へ動かす。
     /// 持ち主が死んでいない・死体が無い・消された・作り直しの途中・CNO が出せない (試合の外) 時は false
@@ -130,6 +160,7 @@ public static class DeadBodyMover
 
     public static void OnReportDeadBody()
     {
+        ClientBodySync.OnReportDeadBody();
         foreach (var c in covers) c?.Despawn();
         covers.Clear();
         foreach (var m in inFlight.Values) m.Killer?.Despawn();
@@ -227,18 +258,7 @@ public static class DeadBodyMover
             m.StartMessage(6);
             m.Write(client.GameId);
             m.WritePacked(target.OwnerId);
-            m.StartMessage(2);
-            m.WritePacked(nt.NetId);
-            m.Write((byte)RpcCalls.SnapTo);
-            NetHelpers.WriteVector2(move.StandPos, m);
-            m.Write(seq);
-            m.EndMessage();
-            m.StartMessage(2);
-            m.WritePacked(move.Killer.NetId);
-            m.Write((byte)RpcCalls.MurderPlayer);
-            m.WriteNetObject(parent);
-            m.Write((int)MurderResultFlags.Succeeded);
-            m.EndMessage();
+            WriteRecreate(m, parent, move.StandPos, seq, move.Killer.NetId);
             m.EndMessage();
             client.SendOrDisconnect(m);
             m.Recycle();
@@ -246,7 +266,12 @@ public static class DeadBodyMover
             sent++;
         }
         Logger.Info($"{move.ParentId} の死体を作り直しました (客 {sent})", Tag);
-        new LateTask(() => Finish(move), KillerHold, "");
+        new LateTask(() =>
+        {
+            Finish(move);
+            // 本編の客の画面には元の所の死体が覆いの下に残る。送れる客から、画面の死体をホストの手元に合わせ直す
+            ClientBodySync.Request();
+        }, KillerHold, "");
     }
 
     // 作り直しを送る本編の客 (ホスト・CNO・切断した人・持ち主本人・同じ版の TOHL の客を除く)

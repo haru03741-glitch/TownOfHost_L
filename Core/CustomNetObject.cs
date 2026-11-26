@@ -93,6 +93,12 @@ public sealed class CustomNetObject
     private byte? onlyVisibleTo;
     // この条件に合う人の画面には出さない (出し終えてから消す)。null なら全員に出す
     private Func<PlayerControl, bool> hiddenFrom;
+    // 消す電文を送った客 (clientId)。その客の手元に、この CNO はもう無い
+    private HashSet<int> hiddenClients;
+    // 出し終えたら消す電文を送る客 (出し終える前に HideFromClient で頼まれた分)
+    private HashSet<int> hideRequests;
+    // spawn から可視化までの待ちに足す秒数
+    private float visibilityHold;
 
     public Vector2 Position { get; private set; }
     public string Sprite { get; private set; }
@@ -155,6 +161,50 @@ public sealed class CustomNetObject
     {
         if (state != State.Waiting) Log.Warn(Tag, "HideFrom は出す前に呼ぶ");
         hiddenFrom = who;
+    }
+
+    /// <summary>
+    /// 出した後でも、この客の画面からだけ消す。出し終える前に呼ぶと、出し終えた時に消す
+    /// (先に消せない理由は <see cref="ShowOnlyTo"/> と同じ)。
+    /// </summary>
+    public void HideFromClient(int clientId)
+    {
+        if (state == State.Gone || clientId < 0 || IsHiddenFrom(clientId)) return;
+        if (state != State.Live)
+        {
+            (hideRequests ??= new()).Add(clientId);
+            return;
+        }
+        if (!pc) return;
+        var client = AmongUsClient.Instance;
+        if (!client || client.GetClient(clientId) == null) return;
+        SendDespawnTo(clientId);
+    }
+
+    /// <summary>この客には消す電文を送ってある (客の手元に、この CNO の体は無い)</summary>
+    public bool IsHiddenFrom(int clientId) => hiddenClients != null && hiddenClients.Contains(clientId);
+
+    /// <summary>
+    /// spawn から可視化までの待ちを延ばす。出す前に呼ぶ。可視化するまで、客の手元の体はプレイヤーの情報を持たない。
+    /// 待たせている間は、ほかの CNO も出ない。
+    /// </summary>
+    public void DelayVisibility(float seconds)
+    {
+        if (state != State.Waiting) Log.Warn(Tag, "DelayVisibility は出す前に呼ぶ");
+        visibilityHold = Mathf.Max(0f, seconds);
+    }
+
+    /// <summary>位置の電文の宛先 (spawn する前と消した後は null)</summary>
+    public CustomNetworkTransform NetTransform => pc ? pc.NetTransform : null;
+
+    /// <summary>客の手元に体がある CNO (出している途中の物を含む)</summary>
+    public static IEnumerable<CustomNetObject> Bodies
+    {
+        get
+        {
+            foreach (var obj in all)
+                if (obj.state != State.Waiting && obj.state != State.Gone && obj.pc) yield return obj;
+        }
     }
 
     public void MoveTo(Vector2 position)
@@ -402,7 +452,7 @@ public sealed class CustomNetObject
         pc.cosmetics.colorBlindText.color = Color.clear;
         pc.cosmetics.currentBodySprite.BodySprite.color = Color.clear;
         state = State.Spawned;
-        stepAt = now + VisibilityDelay;
+        stepAt = now + VisibilityDelay + visibilityHold;
         Log.Info(Tag, $"出した netId={pc.NetId} id={playerId} at ({Position.x:F2}, {Position.y:F2})");
         if (Spawned != null)
         {
@@ -609,12 +659,35 @@ public sealed class CustomNetObject
             int hidden = HideFromMatching(hiddenFrom);
             Log.Info(Tag, $"一部の人には出さない netId={pc.NetId} 隠した客={hidden}");
         }
+        if (hideRequests != null)
+        {
+            var client = AmongUsClient.Instance;
+            foreach (int clientId in hideRequests)
+                if (!IsHiddenFrom(clientId) && client.GetClient(clientId) != null) SendDespawnTo(clientId);
+            hideRequests = null;
+        }
+    }
+
+    // この客にだけ、CNO を消す電文を送る
+    private void SendDespawnTo(int clientId)
+    {
+        var client = AmongUsClient.Instance;
+        var w = MessageWriter.Get(SendOption.Reliable);
+        w.StartMessage(6);
+        w.Write(client.GameId);
+        w.WritePacked(clientId);
+        w.StartMessage(5);
+        w.WritePacked(pc.NetId);
+        w.EndMessage();
+        w.EndMessage();
+        client.SendOrDisconnect(w);
+        w.Recycle();
+        (hiddenClients ??= new()).Add(clientId);
     }
 
     // 条件に合う客へ、その客にだけ CNO を消す電文を送る。ホストが条件に合えば手元で隠す。隠した客の数を返す
     private int HideFromMatching(Func<PlayerControl, bool> match)
     {
-        var client = AmongUsClient.Instance;
         if (match(PlayerControl.LocalPlayer))
         {
             pc.Visible = false;
@@ -625,17 +698,8 @@ public sealed class CustomNetObject
         {
             if (!target || target.AmOwner || target.PlayerId >= MinPlayerId) continue;
             if (target.Data == null || target.Data.Disconnected) continue;
-            if (!match(target)) continue;
-            var w = MessageWriter.Get(SendOption.Reliable);
-            w.StartMessage(6);
-            w.Write(client.GameId);
-            w.WritePacked(target.OwnerId);
-            w.StartMessage(5);
-            w.WritePacked(pc.NetId);
-            w.EndMessage();
-            w.EndMessage();
-            client.SendOrDisconnect(w);
-            w.Recycle();
+            if (!match(target) || target.OwnerId < 0 || IsHiddenFrom(target.OwnerId)) continue;
+            SendDespawnTo(target.OwnerId);
             hidden++;
         }
         return hidden;

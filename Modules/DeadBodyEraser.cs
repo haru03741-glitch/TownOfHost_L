@@ -80,7 +80,12 @@ public static class DeadBodyEraser
         erasedBodies.Add(playerId);
         HideLocal(playerId);
         EraseOnModClients(playerId);
-        if (bodyPos.HasValue) Cover(playerId, bodyPos.Value);
+        if (bodyPos.HasValue)
+        {
+            Cover(playerId, bodyPos.Value);
+            // 本編の客は、送れる客から画面の死体そのものを消す (消せた客からは覆いを外す)
+            ClientBodySync.Request();
+        }
         RemovePet(Utils.GetPlayerById(playerId));
         Logger.Info($"{playerId} の死体を消しました", "DeadBodyEraser");
     }
@@ -104,6 +109,7 @@ public static class DeadBodyEraser
         if (pos.HasValue)
         {
             EraseOnModClients(playerId);
+            ClientBodySync.Request();
             Logger.Info($"{playerId} の残った死体を隠しました", "DeadBodyEraser");
         }
         return pos;
@@ -222,6 +228,12 @@ public static class DeadBodyEraser
     {
         foreach (var cover in covers.Values) cover?.Despawn();
         covers.Clear();
+    }
+
+    /// <summary>画面の死体そのものを消せた客から、覆いを外す</summary>
+    public static void HideCoversFrom(int clientId)
+    {
+        foreach (var cover in covers.Values) cover?.HideFromClient(clientId);
     }
 
     private static void RemovePet(PlayerControl pc)

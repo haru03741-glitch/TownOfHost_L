@@ -9,6 +9,7 @@ public static partial class Options
     public static OptionItem AutoGrantPet;
     public static OptionItem ErasedBodyRemovePet;
     public static OptionItem ErasedBodyCover;
+    public static OptionItem ErasedBodySyncVanilla;
     public static OptionItem DeathBurst;
     public static OptionItem ClientEffects;
     public static OptionItem ClientEffectsBeam;
@@ -49,6 +50,8 @@ public static partial class Options
         ErasedBodyRemovePet = BooleanOptionItem.Create("ErasedBodyRemovePet", true, TabGroup.ModMainSettings, false)
             .SetColorcode("#f0d36a");
         ErasedBodyCover = BooleanOptionItem.Create("ErasedBodyCover", true, TabGroup.ModMainSettings, false)
+            .SetColorcode("#f0d36a");
+        ErasedBodySyncVanilla = BooleanOptionItem.Create("ErasedBodySyncVanilla", true, TabGroup.ModMainSettings, false)
             .SetColorcode("#f0d36a");
         DeathBurst = BooleanOptionItem.Create("DeathBurst", true, TabGroup.ModMainSettings, false)
             .SetColorcode("#f0d36a");

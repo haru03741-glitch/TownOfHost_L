@@ -78,6 +78,9 @@ public static class ModClientSync
         }
     }
 
+    /// <summary>この客は同じ版の TOHL で、TOHL の電文を受ける</summary>
+    public static bool IsPeer(int clientId) => peers.ContainsKey(clientId);
+
     private static void Prune()
     {
         if (!AmongUsClient.Instance) { peers.Clear(); return; }

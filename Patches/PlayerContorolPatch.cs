@@ -1101,7 +1101,9 @@ public static class PlayerControlCheckUseZiplinePatch
     }
     public static void Postfix(PlayerControl target, bool fromTop, bool __runOriginal)
     {
-        if (__runOriginal) Roles.Neutral.Spelunker.OnZiplineUsed(target, fromTop);
+        if (!__runOriginal) return;
+        Roles.Neutral.Spelunker.OnZiplineUsed(target, fromTop);
+        ClientBodySync.OnZiplineUsed(target);
     }
 }
 [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.CheckSporeTrigger))]
