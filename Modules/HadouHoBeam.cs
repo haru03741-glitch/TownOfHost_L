@@ -8,7 +8,7 @@ namespace TownOfHostL.Modules;
 /// <summary>
 /// 波動砲系 (波動砲・シェリフ波動砲・ジャッカル波動砲) のためとビームを、CNO の名前の絵で描く。
 /// 一発ごとに 2 体を出す: 撃ち手の前に置く★のゲートと、ゲートの中心から伸びる線 (発射の 1 秒前から ⚠ の予告、撃つとビーム)。
-/// 撃ち終わり・会議・死亡で消す。ための間は撃ち手の足元に医務室のスキャンの輪を出す (本編の SetScanner。素の客の画面にも出る)。
+/// 撃ち終わり・会議・死亡で消す。ための間は撃ち手の足元に医務室のスキャンの輪を出す (本編の SetScanner。素の客の画面にも出るが、本編の「タスクの見た目」が OFF の試合では撃ち手の画面だけ)。
 ///
 /// 撃つ向きは、ため始めまでにホストへ届いた位置の左右の動きで決め、ための間は変えない。客の体の向き (FlipX) は
 /// ホストへ送られず、ホストの手元の向きは動けないため中には変わらないので、FlipX で決めると客の見ている向きと逆へ撃つことがある。
@@ -207,9 +207,9 @@ public sealed class HadouHoBeam
     /// <summary>ゲートからビームを伸ばす。<paramref name="colorHex"/> は "#RRGGBB"、<paramref name="size"/> は太さ。</summary>
     public void Fire(string colorHex, int size)
     {
+        SetScanner(false);
         if (gate == null || line == null || owner == null) return;
         line.ChangeSprite(Padded($"<color={colorHex}FF>{Row}</color>", Row, size));
-        SetScanner(false);
         firing = true;
         shakeOffset = UnityEngine.Random.Range(0f, 100f);
         shakeAmp = ShakePerThickness * size / 30f;
