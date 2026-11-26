@@ -159,6 +159,9 @@ public static partial class MeetingHudPatch
 
             SoundManager.Instance.ChangeAmbienceVolume(0f);
             if (!GameStates.IsModHost) return;
+            // 試合中に残った書き込みの押し出しは、会議の知らせより前に積む
+            try { ChatPushOut.OnMeetingStart(); }
+            catch (System.Exception ex) { Logger.Exception(ex, "ChatPushOut.OnMeetingStart"); }
             // 名前の欄の組み立ての例外で、下の役職の会議の始めの処理と知らせの送信を飛ばさない
             try
             {

@@ -32,16 +32,16 @@ public static class ChatPushOut
     private const float ExilePushOutDelay = 3f;
 
     // 一時的に幽霊になっている人 (TempGhost) は、本編では生きている扱いのまま幽霊のチャット欄を持つので、
-    // 試合中の書き込みが生きている人のチャット欄に残る。届いたら少し待って押し出す (続けて書かれても 1 回にまとめる)
-    private static bool ghostPushOutPending;
-    private const float GhostPushOutDelay = 1f;
+    // 試合中の書き込みが生きている人のチャット欄に残り、次の会議で見える。試合中に押し出しても客のチャット欄に残らないので
+    // (2026-11-26 実機)、次の会議の始まりに押し出す
+    private static bool pushOutAtMeeting;
 
     [GameModuleInitializer]
     public static void Reset()
     {
         history.Clear();
         chattedDuringExile = false;
-        ghostPushOutPending = false;
+        pushOutAtMeeting = false;
     }
 
     /// <summary>客の書き込みが届いた時に呼ぶ (ホストだけ)。追放の画面の間なら覚えておく</summary>
@@ -49,17 +49,20 @@ public static class ChatPushOut
     {
         if (player == null || player.AmOwner || !AmongUsClient.Instance.AmHost) return;
         if (ExileController.Instance != null && player.Data != null && !player.Data.IsDead) chattedDuringExile = true;
-        if (TempGhost.IsGhost(player) && !ghostPushOutPending)
+        // バイタルで生きているように見せている死者も、嘘を受けた人の画面では生きている扱いなので書き込みが残る
+        if (GameStates.IsInTask && !pushOutAtMeeting && (TempGhost.IsGhost(player) || Net.VitalsMask.ShowsChatOf(player.PlayerId)))
         {
-            ghostPushOutPending = true;
-            _ = new LateTask(() =>
-            {
-                ghostPushOutPending = false;
-                if (!GameStates.IsInGame) return;
-                Logger.Info("一時的に幽霊になっている人の書き込みを押し出します", "ChatPushOut");
-                PushOut();
-            }, GhostPushOutDelay, "ChatPushOutGhost");
+            Logger.Info($"{player.GetNameWithRole()} の試合中の書き込みを、次の会議の始まりに押し出す", "ChatPushOut");
+            pushOutAtMeeting = true;
         }
+    }
+
+    /// <summary>会議の始まりに呼ぶ (ホストだけ)。試合中に残った書き込みがあれば、会議の知らせより前に押し出す</summary>
+    public static void OnMeetingStart()
+    {
+        if (!pushOutAtMeeting || !AmongUsClient.Instance.AmHost) return;
+        pushOutAtMeeting = false;
+        PushOut(resend: false);
     }
 
     /// <summary>追放の画面が終わって試合に戻った時に呼ぶ (ホストだけ)</summary>
