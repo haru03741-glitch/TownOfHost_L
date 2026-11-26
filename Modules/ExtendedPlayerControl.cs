@@ -284,6 +284,21 @@ static partial class ExtendedPlayerControl
             AmongUsClient.Instance.FinishRpcImmediately(messageWriter);
         }
     }
+    /// <summary>
+    /// 医務室のスキャンの輪を、その人の足元に出す・止める。本編の RpcSetScanner は「タスクの見た目」が OFF だと
+    /// 手元で出すだけで電文を送らない (受け側には判定が無い) ので、電文を自前で組んで全員へ送る。
+    /// </summary>
+    public static void RpcSetScannerForAll(this PlayerControl player, bool on)
+    {
+        if (!AmongUsClient.Instance.AmHost || player == null) return;
+        // 受け側は前より小さい連番を捨てるので、本編と同じく 1 つ進めた番号で送る
+        byte count = (byte)(player.scannerCount + 1);
+        player.SetScanner(on, count);
+        var writer = AmongUsClient.Instance.StartRpcImmediately(player.NetId, (byte)RpcCalls.SetScanner, SendOption.Reliable, -1);
+        writer.Write(on);
+        writer.Write(count);
+        AmongUsClient.Instance.FinishRpcImmediately(writer);
+    }
     [Obsolete]
     public static void RpcSpecificProtectPlayer(this PlayerControl killer, PlayerControl target = null, int colorId = 0)
     {
