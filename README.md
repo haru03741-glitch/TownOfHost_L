@@ -145,6 +145,7 @@ Thank you for finding and using TOH_L!<br>
   - 決めた時間だけ客のチャットを止めるミュート
   - 追放の画面の間の書き込みを、試合に戻ってから押し出す処理
   - 会議中の陣営チャット (インポスター・恋人)
+  - 反転スケルドをロビーでは MapId 0 で持ち、試合を始める時に切り替える方式のアイデア
 - [More Roles Plus](https://github.com/haru03741-glitch/More-Roles-Plus)
   - ロビーで本編のモード (通常 / かくれんぼ) を、GameManager を出し直して切り替える手順
   - 設定画面の検索欄と検索の結果のタブ、左の列の区分の字の作り
