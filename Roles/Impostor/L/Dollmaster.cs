@@ -68,6 +68,8 @@ public sealed class Dollmaster : RoleBase, IImpostor
     private const float JumpDistance = 2f;
     // 人形使いを相手の上へ移した後、移す前の位置の電文が届き終わるまで、動きを相手に写さない
     private const float SnapGrace = 0.6f;
+    // ほかの人の画面で幽霊になってから、相手の上へ移るまでの間。同時に送ると、移った姿が消える前に 1 コマ見える
+    private const float GhostLead = 0.25f;
     // 人形使いと相手がこれより離れたまま DriftHold 秒たったら、人形使いを相手の上へ移し直す
     // (相手が机の角などで止まった時。1.5 より短い移しは届かないことがある)
     private const float DriftDistance = 1.5f;
@@ -88,7 +90,7 @@ public sealed class Dollmaster : RoleBase, IImpostor
     private Vector2 masterOrigin, puppetOrigin, lastMasterPos, lastTarget;
     // 操り始めた時の人形使いの位置 (終わったら戻す)
     private Vector2 home;
-    private float endAt, nextStepAt, graceUntil, driftSince, nextResyncAt;
+    private float endAt, nextStepAt, graceUntil, driftSince, nextResyncAt, firstSnapAt;
     private bool ventReleasePending;
     private int shownSeconds;
     private float failNoticeUntil;
@@ -156,7 +158,8 @@ public sealed class Dollmaster : RoleBase, IImpostor
         shownSeconds = -1;
         ventReleasePending = false;
         Logger.Info($"{Player.GetNameWithRole()} → {target.GetNameWithRole()}: {duration} 秒操る", nameof(Dollmaster));
-        SnapOntoPuppet(force: true);
+        firstSnapAt = Time.time + GhostLead;
+        graceUntil = firstSnapAt + SnapGrace;
         // 操っている間は押し直せるよう、待ち時間を短くしてから測り直す。
         // 本編の客は設定より先に測り直しが届くと古い待ち時間で数えるので、設定が届いてから測り直す
         Player.RpcResetAbilityCooldown(sync: CanAct);
@@ -292,6 +295,11 @@ public sealed class Dollmaster : RoleBase, IImpostor
             Utils.NotifyRoles(SpecifySeer: Player);
         }
 
+        if (firstSnapAt > 0f && Time.time >= firstSnapAt)
+        {
+            firstSnapAt = 0f;
+            SnapOntoPuppet(force: true);
+        }
         // 移した直後は、移す前の位置の電文が混ざるので写さない。落ち着いたら基準を取り直す
         if (graceUntil > 0f)
         {
@@ -352,6 +360,7 @@ public sealed class Dollmaster : RoleBase, IImpostor
         var target = puppet;
         puppet = null;
         graceUntil = 0f;
+        firstSnapAt = 0f;
         ventReleasePending = false;
         if (send) PlayerWalker.Stop(target);
         else PlayerWalker.Forget(target);

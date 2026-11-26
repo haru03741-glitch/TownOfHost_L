@@ -9,8 +9,9 @@ namespace TownOfHostL.Modules;
 /// 人を、本人の画面ごと決めた所まで歩かせる (ホストのみ)。
 ///
 /// その人の PlayerPhysics の Pet の電文を送ると、本編の客の画面は電文の座標まで (足元を合わせて) まっすぐ歩き、着くと撫でる。
-/// 撫でる動きと、電文の位置へ先回りするペットは、歩かされていることの目印になる。行き先の先を狙わせて着く頃に止め (撫でさせない)、
-/// ペットの位置にはホストの手元で付いて歩いているペットの位置を入れる (付いて歩いているように見せる)。
+/// 電文を受けた画面では、ペットが電文の位置へ飛んで止まり、人が着くと手を伸ばして撫でる。これは歩かされていることの目印になるので、
+/// 電文は歩かせる本人にだけ送る。ほかの人の画面では、その人は普通に歩いて見え、ペットも本編どおりに付いて歩く。
+/// 本人の画面でも、行き先の先を狙わせて着く頃に止め (撫でさせない)、ペットの位置にはホストの手元で付いて歩いているペットの位置を入れる。
 /// 歩いている間は本人の操作が効かない。机や壁に当たると着かないまま歩き続けるので、行き先は当たる手前で止める。
 /// 受け側は最新の歩きを 1 本だけ覚えていて、CancelPet でそれを止める。止めずに次を送ると古い歩きが会議まで残るので、
 /// 送る前に必ず CancelPet を送る。歩かせる相手はペットを持っていないといけない (本編がペットの体を触る)。
@@ -118,7 +119,7 @@ public static class PlayerWalker
             return true;
         }
         SendCancel(pc);
-        var writer = AmongUsClient.Instance.StartRpcImmediately(pc.MyPhysics.NetId, (byte)RpcCalls.Pet, SendOption.Reliable, -1);
+        var writer = AmongUsClient.Instance.StartRpcImmediately(pc.MyPhysics.NetId, (byte)RpcCalls.Pet, SendOption.Reliable, pc.OwnerId);
         NetHelpers.WriteVector2(aim, writer);
         NetHelpers.WriteVector2(petPos, writer);
         AmongUsClient.Instance.FinishRpcImmediately(writer);
@@ -131,22 +132,26 @@ public static class PlayerWalker
         if (pc == null || !arriveAt.TryGetValue(pc.PlayerId, out var at)) return;
         float now = Time.realtimeSinceStartup;
         if (now < at) return;
-        arriveAt.Remove(pc.PlayerId);
-        if (!walking.Contains(pc.PlayerId) || !AmongUsClient.Instance.AmHost || pc.Data == null || pc.Data.Disconnected) return;
-        if (AmongUsClient.Instance.IsGameOver || GameEndChecker.EndingStarted) return;
+        if (!walking.Contains(pc.PlayerId) || !AmongUsClient.Instance.AmHost || pc.Data == null || pc.Data.Disconnected
+            || AmongUsClient.Instance.IsGameOver || GameEndChecker.EndingStarted)
+        {
+            arriveAt.Remove(pc.PlayerId);
+            return;
+        }
         if (pc.AmOwner)
         {
+            arriveAt.Remove(pc.PlayerId);
             try { pc.MyPhysics.CancelPet(); }
             catch (System.Exception ex) { Logger.Exception(ex, nameof(PlayerWalker)); }
             return;
         }
-        // 止め損ねると狙いの先まで歩いて撫でるので、本数の上限を待たずに送る。本数には数える
-        TakeBudget(0, now);
-        sentTimes.Enqueue(now);
+        // 本数の上限に当たっている間は送らずに待つ (遅れた分だけ狙いの先へ歩き、遅れが長いと着いて撫でる。動けなくはならない)
+        if (!TakeBudget(1, now)) return;
+        arriveAt.Remove(pc.PlayerId);
         SendCancel(pc);
     }
 
-    // 電文に入れるペットの位置。見ている人の画面のペットはここへ移る
+    // 電文に入れるペットの位置。受けた画面のペットはここへ移る
     private static Vector2 PetSpot(PlayerControl pc, Vector2 fallback)
     {
         try
@@ -192,7 +197,7 @@ public static class PlayerWalker
     private static void SendCancel(PlayerControl pc)
     {
         if (pc.MyPhysics == null) return;
-        var writer = AmongUsClient.Instance.StartRpcImmediately(pc.MyPhysics.NetId, (byte)RpcCalls.CancelPet, SendOption.Reliable, -1);
+        var writer = AmongUsClient.Instance.StartRpcImmediately(pc.MyPhysics.NetId, (byte)RpcCalls.CancelPet, SendOption.Reliable, pc.OwnerId);
         AmongUsClient.Instance.FinishRpcImmediately(writer);
     }
 
