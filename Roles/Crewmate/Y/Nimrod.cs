@@ -68,8 +68,8 @@ public sealed class Nimrod : RoleBase
                 }
                 else
                 {
-                    // 一時的な幽霊・鬼の体を戻してから開く経路を通す
-                    Exiled.Object.NoCheckStartMeeting(null);
+                    // 一時的な幽霊・鬼の体を戻してから開く経路を通す。開けなかったら、次の会議をニムロッド会議として扱わない
+                    if (!Exiled.Object.NoCheckStartMeeting(null)) ExecutionMeetingPlayerId = byte.MaxValue;
                 }
             }
         }, 14.5f, "NimrodExiled");

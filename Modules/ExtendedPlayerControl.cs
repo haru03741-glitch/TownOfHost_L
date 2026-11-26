@@ -633,13 +633,24 @@ static partial class ExtendedPlayerControl
     // 待っている間 (追放の画面・SetRole の落ち着き) に重ねて呼ばれても、会議の後始末を 2 度しない
     // (待ちの LateTask が試合の終わりで捨てられても残らないよう、時刻で持つ)
     private static float noCheckMeetingWaitUntil;
-    public static void NoCheckStartMeeting(this PlayerControl reporter, NetworkedPlayerInfo target)
-    { /*サボタージュ中でも関係なしに会議を起こせるメソッド
-        targetがnullの場合はボタンとなる*/
-        if (AmongUsClient.Instance.AmHost && Time.realtimeSinceStartup < noCheckMeetingWaitUntil) return;
-        NoCheckStartMeetingCore(reporter, target);
+    private static int noCheckMeetingSettleWaits;
+    [TownOfHostL.Attributes.GameModuleInitializer]
+    public static void InitNoCheckStartMeeting()
+    {
+        noCheckMeetingWaitUntil = 0f;
+        noCheckMeetingExileWaits = 0;
+        noCheckMeetingSettleWaits = 0;
     }
-    private static void NoCheckStartMeetingCore(PlayerControl reporter, NetworkedPlayerInfo target)
+    /// <summary>
+    /// 通報の確認を通らずに会議を開く (サボタージュ中でも開く。target が null ならボタン)。
+    /// 開いた・開く前の待ちに入ったら true。会議中・試合の外などで開かなかったら false
+    /// </summary>
+    public static bool NoCheckStartMeeting(this PlayerControl reporter, NetworkedPlayerInfo target)
+    {
+        if (AmongUsClient.Instance.AmHost && Time.realtimeSinceStartup < noCheckMeetingWaitUntil) return false;
+        return NoCheckStartMeetingCore(reporter, target);
+    }
+    private static bool NoCheckStartMeetingCore(PlayerControl reporter, NetworkedPlayerInfo target)
     {
         noCheckMeetingWaitUntil = 0f;
         if (AmongUsClient.Instance.AmHost)
@@ -648,14 +659,14 @@ static partial class ExtendedPlayerControl
             // (通すと会議中の旗と全員の暗転を立てたまま、会議が来ずに残る)
             if (reporter == null || GameStates.IsMeeting || MeetingStates.MeetingCalled || !GameStates.IsInGame
                 || AmongUsClient.Instance.IsGameOver || GameEndChecker.EndingStarted)
-                return;
+                return false;
             // 追放の画面の途中に会議を始めると暗転のまま進めなくなるので、終わるまで待つ
             if (ExileController.Instance != null)
             {
-                if (noCheckMeetingExileWaits++ >= 40) { noCheckMeetingExileWaits = 0; Logger.Warn("追放の画面が終わらないので、会議を開くのをやめました", "NoCheckStartMeeting"); return; }
+                if (noCheckMeetingExileWaits++ >= 40) { noCheckMeetingExileWaits = 0; Logger.Warn("追放の画面が終わらないので、会議を開くのをやめました", "NoCheckStartMeeting"); return false; }
                 noCheckMeetingWaitUntil = Time.realtimeSinceStartup + 1f;
                 _ = new LateTask(() => NoCheckStartMeetingCore(reporter, target), 0.5f, "NoCheckStartMeeting.WaitExile");
-                return;
+                return true;
             }
             noCheckMeetingExileWaits = 0;
             // 鬼の体と一時的な幽霊は会議の前に戻し、戻す SetRole が落ち着いてから会議を開く
@@ -664,23 +675,29 @@ static partial class ExtendedPlayerControl
             if (SeekerBody.Active) { SeekerBody.ReleaseAllForMeeting(); hold = true; }
             if (TempGhost.ReturnAllForMeeting()) hold = true;
             // ほかの役職の SetRole (時間切れで幽霊から戻ったなど) が落ち着く前も待つ (通報の経路は Revive が預かる)
-            if (Revive.IsSettling) hold = true;
+            // (ほかの役職が SetRole を出し続けても会議が来なくならないよう、待つのは 8 回まで)
+            if (Revive.IsSettling && noCheckMeetingSettleWaits < 8) hold = true;
             if (hold)
             {
+                noCheckMeetingSettleWaits++;
                 noCheckMeetingWaitUntil = Time.realtimeSinceStartup + Revive.SettleTime + 1f;
                 _ = new LateTask(() => NoCheckStartMeetingCore(reporter, target), Revive.SettleTime + 0.1f, "SeekerBody hold meeting");
-                return;
+                return true;
             }
+            noCheckMeetingSettleWaits = 0;
             // 会議の見出しが使う通報者と対象
             ReportDeadBodyPatch.reporter = reporter.Data;
             ReportDeadBodyPatch.ReportTarget = target;
             ReportDeadBodyPatch.SpecialMeeting = reporter.Data?.PlayerId == target?.PlayerId;
             // 通報の処理を通らないので、会議を開くと決めた後の後始末 (役職の通報の処理・暗転・変身の解除・会議用の名前など) をここでする
-            ReportDeadBodyPatch.PrepareMeeting(reporter, target);
+            // 後始末の例外で、会議中の旗と全員の暗転を立てたまま会議を開かずに止めない
+            try { ReportDeadBodyPatch.PrepareMeeting(reporter, target); }
+            catch (Exception ex) { Logger.Exception(ex, "NoCheckStartMeeting"); }
         }
         MeetingRoomManager.Instance.AssignSelf(reporter, target);
         DestroyableSingleton<HudManager>.Instance.OpenMeetingRoom(reporter);
         reporter.RpcStartMeeting(target);
+        return true;
     }
     public static bool IsModClient(this PlayerControl player) => Main.playerVersion.ContainsKey(player.PlayerId);
     ///<summary>
