@@ -630,20 +630,31 @@ static partial class ExtendedPlayerControl
         }
     }
     private static int noCheckMeetingExileWaits;
+    // 待っている間 (追放の画面・SetRole の落ち着き) に重ねて呼ばれても、会議の後始末を 2 度しない
+    // (待ちの LateTask が試合の終わりで捨てられても残らないよう、時刻で持つ)
+    private static float noCheckMeetingWaitUntil;
     public static void NoCheckStartMeeting(this PlayerControl reporter, NetworkedPlayerInfo target)
     { /*サボタージュ中でも関係なしに会議を起こせるメソッド
         targetがnullの場合はボタンとなる*/
+        if (AmongUsClient.Instance.AmHost && Time.realtimeSinceStartup < noCheckMeetingWaitUntil) return;
+        NoCheckStartMeetingCore(reporter, target);
+    }
+    private static void NoCheckStartMeetingCore(PlayerControl reporter, NetworkedPlayerInfo target)
+    {
+        noCheckMeetingWaitUntil = 0f;
         if (AmongUsClient.Instance.AmHost)
         {
+            // 会議中・会議を開くと決めた後・試合の外や終わり際は開かない
+            // (通すと会議中の旗と全員の暗転を立てたまま、会議が来ずに残る)
+            if (reporter == null || GameStates.IsMeeting || MeetingStates.MeetingCalled || !GameStates.IsInGame
+                || AmongUsClient.Instance.IsGameOver || GameEndChecker.EndingStarted)
+                return;
             // 追放の画面の途中に会議を始めると暗転のまま進めなくなるので、終わるまで待つ
             if (ExileController.Instance != null)
             {
                 if (noCheckMeetingExileWaits++ >= 40) { noCheckMeetingExileWaits = 0; Logger.Warn("追放の画面が終わらないので、会議を開くのをやめました", "NoCheckStartMeeting"); return; }
-                _ = new LateTask(() =>
-                {
-                    if (reporter == null || GameStates.IsMeeting || !GameStates.IsInGame) return;
-                    reporter.NoCheckStartMeeting(target);
-                }, 0.5f, "NoCheckStartMeeting.WaitExile");
+                noCheckMeetingWaitUntil = Time.realtimeSinceStartup + 1f;
+                _ = new LateTask(() => NoCheckStartMeetingCore(reporter, target), 0.5f, "NoCheckStartMeeting.WaitExile");
                 return;
             }
             noCheckMeetingExileWaits = 0;
@@ -656,11 +667,8 @@ static partial class ExtendedPlayerControl
             if (Revive.IsSettling) hold = true;
             if (hold)
             {
-                _ = new LateTask(() =>
-                {
-                    if (reporter == null || GameStates.IsMeeting || !GameStates.IsInGame) return;
-                    reporter.NoCheckStartMeeting(target);
-                }, Revive.SettleTime + 0.1f, "SeekerBody hold meeting");
+                noCheckMeetingWaitUntil = Time.realtimeSinceStartup + Revive.SettleTime + 1f;
+                _ = new LateTask(() => NoCheckStartMeetingCore(reporter, target), Revive.SettleTime + 0.1f, "SeekerBody hold meeting");
                 return;
             }
             // 会議の見出しが使う通報者と対象
