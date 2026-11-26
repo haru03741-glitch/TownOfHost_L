@@ -156,7 +156,8 @@ public static class PlayerWalker
     {
         try
         {
-            var pet = pc.cosmetics?.CurrentPet;
+            var cosmetics = pc.cosmetics;
+            var pet = cosmetics != null ? cosmetics.CurrentPet : null;
             if (pet != null) return pet.transform.position;
         }
         catch (System.Exception ex) { Logger.Exception(ex, nameof(PlayerWalker)); }

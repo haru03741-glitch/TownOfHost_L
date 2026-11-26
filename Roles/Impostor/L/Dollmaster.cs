@@ -378,7 +378,7 @@ public sealed class Dollmaster : RoleBase, IImpostor
         // 押し直しのための短い待ち時間を元に戻し、ここから待ち時間を数える
         if (send && CanAct && Player != null && Player.IsAlive())
             Player.RpcResetAbilityCooldown(sync: true);
-        Logger.Info($"{Player?.GetNameWithRole()} → {target.GetNameWithRole()}: 操るのをやめた", nameof(Dollmaster));
+        Logger.Info($"{(Player != null ? Player.GetNameWithRole() : "?")} → {(target != null ? target.GetNameWithRole() : puppetId.ToString())}: 操るのをやめた", nameof(Dollmaster));
         if (send)
         {
             Utils.NotifyRoles(SpecifySeer: Player);
