@@ -12,6 +12,10 @@ namespace TownOfHostL.Roles.Impostor;
 // (本人の操作は効かない)。歩かせる仕組みは PlayerWalker。壁や机があれば相手はその手前で止まる。
 // 操っている間は変身のボタンをすぐ押せる。メニューで別の人を選ぶと、届けば相手にその人をキルさせ、
 // 相手自身を選ぶと、近くの死体を相手に通報させる。どちらかをすると操るのをやめる。
+// 操っている間、人形使いはほかの人の画面でだけ幽霊になり (TempGhost の hideFromSelf)、相手の上へ移る。
+// 本編の客のカメラはホストから替えられないので、本人の体を相手に重ねて、相手の視点で操る形にする。
+// 本人の画面では生きたままなので、キル・通報・ベント・サボタージュを押すと、それはせずに操るのをやめる。
+// 終わると元の場所へ戻る。
 public sealed class Dollmaster : RoleBase, IImpostor
 {
     public static readonly SimpleRoleInfo RoleInfo =
@@ -60,10 +64,27 @@ public sealed class Dollmaster : RoleBase, IImpostor
     private const float ResendDistance = 0.3f;
     // 1 回の見直しでこれより動いたら、歩きではなく飛び (ベント・テレポート) として相手には写さない
     private const float JumpDistance = 2f;
+    // 人形使いを相手の上へ移した後、移す前の位置の電文が届き終わるまで、動きを相手に写さない
+    private const float SnapGrace = 0.6f;
+    // 人形使いと相手がこれより離れたまま DriftHold 秒たったら、人形使いを相手の上へ移し直す
+    // (相手が机の角などで止まった時。1.5 より短い移しは届かないことがある)
+    private const float DriftDistance = 1.5f;
+    private const float DriftHold = 0.5f;
+    // 移し直しの間隔の下限
+    private const float ResyncInterval = 1.5f;
+    // 幽霊の時間は人形使いの側で終わらせるので、TempGhost の時間切れは操る時間より後に置く
+    private const float GhostSlack = 5f;
+    // ベントから押し出してから元の場所へ戻すまで (押し出された客がベントに入りきって出終わるまで)
+    private const float VentReleaseDelay = 2f;
+    // ベントから出る動きが戻しを上書きした時のために、もう一度戻すまで
+    private const float VentResnapDelay = 1f;
 
     private PlayerControl puppet;
     private Vector2 masterOrigin, puppetOrigin, lastMasterPos, lastTarget;
-    private float endAt, nextStepAt;
+    // 操り始めた時の人形使いの位置 (終わったら戻す)
+    private Vector2 home;
+    private float endAt, nextStepAt, graceUntil, driftSince, nextResyncAt;
+    private bool ventReleasePending;
     private int shownSeconds;
     private float failNoticeUntil;
     private string failNoticeKey;
@@ -114,17 +135,73 @@ public sealed class Dollmaster : RoleBase, IImpostor
             return false;
         }
 
+        home = Player.transform.position;
+        if (!TempGhost.Begin(Player, duration + GhostSlack, hideFromSelf: true, onInterrupt: OnInterrupted))
+        {
+            Fail("DollmasterFailed", "cannot hide");
+            return false;
+        }
         puppet = target;
-        masterOrigin = lastMasterPos = Player.GetTruePosition();
-        puppetOrigin = lastTarget = target.GetTruePosition();
         endAt = Time.time + duration;
         nextStepAt = 0f;
+        nextResyncAt = 0f;
         shownSeconds = -1;
+        ventReleasePending = false;
         Logger.Info($"{Player.GetNameWithRole()} → {target.GetNameWithRole()}: {duration} 秒操る", nameof(Dollmaster));
+        SnapOntoPuppet(force: true);
         // 操っている間は押し直せるよう、待ち時間を短くしてから測り直す。
         // 本編の客は設定より先に測り直しが届くと古い待ち時間で数えるので、設定が届いてから測り直す
         Player.RpcResetAbilityCooldown(sync: CanAct);
         Utils.NotifyRoles(SpecifySeer: target);
+        return false;
+    }
+
+    // 人形使いを相手の上へ移す。移した後しばらくは動きを写さず、落ち着いてから基準の位置を取り直す
+    private bool SnapOntoPuppet(bool force)
+    {
+        if (!Player.RpcSnapTo(puppet.transform.position, force)) return false;
+        graceUntil = Time.time + SnapGrace;
+        driftSince = 0f;
+        return true;
+    }
+
+    // 本人の画面で押せてしまうキル・通報・サボタージュ (TempGhost が止めて呼ぶ)
+    private void OnInterrupted()
+    {
+        if (puppet == null) return;
+        Logger.Info($"{Player.GetNameWithRole()}: 自分の行動を押したので操るのをやめる", nameof(Dollmaster));
+        Release(send: true);
+    }
+
+    public override bool OnEnterVent(PlayerPhysics physics, int ventId)
+    {
+        if (puppet == null) return true;
+        // インポスターのベントは役職が断っても押し出されないので、ここで押し出す。
+        // 出る動きの途中で元の場所へ戻すと、客がベントの中にいるまま残るので、出終わってから戻す
+        if (!ventReleasePending)
+        {
+            ventReleasePending = true;
+            Logger.Info($"{Player.GetNameWithRole()}: ベントを押したので操るのをやめる", nameof(Dollmaster));
+            physics.RpcBootFromVent(ventId);
+            var target = puppet;
+            _ = new LateTask(() =>
+            {
+                if (puppet != target) return;
+                var back = home;
+                Release(send: true);
+                _ = new LateTask(() =>
+                {
+                    if (Player != null && Player.IsAlive() && GameStates.IsInTask && puppet == null) Player.RpcSnapTo(back, force: true);
+                }, VentResnapDelay, "Dollmaster.VentResnap");
+            }, VentReleaseDelay, "Dollmaster.VentRelease");
+        }
+        return false;
+    }
+
+    public override bool OnInvokeSabotage(SystemTypes systemType)
+    {
+        if (puppet == null) return true;
+        OnInterrupted();
         return false;
     }
 
@@ -188,6 +265,8 @@ public sealed class Dollmaster : RoleBase, IImpostor
             Utils.NotifyRoles(SpecifySeer: Player);
         }
         if (puppet == null) return;
+        // ベントから押し出している間は、戻すのを押し出した側 (OnEnterVent の予約) に任せる
+        if (ventReleasePending) return;
 
         if (Time.time >= endAt || !Player.IsAlive() || !puppet.IsAlive() || puppet.Data == null || puppet.Data.Disconnected)
         {
@@ -202,10 +281,32 @@ public sealed class Dollmaster : RoleBase, IImpostor
             Utils.NotifyRoles(SpecifySeer: Player);
         }
 
+        // 移した直後は、移す前の位置の電文が混ざるので写さない。落ち着いたら基準を取り直す
+        if (graceUntil > 0f)
+        {
+            if (Time.time < graceUntil) return;
+            graceUntil = 0f;
+            masterOrigin = lastMasterPos = Player.GetTruePosition();
+            puppetOrigin = lastTarget = puppet.GetTruePosition();
+            nextStepAt = 0f;
+        }
+
         if (Time.time < nextStepAt) return;
         nextStepAt = Time.time + StepInterval;
 
         var masterPos = Player.GetTruePosition();
+        // 相手が机の角などで止まって離れたら、人形使いを相手の上へ移し直す
+        if ((masterPos - puppet.GetTruePosition()).sqrMagnitude > DriftDistance * DriftDistance)
+        {
+            if (driftSince == 0f) driftSince = Time.time;
+            else if (Time.time - driftSince >= DriftHold && Time.time >= nextResyncAt && SnapOntoPuppet(force: false))
+            {
+                nextResyncAt = Time.time + ResyncInterval;
+                Logger.Info($"{Player.GetNameWithRole()}: 相手から離れたので重ね直す", nameof(Dollmaster));
+                return;
+            }
+        }
+        else driftSince = 0f;
         // ベントやテレポートで飛んだ分は写さない (相手が壁を越えて一直線に歩こうとしないように)
         if ((masterPos - lastMasterPos).sqrMagnitude > JumpDistance * JumpDistance)
             masterOrigin += masterPos - lastMasterPos;
@@ -226,10 +327,22 @@ public sealed class Dollmaster : RoleBase, IImpostor
     private void Release(bool send)
     {
         if (puppet == null) return;
+        // 試合の終わり際は送らない
+        if (!GameStates.IsInTask || GameEndChecker.EndingStarted || AmongUsClient.Instance.IsGameOver) send = false;
         var target = puppet;
         puppet = null;
+        graceUntil = 0f;
+        ventReleasePending = false;
         if (send) PlayerWalker.Stop(target);
         else PlayerWalker.Forget(target);
+        // 元の場所へ戻してから、ほかの人の画面に姿を戻す (会議の時は TempGhost が会議の前に戻し、会議で全員の位置も替わる)
+        if (send && Player != null && Player.IsAlive())
+        {
+            Player.RpcSnapTo(home, force: true);
+            TempGhost.End(Player);
+        }
+        // 送らない時も、ホストの画面で隠した姿は戻す (会議の時は TempGhost が会議の前か会議明けに戻す)
+        else if (!send && !MeetingHud.Instance && !MeetingStates.MeetingCalled) TempGhost.Forget(Player);
         // 押し直しのための短い待ち時間を元に戻し、ここから待ち時間を数える
         if (send && CanAct && Player != null && Player.IsAlive())
             Player.RpcResetAbilityCooldown(sync: true);

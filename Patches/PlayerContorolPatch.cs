@@ -155,9 +155,11 @@ class CheckMurderPatch
             Logger.Info("targetは既に死んでいたため、キルをキャンセルしました。", "CheckMurder");
             return false;
         }
-        // 一時的に幽霊になっている人は、キルできず狙われもしない
+        // 一時的に幽霊になっている人は、キルできず狙われもしない。
+        // 本人の画面だけ生きている幽霊がキルを押したら、止め役 (人形使いなら操るのをやめる) へ回す
         if (TempGhost.IsGhost(killer) || TempGhost.IsGhost(target))
         {
+            TempGhost.TryInterrupt(killer);
             Logger.Info("一時的に幽霊になっている人が関わるため、キルをキャンセルしました。", "CheckMurder");
             return false;
         }
@@ -630,6 +632,8 @@ partial class ReportDeadBodyPatch
         if (target != null && !SpecialMeeting && Revive.WasRevived(target.PlayerId) && !(PlayerState.GetByPlayerId(target.PlayerId)?.IsDead ?? true)) return false;
         // 動かした死体を、動かす前の所 (本編の客の画面では覆いの下に残っている) から通報したものは捨てる
         if (AmongUsClient.Instance.AmHost && !ForceReport && !SpecialMeeting && !DeadBodyMover.AllowsReport(__instance, target)) return false;
+        // 本人の画面だけ生きている幽霊の通報 (緊急ボタンも) は、会議を開かずに止め役へ回す
+        if (AmongUsClient.Instance.AmHost && !ForceReport && TempGhost.TryInterrupt(__instance)) return false;
         // 一時的に幽霊になっている人は、会議の前に戻す (戻す SetRole が落ち着くまで、下で通報を預かる)
         if (AmongUsClient.Instance.AmHost) TempGhost.ReturnAllForMeeting();
         // 鬼の体も会議の前に外す (外す SetRole が落ち着くまで、下で通報を預かる)

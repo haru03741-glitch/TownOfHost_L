@@ -26,6 +26,10 @@ public static class TempGhost
         public float EndAt;
         public int ShownSeconds;
         public Action<PlayerControl> OnReturned;
+        // 本人の画面は生きたままにし、ほかの人の画面でだけ幽霊にする
+        public bool HideFromSelf;
+        // 本人の画面で生きているので押せてしまう行動 (キル・通報・ベント・サボタージュ) を押した時に呼ぶ
+        public Action OnInterrupt;
     }
 
     // 会議明けの役職の配り直し (0.5 秒後) より後に送る
@@ -38,6 +42,8 @@ public static class TempGhost
     private static readonly Dictionary<byte, Entry> ghosts = new();
     // 会議に持ち越した人 (会議の間は送らず、会議明けに戻す)
     private static readonly List<byte> returnAfterMeeting = new();
+    // 会議に持ち越した人のうち、本人の画面は生きたままにしていた人
+    private static readonly HashSet<byte> hiddenFromSelfAfterMeeting = new();
     private static readonly List<byte> scratch = new();
     private static bool wasInMeeting;
     private static int generation;
@@ -45,14 +51,44 @@ public static class TempGhost
     [GameModuleInitializer]
     public static void Init()
     {
+        // 前の試合でホストの画面に隠したままの人を戻す (ロビーでは同じ PlayerControl を使い回す)
+        foreach (var (id, e) in ghosts)
+            if (e.HideFromSelf) RestoreHostVisibility(Utils.GetPlayerById(id));
+        foreach (var id in hiddenFromSelfAfterMeeting) RestoreHostVisibility(Utils.GetPlayerById(id));
         ghosts.Clear();
         returnAfterMeeting.Clear();
+        hiddenFromSelfAfterMeeting.Clear();
         wasInMeeting = false;
         generation++;
     }
 
     public static bool IsGhost(byte playerId) => ghosts.Count != 0 && ghosts.ContainsKey(playerId);
     public static bool IsGhost(PlayerControl pc) => pc != null && IsGhost(pc.PlayerId);
+
+    /// <summary>
+    /// 本人の画面では生きたままの幽霊 (<see cref="Begin"/> の hideFromSelf) が、本人の画面で押せる行動を押した時に呼ぶ。
+    /// その人に止め役 (onInterrupt) があれば呼んで true (呼んだ側はその行動を取りやめる)
+    /// </summary>
+    public static bool TryInterrupt(PlayerControl pc)
+    {
+        if (pc == null || !ghosts.TryGetValue(pc.PlayerId, out var e) || e.OnInterrupt == null) return false;
+        try { e.OnInterrupt(); }
+        catch (Exception ex) { Logger.Exception(ex, "TempGhost"); }
+        return true;
+    }
+
+    /// <summary>時間を待たずに戻す (会議の外で)</summary>
+    public static void End(PlayerControl pc)
+    {
+        if (pc != null) Return(pc.PlayerId, forMeeting: false);
+    }
+
+    /// <summary>電文は送らずに幽霊の記録だけ消す (試合の終わり際など)。ホストの画面で隠した姿は戻す</summary>
+    public static void Forget(PlayerControl pc)
+    {
+        if (pc == null || !ghosts.Remove(pc.PlayerId, out var e)) return;
+        if (e.HideFromSelf) RestoreHostVisibility(pc);
+    }
 
     /// <summary>幽霊でいる残りの秒 (切り上げ)。幽霊でなければ 0</summary>
     public static int RemainingSeconds(byte playerId)
@@ -84,8 +120,11 @@ public static class TempGhost
     /// <summary>
     /// duration 秒だけ幽霊にする。なれたら true。onReturned は会議以外で戻った後に呼ぶ (キルのクールの立て直しなど)。
     /// ignoreVent は、ベントから押し出した直後に呼ぶ時に使う (押し出された客は出ても、ホストの手元では inVent が立ったまま残る)。
+    /// hideFromSelf は、本人の画面の役職は替えず、ほかの人の画面でだけ幽霊にする (本人は自分の役職のボタンを使え、壁にも当たる)。
+    /// その時は本人の画面で押せるキルなどを止め役 onInterrupt へ回す (<see cref="TryInterrupt"/>)。
     /// </summary>
-    public static bool Begin(PlayerControl pc, float duration, Action<PlayerControl> onReturned = null, bool ignoreVent = false)
+    public static bool Begin(PlayerControl pc, float duration, Action<PlayerControl> onReturned = null, bool ignoreVent = false,
+        bool hideFromSelf = false, Action onInterrupt = null)
     {
         if (BlockReason(pc, !ignoreVent) is { } reason)
         {
@@ -99,14 +138,25 @@ public static class TempGhost
             EndAt = Time.realtimeSinceStartup + duration,
             ShownSeconds = -1,
             OnReturned = onReturned,
+            HideFromSelf = hideFromSelf,
+            OnInterrupt = onInterrupt,
         };
         // 見る人ごとに 1 本ずつ (守護天使は表に記録されない)
         foreach (var seer in Main.AllPlayerControls)
         {
+            if (hideFromSelf && (seer == pc || seer.AmOwner)) continue;
             try { RoleView.Send(pc, seer, RoleTypes.GuardianAngel); }
             catch (Exception ex) { Logger.Exception(ex, "TempGhost"); }
         }
         Revive.BeginSettling();
+        if (hideFromSelf)
+        {
+            // ホストの手元で守護天使にすると、ホストの PlayerInfo の IsDead が立ち、次の PlayerInfo の送り (ペットを外すなど) で
+            // 本人の画面にも届いて、本人が幽霊の姿のまま戻らなくなる。ホストの画面では姿を隠すだけにする
+            HideOnHost(pc, true);
+            Utils.NotifyRoles(SpecifySeer: pc);
+            return true;
+        }
 
         int gen = generation;
         // 守護のボタンのクールダウンを掛け直す (役職の設定で 900 秒にしてある)
@@ -132,19 +182,78 @@ public static class TempGhost
     {
         if (!ghosts.Remove(playerId, out var entry)) return;
         var pc = Utils.GetPlayerById(playerId);
-        if (pc == null || pc.Data == null || pc.Data.Disconnected || !pc.IsAlive()) return;
+        if (pc == null || pc.Data == null || pc.Data.Disconnected || !pc.IsAlive())
+        {
+            if (entry.HideFromSelf) RestoreHostVisibility(pc);
+            return;
+        }
         Logger.Info($"幽霊から戻る: {pc.GetNameWithRole()}{(forMeeting ? " (会議の前)" : "")}", "TempGhost");
 
-        RoleView.Replay(pc);
+        // 幽霊の間はベントに入れない (本人の画面だけ生きている人も、入ろうとすると押し出す) ので、
+        // ホストの手元に残った inVent (ベントから押し出した客で残ることがある) を下ろす。
+        // 立ったままだとキルの対象にならず (CheckMurderPatch)、次に幽霊にもなれず、ホストの画面で隠した姿も戻せない
+        if (pc.inVent) pc.inVent = false;
+        ReplayLiving(pc, entry.HideFromSelf);
         RestoreHostView(pc);
         Revive.BeginSettling();
-        // 幽霊の間はベントに入れないので、ホストの手元に残った inVent (ベントから押し出した客で残ることがある) を下ろす。
-        // 立ったままだとキルの対象にならない (CheckMurderPatch)
-        if (pc.inVent) pc.inVent = false;
+        if (entry.HideFromSelf)
+        {
+            // 本人の画面の役職は替えていないので、クールの立て直しは要らない
+            if (forMeeting) return;
+            try { entry.OnReturned?.Invoke(pc); }
+            catch (Exception ex) { Logger.Exception(ex, "TempGhost"); }
+            Utils.NotifyRoles(SpecifySeer: pc);
+            return;
+        }
         if (forMeeting) return;
 
         BringInside(pc);
         AfterReturn(pc, entry, generation, AfterReturnPolls);
+    }
+
+    /// <summary>生きている時の見え方を送り直す。hideFromSelf なら本人とホストの画面へは送らない (替えていない)</summary>
+    private static void ReplayLiving(PlayerControl pc, bool hideFromSelf)
+    {
+        if (!hideFromSelf)
+        {
+            RoleView.Replay(pc);
+            return;
+        }
+        RestoreHostVisibility(pc);
+        foreach (var seer in Main.AllPlayerControls)
+        {
+            if (seer == pc || seer.AmOwner) continue;
+            try { RoleView.Send(pc, seer, RoleView.Living(pc, seer)); }
+            catch (Exception ex) { Logger.Exception(ex, "TempGhost"); }
+        }
+    }
+
+    /// <summary>ホストの画面でだけ、その人の姿を隠す (ホスト自身なら何もしない)</summary>
+    private static void HideOnHost(PlayerControl pc, bool hide)
+    {
+        if (!hide)
+        {
+            RestoreHostVisibility(pc);
+            return;
+        }
+        if (pc == null || pc.AmOwner) return;
+        try { pc.Visible = false; }
+        catch (Exception ex) { Logger.Exception(ex, "TempGhost"); }
+    }
+
+    /// <summary>
+    /// ホストの画面で隠した姿を、本編と同じ見え方に戻す。生きていてベントの外なら見せ、
+    /// 隠している間に死んでいたら、ホストも死んでいる時だけ見せる (本編では生きている人に幽霊は見えない)
+    /// </summary>
+    private static void RestoreHostVisibility(PlayerControl pc)
+    {
+        if (pc == null || pc.AmOwner || pc.Data == null) return;
+        try
+        {
+            bool dead = pc.Data.IsDead || !pc.IsAlive();
+            pc.Visible = dead ? PlayerControl.LocalPlayer?.Data?.IsDead == true : !pc.inVent;
+        }
+        catch (Exception ex) { Logger.Exception(ex, "TempGhost"); }
     }
 
     /// <summary>
@@ -244,8 +353,11 @@ public static class TempGhost
             // 通報を通らずに開いた会議: 会議の間は送らず、会議明けに戻す
             if (ghosts.Count != 0)
             {
-                foreach (var id in ghosts.Keys)
+                foreach (var (id, e) in ghosts)
+                {
                     if (!returnAfterMeeting.Contains(id)) returnAfterMeeting.Add(id);
+                    if (e.HideFromSelf) hiddenFromSelfAfterMeeting.Add(id);
+                }
                 ghosts.Clear();
             }
             return;
@@ -264,6 +376,7 @@ public static class TempGhost
             // 抜けた・本当に死んだ (死ねば本編の幽霊になるので戻さない)
             if (pc == null || pc.Data == null || pc.Data.Disconnected || !pc.IsAlive())
             {
+                if (entry.HideFromSelf) RestoreHostVisibility(pc);
                 scratch.Add(id);
                 continue;
             }
@@ -272,6 +385,8 @@ public static class TempGhost
                 scratch.Add(id);
                 continue;
             }
+            // ホストの画面で隠した姿は、本編がベントの出入りなどで出し直すので、隠し続ける
+            if (entry.HideFromSelf && !pc.AmOwner) pc.Visible = false;
             // 残りの秒が変わった時だけ、本人の名前の下の秒読みを書き直す
             int shown = CeilSeconds(entry.EndAt - now);
             if (shown != entry.ShownSeconds)
@@ -290,19 +405,25 @@ public static class TempGhost
     private static void ScheduleReturnAfterMeeting()
     {
         var ids = returnAfterMeeting.ToArray();
+        var hidden = new HashSet<byte>(hiddenFromSelfAfterMeeting);
         int gen = generation;
         _ = new LateTask(() =>
         {
             // 暗転対策が客の画面の役職を戻し終えるまで待つ (先に送ると身代わりを上書きする)
             if (gen == generation && GameStates.IsInTask && AntiBlackout.IsRevertPending) { ScheduleReturnAfterMeeting(); return; }
             returnAfterMeeting.Clear();
+            hiddenFromSelfAfterMeeting.Clear();
             if (gen != generation || !GameStates.IsInTask) return;
             foreach (var id in ids)
             {
                 var pc = Utils.GetPlayerById(id);
-                if (pc == null || pc.Data == null || pc.Data.Disconnected || !pc.IsAlive()) continue;
+                if (pc == null || pc.Data == null || pc.Data.Disconnected || !pc.IsAlive())
+                {
+                    if (hidden.Contains(id)) RestoreHostVisibility(pc);
+                    continue;
+                }
                 Logger.Info($"会議を持ち越した幽霊を戻す: {pc.GetNameWithRole()}", "TempGhost");
-                RoleView.Replay(pc);
+                ReplayLiving(pc, hidden.Contains(id));
                 RestoreHostView(pc);
                 // 本編の客は幽霊の間にペットを外している。PlayerInfo は SetRole の後に届くよう間を空けて付け直す
                 _ = new LateTask(() => PetAbility.EnsurePet(pc), AfterReturnPoll, "TempGhost_AfterMeetingPet");
