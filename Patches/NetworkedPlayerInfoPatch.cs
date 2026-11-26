@@ -29,6 +29,14 @@ class GameDataSerializePatch
             __result = false;
             return false;
         }
+        // バイタルで生きているように見せている死者は、全員への配りの代わりに人ごとに送り分ける
+        // (見る人へ本物が届くと、開いているバイタルが死亡のまま戻らない)
+        if (SerializeMessageCount == 0 && Modules.Net.VitalsMask.TrySplitBroadcast(__instance))
+        {
+            __instance.ClearDirtyBits();
+            __result = false;
+            return false;
+        }
         if (SerializeMessageCount > 0)
         {
             SendRealName(__instance);

@@ -12,7 +12,7 @@ namespace TownOfHostL.Modules.Net;
 // ホストの手元の値と他の客には何も変わらない (SeerCamouflage と同じく、書き出す間だけ替えてすぐ戻す)。
 // 同じ値で、見る人の画面ではその死者の幽霊が生きた体で見える (2026-11-26 実機)。そのため嘘を送るのはバイタルの台の近くにいる人だけにし、離れたら本物へ戻す。
 // どこでもバイタルを開ける科学者の型の役職には送らない (台の近くかどうかで絞れない)。
-// 本編のバイタルは開いている間に死亡へは変わるが生存へは戻らないので、本物が届いた時は同じフレームのうちに嘘を送り直す。
+// 本編のバイタルは開いている間に死亡へは変わるが生存へは戻らないので、全員への配りは見る人とほかの人で送り分ける。
 // 会議・試合の終わりの前には必ず本物へ戻す。
 public static class VitalsMask
 {
@@ -28,19 +28,37 @@ public static class VitalsMask
     // 自分で書き出している間 (Serialize の Postfix で送り直しの印を立てない)
     static bool writing;
     const float TickInterval = 0.1f;
+    // 役職の電文 (SetRole) を受けた客は手元で死者の IsDead を戻すので、見る人へは 1 秒ごとに掛け直す
+    // (2026-11-26 実機: 見る人の役職の付け替えで、PlayerInfo を送らないまま死亡に戻った)
+    const float KeepAliveInterval = 1f;
+    static float nextKeepAlive;
+    const float MinResendInterval = 0.2f;
+    static float nextResendAllowed;
+    // SendAllStreamedObjects の中 (全員への配りの最中)
+    static bool inStream;
     static float nextTick;
+    // 送れない間に頼まれた本物への戻し (見る人 → 死者)。送れるようになってから送る
+    static readonly Dictionary<byte, HashSet<byte>> pendingReal = new();
 
     public static bool HasAny => masked.Count > 0;
     public static bool IsMasked(byte playerId) => masked.Count > 0 && masked.ContainsKey(playerId);
+    /// <summary>この死者の書き込みが、嘘を受けている人のチャット欄に残るか (本編は生きている人の画面で死者の書き込みを隠すが、嘘の間は隠さない)</summary>
+    public static bool ShowsChatOf(byte playerId) => seers.Count > 0 && IsMasked(playerId);
+    /// <summary>試合中、嘘を受けている seer へ、嘘を出している死者 deadId の幽霊の役職を送り直さなくてよいか</summary>
+    public static bool SkipsGhostRoleFor(byte seerId, byte deadId) => seers.Count > 0 && GameStates.IsInTask && seers.Contains(seerId) && IsMasked(deadId);
 
     [GameModuleInitializer]
     public static void Init()
     {
         masked.Clear();
         seers.Clear();
+        pendingReal.Clear();
         resendPending = false;
         followUpAt = 0f;
         nextTick = 0f;
+        nextKeepAlive = 0f;
+        nextResendAllowed = 0f;
+        inStream = false;
     }
 
     /// <summary>死者 playerId を、duration 秒 (0 は次の会議まで) バイタルで生きているように見せる</summary>
@@ -60,10 +78,17 @@ public static class VitalsMask
         Logger.Info($"バイタルの嘘を全部戻す (死者 {masked.Count}・見る人 {seers.Count})", nameof(VitalsMask));
         var victims = new List<byte>(masked.Keys);
         masked.Clear();
-        // 暗転対策の退避中は IsDead が偽りの値なので送らない (退避を戻す時に全員の PlayerInfo が配られ、嘘も上書きされる)
-        if (CanSend())
-            foreach (var seerId in seers)
-                if (Utils.GetPlayerById(seerId) is { } seer) Send(seer, victims, fake: false);
+        // 送れない間 (暗転対策の退避中は IsDead が偽りの値) は預かり、送れるようになってから送る
+        var canSend = CanSend();
+        foreach (var seerId in seers)
+        {
+            if (!canSend)
+            {
+                if (!pendingReal.TryGetValue(seerId, out var set)) pendingReal[seerId] = set = new();
+                set.UnionWith(victims);
+            }
+            else if (Utils.GetPlayerById(seerId) is { } seer) Send(seer, victims, fake: false);
+        }
         seers.Clear();
         resendPending = false;
         followUpAt = 0f;
@@ -115,12 +140,18 @@ public static class VitalsMask
     {
         public static void Postfix(PlayerControl __instance)
         {
-            if ((masked.Count == 0 && seers.Count == 0) || __instance != PlayerControl.LocalPlayer || !AmongUsClient.Instance.AmHost) return;
+            if ((masked.Count == 0 && seers.Count == 0 && pendingReal.Count == 0) || __instance != PlayerControl.LocalPlayer || !AmongUsClient.Instance.AmHost) return;
+            if (pendingReal.Count > 0) FlushPendingReal();
             var now = Time.time;
             if (followUpAt > 0f && now >= followUpAt)
             {
                 followUpAt = 0f;
                 // 追いの 1 回は、次の追いを立てない (立てると 0.3 秒ごとに送り続ける)
+                ResendAll(followUp: true);
+            }
+            if (seers.Count > 0 && now >= nextKeepAlive)
+            {
+                nextKeepAlive = now + KeepAliveInterval;
                 ResendAll(followUp: true);
             }
             if (resendPending) ResendAll();
@@ -177,8 +208,26 @@ public static class VitalsMask
         }
     }
 
+    static void FlushPendingReal()
+    {
+        // 試合の外 (終わった後・ロビー) では送らずに捨てる
+        if (!GameStates.IsInGame || GameData.Instance == null)
+        {
+            pendingReal.Clear();
+            return;
+        }
+        if (!CanSend()) return;
+        foreach (var (seerId, set) in pendingReal)
+            if (Utils.GetPlayerById(seerId) is { } seer) Send(seer, new List<byte>(set), fake: false);
+        pendingReal.Clear();
+    }
+
     static void ResendAll(bool followUp = false)
     {
+        // 宛先指定の書き出しが続いても、見る人へは 0.2 秒に 1 回までにする (残りは次に回す)
+        var now = Time.time;
+        if (!followUp && now < nextResendAllowed) return;
+        nextResendAllowed = now + MinResendInterval;
         resendPending = false;
         if (masked.Count == 0 || seers.Count == 0 || !GameStates.IsInTask || !CanSend()) return;
         var victims = new List<byte>(masked.Keys);
@@ -188,15 +237,15 @@ public static class VitalsMask
     }
 
     // 1 人分の失敗で、残りの見る人への戻し (会議の前には必ず本物へ戻す) を止めない
-    static void Send(PlayerControl seer, List<byte> victims, bool fake)
+    static bool Send(PlayerControl seer, List<byte> victims, bool fake)
     {
-        try { SendTo(seer, victims, fake); }
-        catch (System.Exception ex) { Logger.Exception(ex, nameof(VitalsMask)); }
+        try { return SendTo(seer, victims, fake); }
+        catch (System.Exception ex) { Logger.Exception(ex, nameof(VitalsMask)); return false; }
     }
 
-    static void SendTo(PlayerControl seer, List<byte> victims, bool fake)
+    static bool SendTo(PlayerControl seer, List<byte> victims, bool fake)
     {
-        if (victims.Count == 0 || seer.AmOwner || seer.LacksClient(nameof(VitalsMask))) return;
+        if (victims.Count == 0 || seer.AmOwner || seer.LacksClient(nameof(VitalsMask))) return false;
         var writer = MessageWriter.Get(SendOption.Reliable);
         try
         {
@@ -212,7 +261,9 @@ public static class VitalsMask
                 written++;
             }
             writer.EndMessage();
-            if (written > 0) AmongUsClient.Instance.SendOrDisconnect(writer);
+            if (written == 0) return false;
+            AmongUsClient.Instance.SendOrDisconnect(writer);
+            return true;
         }
         finally { writer.Recycle(); }
     }
@@ -241,7 +292,28 @@ public static class VitalsMask
         }
     }
 
-    // 嘘を出している死者の本物の PlayerInfo が、誰か (全員・宛先指定のどちらも) へ書き出された
+    /// <summary>
+    /// 嘘を出している死者の PlayerInfo を全員へ配る代わりに、見る人には嘘・ほかの人には本物を人ごとに送る。
+    /// 送り分けたら true (呼び元は全員への配りを止める)。本編のバイタルは開いている間に死亡へ変わると生存へ戻らないので、
+    /// 本物を届けてから送り直すのでは間に合わない (2026-11-26 実機・30 ミリ秒後の送り直しでも死亡のまま)
+    /// </summary>
+    public static bool TrySplitBroadcast(NetworkedPlayerInfo data)
+    {
+        // 全員への配り (SendAllStreamedObjects の中) だけを送り分ける。自前の書き出し先へ直接 Serialize する所を止めると、中身の無い Data になる
+        if (!inStream || writing || seers.Count == 0 || data == null || data.DirtyBits == 0 || !IsMasked(data.PlayerId)
+            || !AmongUsClient.Instance.AmHost || !GameStates.IsInTask || !CanSend()) return false;
+        var one = new List<byte> { data.PlayerId };
+        var sent = 0;
+        foreach (var pc in Main.AllPlayerControls)
+        {
+            if (pc.AmOwner || pc.Data == null || pc.Data.Disconnected) continue;
+            if (Send(pc, one, fake: seers.Contains(pc.PlayerId))) sent++;
+        }
+        // 誰にも送れなかった時は、全員への配りに任せる (更新を落とさない)
+        return sent > 0;
+    }
+
+    // 嘘を出している死者の本物の PlayerInfo が、宛先指定で誰かへ書き出された (全員への配りは上で送り分ける)
     [HarmonyPatch(typeof(NetworkedPlayerInfo), nameof(NetworkedPlayerInfo.Serialize))]
     static class SerializePatch
     {
@@ -252,12 +324,14 @@ public static class VitalsMask
         }
     }
 
-    // 全員への PlayerInfo は SendAllStreamedObjects の中で書かれる。同じフレームのうちに見る人へ嘘を送り直す
+    // 宛先指定の書き出しの後、同じフレームのうちに見る人へ嘘を送り直す
     [HarmonyPatch(typeof(InnerNet.InnerNetClient), nameof(InnerNet.InnerNetClient.SendAllStreamedObjects))]
     static class AfterStreamPatch
     {
+        public static void Prefix() => inStream = true;
         public static void Postfix()
         {
+            inStream = false;
             if (resendPending && AmongUsClient.Instance.AmHost) ResendAll();
         }
     }

@@ -194,6 +194,9 @@ public static partial class AntiBlackout
             {
                 bool fill = lacking > 0;
                 if (!fill && selfKiller) continue;
+                // バイタルで生きているように見せている死者の幽霊の役職は、嘘を受けている人へは送り直さない
+                // (その画面では死んだ時に幽霊の役職になっている。送り直すと手元で死亡に戻り、開いているバイタルが死亡のまま戻らない)
+                if (!fill && Modules.Net.VitalsMask.SkipsGhostRoleFor(pc.PlayerId, dead.PlayerId)) continue;
                 if (fill)
                 {
                     lacking--;
