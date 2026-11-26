@@ -216,7 +216,8 @@ public static class HamoCommands
             return;
         }
         var reporter = c.Player != null && c.Player.IsAlive() ? c.Player : Main.AllAlivePlayerControls.FirstOrDefault();
-        reporter?.ReportDeadBodyForced(null);
+        // 一時的な幽霊・鬼の体を戻してから開く経路を通す
+        reporter?.NoCheckStartMeeting(null);
     }
 
     static void ReviveCommand(ChatCommandContext c)

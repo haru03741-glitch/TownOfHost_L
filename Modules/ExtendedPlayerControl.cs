@@ -632,19 +632,31 @@ static partial class ExtendedPlayerControl
     public static void NoCheckStartMeeting(this PlayerControl reporter, NetworkedPlayerInfo target)
     { /*サボタージュ中でも関係なしに会議を起こせるメソッド
         targetがnullの場合はボタンとなる*/
-        // 鬼の体は会議の前に外し、外す SetRole が落ち着いてから会議を開く (本編の客は SetRole の直後の会議で画面が壊れる)
-        if (AmongUsClient.Instance.AmHost && SeekerBody.Active)
+        // 鬼の体と一時的な幽霊は会議の前に戻し、戻す SetRole が落ち着いてから会議を開く
+        // (本編の客は SetRole の直後の会議で画面が壊れる。幽霊のまま開くと、会議の間ほかの人の画面で死んだ印が付く)
+        if (AmongUsClient.Instance.AmHost)
         {
-            SeekerBody.ReleaseAllForMeeting();
-            _ = new LateTask(() =>
+            bool hold = false;
+            if (SeekerBody.Active) { SeekerBody.ReleaseAllForMeeting(); hold = true; }
+            if (TempGhost.ReturnAllForMeeting()) hold = true;
+            if (hold)
             {
-                if (reporter == null || GameStates.IsMeeting || !GameStates.IsInGame) return;
-                reporter.NoCheckStartMeeting(target);
-            }, Revive.SettleTime + 0.1f, "SeekerBody hold meeting");
-            return;
+                _ = new LateTask(() =>
+                {
+                    if (reporter == null || GameStates.IsMeeting || !GameStates.IsInGame) return;
+                    reporter.NoCheckStartMeeting(target);
+                }, Revive.SettleTime + 0.1f, "SeekerBody hold meeting");
+                return;
+            }
         }
         // ベントに閉じ込めた人も会議の前に出す
         if (AmongUsClient.Instance.AmHost) VentCage.ReleaseAllForMeeting();
+        // 通報の処理を通らないので、会議用の名前 (能力の秒読みなどを外した物) をここで送る
+        if (AmongUsClient.Instance.AmHost)
+        {
+            try { Utils.NotifyRoles(isForMeeting: true, NoCache: true); }
+            catch (Exception ex) { Logger.Exception(ex, "NoCheckStartMeeting"); }
+        }
         MeetingRoomManager.Instance.AssignSelf(reporter, target);
         DestroyableSingleton<HudManager>.Instance.OpenMeetingRoom(reporter);
         reporter.RpcStartMeeting(target);

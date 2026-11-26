@@ -68,7 +68,8 @@ public sealed class Nimrod : RoleBase
                 }
                 else
                 {
-                    Exiled.Object.ReportDeadBodyForced(null);
+                    // 一時的な幽霊・鬼の体を戻してから開く経路を通す
+                    Exiled.Object.NoCheckStartMeeting(null);
                 }
             }
         }, 14.5f, "NimrodExiled");
