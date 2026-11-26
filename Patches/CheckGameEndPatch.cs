@@ -110,6 +110,9 @@ namespace TownOfHostL
             // サーバー側のパケットサイズ制限によりCustomRpcSenderが利用できないため，遅延を挟むことで順番の整合性を保つ．
 
             // バニラ画面でのアウトロを正しくするためのゴーストロール化
+            // バイタルの嘘を本物へ戻してから終わりの送信を始める
+            try { Modules.Net.VitalsMask.EndAll(); }
+            catch (System.Exception ex) { Logger.Exception(ex, "CoEndGame.VitalsMask"); }
             List<byte> ReviveRequiredPlayerIds = new();
             var winner = CustomWinnerHolder.WinnerTeam;
             foreach (var pc in Main.AllPlayerControls)
