@@ -124,9 +124,24 @@ public sealed class GrudgeSheriff : RoleBase
         Player.AddVentSelect();
     }
 
+    // 最後に送った設定で撃てたか
+    bool lastUsable;
     public override void ApplyGameOptions(IGameOptions opt)
     {
-        AURoleOptions.EngineerCooldown = CanUseKillButton() ? (IsCoolTimeOn ? KillCooldown : 0f) : 255f;
+        bool usable = CanUseKillButton();
+        // 撃てない間はベントの待ち時間を 255 秒にしてあり、客の手元ではそれを数え続けている。
+        // 試合中に撃てるようになった (タスクの数が届いた・最初の死者が出た) 時は、いま送る設定が届いてから数え直す。
+        // 会議の間に変わった分は、会議明けに本編が数え直す
+        if (usable && !lastUsable && GameStates.IsInTask)
+        {
+            var self = Player;
+            _ = new LateTask(() =>
+            {
+                if (self != null && self.IsAlive()) self.RpcResetAbilityCooldown();
+            }, 0.2f, "GrudgeSheriff.Unlock");
+        }
+        lastUsable = usable;
+        AURoleOptions.EngineerCooldown = usable ? (IsCoolTimeOn ? KillCooldown : 0f) : 255f;
         AURoleOptions.EngineerInVentMaxTime = 1f;
     }
     public bool CanUseKillButton()
