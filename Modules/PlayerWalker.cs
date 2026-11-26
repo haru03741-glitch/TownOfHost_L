@@ -16,7 +16,7 @@ namespace TownOfHostL.Modules;
 /// </summary>
 public static class PlayerWalker
 {
-    // 同じ人へ送る間隔の下限。1 回に CancelPet と Pet の 2 通を全員へ送るので、秒に 8 通までにする
+    // 同じ人へ送る間隔の下限 (1 回に CancelPet と Pet の 2 通を全員へ送る)
     private const float MinInterval = 0.25f;
     // 行き先までに当たる物がある時は、その手前この距離で止める
     private const float WallMargin = 0.1f;
@@ -25,14 +25,29 @@ public static class PlayerWalker
     // 足元の円の半径 (人の当たりより少し細く: 接している面を数えない)
     private const float FootRadius = 0.15f;
 
+    // 全員分の合計で、直近 1 秒に送る電文の上限。公式サーバーは同じ種類の Reliable を毎秒 10 本なら続けても切らず、
+    // 毎秒 15 本を 2 秒続けると切った。操る人が何人いても、他の送信の分を残してこの本数に抑える (区切りの境目で倍にならないよう、滑る窓で数える)
+    private const int MaxPerSecond = 8;
+
     private static readonly Dictionary<byte, float> lastSentAt = new();
     private static readonly HashSet<byte> walking = new();
+    private static readonly Queue<float> sentTimes = new();
 
     [GameModuleInitializer]
     public static void Init()
     {
         lastSentAt.Clear();
         walking.Clear();
+        sentTimes.Clear();
+    }
+
+    // 直近 1 秒の送信の本数に count を足しても上限を超えないか。超えないなら数えて true
+    private static bool TakeBudget(int count, float now)
+    {
+        while (sentTimes.Count > 0 && now - sentTimes.Peek() >= 1f) sentTimes.Dequeue();
+        if (sentTimes.Count + count > MaxPerSecond) return false;
+        for (int i = 0; i < count; i++) sentTimes.Enqueue(now);
+        return true;
     }
 
     public static bool IsWalking(byte playerId) => walking.Contains(playerId);
@@ -65,6 +80,7 @@ public static class PlayerWalker
         var from = pc.GetTruePosition();
         var to = ClampToWall(pc, from, target);
         if ((to - from).sqrMagnitude < MinStep * MinStep) return false;
+        if (!pc.AmOwner && !TakeBudget(2, now)) return false;
 
         lastSentAt[pc.PlayerId] = now;
         walking.Add(pc.PlayerId);
@@ -72,8 +88,13 @@ public static class PlayerWalker
         var petPos = to + (to - from).normalized * 0.5f;
         if (pc.AmOwner)
         {
-            pc.MyPhysics.CancelPet();
-            pc.MyPhysics.PetPet(to, petPos);
+            // ホスト自身は電文を経ずに本編の受け口を手元で呼ぶ (本編の更新で形が変わっても他の処理を止めない)
+            try
+            {
+                pc.MyPhysics.CancelPet();
+                pc.MyPhysics.PetPet(to, petPos);
+            }
+            catch (System.Exception ex) { Logger.Exception(ex, nameof(PlayerWalker)); }
             return true;
         }
         SendCancel(pc);
@@ -90,11 +111,18 @@ public static class PlayerWalker
         if (pc == null || !walking.Remove(pc.PlayerId)) return;
         lastSentAt.Remove(pc.PlayerId);
         if (!AmongUsClient.Instance.AmHost || pc.Data == null || pc.Data.Disconnected) return;
+        // 試合の終わり際は送らない (相手の歩きは次の試合に持ち越されない)
+        if (AmongUsClient.Instance.IsGameOver || GameEndChecker.EndingStarted) return;
         if (pc.AmOwner)
         {
-            pc.MyPhysics.CancelPet();
+            try { pc.MyPhysics.CancelPet(); }
+            catch (System.Exception ex) { Logger.Exception(ex, nameof(PlayerWalker)); }
             return;
         }
+        // 止める電文は本数の上限を待たずに送る (止め損ねると相手が動けないままになる)。本数には数える
+        float now = Time.realtimeSinceStartup;
+        TakeBudget(0, now);
+        sentTimes.Enqueue(now);
         SendCancel(pc);
     }
 
@@ -108,6 +136,7 @@ public static class PlayerWalker
 
     private static void SendCancel(PlayerControl pc)
     {
+        if (pc.MyPhysics == null) return;
         var writer = AmongUsClient.Instance.StartRpcImmediately(pc.MyPhysics.NetId, (byte)RpcCalls.CancelPet, SendOption.Reliable, -1);
         AmongUsClient.Instance.FinishRpcImmediately(writer);
     }

@@ -28,7 +28,6 @@ public sealed class Dollmaster : RoleBase, IImpostor
     {
         cooldown = OptionCooldown.GetFloat();
         duration = OptionDuration.GetFloat();
-        CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
     }
 
     private static OptionItem OptionCooldown;
@@ -62,10 +61,13 @@ public sealed class Dollmaster : RoleBase, IImpostor
             .SetValueFormat(OptionFormat.Seconds);
     }
 
+    public override void Add() => CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
+
     public override void OnDestroy()
     {
         CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
-        Release(send: true);
+        // 試合の終わりの後始末では送らない (相手の歩きは次の試合に持ち越されず、相手が先に壊れていることもある)
+        Release(send: GameStates.IsInTask && !GameEndChecker.EndingStarted);
     }
 
     public override void ApplyGameOptions(IGameOptions opt)
@@ -80,7 +82,8 @@ public sealed class Dollmaster : RoleBase, IImpostor
     {
         animate = false;
         if (!Player.IsAlive() || puppet != null || Is(target) || !target.IsAlive()) return false;
-        if (PlayerWalker.BlockReason(target) is { } reason)
+        // ほかの人形使いが操っている人は選べない (後から終わった方の止めが、もう片方の歩きまで止めるため)
+        if ((PlayerWalker.IsWalking(target.PlayerId) ? "walking" : PlayerWalker.BlockReason(target)) is { } reason)
         {
             Logger.Info($"{Player.GetNameWithRole()} → {target.GetNameWithRole()}: 操れない ({reason})", nameof(Dollmaster));
             var showing = failNoticeUntil > 0f;
