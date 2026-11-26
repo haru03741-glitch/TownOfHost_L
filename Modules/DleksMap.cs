@@ -133,30 +133,44 @@ public static class DleksMap
     }
 
     // ホストの手元は MapId 3 でもスケルドの船 (SkeldShip) を出してしまい、客だけが反転した船 (AprilShip) を出して位置が全部ずれる。
-    // ホストが出す船は、試合を始めるホストのコルーチンの中で AprilFoolsMode.ShouldFlipSkeld を見て決まるので、その間だけ true を返す。
-    // ShouldFlipSkeld は他の所でも呼ばれ、ずっと true にすると、メニューの立ち上げが終わらずログインできない・ホストの画面で人が
-    // 縦に伸びる・ホストのタスクの判定が毎フレーム例外を出す (どれも 2026-11-26 実機)
-    static bool inHostStart;
-
+    // 試合を始めるホストのコルーチンの 1 歩目は、MapId が 3 でも AprilFoolsMode.ShouldFlipSkeld が false なら 0 に直してから
+    // ShipPrefabs[id] を読み込むので、その 1 歩の間だけ手元の ShipPrefabs の 0 と 3 を入れ替えて、反転した船を読ませる。
+    // ShouldFlipSkeld に後置を付けてはいけない: 本編の DLL では「false を返すだけ」の関数が 1 つの機械語に畳まれていて
+    // (ImpostorRole.IsDead・ShouldLongAround なども同じ番地)、後置がその全部に効く。付けた役職が全部「死んだ役職」になり
+    // かくれんぼでは配役の直後に全員が死ぬ・人が縦に伸びる・タスクの判定が例外を出す (どれも 2026-11-26 実機)
     [HarmonyPatch(typeof(AmongUsClient._CoStartGameHost_d__28), nameof(AmongUsClient._CoStartGameHost_d__28.MoveNext))]
     static class HostStartPatch
     {
-        static void Prefix() => inHostStart = true;
-        static void Finalizer() => inHostStart = false;
-    }
+        static bool swapped;
 
-    [HarmonyPatch(typeof(AprilFoolsMode), nameof(AprilFoolsMode.ShouldFlipSkeld))]
-    static class ShouldFlipSkeldPatch
-    {
-        static void Postfix(ref bool __result)
+        static void Prefix(AmongUsClient._CoStartGameHost_d__28 __instance)
         {
-            if (__result || !inHostStart) return;
             try
             {
+                if (__instance.__1__state != 0) return;
                 var o = Opts;
-                if (o != null && o.MapId == MapId) __result = true;
+                if (o == null || o.MapId != MapId) return;
+                swapped = Swap();
+                if (swapped) Logger.Info("ホストの船に反転スケルドを読ませる", nameof(DleksMap));
             }
-            catch { }
+            catch (Exception ex) { Logger.Error($"ホストの船の差し替えに失敗: {ex.Message}", nameof(DleksMap)); }
+        }
+
+        static void Finalizer()
+        {
+            if (!swapped) return;
+            swapped = false;
+            try { Swap(); } catch (Exception ex) { Logger.Error($"ShipPrefabs の戻しに失敗: {ex.Message}", nameof(DleksMap)); }
+        }
+
+        static bool Swap()
+        {
+            var list = AmongUsClient.Instance ? AmongUsClient.Instance.ShipPrefabs : null;
+            if (list == null || list.Count <= MapId) return false;
+            var skeld = list[0];
+            list[0] = list[MapId];
+            list[MapId] = skeld;
+            return true;
         }
     }
 
