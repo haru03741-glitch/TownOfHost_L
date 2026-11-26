@@ -55,7 +55,9 @@ namespace TownOfHostL
         {
             if (Tasks.Count == 0) return;
             bool anyDone = false;
-            // 走らせた処理が新しい LateTask を作ると Tasks が伸びる。伸びた分も同じフレームで数える
+            // 走らせた処理が新しい LateTask を作ると Tasks が伸びる。伸びた分も同じフレームで見るが、作られる前の時間は引かない
+            // (引くと、待ちが 1 フレームの長さ以下の「終わったらまた自分を作る」処理が、同じフレームの中で終わらなくなる)
+            int existing = Tasks.Count;
             for (int i = 0; i < Tasks.Count; i++)
             {
                 var task = Tasks[i];
@@ -69,7 +71,7 @@ namespace TownOfHostL
                 }
                 try
                 {
-                    if (task.Run(deltaTime))
+                    if (task.Run(i < existing ? deltaTime : 0f))
                     {
                         if (task.name != "")
                             Log.Info("LateTask", $"\"{task.name}\" is finished");
