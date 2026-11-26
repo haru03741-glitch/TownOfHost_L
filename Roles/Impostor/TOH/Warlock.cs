@@ -75,7 +75,8 @@ public sealed class Warlock : RoleBase, IImpostor
                 CursedPlayer = target;
                 //呪える相手は一人だけなのでキルボタン無効化
                 killer.SetKillCooldown(255f);
-                killer.RpcResetAbilityCooldown();
+                // 変身のクールを 1 秒にした設定が届いてから数え直す
+                killer.RpcResetAbilityCooldown(sync: true);
             }
             //どちらにしてもキルは無効
             info.DoKill = false;
@@ -119,8 +120,7 @@ public sealed class Warlock : RoleBase, IImpostor
             {
                 //ShapeshifterCooldownを通常に戻す
                 IsCursed = false;
-                Player.SyncSettings();
-                Player.RpcResetAbilityCooldown();
+                Player.RpcResetAbilityCooldown(sync: true);
             }
         }
     }

@@ -137,8 +137,7 @@ static class CatPlayer
         {
             CanVent[pc.PlayerId] = true;
             Logger.Info($"CanVent[{pc.GetRealName()}] : true", "OnCompleteTask");
-            pc.MarkDirtySettings();
-            pc.RpcResetAbilityCooldown();
+            pc.RpcResetAbilityCooldown(sync: true);
             IsSet[pc.PlayerId][2] = true;
         }
 

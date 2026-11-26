@@ -121,9 +121,9 @@ public sealed class Dollmaster : RoleBase, IImpostor
         nextStepAt = 0f;
         shownSeconds = -1;
         Logger.Info($"{Player.GetNameWithRole()} → {target.GetNameWithRole()}: {duration} 秒操る", nameof(Dollmaster));
-        // 操っている間は押し直せるよう、待ち時間を短くしてから測り直す
-        if (CanAct) Player.SyncSettings();
-        Player.RpcResetAbilityCooldown();
+        // 操っている間は押し直せるよう、待ち時間を短くしてから測り直す。
+        // 本編の客は設定より先に測り直しが届くと古い待ち時間で数えるので、設定が届いてから測り直す
+        Player.RpcResetAbilityCooldown(sync: CanAct);
         Utils.NotifyRoles(SpecifySeer: target);
         return false;
     }
@@ -232,10 +232,7 @@ public sealed class Dollmaster : RoleBase, IImpostor
         else PlayerWalker.Forget(target);
         // 押し直しのための短い待ち時間を元に戻し、ここから待ち時間を数える
         if (send && CanAct && Player != null && Player.IsAlive())
-        {
-            Player.SyncSettings();
-            Player.RpcResetAbilityCooldown();
-        }
+            Player.RpcResetAbilityCooldown(sync: true);
         Logger.Info($"{Player?.GetNameWithRole()} → {target.GetNameWithRole()}: 操るのをやめた", nameof(Dollmaster));
         if (send)
         {

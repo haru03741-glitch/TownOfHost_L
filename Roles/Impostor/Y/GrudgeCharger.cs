@@ -146,11 +146,16 @@ public sealed class GrudgeCharger : RoleBase, IImpostor
                 Utils.NotifyRoles(SpecifySeer: Player);
             }
 
+            // クール 0 の設定を送り、それが届いてから数え直す。数え直すまで killThisTurn を立てておく
+            // (間に別の設定の送りが入っても 0 のまま送る)
             killThisTurn = true;
-            // 印だけ立てると、送る時には killThisTurn が戻っているので、ここで送る
             Player.SyncSettings();
-            Player.RpcResetAbilityCooldown();
-            killThisTurn = false;
+            var self = Player;
+            _ = new LateTask(() =>
+            {
+                killThisTurn = false;
+                if (self != null && self.IsAlive()) self.RpcResetAbilityCooldown();
+            }, 0.2f, "GrudgeCharger.ResetAfterKill");
         }
     }
 

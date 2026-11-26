@@ -166,8 +166,7 @@ public sealed class EvilTracker : RoleBase, IImpostor, IKillFlashSeeable, ISidek
         {
             RemoveTarget();
         }
-        Player.SyncSettings();
-        Player.RpcResetAbilityCooldown();
+        Player.RpcResetAbilityCooldown(sync: true);
     }
 
     // 表示系の関数群

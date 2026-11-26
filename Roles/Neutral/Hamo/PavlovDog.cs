@@ -390,9 +390,7 @@ public abstract class PavlovDogBase : RoleBase, IKiller, IAdditionalWinner, ISch
     {
         if (!AmongUsClient.Instance.AmHost) return;
 
-        Player.MarkDirtySettings();
-        Player.SyncSettings();
-        Player.RpcResetAbilityCooldown();
+        Player.RpcResetAbilityCooldown(sync: true);
     }
 
     public override bool OnCheckShapeshift(PlayerControl target, ref bool shouldAnimate)

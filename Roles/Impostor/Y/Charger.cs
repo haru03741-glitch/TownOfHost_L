@@ -111,8 +111,7 @@ public sealed class Charger : RoleBase, IImpostor
     {
         if (AmongUsClient.Instance.IsGameOver) return;
         killThisTurn = false;
-        Player.SyncSettings();
-        Player.RpcResetAbilityCooldown();
+        Player.RpcResetAbilityCooldown(sync: true);
     }
 
     public override bool OnCheckVanish(ref float killCooldown, ref bool canResetAbilityCooldown)

@@ -225,11 +225,10 @@ public sealed class Sage : RoleBase, IUsePetButton
 
         {
 
-            AURoleOptions.EngineerCooldown = BarrierCooldown;
-
-            Player.RpcResetAbilityCooldown();
-
+            // 送る設定のクールは cooldownTimer から作るので、先に戻してから、設定が届いた後に数え直す
             cooldownTimer = BarrierCooldown;
+
+            Player.RpcResetAbilityCooldown(sync: true);
 
         }
 
@@ -385,11 +384,9 @@ public sealed class Sage : RoleBase, IUsePetButton
 
 
 
-        AURoleOptions.EngineerCooldown = BarrierCooldown;
-
-        Player.RpcResetAbilityCooldown();
-
         cooldownTimer = BarrierCooldown;
+
+        Player.RpcResetAbilityCooldown(sync: true);
 
     }
 
