@@ -82,7 +82,7 @@ namespace TownOfHostL
             bool found = translateMaps.TryGetValue(str, out var dic);
             if (found && (!dic.TryGetValue((int)langId, out res) || res == "")) //strに該当する&無効なlangIdかresが空
             {
-                res = $"*{dic[0]}";
+                res = $"*{(dic.TryGetValue(0, out var en) ? en : "")}";
             }
             if (langId == SupportedLangs.Japanese)
             {
@@ -257,7 +257,12 @@ namespace TownOfHostL
             foreach (var title in translateMaps) sb.Append($"{title.Key}:\n");
             File.WriteAllText(@$"./{LANGUAGE_FOLDER_NAME}/template.dat", sb.ToString());
             sb.Clear();
-            foreach (var title in translateMaps) sb.Append($"{title.Key}:{title.Value[0].Replace("\n", "\\n").Replace("\r", "\\r")}\n");
+            // 英語の欄が空の行 (日本語だけの説明など) は、英語を空のまま書く。例外にすると下のカスタム翻訳が読まれない
+            foreach (var title in translateMaps)
+            {
+                var english = title.Value.TryGetValue(0, out var en) ? en : "";
+                sb.Append($"{title.Key}:{english.Replace("\n", "\\n").Replace("\r", "\\r")}\n");
+            }
             File.WriteAllText(@$"./{LANGUAGE_FOLDER_NAME}/template_English.dat", sb.ToString());
         }
         public static void ExportCustomTranslation()
