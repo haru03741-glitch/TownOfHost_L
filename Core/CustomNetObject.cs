@@ -386,7 +386,9 @@ public sealed class CustomNetObject
                 {
                     // 見た目をもう一度送ってから、位置を送り直す。本編の客は、体の初期化が終わった時に可視化で借りた人の姿を付ける。
                     // 客の画面が止まって可視化と最初の見た目を同じフレームで処理すると、初期化が見た目の後に走り、借りた人の姿のまま残る
-                    if (!inMeeting)
+                    // 会議中は見た目を送れないので、明けてから送る
+                    if (inMeeting) pendingSprite = Sprite;
+                    else
                     {
                         if (now < nextSpritePacketAt) return;
                         SendSprite(now, Sprite, bodyColorId, new[] { this }, first: null);
