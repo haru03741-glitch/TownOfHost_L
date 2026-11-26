@@ -36,6 +36,17 @@ namespace TownOfHostL.Modules
         // 最後に送った設定のバイト列。同じなら送らない。会議中に送った物は覚えない (会議の後に必ず送り直す)
         byte[] lastSent;
         bool skippedLastSend;
+        // 最後に送った設定の、能力のクールの長さ
+        float sentEngineerCooldown, sentShapeshifterCooldown, sentPhantomCooldown;
+
+        /// <summary>この人へ最後に送った設定の、その役職の能力のクールの長さ</summary>
+        public float SentAbilityCooldown(RoleTypes role) => role switch
+        {
+            RoleTypes.Engineer => sentEngineerCooldown,
+            RoleTypes.Shapeshifter => sentShapeshifterCooldown,
+            RoleTypes.Phantom => sentPhantomCooldown,
+            _ => 0f,
+        };
 
         public PlayerGameOptionsSender(PlayerControl player)
         {
@@ -51,6 +62,9 @@ namespace TownOfHostL.Modules
             if (player != null && Flashlight.IsHolding(player.PlayerId)) return;
             var opt = BuildGameOptions();
             if (opt == null) return;
+            sentEngineerCooldown = opt.GetFloat(FloatOptionNames.EngineerCooldown);
+            sentShapeshifterCooldown = opt.GetFloat(FloatOptionNames.ShapeshifterCooldown);
+            sentPhantomCooldown = opt.GetFloat(FloatOptionNames.PhantomCooldown);
             if (player.AmOwner)
             {
                 foreach (var com in GameManager.Instance.LogicComponents)
@@ -96,6 +110,47 @@ namespace TownOfHostL.Modules
         }
 
         public override string Describe() => player != null ? $"{player.PlayerId}" : "null";
+
+        /// <summary>この人の設定の送り手 (無ければ null)</summary>
+        public static PlayerGameOptionsSender Of(byte playerId)
+        {
+            foreach (var s in AllSenders)
+                if (s is PlayerGameOptionsSender ps && ps.player != null && ps.player.PlayerId == playerId) return ps;
+            return null;
+        }
+
+        /// <summary>
+        /// この人の今の設定を組み立て、tweak で書き換えた物をバイト列にする (送らない)。
+        /// ほかの電文と同じ包みに入れて、包みの途中でだけ効かせる設定に使う。書き出せなければ null
+        /// </summary>
+        public Il2CppStructArray<byte> BuildBytes(System.Action<IGameOptions> tweak = null)
+        {
+            var opt = BuildGameOptions();
+            if (opt == null) return null;
+            tweak?.Invoke(opt);
+            return Serialize(opt);
+        }
+
+        /// <summary>開いている GameData の包みへ、設定の更新を書く。書いた設定の更新の数を返す</summary>
+        public static int WriteOptions(MessageWriter writer, Il2CppStructArray<byte> optionArray)
+        {
+            int n = 0;
+            var components = GameManager.Instance.LogicComponents;
+            for (byte i = 0; i < components.Count; i++)
+            {
+                if (!components[i].TryCast<LogicOptions>(out _)) continue;
+                WriteOptionsData(writer, optionArray, i);
+                n++;
+            }
+            return n;
+        }
+
+        /// <summary>ほかの包みに入れて送った設定を、最後に送った物として覚える</summary>
+        public void NoteSent(Il2CppStructArray<byte> optionArray)
+        {
+            skippedLastSend = false;
+            OnSent(optionArray);
+        }
 
         public override void SendOptionsArray(Il2CppStructArray<byte> optionArray)
         {

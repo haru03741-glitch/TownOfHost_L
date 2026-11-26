@@ -166,6 +166,8 @@ public static partial class AntiBlackout
                     .Write(true)
                     .EndRpc();
                 count++;
+                // 本人へ届く役職は、客の手元で役職を作り直し、能力のクールを 0 にする
+                if (dummy.PlayerId == pc.PlayerId) AbilityCooldownClock.Clear(pc.PlayerId);
                 // デシンクの人の画面と、デシンクの役職・インポスターに差し替えた身代わり (会議明けの配り直しが見え方へ戻してしまう) は、演出の後で戻す。
                 // 本物のインポスターの身代わりは戻さない (戻すと、演出の締めがホストより遅れた客の画面で生存インポスターが 0 人になる)
                 if ((desync && pc.IsAlive()) || RoleView.IsDesync(dummy) || replaced)
@@ -296,6 +298,7 @@ public static partial class AntiBlackout
                         .Write(true)
                         .EndRpc();
                     count++;
+                    if (dummy.PlayerId == seer.PlayerId) AbilityCooldownClock.Clear(seer.PlayerId);
                 }
                 if (count > 0) { sender.EndMessage(); sender.SendMessage(); }
                 else sender.stream.Recycle();

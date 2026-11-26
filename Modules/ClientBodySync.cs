@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using AmongUs.GameOptions;
 using Hazel;
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using InnerNet;
 using UnityEngine;
 using TownOfHostL.Attributes;
@@ -29,8 +30,14 @@ namespace TownOfHostL.Modules;
 /// 殺し手は死体 1 つに 1 体。同じフレームに 1 体の殺し手が 2 人を殺すと、本編のキルの演出が終わらず、死体が通報できないまま残る。
 /// </para>
 /// <para>
-/// 送るのは、本人の画面に悪い変化が出ない客だけ: 生きている・基底がクルーメイト (役職の送り直しでクールが始まり直すボタンを
-/// 持たない)・ベントやはしごの途中でない。合わない客は合うまで待ち、その間は覆い (<see cref="DeadBodyEraser"/>) のまま。
+/// 役職の送り直しは、客の手元で本人の役職を作り直し、キルクールと能力のクールを始めの値にする。
+/// 送り直しを「作り直しの間だけの設定」と「今の設定」で挟んで元の値にする (緊急会議の残り回数は設定の回数へ戻る)。能力のクールの残りは
+/// <see cref="AbilityCooldownClock"/> が数えた値を使う。
+/// </para>
+/// <para>
+/// 送るのは、本人の画面に悪い変化が出ない客だけ: 生きている・作り直しで変わる物を元へ戻せる役職
+/// (Scientist・Tracker・Detective は戻せない)・変身や透明の途中でない・ベントやはしごの途中でない。
+/// 合わない客は合うまで待ち、その間は覆い (<see cref="DeadBodyEraser"/>) のまま。
 /// 送った客からは覆いを外す。会議の始まりが開いている地図とタスクの窓を閉じる点は残る。
 /// </para>
 /// </summary>
@@ -77,6 +84,10 @@ public static class ClientBodySync
     private const int BaseBytes = 64;
     private const int SnapBytes = 13;
     private const int RebuildBytes = 28;
+    // 設定の更新 1 つの長さの見積もり
+    private const int OptionsBytes = 170;
+    // 能力のクールの残りがこれ以下なら、始め直さない (作り直した役職のクールは 0 から始まる)
+    private const float MinAbilityCooldown = 0.3f;
 
     // 残す死体が客の画面に入っているかを見る範囲 (画面の半分 + 動いている分の余り)
     private const float ViewHalfWidth = 8f;
@@ -302,13 +313,45 @@ public static class ClientBodySync
     {
         // 死者は、役職の送り直しで地図のボタンが戻らない。生き返った人も、本人の画面では幽霊のまま
         if (!pc.IsAlive() || Revive.WasRevived(pc.PlayerId) || TempGhost.IsGhost(pc) || SeekerBody.IsMasked(pc.PlayerId)) return "dead";
-        // 役職の送り直しは、キルと能力のボタンのクールを始め直す。ボタンを持たない基底だけ
-        if (RoleView.Living(pc, pc) != RoleTypes.Crewmate) return "role";
+        string role = RoleBlock(pc, RoleView.Living(pc, pc));
+        if (role != null) return role;
         // ベントの中の本人に送ると、本人の画面でだけ外に出る
         if (pc.inVent || pc.walkingToVent || VentCage.IsCaged(pc) || pc.MyPhysics.Animations.IsPlayingEnterVentAnimation()) return "in vent";
         if (PlayerWalker.IsWalking(pc.PlayerId)) return "walking";
         if (SeesAny(pc, keep)) return "body in view";
         if (EstimateBytes(keep.Count) > MaxPacketBytes) return "too long";
+        return null;
+    }
+
+    // 役職の送り直しは、客の手元で本人の役職を作り直す。作り直しで変わる物を元へ戻せない役職には送らない (送れるなら null)
+    private static string RoleBlock(PlayerControl pc, RoleTypes role)
+    {
+        switch (role)
+        {
+            case RoleTypes.Crewmate:
+            case RoleTypes.Noisemaker:
+            case RoleTypes.Impostor:
+            case RoleTypes.Viper:
+            case RoleTypes.Engineer:
+                break;
+            case RoleTypes.Shapeshifter:
+                // 変身の残り時間は役職の中にあり、作り直すと自動で戻らなくなる
+                if (pc.shapeshifting || pc.CurrentOutfitType == PlayerOutfitType.Shapeshifted
+                    || (Main.CheckShapeshift.TryGetValue(pc.PlayerId, out bool shifted) && shifted)) return "shifted";
+                break;
+            case RoleTypes.Phantom:
+                // 透明の残り時間も役職の中にある
+                if (pc.shouldAppearInvisible || pc.invisibilityAlpha < 1f) return "vanished";
+                break;
+            default:
+                // Scientist の電池・Tracker の追跡・Detective のメモは、ホストから見えず、作り直すと失われる
+                return "role";
+        }
+        if (!RoleView.IsKillerRole(role) && !AbilityCooldownClock.Tracks(role)) return null;
+        // 作り直しで変わる物は設定で元へ戻すので、今の設定を組み立てられる人だけ。
+        // 懐中電灯の点け直しの間は、客の設定がかくれんぼ型になっていて、ふだんの設定で上書きできない
+        if (Flashlight.IsHolding(pc.PlayerId)) return "flashlight";
+        if (PlayerGameOptionsSender.Of(pc.PlayerId) == null) return "no options";
         return null;
     }
 
@@ -342,7 +385,7 @@ public static class ClientBodySync
     }
 
     private static int EstimateBytes(int keepCount)
-        => BaseBytes + SnapCount(keepCount) * SnapBytes + keepCount * RebuildBytes;
+        => BaseBytes + OptionsBytes * 2 + SnapCount(keepCount) * SnapBytes + keepCount * RebuildBytes;
 
     // ---- 1 回の合わせ直し ----
 
@@ -459,6 +502,29 @@ public static class ClientBodySync
             if (!SnapToBudget.HasHeadroom(cost + BudgetReserve)) break;
             parentSids ??= ParentSids(keep);
 
+            var role = RoleView.Living(pc, pc);
+            // 役職の送り直しを「作り直しの間だけの設定」と「今の設定」で挟み、作り直しで変わる物を元の値にする:
+            // - キルクールは、本編が 10 秒へ書き換える → 設定のキルクールを 0 にしておく。本編は設定が 0 以下だと
+            //   キルクールの残りを書き換えないので、残りがそのまま続く。
+            // - 能力のクールは、役職の中にあって 0 になる → 設定のクールを残りの秒数にしておき、守護の電文で設定値から始めさせる。
+            // どちらも要らない役職 (キルも能力のクールも無い) には、設定を入れない
+            bool killer = RoleView.IsKillerRole(role);
+            float ability = AbilityCooldownClock.Tracks(role) ? AbilityCooldownClock.Remaining(pc.PlayerId) : 0f;
+            bool restartAbility = ability > MinAbilityCooldown;
+            PlayerGameOptionsSender options = null;
+            Il2CppStructArray<byte> frozen = null, current = null;
+            if (killer || restartAbility)
+            {
+                options = PlayerGameOptionsSender.Of(pc.PlayerId);
+                frozen = options?.BuildBytes(o =>
+                {
+                    if (killer) o.SetFloat(FloatOptionNames.KillCooldown, 0f);
+                    if (restartAbility) o.SetFloat(AbilityCooldownClock.OptionOf(role), ability);
+                });
+                current = options?.BuildBytes();
+                if (frozen == null || current == null) continue;
+            }
+
             var m = MessageWriter.Get(SendOption.Reliable);
             int snaps, length;
             try
@@ -468,10 +534,19 @@ public static class ClientBodySync
                 m.WritePacked(pc.OwnerId);
                 WriteFakeMeeting(m, r.Reporter.NetId);
                 snaps = WritePositions(m, pc, sids);
+                if (frozen != null) PlayerGameOptionsSender.WriteOptions(m, frozen);
                 WriteRpc(m, pc.NetId, RpcCalls.SetRole);
-                m.Write((ushort)RoleView.Living(pc, pc));
+                m.Write((ushort)role);
                 m.Write(true);
                 m.EndMessage();
+                if (restartAbility)
+                {
+                    WriteRpc(m, pc.NetId, RpcCalls.ProtectPlayer);
+                    m.WriteNetObject(pc);
+                    m.Write(0);
+                    m.EndMessage();
+                }
+                if (current != null) PlayerGameOptionsSender.WriteOptions(m, current);
                 for (int i = 0; i < keep.Count; i++)
                     DeadBodyMover.WriteRecreate(m, keep[i].Parent, keep[i].Stand, parentSids[i], r.Killers[i].NetId);
                 m.EndMessage();
@@ -495,12 +570,13 @@ public static class ClientBodySync
                 m.Recycle();
             }
             for (int i = 0; i < snaps + keep.Count; i++) SnapToBudget.Record();
+            if (current != null) options.NoteSent(current);
 
             pending.Remove(pc.OwnerId);
             DeadBodyEraser.HideCoversFrom(pc.OwnerId);
             DeadBodyMover.HideCoversFrom(pc.OwnerId);
             sent++;
-            Logger.Info($"{pc.PlayerId} の画面の死体を合わせ直しました (残す死体 {keep.Count}・位置 {snaps}・{length} バイト)", Tag);
+            Logger.Info($"{pc.PlayerId} の画面の死体を合わせ直しました ({role}・能力のクール {ability:0.0}・残す死体 {keep.Count}・位置 {snaps}・{length} バイト)", Tag);
         }
         if (sent == 0) Logger.Info("死体の合わせ直しは、送れる客がいなかったので次へ回します", Tag);
         return sent;

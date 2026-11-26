@@ -33,6 +33,8 @@ public static class RoleView
         // 試合の始めの配り (イントロ中) も覚えるよう、InGame が立つ前から記録する
         if (!AmongUsClient.Instance || !AmongUsClient.Instance.AmHost || AmongUsClient.Instance.GameState != AmongUsClient.GameStates.Started) return;
         living[(seer.PlayerId, target.PlayerId)] = role;
+        // 本人へ役職を送ると、客の手元で役職が作り直され、能力のクールが 0 になる
+        if (seer.PlayerId == target.PlayerId) AbilityCooldownClock.Clear(target.PlayerId);
         SeekerBody.OnRoleSent(target);
     }
 

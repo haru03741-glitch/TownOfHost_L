@@ -311,6 +311,7 @@ static partial class ExtendedPlayerControl
         messageWriter.WriteNetObject(target);
         messageWriter.Write(colorId);
         AmongUsClient.Instance.FinishRpcImmediately(messageWriter);
+        AbilityCooldownClock.Restart(killer);
     }
     /// <param name="sync">true なら設定を送ってから少し後に戻す (クールの長さを変えた直後に使う)</param>
     public static void RpcResetAbilityCooldown(this PlayerControl target, bool sync = false)
@@ -341,6 +342,7 @@ static partial class ExtendedPlayerControl
             writer.WriteNetObject(target);
             writer.Write(0);
             AmongUsClient.Instance.FinishRpcImmediately(writer);
+            AbilityCooldownClock.Restart(target);
         }
         /*
             プレイヤーがバリアを張ったとき、そのプレイヤーの役職に関わらずアビリティーのクールダウンがリセットされます。

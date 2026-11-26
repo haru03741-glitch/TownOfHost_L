@@ -242,7 +242,11 @@ static class ExitVentHookPatch
     {
         if (__instance?.myPlayer == null) return;
         RoleHooks.NowVentId.Remove(__instance.myPlayer.PlayerId);
-        if (AmongUsClient.Instance.AmHost) Modules.VentCage.OnExitVent(__instance);
+        if (AmongUsClient.Instance.AmHost)
+        {
+            Modules.VentCage.OnExitVent(__instance);
+            Modules.AbilityCooldownClock.OnExitVent(__instance.myPlayer);
+        }
     }
 }
 

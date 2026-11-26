@@ -146,6 +146,10 @@ public static class PhantomButton
         }
         writer.EndMessage();
         writer.SendMessage();
+        // 本人の画面の役職を覚える (ファントムへ戻さない役職は、客の手元が Impostor になる)。
+        // 役職の送り直しは能力のクールを 0 にし、守護の電文は設定値から始め直す
+        if (ResetCooldown is not null) Modules.RoleView.Record(player, player, pb.IsPhantomRole ? RoleTypes.Phantom : RoleTypes.Impostor);
+        if (ResetCooldown is true && pb.IsPhantomRole) Modules.AbilityCooldownClock.Restart(player);
         player.ResetKillCooldown();
         if (AdjustKillCooldown)
         {

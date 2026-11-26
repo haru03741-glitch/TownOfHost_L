@@ -275,6 +275,8 @@ namespace TownOfHostL
                 .Write((ushort)role)
                 .Write(true) //canOverrideRole
                 .EndRpc();
+            // 本人へ届く役職は、客の手元で役職を作り直し、能力のクールを 0 にする
+            if (player != null && (targetClientId == -1 || targetClientId == player.GetClientId())) Modules.AbilityCooldownClock.Clear(player.PlayerId);
             Logger.Info($"CustomRpcSenderExtensions toClientId:{targetClientId} player:{player?.name}({role})", "RpcSetRole");
         }
         public static void RpcMurderPlayer(this CustomRpcSender sender, PlayerControl player, PlayerControl target, int targetClientId = -1)

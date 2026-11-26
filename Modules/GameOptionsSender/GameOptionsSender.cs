@@ -50,10 +50,29 @@ using InnerNet;
             /// <summary>組み立て済みの設定を書き出して送る。</summary>
             protected void SendBuiltOptions(IGameOptions opt)
             {
+                var byteArray = Serialize(opt);
+                if (byteArray == null) return;
+                try
+                {
+                    if (ShouldSend(byteArray))
+                    {
+                        SendOptionsArray(byteArray);
+                        OnSent(byteArray);
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    Logger.Error($"SendGameOptions exception: {ex.Message}", nameof(GameOptionsSender));
+                }
+            }
+
+            /// <summary>設定を、客へ送るバイト列にする。書き出せなければ null</summary>
+            protected static Il2CppStructArray<byte> Serialize(IGameOptions opt)
+            {
                 if (opt == null)
                 {
                     Logger.Error("BuildGameOptions returned null", nameof(GameOptionsSender));
-                    return;
+                    return null;
                 }
                 var currentGameMode = AprilFoolsMode.IsAprilFoolsModeToggledOn ? opt.AprilFoolsOnMode : opt.GameMode;
                 MessageWriter writer = MessageWriter.Get(SendOption.None);
@@ -75,32 +94,27 @@ using InnerNet;
                     else
                     {
                         writer.EndMessage();
-                        writer.Recycle();
                         Logger.Error("オプションのキャストに失敗しました (unknown concrete type)", nameof(GameOptionsSender));
-                        return;
+                        return null;
                     }
                     writer.EndMessage();
                     if (writer.Length <= 1)
                     {
-                        writer.Recycle();
                         Logger.Error("MessageWriter produced invalid length when serializing game options", nameof(GameOptionsSender));
-                        return;
+                        return null;
                     }
                     var byteArray = new Il2CppStructArray<byte>(writer.Length - 1);
                     Buffer.BlockCopy(writer.Buffer.Cast<Array>(), 1, byteArray.Cast<Array>(), 0, writer.Length - 1);
-                    if (ShouldSend(byteArray))
-                    {
-                        SendOptionsArray(byteArray);
-                        OnSent(byteArray);
-                    }
+                    return byteArray;
                 }
                 catch (System.Exception ex)
                 {
                     Logger.Error($"SendGameOptions exception: {ex.Message}", nameof(GameOptionsSender));
+                    return null;
                 }
                 finally
                 {
-                    if (writer != null) writer.Recycle();
+                    writer.Recycle();
                 }
             }
             public virtual void SendOptionsArray(Il2CppStructArray<byte> optionArray)
@@ -121,21 +135,26 @@ using InnerNet;
                 {
                     writer.Write(AmongUsClient.Instance.GameId);
                     if (targetClientId != -1) writer.WritePacked(targetClientId);
-                    writer.StartMessage(1);
-                    {
-                        writer.WritePacked(GameManager.Instance.NetId);
-                        writer.StartMessage(LogicOptionsIndex);
-                        {
-                            writer.WriteBytesAndSize(optionArray);
-                        }
-                        writer.EndMessage();
-                    }
-                    writer.EndMessage();
+                    WriteOptionsData(writer, optionArray, LogicOptionsIndex);
                 }
                 writer.EndMessage();
 
                 AmongUsClient.Instance.SendOrDisconnect(writer);
                 writer.Recycle();
+            }
+            /// <summary>開いている GameData の包みへ、設定の更新 (GameManager の Data) を 1 つ書く</summary>
+            protected static void WriteOptionsData(MessageWriter writer, Il2CppStructArray<byte> optionArray, byte LogicOptionsIndex)
+            {
+                writer.StartMessage(1);
+                {
+                    writer.WritePacked(GameManager.Instance.NetId);
+                    writer.StartMessage(LogicOptionsIndex);
+                    {
+                        writer.WriteBytesAndSize(optionArray);
+                    }
+                    writer.EndMessage();
+                }
+                writer.EndMessage();
             }
             public abstract IGameOptions BuildGameOptions();
 

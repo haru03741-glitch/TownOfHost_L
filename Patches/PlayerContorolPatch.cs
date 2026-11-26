@@ -288,6 +288,11 @@ public static class PlayerControlCheckShapeshiftPatch
             return false;
         }
 
+        // 変身している客が戻すと知らせてきた時、客の手元では変身のクールがもう始まっている
+        if (target != null && target.PlayerId == __instance.PlayerId
+            && (__instance.CurrentOutfitType == PlayerOutfitType.Shapeshifted || (Main.CheckShapeshift.TryGetValue(__instance.PlayerId, out var shifted) && shifted)))
+            AbilityCooldownClock.OnRevertShapeshift(__instance);
+
         // 無効な変身を弾く．これより前に役職等の処理をしてはいけない
         // CNO (客の手元の一覧に残る偽のプレイヤー) は Data がホストの物なので、ここで先に弾く
         if (Core.CustomNetObject.Is(target) || !CheckInvalidShapeshifting(__instance, target, shouldAnimate))
@@ -805,6 +810,7 @@ partial class ReportDeadBodyPatch
         // 会議で死体は全部片付くので、死体の覆いも外す
         Step(DeadBodyEraser.OnReportDeadBody, "DeadBodyEraser.OnReportDeadBody");
         Step(DeadBodyMover.OnReportDeadBody, "DeadBodyMover.OnReportDeadBody");
+        Step(AbilityCooldownClock.ClearAll, "AbilityCooldownClock.ClearAll");
         Step(() => Utils.NotifyRoles(isForMeeting: true, NoCache: true), "ReportDeadBody.NotifyRoles");
         Step(Utils.SyncAllSettings, "ReportDeadBody.SyncAllSettings");
     }

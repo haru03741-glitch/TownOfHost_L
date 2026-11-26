@@ -52,6 +52,10 @@ namespace TownOfHostL
                 case RpcCalls.CheckVanish:
                 case RpcCalls.MurderPlayer:
                     return HandleWithoutRead(__instance, rpcType);
+                case RpcCalls.CheckAppear:
+                    // 透明の客が姿を現すと知らせてきた時、客の手元では能力のクールがもう始まっている
+                    if (AmongUsClient.Instance.AmHost) AbilityCooldownClock.OnAppear(__instance);
+                    return true;
                 default:
                     return true;
             }
