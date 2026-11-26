@@ -18,10 +18,13 @@ public static class MovingPlatformBehaviourPatch
             ShipStatus.Instance.Cast<AirshipStatus>().outOfOrderPlat.SetActive(true);
         }
     }
+    // 本編の DLL では、この getter は同じ機械語の OverlayKillAnimation.IsClassicAnimation などと 1 つの番地に畳まれていて、
+    // この前置きはそれらの呼び出しでも走る。ぬーんの物の時だけ書き換える
     [HarmonyPatch(nameof(MovingPlatformBehaviour.IsDirty), MethodType.Getter), HarmonyPrefix]
-    public static bool GetIsDirtyPrefix(ref bool __result)
+    public static bool GetIsDirtyPrefix(MovingPlatformBehaviour __instance, ref bool __result)
     {
-        if (isDisabled)
+        if (isDisabled && __instance is not null
+            && Il2CppInterop.Runtime.IL2CPP.il2cpp_object_get_class(__instance.Pointer) == Il2CppInterop.Runtime.Il2CppClassPointerStore<MovingPlatformBehaviour>.NativeClassPtr)
         {
             __result = false;
             return false;
