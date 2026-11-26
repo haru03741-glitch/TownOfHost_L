@@ -285,7 +285,14 @@ public sealed class CustomNetObject
             }
         }
 
+        // 出している途中の物が 1 体でもあれば、次は出さない。回す順に任せると、途中の物より後に作った物が先に回って同時に出る
         bool spawning = false;
+        foreach (var obj in all)
+        {
+            if (obj.state is not (State.Spawned or State.Visible or State.Sprited)) continue;
+            spawning = true;
+            break;
+        }
         // Tick の中で消えると all から抜けるので、後ろから回す
         for (int i = all.Count - 1; i >= 0; i--)
         {
