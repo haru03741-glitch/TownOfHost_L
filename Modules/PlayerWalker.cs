@@ -78,8 +78,15 @@ public static class PlayerWalker
         if (lastSentAt.TryGetValue(pc.PlayerId, out var last) && now - last < MinInterval) return false;
 
         var from = pc.GetTruePosition();
-        var to = ClampToWall(pc, from, target);
-        if ((to - from).sqrMagnitude < MinStep * MinStep) return false;
+        var to = ClampToWall(pc, from, target, out var wallNormal);
+        if ((to - from).sqrMagnitude < MinStep * MinStep)
+        {
+            // まっすぐは壁に当たって進めない。自分で歩く人は壁に沿って滑るので、壁に沿う分だけで進めるかを見る
+            if (wallNormal == Vector2.zero) return false;
+            var rest = target - from;
+            to = ClampToWall(pc, from, from + rest - Vector2.Dot(rest, wallNormal) * wallNormal, out _);
+            if ((to - from).sqrMagnitude < MinStep * MinStep) return false;
+        }
         if (!pc.AmOwner && !TakeBudget(2, now)) return false;
 
         lastSentAt[pc.PlayerId] = now;
@@ -144,9 +151,11 @@ public static class PlayerWalker
     /// <summary>
     /// from から target へ足元の円を流し、人の体が当たる物 (壁・机・閉じたドア) があればその手前を返す。
     /// 本編の ShipAndObjectsMask には机 (層 12) が入っていないので、人の層の衝突表から作る。部屋の入り口のトリガーは数えない
+    /// wallNormal = 当たった面の向き (当たらなければ zero)
     /// </summary>
-    public static Vector2 ClampToWall(PlayerControl pc, Vector2 from, Vector2 target)
+    public static Vector2 ClampToWall(PlayerControl pc, Vector2 from, Vector2 target, out Vector2 wallNormal)
     {
+        wallNormal = Vector2.zero;
         var dir = target - from;
         float dist = dir.magnitude;
         if (dist < 1e-4f) return from;
@@ -158,6 +167,7 @@ public static class PlayerWalker
         {
             var hit = Physics2D.CircleCast(from, FootRadius, dir / dist, dist, mask);
             if (!hit.collider) return target;
+            wallNormal = hit.normal;
             return from + dir / dist * Mathf.Max(0f, hit.distance - WallMargin);
         }
         finally { Physics2D.queriesHitTriggers = queries; }
