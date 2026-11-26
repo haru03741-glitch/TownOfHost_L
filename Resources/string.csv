@@ -6446,7 +6446,7 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "DollmasterNoBody","No dead body near your puppet","操っている人の近くに死体が無い"
 "Pacemaker","Pacemaker","ペースメーカー"
 "PacemakerInfo","Players you kill still look alive on Vitals","キルした人を、バイタルで生きているように見せる"
-"PacemakerInfoLong","(Impostors):\nPlayers you kill show as OK on Vitals for a set time (0 = until the next meeting).\nThe fake shows to players at the Vitals panel. Scientists and other roles that can check Vitals from anywhere see the truth.\nWhile it lasts, players at the Vitals panel may see the ghost of your victim as if alive.\nIt ends when a meeting starts. Maps without Vitals have no effect.","[インポスター陣営]\nキルした人が、設定した時間 (0 は次の会議まで) バイタルで「OK」と表示される。\n嘘が出るのは、バイタルの台の近くにいる人の画面だけ。科学者など、どこでもバイタルを見られる役職には本当の状態が見える。\n効いている間、バイタルの台の近くにいる人には、キルした人の幽霊が生きているように見えることがある。\n会議が始まると元に戻る。バイタルの無いマップでは効果が無い。"
+"PacemakerInfoLong","(Impostors):\nPlayers you kill show as OK on Vitals for a set time (0 = until the next meeting).\nThe fake shows to players at the Vitals panel. Scientists and other roles that can check Vitals from anywhere see the truth.\nWhile it lasts, players at the Vitals panel may see the ghost of your victim as if alive.\nSomeone already watching Vitals when you kill sees that player as dead until they reopen it.\nIt ends when a meeting starts. Maps without Vitals have no effect.","[インポスター陣営]\nキルした人が、設定した時間 (0 は次の会議まで) バイタルで「OK」と表示される。\n嘘が出るのは、バイタルの台の近くにいる人の画面だけ。科学者など、どこでもバイタルを見られる役職には本当の状態が見える。\n効いている間、バイタルの台の近くにいる人には、キルした人の幽霊が生きているように見えることがある。\nキルした時にバイタルを見ていた人には、開き直すまでその人が死亡と表示される。\n会議が始まると元に戻る。バイタルの無いマップでは効果が無い。"
 "PacemakerDuration","Fake Vitals Time","バイタル偽装の時間"
 "SettingsUI.Sec.AfterGame","After the game","試合の後の表示","","","","",""
 "SettingsUI.Sec.Names","Names","名前の表示","","","","",""
