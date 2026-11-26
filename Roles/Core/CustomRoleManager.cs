@@ -801,7 +801,7 @@ public enum CustomRoles
     EvilBusker, Busker, JackalBusker,
 
     // TownOfHost_L の役職
-    Berserker, Confiner, Kamikakushi,
+    Berserker, Confiner, Kamikakushi, Dollmaster,
 
     GM,
     CounselorAndMadDilemma,

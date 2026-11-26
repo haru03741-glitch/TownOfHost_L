@@ -6430,6 +6430,20 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "KamikakushiDuration","Time in Vent","ベントに閉じ込める時間"
 "KamikakushiButtonText","Spirit Away","神隠し"
 "KamikakushiFailed","Cannot pull them in right now","今は吸い込めない"
+"Dollmaster","Dollmaster","人形使い"
+"DollmasterInfo","Make a player walk wherever you walk","人を操り、自分と同じように歩かせる"
+"DollmasterInfoLong","(Impostors):
+Use the Shapeshift button on a player to control them for a set time. While controlled, they walk the same direction and distance you walk, and cannot move on their own.
+They stop in front of walls and tables. Moving through a vent is not copied.
+Players inside a vent, on a ladder, on a moving platform or without a pet cannot be controlled. Control ends when a meeting starts.","[インポスター陣営]
+変身のボタンで人を選ぶと、決めた時間のあいだその人を操る。操られた人は、人形使いが歩いたのと同じ向き・同じ距離を歩き、自分では動けない。
+壁や机があれば、その手前で止まる。ベントでの移動は写らない。
+ベントの中・梯子の上・動く床の上にいる人と、ペットを持っていない人は操れない。会議が始まると操るのをやめる。"
+"DollmasterDuration","Control Time","操る時間"
+"DollmasterButtonText","Control","操る"
+"DollmasterFailed","Cannot control them right now","今は操れない"
+"DollmasterControlling","Controlling ({0}s)","操作中 ({0}秒)"
+"DollmasterControlled","You are being controlled","操られている"
 "SettingsUI.Sec.AfterGame","After the game","試合の後の表示","","","","",""
 "SettingsUI.Sec.Names","Names","名前の表示","","","","",""
 "SettingsUI.Sec.Display","Roles and add-ons","役職と属性の表示","","","","",""
