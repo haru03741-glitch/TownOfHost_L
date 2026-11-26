@@ -70,6 +70,8 @@ public static class PlayerWalker
         if (AmongUsClient.Instance.IsGameOver || GameEndChecker.EndingStarted) return "game over";
         if (MeetingHud.Instance || ExileController.Instance || MeetingStates.MeetingCalled || AntiBlackout.IsCached || AntiBlackout.IsRevertPending) return "meeting";
         if (!pc.IsAlive() || pc.Data == null || pc.Data.Disconnected) return "dead";
+        // 電文は本人だけへ送る。宛先の無い人へ送ると全員宛てになる
+        if (!pc.AmOwner && pc.LacksClient(nameof(PlayerWalker))) return "no client";
         if (TempGhost.IsGhost(pc)) return "ghost";
         if (!PetAbility.IsPet(pc.Data.DefaultOutfit?.PetId)) return "no pet";
         if (pc.inVent || pc.walkingToVent || VentCage.IsCaged(pc) || pc.MyPhysics.Animations.IsPlayingEnterVentAnimation()) return "in vent";
@@ -132,8 +134,10 @@ public static class PlayerWalker
         if (pc == null || !arriveAt.TryGetValue(pc.PlayerId, out var at)) return;
         float now = Time.realtimeSinceStartup;
         if (now < at) return;
+        // 会議が開くと本編が歩きを止めるので、会議が決まった後は送らない
         if (!walking.Contains(pc.PlayerId) || !AmongUsClient.Instance.AmHost || pc.Data == null || pc.Data.Disconnected
-            || AmongUsClient.Instance.IsGameOver || GameEndChecker.EndingStarted)
+            || AmongUsClient.Instance.IsGameOver || GameEndChecker.EndingStarted
+            || MeetingHud.Instance || MeetingStates.MeetingCalled || AntiBlackout.IsCached || AntiBlackout.IsRevertPending)
         {
             arriveAt.Remove(pc.PlayerId);
             return;
@@ -197,7 +201,7 @@ public static class PlayerWalker
 
     private static void SendCancel(PlayerControl pc)
     {
-        if (pc.MyPhysics == null) return;
+        if (pc.MyPhysics == null || pc.OwnerId < 0) return;
         var writer = AmongUsClient.Instance.StartRpcImmediately(pc.MyPhysics.NetId, (byte)RpcCalls.CancelPet, SendOption.Reliable, pc.OwnerId);
         AmongUsClient.Instance.FinishRpcImmediately(writer);
     }
