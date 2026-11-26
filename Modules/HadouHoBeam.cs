@@ -8,7 +8,7 @@ namespace TownOfHostL.Modules;
 /// <summary>
 /// 波動砲系 (波動砲・シェリフ波動砲・ジャッカル波動砲) のためとビームを、CNO の名前の絵で描く。
 /// 一発ごとに 2 体を出す: 撃ち手の前に置く★のゲートと、ゲートの中心から伸びる線 (発射の 1 秒前から ⚠ の予告、撃つとビーム)。
-/// 撃ち終わり・会議・死亡で消す。
+/// 撃ち終わり・会議・死亡で消す。ための間は撃ち手の足元に医務室のスキャンの輪を出す (本編の SetScanner。素の客の画面にも出る)。
 ///
 /// 撃つ向きは、ため始めまでにホストへ届いた位置の左右の動きで決め、ための間は変えない。客の体の向き (FlipX) は
 /// ホストへ送られず、ホストの手元の向きは動けないため中には変わらないので、FlipX で決めると客の見ている向きと逆へ撃つことがある。
@@ -75,6 +75,8 @@ public sealed class HadouHoBeam
     private float shakeOffset, shakeAmp;
     private Action pendingStart;
     private float pendingUntil;
+    // 撃ち手の足元にスキャンの輪を出しているか (出す・止めるの電文を重ねて送らない)
+    private bool scanning;
 
     /// <summary>向きを決める段の途中 (ボタンは押されたが、まだためていない)。</summary>
     public bool Pending => pendingStart != null;
@@ -181,6 +183,7 @@ public sealed class HadouHoBeam
         chargeStartedAt = Time.realtimeSinceStartup;
         gate = Cno.Create(GateSprite, GatePosition(), BodyColor);
         line = Cno.Create("", LinePosition(), BodyColor);
+        SetScanner(true);
     }
 
     /// <summary>ための間に毎 fixed update で呼ぶ。撃つ 1 秒前に予告を出す。途中で消えた CNO は出し直す。</summary>
@@ -206,6 +209,7 @@ public sealed class HadouHoBeam
     {
         if (gate == null || line == null || owner == null) return;
         line.ChangeSprite(Padded($"<color={colorHex}FF>{Row}</color>", Row, size));
+        SetScanner(false);
         firing = true;
         shakeOffset = UnityEngine.Random.Range(0f, 100f);
         shakeAmp = ShakePerThickness * size / 30f;
@@ -223,6 +227,7 @@ public sealed class HadouHoBeam
     {
         pendingStart = null;
         firing = false;
+        SetScanner(false);
         gate?.Despawn();
         line?.Despawn();
         gate = line = null;
@@ -253,6 +258,14 @@ public sealed class HadouHoBeam
         uint netId = cno.NetId;
         if (netId == 0 || netId == hidden) return;
         if (ClientEffects.HideDummy(netId)) hidden = netId;
+    }
+
+    private void SetScanner(bool on)
+    {
+        if (scanning == on) return;
+        scanning = on;
+        if (owner == null || owner.Data == null || owner.Data.Disconnected) return;
+        owner.RpcSetScanner(on);
     }
 
     private string WarningSprite() => Padded($"<color=#FFFF00FF>{WarningRow}</color>", WarningRow, warningSize);
