@@ -629,16 +629,31 @@ static partial class ExtendedPlayerControl
             AmongUsClient.Instance.FinishRpcImmediately(writer);
         }
     }
+    private static int noCheckMeetingExileWaits;
     public static void NoCheckStartMeeting(this PlayerControl reporter, NetworkedPlayerInfo target)
     { /*サボタージュ中でも関係なしに会議を起こせるメソッド
         targetがnullの場合はボタンとなる*/
-        // 鬼の体と一時的な幽霊は会議の前に戻し、戻す SetRole が落ち着いてから会議を開く
-        // (本編の客は SetRole の直後の会議で画面が壊れる。幽霊のまま開くと、会議の間ほかの人の画面で死んだ印が付く)
         if (AmongUsClient.Instance.AmHost)
         {
+            // 追放の画面の途中に会議を始めると暗転のまま進めなくなるので、終わるまで待つ
+            if (ExileController.Instance != null)
+            {
+                if (noCheckMeetingExileWaits++ >= 40) { noCheckMeetingExileWaits = 0; Logger.Warn("追放の画面が終わらないので、会議を開くのをやめました", "NoCheckStartMeeting"); return; }
+                _ = new LateTask(() =>
+                {
+                    if (reporter == null || GameStates.IsMeeting || !GameStates.IsInGame) return;
+                    reporter.NoCheckStartMeeting(target);
+                }, 0.5f, "NoCheckStartMeeting.WaitExile");
+                return;
+            }
+            noCheckMeetingExileWaits = 0;
+            // 鬼の体と一時的な幽霊は会議の前に戻し、戻す SetRole が落ち着いてから会議を開く
+            // (本編の客は SetRole の直後の会議で画面が壊れる。幽霊のまま開くと、会議の間ほかの人の画面で死んだ印が付く)
             bool hold = false;
             if (SeekerBody.Active) { SeekerBody.ReleaseAllForMeeting(); hold = true; }
             if (TempGhost.ReturnAllForMeeting()) hold = true;
+            // ほかの役職の SetRole (時間切れで幽霊から戻ったなど) が落ち着く前も待つ (通報の経路は Revive が預かる)
+            if (Revive.IsSettling) hold = true;
             if (hold)
             {
                 _ = new LateTask(() =>
@@ -648,14 +663,12 @@ static partial class ExtendedPlayerControl
                 }, Revive.SettleTime + 0.1f, "SeekerBody hold meeting");
                 return;
             }
-        }
-        // ベントに閉じ込めた人も会議の前に出す
-        if (AmongUsClient.Instance.AmHost) VentCage.ReleaseAllForMeeting();
-        // 通報の処理を通らないので、会議用の名前 (能力の秒読みなどを外した物) をここで送る
-        if (AmongUsClient.Instance.AmHost)
-        {
-            try { Utils.NotifyRoles(isForMeeting: true, NoCache: true); }
-            catch (Exception ex) { Logger.Exception(ex, "NoCheckStartMeeting"); }
+            // 会議の見出しが使う通報者と対象
+            ReportDeadBodyPatch.reporter = reporter.Data;
+            ReportDeadBodyPatch.ReportTarget = target;
+            ReportDeadBodyPatch.SpecialMeeting = reporter.Data?.PlayerId == target?.PlayerId;
+            // 通報の処理を通らないので、会議を開くと決めた後の後始末 (役職の通報の処理・暗転・変身の解除・会議用の名前など) をここでする
+            ReportDeadBodyPatch.PrepareMeeting(reporter, target);
         }
         MeetingRoomManager.Instance.AssignSelf(reporter, target);
         DestroyableSingleton<HudManager>.Instance.OpenMeetingRoom(reporter);

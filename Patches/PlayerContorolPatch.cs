@@ -730,6 +730,26 @@ partial class ReportDeadBodyPatch
         }
 
     confirmed:
+        PrepareMeeting(__instance, target);
+
+        if (ShapeKiller.DummyReportDeadBody(__instance, target)) return false;
+
+        if (!__instance.IsAlive())
+        {
+            //通報者が通報処理中に死亡した場合の強制会議実行
+            RPC.ReportDeadBodyForced(__instance, target);
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 会議を開くと決めた後の後始末 (ベントの閉じ込め・暗転・変身の解除・役職の通報の処理・会議用の名前と設定)。
+    /// 通報の処理の中と、通報を通らずに会議を開く入口 (NoCheckStartMeeting) の両方から 1 回だけ呼ぶ
+    /// </summary>
+    public static void PrepareMeeting(PlayerControl __instance, NetworkedPlayerInfo target)
+    {
         // ベントに閉じ込めた人を出す。会議が開くと決まってから送る (捨てる通報で出さない)。
         // MeetingCalled を立てた後だと、VentCage は会議中と見て送らずに記録だけ消す
         if (AmongUsClient.Instance.AmHost) VentCage.ReleaseAllForMeeting();
@@ -781,17 +801,6 @@ partial class ReportDeadBodyPatch
         Step(DeadBodyMover.OnReportDeadBody, "DeadBodyMover.OnReportDeadBody");
         Step(() => Utils.NotifyRoles(isForMeeting: true, NoCache: true), "ReportDeadBody.NotifyRoles");
         Step(Utils.SyncAllSettings, "ReportDeadBody.SyncAllSettings");
-
-        if (ShapeKiller.DummyReportDeadBody(__instance, target)) return false;
-
-        if (!__instance.IsAlive())
-        {
-            //通報者が通報処理中に死亡した場合の強制会議実行
-            RPC.ReportDeadBodyForced(__instance, target);
-            return false;
-        }
-
-        return true;
     }
 }
 [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.StartMeeting))]
