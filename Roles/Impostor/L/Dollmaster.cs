@@ -273,6 +273,7 @@ public sealed class Dollmaster : RoleBase, IImpostor
             Utils.NotifyRoles(SpecifySeer: Player);
         }
         if (puppet == null) return;
+        PlayerWalker.Tick(puppet);
         // ベントから押し出している間は、戻すのを押し出した側 (OnEnterVent の予約) に任せる
         if (ventReleasePending) return;
 

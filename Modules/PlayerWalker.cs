@@ -9,6 +9,8 @@ namespace TownOfHostL.Modules;
 /// 人を、本人の画面ごと決めた所まで歩かせる (ホストのみ)。
 ///
 /// その人の PlayerPhysics の Pet の電文を送ると、本編の客の画面は電文の座標まで (足元を合わせて) まっすぐ歩き、着くと撫でる。
+/// 撫でる動きと、電文の位置へ先回りするペットは、歩かされていることの目印になる。行き先の先を狙わせて着く頃に止め (撫でさせない)、
+/// ペットの位置にはホストの手元で付いて歩いているペットの位置を入れる (付いて歩いているように見せる)。
 /// 歩いている間は本人の操作が効かない。机や壁に当たると着かないまま歩き続けるので、行き先は当たる手前で止める。
 /// 受け側は最新の歩きを 1 本だけ覚えていて、CancelPet でそれを止める。止めずに次を送ると古い歩きが会議まで残るので、
 /// 送る前に必ず CancelPet を送る。歩かせる相手はペットを持っていないといけない (本編がペットの体を触る)。
@@ -24,6 +26,10 @@ public static class PlayerWalker
     private const float MinStep = 0.15f;
     // 足元の円の半径 (人の当たりより少し細く: 接している面を数えない)
     private const float FootRadius = 0.15f;
+    // 行き先のこれだけ先を狙わせる。本編の歩きは狙いの 0.5 手前から緩むので、行き先までは緩まずに歩く
+    private const float Overshoot = 0.6f;
+    // ホストの手元にペットがいない時の、歩く人の後ろのペットの位置
+    private const float PetTrail = 0.5f;
 
     // 全員分の合計で、直近 1 秒に送る電文の上限。公式サーバーは同じ種類の Reliable を毎秒 10 本なら続けても切らず、
     // 毎秒 15 本を 2 秒続けると切った。操る人が何人いても、他の送信の分を残してこの本数に抑える (区切りの境目で倍にならないよう、滑る窓で数える)
@@ -32,6 +38,8 @@ public static class PlayerWalker
     private static readonly Dictionary<byte, float> lastSentAt = new();
     private static readonly HashSet<byte> walking = new();
     private static readonly Queue<float> sentTimes = new();
+    // 行き先に着く頃 (歩きを止める時刻)
+    private static readonly Dictionary<byte, float> arriveAt = new();
 
     [GameModuleInitializer]
     public static void Init()
@@ -39,6 +47,7 @@ public static class PlayerWalker
         lastSentAt.Clear();
         walking.Clear();
         sentTimes.Clear();
+        arriveAt.Clear();
     }
 
     // 直近 1 秒の送信の本数に count を足しても上限を超えないか。超えないなら数えて true
@@ -91,25 +100,62 @@ public static class PlayerWalker
 
         lastSentAt[pc.PlayerId] = now;
         walking.Add(pc.PlayerId);
-        // 撫でる手はペットの方へ伸びる。行き先の少し先に置き、歩いた向きのまま撫でさせる
-        var petPos = to + (to - from).normalized * 0.5f;
+        float dist = (to - from).magnitude;
+        var dir = (to - from) / dist;
+        var aim = to + dir * Overshoot;
+        var petPos = PetSpot(pc, from - dir * PetTrail);
+        // 歩かされる速さは本編の決まった値 (速さの設定は掛からない)。止める電文も同じ道を通るので、送る間隔がそのまま歩く時間になる
+        arriveAt[pc.PlayerId] = now + dist / Mathf.Max(0.1f, pc.MyPhysics.Speed);
         if (pc.AmOwner)
         {
             // ホスト自身は電文を経ずに本編の受け口を手元で呼ぶ (本編の更新で形が変わっても他の処理を止めない)
             try
             {
                 pc.MyPhysics.CancelPet();
-                pc.MyPhysics.PetPet(to, petPos);
+                pc.MyPhysics.PetPet(aim, petPos);
             }
             catch (System.Exception ex) { Logger.Exception(ex, nameof(PlayerWalker)); }
             return true;
         }
         SendCancel(pc);
         var writer = AmongUsClient.Instance.StartRpcImmediately(pc.MyPhysics.NetId, (byte)RpcCalls.Pet, SendOption.Reliable, -1);
-        NetHelpers.WriteVector2(to, writer);
+        NetHelpers.WriteVector2(aim, writer);
         NetHelpers.WriteVector2(petPos, writer);
         AmongUsClient.Instance.FinishRpcImmediately(writer);
         return true;
+    }
+
+    /// <summary>歩かせている人が行き先に着く頃に、歩きを止める (歩かせている間は毎フレーム呼ぶ)</summary>
+    public static void Tick(PlayerControl pc)
+    {
+        if (pc == null || !arriveAt.TryGetValue(pc.PlayerId, out var at)) return;
+        float now = Time.realtimeSinceStartup;
+        if (now < at) return;
+        arriveAt.Remove(pc.PlayerId);
+        if (!walking.Contains(pc.PlayerId) || !AmongUsClient.Instance.AmHost || pc.Data == null || pc.Data.Disconnected) return;
+        if (AmongUsClient.Instance.IsGameOver || GameEndChecker.EndingStarted) return;
+        if (pc.AmOwner)
+        {
+            try { pc.MyPhysics.CancelPet(); }
+            catch (System.Exception ex) { Logger.Exception(ex, nameof(PlayerWalker)); }
+            return;
+        }
+        // 止め損ねると狙いの先まで歩いて撫でるので、本数の上限を待たずに送る。本数には数える
+        TakeBudget(0, now);
+        sentTimes.Enqueue(now);
+        SendCancel(pc);
+    }
+
+    // 電文に入れるペットの位置。見ている人の画面のペットはここへ移る
+    private static Vector2 PetSpot(PlayerControl pc, Vector2 fallback)
+    {
+        try
+        {
+            var pet = pc.cosmetics?.CurrentPet;
+            if (pet != null) return pet.transform.position;
+        }
+        catch (System.Exception ex) { Logger.Exception(ex, nameof(PlayerWalker)); }
+        return fallback;
     }
 
     /// <summary>歩かせているなら止める (本人は操作できるように戻る)</summary>
@@ -117,6 +163,7 @@ public static class PlayerWalker
     {
         if (pc == null || !walking.Remove(pc.PlayerId)) return;
         lastSentAt.Remove(pc.PlayerId);
+        arriveAt.Remove(pc.PlayerId);
         if (!AmongUsClient.Instance.AmHost || pc.Data == null || pc.Data.Disconnected) return;
         // 試合の終わり際は送らない (相手の歩きは次の試合に持ち越されない)
         if (AmongUsClient.Instance.IsGameOver || GameEndChecker.EndingStarted) return;
@@ -139,6 +186,7 @@ public static class PlayerWalker
         if (pc == null) return;
         walking.Remove(pc.PlayerId);
         lastSentAt.Remove(pc.PlayerId);
+        arriveAt.Remove(pc.PlayerId);
     }
 
     private static void SendCancel(PlayerControl pc)
