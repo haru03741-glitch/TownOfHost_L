@@ -337,7 +337,8 @@ public static class ClientBodySync
         foreach (var pc in Main.AllAlivePlayerControls)
             if (pc && !CustomNetObject.Is(pc)) n++;
         foreach (var _ in CustomNetObject.Bodies) n++;
-        return n;
+        // 通報者の分 (条件を見る時にはまだ出していない)
+        return n + 1;
     }
 
     private static int EstimateBytes(int keepCount)
@@ -466,7 +467,7 @@ public static class ClientBodySync
                 m.Write(client.GameId);
                 m.WritePacked(pc.OwnerId);
                 WriteFakeMeeting(m, r.Reporter.NetId);
-                snaps = WritePositions(m, pc, r.Reporter, sids);
+                snaps = WritePositions(m, pc, sids);
                 WriteRpc(m, pc.NetId, RpcCalls.SetRole);
                 m.Write((ushort)RoleView.Living(pc, pc));
                 m.Write(true);
@@ -547,7 +548,7 @@ public static class ClientBodySync
 
     // 会議の始まりは、客の手元の体を全部 (CNO も) 会議の席へ動かす。今の位置へ戻す SnapTo を書き、書いた本数を返す。
     // 死者は生きている客の画面に映らないので戻さない
-    private static int WritePositions(MessageWriter m, PlayerControl self, CustomNetObject reporter, Dictionary<uint, ushort> sids)
+    private static int WritePositions(MessageWriter m, PlayerControl self, Dictionary<uint, ushort> sids)
     {
         int n = 0;
         foreach (var pc in Main.AllAlivePlayerControls)
@@ -568,8 +569,9 @@ public static class ClientBodySync
         int clientId = self.OwnerId;
         foreach (var obj in CustomNetObject.Bodies)
         {
-            // 通報者は地図の外のまま。この客から消した CNO は、客の手元に無い
-            if (obj == reporter || obj.IsHiddenFrom(clientId)) continue;
+            // この客から消した CNO は、客の手元に無い。通報者も席へ動かされるので、地図の外へ戻す
+            // (戻さないと、可視化までの間、名前の無い人が会議の席に立って見える)
+            if (obj.IsHiddenFrom(clientId)) continue;
             var nt = obj.NetTransform;
             Vector2 pos = nt.transform.position;
             WriteSnapTo(m, nt, pos, RoundSid(nt, sids));
