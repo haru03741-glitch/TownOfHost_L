@@ -10,6 +10,8 @@ namespace TownOfHostL.Roles.Impostor;
 
 // 人形使い: 変身のボタンで選んだ人を、決めた時間だけ操る。操っている間、相手は人形使いが歩いたのと同じ向き・同じ距離を歩く
 // (本人の操作は効かない)。歩かせる仕組みは PlayerWalker。壁や机があれば相手はその手前で止まる。
+// 本編の客が自分で動けないのは歩かされている最中だけで、着いた後は操作が戻る。操っている間は相手の速さを止めておく
+// (歩かされる速さは本編の決まった値で、速さの設定は掛からない)。
 // 操っている間は変身のボタンをすぐ押せる。メニューで別の人を選ぶと、届けば相手にその人をキルさせ、
 // 相手自身を選ぶと、近くの死体を相手に通報させる。どちらかをすると操るのをやめる。
 // 操っている間、人形使いはほかの人の画面でだけ幽霊になり (TempGhost の hideFromSelf)、相手の上へ移る。
@@ -78,8 +80,11 @@ public sealed class Dollmaster : RoleBase, IImpostor
     private const float VentReleaseDelay = 2f;
     // ベントから出る動きが戻しを上書きした時のために、もう一度戻すまで
     private const float VentResnapDelay = 1f;
+    // 相手の速さを止める時の名前 (操る相手は人形使いごとに 1 人で、同じ人を 2 人では操れない)
+    private const string SpeedKey = nameof(Dollmaster);
 
     private PlayerControl puppet;
+    private byte puppetId;
     private Vector2 masterOrigin, puppetOrigin, lastMasterPos, lastTarget;
     // 操り始めた時の人形使いの位置 (終わったら戻す)
     private Vector2 home;
@@ -142,6 +147,9 @@ public sealed class Dollmaster : RoleBase, IImpostor
             return false;
         }
         puppet = target;
+        puppetId = target.PlayerId;
+        PlayerSpeed.Freeze(puppetId, SpeedKey);
+        target.MarkDirtySettings();
         endAt = Time.time + duration;
         nextStepAt = 0f;
         nextResyncAt = 0f;
@@ -319,6 +327,15 @@ public sealed class Dollmaster : RoleBase, IImpostor
         if (PlayerWalker.WalkTo(puppet, target)) lastTarget = target;
     }
 
+    // 操っている途中に人形使いが抜けると、OnFixedUpdate の見張りが止まり相手の速さが止まったまま残る。抜けた時に放す
+    // (相手が抜けた時は OnFixedUpdate が切断を見てやめる)
+    public override void OnPlayerLeft(byte playerId)
+    {
+        if (!AmongUsClient.Instance.AmHost || puppet == null || playerId != Player.PlayerId) return;
+        try { Release(send: false); }
+        catch (System.Exception ex) { Logger.Exception(ex, nameof(Dollmaster)); }
+    }
+
     public override void OnStartMeeting()
     {
         failNoticeUntil = 0f;
@@ -337,6 +354,9 @@ public sealed class Dollmaster : RoleBase, IImpostor
         ventReleasePending = false;
         if (send) PlayerWalker.Stop(target);
         else PlayerWalker.Forget(target);
+        PlayerSpeed.Remove(puppetId, SpeedKey);
+        // 試合の終わりの後始末では、相手が先に壊れていることがある
+        if (target != null && target.Data != null && !target.Data.Disconnected) target.MarkDirtySettings();
         // 元の場所へ戻してから、ほかの人の画面に姿を戻す (会議の時は TempGhost が会議の前に戻し、会議で全員の位置も替わる)
         if (send && Player != null && Player.IsAlive())
         {
