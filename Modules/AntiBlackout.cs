@@ -161,6 +161,9 @@ public static partial class AntiBlackout
                 var dummyRole = dummy.GetCustomRole().GetRoleTypes();
                 bool replaced = !RoleView.IsKillerRole(dummyRole);
                 if (replaced) dummyRole = RoleTypes.Impostor;
+                // キルの後に、本人の手元と同じ役職を本人へ送り直すと、本編が役職を作り直してキルクールを 10 秒・能力のクールを 0 にする。
+                // 手元が既にその役職なら身代わりとして数えられているので送らない (会議の締めは会議明けに本編がクールを戻すので送る)
+                if (killer != null && dummy.PlayerId == pc.PlayerId && dummyRole == RoleView.Living(pc, pc)) continue;
                 sender.StartRpc(dummy.NetId, RpcCalls.SetRole)
                     .Write((ushort)dummyRole)
                     .Write(true)
