@@ -20,7 +20,7 @@ namespace TownOfHostL.Core;
 /// 1. PlayerPrefab を作って spawn (持ち主 -2)。公式鯖では子の 3 つの netId を空の spawn で埋める。
 /// 2. 0.1 秒後、客ごとに「CNO の PlayerId をその客の ID に差し替え → MurderPlayer(FailedError) → 戻す」を送る (4 人/包み)。
 /// 3. 0.15 秒後、ホストの外見を一瞬だけ「絵の名前・体の色・装飾なし」にして Data を送り、CNO をホストに変身させ、外見を戻す。
-/// 4. 0.3 秒後に SnapTo をもう一度送る。客の側は spawn で通し番号が 1 つ進んでいるので、これが無いと映らない。
+/// 4. 0.3 秒後に、見た目と SnapTo をもう一度送る。客の側は spawn で通し番号が 1 つ進んでいるので、これが無いと映らない。
 ///
 /// 公式鯖のキックを避ける決まり:
 /// - イントロが終わってから 13 秒、会議 (追放の演出を含む) が明けてから 10 秒は出さない。
@@ -332,7 +332,17 @@ public sealed class CustomNetObject
                     if (now < nextSpritePacketAt || inMeeting) return;
                     SendSprite(now, Sprite, bodyColorId, new[] { this }, first: this);
                 }
-                else Resnap(now);
+                else
+                {
+                    // 見た目をもう一度送ってから、位置を送り直す。本編の客は、体の初期化が終わった時に可視化で借りた人の姿を付ける。
+                    // 客の画面が止まって可視化と最初の見た目を同じフレームで処理すると、初期化が見た目の後に走り、借りた人の姿のまま残る
+                    if (!inMeeting)
+                    {
+                        if (now < nextSpritePacketAt) return;
+                        SendSprite(now, Sprite, bodyColorId, new[] { this }, first: null);
+                    }
+                    Resnap(now);
+                }
                 return;
             case State.Live:
                 if (!pc) { Despawn(); return; }
