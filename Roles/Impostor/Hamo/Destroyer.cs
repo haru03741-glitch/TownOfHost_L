@@ -215,6 +215,12 @@ public sealed class Destroyer : RoleBase, IImpostor
     public override void OnDestroy()
     {
         TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(Destroyer));
+        // つぶしている途中に役職が替わった時に、相手の足止めを残さない
+        if (victimId != byte.MaxValue)
+        {
+            TownOfHostL.Modules.PlayerSpeed.Remove(victimId, "DestroyerVictim");
+            if (victim != null && GameStates.IsInTask) victim.MarkDirtySettings();
+        }
         foreach (var t in traces) t.Remove();
         traces.Clear();
     }

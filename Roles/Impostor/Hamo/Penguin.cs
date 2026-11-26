@@ -34,6 +34,13 @@ class Penguin : RoleBase, IImpostor
     {
         // 自分だけ外す (途中で 1 人だけ役職が替わった時に、残りのペンギンの連れ去りまで消さない)
         Penguins.Remove(this);
+        // 連れ去っている途中に役職が替わった時に、相手の足止めを残さない
+        if (AbductVictim != null && GameStates.IsInTask)
+        {
+            PlayerState.GetByPlayerId(AbductVictim.PlayerId).CanUseMovingPlatform = true;
+            TownOfHostL.Modules.PlayerSpeed.Remove(AbductVictim.PlayerId, "PenguinVictim");
+            AbductVictim.MarkDirtySettings();
+        }
         AbductVictim = null;
     }
 
