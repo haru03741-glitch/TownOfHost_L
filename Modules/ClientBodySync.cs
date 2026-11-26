@@ -142,7 +142,7 @@ public static class ClientBodySync
     /// </summary>
     public static void Request()
     {
-        if (!Enabled) return;
+        if (!Enabled || !GameStates.IsInGame || ShipStatus.Instance == null) return;
         foreach (var pc in Main.AllPlayerControls)
             if (IsVanillaClient(pc)) pending.Add(pc.OwnerId);
         if (pending.Count == 0) return;
@@ -241,7 +241,7 @@ public static class ClientBodySync
         if (Revive.IsSettling) return "revive";
         // 動かしている途中の死体は、作り直しが 2 つ重なる
         if (DeadBodyMover.IsBusy) return "moving body";
-        if (HudManager.Instance == null || HudManager.Instance.MeetingPrefab == null) return "no hud";
+        if (!HudManager.InstanceExists || HudManager.Instance.MeetingPrefab == null) return "no hud";
         // はしご・昇降機・ジップラインの途中の人は、会議の始まりを受けた客の画面で動きが止まる
         foreach (var pc in Main.AllAlivePlayerControls)
             if (pc && !CustomNetObject.Is(pc) && IsRiding(pc, now)) return "riding";
@@ -459,28 +459,40 @@ public static class ClientBodySync
             parentSids ??= ParentSids(keep);
 
             var m = MessageWriter.Get(SendOption.Reliable);
-            m.StartMessage(6);
-            m.Write(client.GameId);
-            m.WritePacked(pc.OwnerId);
-            WriteFakeMeeting(m, r.Reporter.NetId);
-            int snaps = WritePositions(m, pc, r.Reporter, sids);
-            WriteRpc(m, pc.NetId, RpcCalls.SetRole);
-            m.Write((ushort)RoleView.Living(pc, pc));
-            m.Write(true);
-            m.EndMessage();
-            for (int i = 0; i < keep.Count; i++)
-                DeadBodyMover.WriteRecreate(m, keep[i].Parent, keep[i].Stand, parentSids[i], r.Killers[i].NetId);
-            m.EndMessage();
-            int length = m.Length;
-            if (length > MaxPacketBytes)
+            int snaps, length;
+            try
             {
-                // 分割されると順番が崩れる。見積もりより長くなった包みは送らない
-                Logger.Warn($"{pc.PlayerId} への死体の合わせ直しの包みが長すぎるので送りません ({length} バイト)", Tag);
-                m.Recycle();
-                continue;
+                m.StartMessage(6);
+                m.Write(client.GameId);
+                m.WritePacked(pc.OwnerId);
+                WriteFakeMeeting(m, r.Reporter.NetId);
+                snaps = WritePositions(m, pc, r.Reporter, sids);
+                WriteRpc(m, pc.NetId, RpcCalls.SetRole);
+                m.Write((ushort)RoleView.Living(pc, pc));
+                m.Write(true);
+                m.EndMessage();
+                for (int i = 0; i < keep.Count; i++)
+                    DeadBodyMover.WriteRecreate(m, keep[i].Parent, keep[i].Stand, parentSids[i], r.Killers[i].NetId);
+                m.EndMessage();
+                length = m.Length;
+                if (length > MaxPacketBytes)
+                {
+                    // 分割されると順番が崩れる。見積もりより長くなった包みは送らない
+                    Logger.Warn($"{pc.PlayerId} への死体の合わせ直しの包みが長すぎるので送りません ({length} バイト)", Tag);
+                    continue;
+                }
+                client.SendOrDisconnect(m);
             }
-            client.SendOrDisconnect(m);
-            m.Recycle();
+            catch (System.Exception ex)
+            {
+                // 組んでいる途中で壊れた相手がいた時は、この回をやめる (送らなかった客は待ちに残る)
+                Logger.Exception(ex, Tag);
+                break;
+            }
+            finally
+            {
+                m.Recycle();
+            }
             for (int i = 0; i < snaps + keep.Count; i++) SnapToBudget.Record();
 
             pending.Remove(pc.OwnerId);
