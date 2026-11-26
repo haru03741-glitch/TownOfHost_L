@@ -122,7 +122,10 @@ public sealed class Busker : RoleBase, IUsePetButton
         if (tasksPerUse > 0 && Player.IsAlive() && MyTaskState.CompletedTasksCount % tasksPerUse == 0)
         {
             uses++;
-            Player.MarkDirtySettings();
+            // 0 回の間はベントの待ち時間を 255 秒にしてあり、客の手元ではそれを数え続けている。
+            // 使えるようになった時は、元の待ち時間の設定が届いてから数え直す
+            if (uses == 1) Player.RpcResetAbilityCooldown(sync: true);
+            else Player.MarkDirtySettings();
         }
         return true;
     }

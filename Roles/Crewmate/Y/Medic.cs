@@ -128,7 +128,9 @@ public sealed class Medic : RoleBase
 
         if (MyTaskState.CompletedTasksCount == TaskTrigger || IsTaskFinished)
         {
-            Player.MarkDirtySettings();
+            // 使えない間はベントの待ち時間を 255 秒にしてあり、客の手元ではそれを数え続けている。
+            // 使えるようになった待ち時間の設定が届いてから数え直す
+            Player.RpcResetAbilityCooldown(sync: true);
         }
 
         return true;

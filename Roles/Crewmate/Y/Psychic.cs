@@ -92,6 +92,15 @@ public sealed class Psychic : RoleBase
         && DivinationLeftCount > 0
         && MyTaskState.HasCompletedEnoughCountOfTasks(TaskTrigger);
 
+    public override bool OnCompleteTask()
+    {
+        // 使えない間はベントの待ち時間を 255 秒にしてあり、客の手元ではそれを数え続けている。
+        // タスクの数が届いて使えるようになったら、その設定が届いてから数え直す
+        if (Player.IsAlive() && MyTaskState.CompletedTasksCount == TaskTrigger)
+            Player.RpcResetAbilityCooldown(sync: true);
+        return true;
+    }
+
     public override bool OnEnterVent(PlayerPhysics physics, int ventId)
     {
         if (!CanUseVent()) return false;
