@@ -268,7 +268,9 @@ public sealed class Dollmaster : RoleBase, IImpostor
         // ベントから押し出している間は、戻すのを押し出した側 (OnEnterVent の予約) に任せる
         if (ventReleasePending) return;
 
-        if (Time.time >= endAt || !Player.IsAlive() || !puppet.IsAlive() || puppet.Data == null || puppet.Data.Disconnected)
+        // 会議の前に幽霊から戻された時 (会議が開くまで通報を預かる間) も、ほかの人に見えたまま操らないようやめる
+        if (Time.time >= endAt || !Player.IsAlive() || !puppet.IsAlive() || puppet.Data == null || puppet.Data.Disconnected
+            || !TempGhost.IsGhost(Player))
         {
             Release(send: true);
             return;
