@@ -20,7 +20,7 @@ namespace TownOfHostL.Core;
 /// 1. PlayerPrefab を作って spawn (持ち主 -2)。公式鯖では子の 3 つの netId を空の spawn で埋める。
 /// 2. 0.1 秒後、客ごとに「CNO の PlayerId をその客の ID に差し替え → MurderPlayer(FailedError) → 戻す」を送る (4 人/包み)。
 /// 3. 0.15 秒後、ホストの外見を一瞬だけ「絵の名前・体の色・装飾なし」にして Data を送り、CNO をホストに変身させ、外見を戻す。
-/// 4. 0.3 秒後に、見た目と SnapTo をもう一度送る。客の側は spawn で通し番号が 1 つ進んでいるので、これが無いと映らない。
+/// 4. 0.3 秒後に SnapTo をもう一度送る (ResendSprite を呼んだ物は、見た目も)。客の側は spawn で通し番号が 1 つ進んでいるので、これが無いと映らない。
 ///
 /// 公式鯖のキックを避ける決まり:
 /// - イントロが終わってから 13 秒、会議 (追放の演出を含む) が明けてから 10 秒は出さない。
@@ -99,6 +99,8 @@ public sealed class CustomNetObject
     private HashSet<int> hideRequests;
     // spawn から可視化までの待ちに足す秒数
     private float visibilityHold;
+    // 出し終える時に見た目をもう一度送る
+    private bool resendSprite;
 
     public Vector2 Position { get; private set; }
     public string Sprite { get; private set; }
@@ -186,12 +188,23 @@ public sealed class CustomNetObject
 
     /// <summary>
     /// spawn から可視化までの待ちを延ばす。出す前に呼ぶ。可視化するまで、客の手元の体はプレイヤーの情報を持たない。
-    /// 待たせている間は、ほかの CNO も出ない。
+    /// 待たせている間は、ほかの CNO を出さない。
     /// </summary>
     public void DelayVisibility(float seconds)
     {
         if (state != State.Waiting) Log.Warn(Tag, "DelayVisibility は出す前に呼ぶ");
         visibilityHold = Mathf.Max(0f, seconds);
+    }
+
+    /// <summary>
+    /// 出し終える時に、見た目をもう一度送る。出す前に呼ぶ。見た目の包みが 1 体につき 2 通になるので、長く残って目に付く物にだけ使う。
+    /// 本編の客は、体の初期化が終わった時に可視化で借りた人の外見を付ける。客の画面が止まって可視化と最初の見た目を
+    /// 同じフレームで処理すると、初期化が見た目の後に走り、その客の画面では借りた人の姿のまま残る。
+    /// </summary>
+    public void ResendSprite()
+    {
+        if (state != State.Waiting) Log.Warn(Tag, "ResendSprite は出す前に呼ぶ");
+        resendSprite = true;
     }
 
     /// <summary>位置の電文の宛先 (spawn する前と消した後は null)</summary>
@@ -335,11 +348,11 @@ public sealed class CustomNetObject
             }
         }
 
-        // 出している途中の物が 1 体でもあれば、次は出さない。回す順に任せると、途中の物より後に作った物が先に回って同時に出る
+        // 可視化を待たせている物 (DelayVisibility) がある間は、次を出さない。回す順に任せると、後に作った物が先に回って出る
         bool spawning = false;
         foreach (var obj in all)
         {
-            if (obj.state is not (State.Spawned or State.Visible or State.Sprited)) continue;
+            if (obj.state != State.Spawned || obj.visibilityHold <= 0f) continue;
             spawning = true;
             break;
         }
@@ -384,14 +397,15 @@ public sealed class CustomNetObject
                 }
                 else
                 {
-                    // 見た目をもう一度送ってから、位置を送り直す。本編の客は、体の初期化が終わった時に可視化で借りた人の姿を付ける。
-                    // 客の画面が止まって可視化と最初の見た目を同じフレームで処理すると、初期化が見た目の後に走り、借りた人の姿のまま残る
-                    // 会議中は見た目を送れないので、明けてから送る
-                    if (inMeeting) pendingSprite = Sprite;
-                    else
+                    if (resendSprite)
                     {
-                        if (now < nextSpritePacketAt) return;
-                        SendSprite(now, Sprite, bodyColorId, new[] { this }, first: null);
+                        // 会議中は見た目を送れないので、明けてから送る
+                        if (inMeeting) pendingSprite = Sprite;
+                        else
+                        {
+                            if (now < nextSpritePacketAt) return;
+                            SendSprite(now, Sprite, bodyColorId, new[] { this }, first: null);
+                        }
                     }
                     Resnap(now);
                 }

@@ -201,6 +201,8 @@ public static class DeadBodyEraser
     {
         var cover = Core.CustomNetObject.Create(CoverSpriteAt(pos), pos);
         cover?.HideFrom(p => p.AmOwner || (skipClients != null && skipClients.Contains(p.OwnerId)));
+        // 覆いは会議まで残る。絵が入らずに人の姿で残ると目に付くので、見た目を送り直す
+        cover?.ResendSprite();
         return cover;
     }
 
