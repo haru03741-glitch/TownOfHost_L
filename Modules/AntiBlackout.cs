@@ -195,7 +195,9 @@ public static partial class AntiBlackout
                 // (ジャッカルとサイドキックの 2 人・インポスター・クルーが残った会議の後、ジャッカルの画面が 2 対 2 で暗転した。2026-11-21 実機で確認)
                 lacking = BalanceView(pc, clientId, sender, ref count);
             }
-            foreach (var dead in deadPlayers)
+            // 見る本人は最後に回し、ほかの死者で足りる時は本人を生きたクルーにしない
+            // (本人へ届く生きた役職は、戻すまでの間その画面を生きた姿・通報ボタンつきの HUD にする)
+            foreach (var dead in deadPlayers.OrderBy(d => d.PlayerId == pc.PlayerId))
             {
                 bool fill = lacking > 0;
                 if (!fill && selfKiller) continue;

@@ -1068,10 +1068,11 @@ class PlayerControlSetRolePatch
         {
             var capTarget2 = target;
             var capRoleType = roleType;
-            var capCanOverride = canOverrideRole;
+            // 本編の死 (AssignRoleOnDeath) は canOverride を false で送る。false の SetRole は本編の客でその人の roleAssigned を立て、
+            // 以後その人への幽霊でない SetRole (復活・暗転対策の頭数合わせ・死体の合わせ直し) を全部捨てさせるので、true で送る
             _ = new LateTask(() =>
             {
-                capTarget2.RpcSetRoleNormal(capRoleType, capCanOverride);
+                capTarget2.RpcSetRoleNormal(capRoleType, canOverrideRole: true);
             }, GhostRoleSyncDelay, "DelayedGhostRoleSyncNormal");
         }
         else
