@@ -6482,7 +6482,7 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "RoleDictionary.Mine","You","自分","","","","",""
 "RoleDictionary.MyRole","Your role","あなたの役職","","","","",""
 "RoleDictionary.MyAddOn","Your add-on","あなたの属性","","","","",""
-"RoleDictionary.Summary","Summary","ひとことで","","","","",""
+"RoleDictionary.Summary","Intro","イントロ","","","","",""
 "RoleDictionary.Detail","How it works","くわしく","","","","",""
 "RoleDictionary.MineTitle","Your role and add-ons","あなたの役職と属性","","","","",""
 "RoleDictionary.Keys","↑↓ Pick a role   ←→ Change team   / Search   Esc Close","↑↓ 役職を選ぶ   ←→ 陣営を替える   / 検索   Esc 閉じる","","","","",""
