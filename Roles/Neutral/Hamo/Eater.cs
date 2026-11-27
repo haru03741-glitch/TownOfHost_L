@@ -151,6 +151,8 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
 
     public void OnCheckMurderAsKiller(MurderInfo info)
     {
+        // キル出来ない相手・守りで止まるキルは飲み込まない (飲み込んだ後の死は守りを通らないので、守りが働いても相手が死んでしまう)
+        if (!info.CanKill || info.CheckHasGuard()) return;
         var (killer, target) = info.AttemptTuple;
         info.DoKill = false;
         killer.SetKillCooldown(OptionSwallowTime.GetFloat(), ForceProtect: true);

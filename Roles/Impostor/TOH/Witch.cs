@@ -113,7 +113,8 @@ namespace TownOfHostL.Roles.Impostor
         }
         public void OnCheckMurderAsKiller(MurderInfo info)
         {
-            if (!info.CanKill) return;
+            // キル出来ない相手・守りで止まるキルは呪わない (呪った後の死は守りを通らないので、守りが働いても相手が死んでしまう)
+            if (!info.CanKill || info.CheckHasGuard()) return;
 
             var (killer, target) = info.AttemptTuple;
             if (NowSwitchTrigger == SwitchTrigger.TriggerDouble)
