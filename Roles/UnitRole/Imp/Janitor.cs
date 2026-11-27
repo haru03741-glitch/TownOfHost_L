@@ -115,11 +115,18 @@ public sealed class Janitor : RoleBase, IImpostor
         target.MarkDirtySettings();
 
         /* ターゲットを死体なしで霊界転送する */
-        targetPlayerState.SetDead(CustomDeathReason.Clean);
-        // canOverride の無い SetRole は本編の客でその人への以後の生きた役職の SetRole を捨てさせるので、付けて送る
-        target.RpcSetRoleNormal(RoleTypes.CrewmateGhost, canOverrideRole: true);
-        target.Exiled();
-        target.RpcExileV3(CustomDeathReason.Clean);
+        void Clean()
+        {
+            targetPlayerState.SetDead(CustomDeathReason.Clean);
+            // canOverride の無い SetRole は本編の客でその人への以後の生きた役職の SetRole を捨てさせるので、付けて送る
+            target.RpcSetRoleNormal(RoleTypes.CrewmateGhost, canOverrideRole: true);
+            target.Exiled();
+            target.RpcExileV3(CustomDeathReason.Clean);
+        }
+        // ホストの追放の締めから暗転対策の戻しまでは、死を戻しの後まで待たせる (本編の客の追放の締めの頭数の判定より先に届くと暗転しうる)
+        if (AntiBlackout.InRevertWindow)
+            AntiBlackout.RunAfterRevert(() => { if (target != null && target.Data != null && !target.Data.Disconnected && target.IsAlive()) Clean(); });
+        else Clean();
         Logger.Info($"{Player.GetNameWithRole()} : ターゲット({target.GetNameWithRole()})を掃除", "G&J");
 
         // 自身のキルクールリセット

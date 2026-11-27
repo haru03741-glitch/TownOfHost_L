@@ -367,6 +367,12 @@ public static partial class AntiBlackout
     /// </summary>
     public static bool IsDeathDeferred(byte playerId) => deferredDead.ContainsKey(playerId);
 
+    /// <summary>
+    /// ホストの追放の締め (退避した生死を戻した後) から、身代わりを戻すまでの間か。
+    /// 本編の客はこの間にまだ追放の締めの頭数の判定をしていないことがあるので、新しい死は RunAfterRevert で戻しの後へ回す
+    /// </summary>
+    public static bool InRevertWindow => revertPending && !IsCached;
+
     public static bool DeferDeathIfFilled(byte playerId)
     {
         if (!deferredDead.TryGetValue(playerId, out var val)) return false;

@@ -901,6 +901,18 @@ static partial class ExtendedPlayerControl
     public static void RpcExileV3(this PlayerControl player, CustomDeathReason reason, bool keepExisting = false)
     {
         if (player == null) return;
+        // ホストの追放の締めから暗転対策の戻しまでの新しい死は、戻しの後まで待たせる
+        // (本編の客がまだ追放の締めの頭数の判定をしていないことがあり、先に死が届くと暗転しうる。キルの送り口と同じ)
+        if (AntiBlackout.InRevertWindow && player.Data != null && !player.Data.IsDead)
+        {
+            Logger.Info($"{player.GetNameWithRole().RemoveHtmlTags()}: 暗転対策の戻しの前なので、死を戻しの後まで待たせます ({reason})", "RpcExileV3");
+            AntiBlackout.RunAfterRevert(() =>
+            {
+                if (player == null || player.Data == null || player.Data.Disconnected || player.Data.IsDead) return;
+                player.RpcExileV3(reason, keepExisting);
+            });
+            return;
+        }
         player.Exiled();
         PlayerState.GetByPlayerId(player.PlayerId).SetDead(reason, keepExisting);
         player.Data.IsDead = true;

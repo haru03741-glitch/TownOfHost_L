@@ -37,6 +37,8 @@ namespace TownOfHostL
                 if (Vector2.Distance(TargetLadderData[player.PlayerId], player.transform.position) < 0.5f)
                 {
                     if (player.Data.IsDead) return;
+                    // ホストの追放の締めから暗転対策の戻しまでは死を送らない (本編の客の追放の締めの頭数の判定より先に届くと暗転しうる)
+                    if (AntiBlackout.InRevertWindow) return;
                     //LateTaskを入れるため、先に死亡判定を入れておく
                     player.Data.IsDead = true;
                     _ = new LateTask(() =>
