@@ -479,7 +479,7 @@ public sealed class Spelunker : RoleBase, ISystemTypeUpdateHook
 
             if (!CanDieNow(checkMeeting: true)) return;
 
-            TownOfHostL.Modules.PlayerSpeed.Freeze(Player.PlayerId, nameof(Spelunker));
+            Holdings.Freeze(Player.PlayerId, nameof(Spelunker));
 
             Player.SyncSettings();
 
@@ -491,7 +491,7 @@ public sealed class Spelunker : RoleBase, ISystemTypeUpdateHook
 
         {
 
-            TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(Spelunker));
+            Holdings.RemoveSpeed(Player.PlayerId, nameof(Spelunker));
 
             Player.SyncSettings();
 
