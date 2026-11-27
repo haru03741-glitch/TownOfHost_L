@@ -79,20 +79,16 @@ namespace TownOfHostL.Roles
         }
         public static bool CheckRoleCount()
         {
-            // 人数ごとの構成を使う時は、その人数の数をそのまま使う (人数に収まるよう削ってある)
-            if (PlayerCountComposition.IsOn) { PlayerCountComposition.ApplyAtGameStart(); return true; }
-            if (AssignMode == AssignAlgorithm.Fixed) return true;
-            var result = true;
-            var opt = Main.NormalOptions.Cast<IGameOptions>();
-
             var playerCount = GameData.Instance.PlayerCount;
-            var numImpostors = Math.Min(playerCount, opt.GetInt(Int32OptionNames.NumImpostors));
+            Func<CustomRoleTypes, (int min, int max)> range;
+            if (PlayerCountComposition.IsOn) range = t => PlayerCountComposition.Get(playerCount, t);
+            else if (AssignMode == AssignAlgorithm.Fixed) return true;
+            else range = t => (RandomAssignOptionsCollection[t].Min, RandomAssignOptionsCollection[t].Max);
+            var result = true;
 
-            var impOptions = RandomAssignOptionsCollection[CustomRoleTypes.Impostor];
-
-            var min = impOptions.Min;
-            var max = impOptions.Max;
-            if (min > max || min > numImpostors || max > numImpostors)
+            // インポスターの数は本編の「インポスター数」ではなく、ここの最少と最多で決める (本編の数で頭打ちにしない)
+            var (min, max) = range(CustomRoleTypes.Impostor);
+            if (min > max || min >= playerCount)
             {
                 var msg = GetString("Warning.NotMatchImpostorCount");
                 Logger.SendInGame(msg);
@@ -100,8 +96,8 @@ namespace TownOfHostL.Roles
                 result = false;
             }
             var roleMinCount = 0;
-            foreach (var options in RandomAssignOptionsCollection.Values)
-                roleMinCount += options.Min;
+            foreach (var type in RandomAssignOptionsCollection.Keys)
+                roleMinCount += range(type).min;
             if (roleMinCount > playerCount)
             {
                 var msg = GetString("Warning.NotMatchRoleCount");
@@ -112,21 +108,24 @@ namespace TownOfHostL.Roles
 
             return result;
         }
+        /// <summary>
+        /// ランダムのアサイン (と人数ごとの構成) で決めたインポスターの数。
+        /// 本編の「インポスター数」の代わりに、本編の役職の割り当てで使う (ロビーに戻ったら消す)
+        /// </summary>
+        public static int? ImpostorCountOverride;
         public static void SelectAssignRoles()
         {
             AssignCount.Clear();
             AssignRoleList.Clear();
             LaterAddOnList.Clear();
 
+            ImpostorCountOverride = null;
             if (PlayerCountComposition.IsOn)
             {
-                // 人数ごとに決めた構成の枠で、ランダムのアサインと同じく役職を配る
-                var (imp, mad, neu, crew) = PlayerCountComposition.Get(GameData.Instance.PlayerCount);
-                AssignCount[CustomRoleTypes.Impostor] = imp;
-                AssignCount[CustomRoleTypes.Madmate] = mad;
-                AssignCount[CustomRoleTypes.Neutral] = neu;
-                AssignCount[CustomRoleTypes.Crewmate] = crew;
-                Logger.Info($"人数ごとの構成 ({GameData.Instance.PlayerCount} 人): インポスター {imp}・マッド {mad}・ニュートラル {neu}・クルー {crew}", "AssignCount");
+                // 人数ごとに決めた最少と最多で、ランダムのアサインと同じく配る
+                var players = GameData.Instance.PlayerCount;
+                Logger.Info($"人数ごとの構成を使う ({players} 人)", "AssignCount");
+                SetRandomAssignCount(t => PlayerCountComposition.Get(players, t));
                 SetRandomAssignRoleList();
                 SetAddOnsList(false);
             }
@@ -137,7 +136,7 @@ namespace TownOfHostL.Roles
                     SetAddOnsList(true);
                     break;
                 case AssignAlgorithm.Random:
-                    SetRandomAssignCount();
+                    SetRandomAssignCount(t => (RandomAssignOptionsCollection[t].Min, RandomAssignOptionsCollection[t].Max));
                     SetRandomAssignRoleList();
                     SetAddOnsList(false);
                     break;
@@ -191,22 +190,24 @@ namespace TownOfHostL.Roles
         ///<summary>
         ///設定と実際の人数から各役職のアサイン数を決定
         ///</summary>
-        private static void SetRandomAssignCount()
+        private static void SetRandomAssignCount(Func<CustomRoleTypes, (int min, int max)> range)
         {
-
             var rand = IRandom.Instance;
-            int numImpostors = Math.Min(GameData.Instance.PlayerCount, Main.RealOptionsData.GetInt(Int32OptionNames.NumImpostors));
+            var playerCount = GameData.Instance.PlayerCount;
+            // インポスターの数: 最少〜最多のくじ引き。本編の「インポスター数」では頭打ちにしない (最低 1 人はクルー側に残す)
+            var (impMin, impMax) = range(CustomRoleTypes.Impostor);
+            int numImpostors = Math.Clamp(rand.Next(impMin, Math.Max(impMin, impMax) + 1), 0, Math.Max(0, playerCount - 1));
             //インポスター以外の人数
             //マッド、クルー、ニュートラル合計の限界値
-            int numOthers = GameData.Instance.PlayerCount - numImpostors;
+            int numOthers = playerCount - numImpostors;
+            var otherTypes = RandomAssignOptionsCollection.Keys.Where(x => x != CustomRoleTypes.Impostor).ToList();
 
             List<CustomRoleTypes> otherRoleTypesList = new();
             if (numOthers > 0) //マッド、クルー、ニュートラルの人数決定
             {
-                var otherRoleTypesOptions = RandomAssignOptionsCollection.Where(x => x.Key != CustomRoleTypes.Impostor);
                 //一旦最少人数を設定
-                foreach (var (roleType, options) in otherRoleTypesOptions)
-                    otherRoleTypesList.AddRange(Enumerable.Repeat(roleType, options.Min).ToList());
+                foreach (var roleType in otherTypes)
+                    otherRoleTypesList.AddRange(Enumerable.Repeat(roleType, range(roleType).min).ToList());
 
                 //超えている場合はランダムに削除
                 while (otherRoleTypesList.Count > numOthers)
@@ -216,11 +217,12 @@ namespace TownOfHostL.Roles
                 if (numAdditional > 0) //最少人数で限界値に満たない場合
                 {
                     List<CustomRoleTypes> additionalList = new();
-                    foreach (var (roleType, options) in otherRoleTypesOptions)
+                    foreach (var roleType in otherTypes)
                     {
+                        var (min, max) = range(roleType);
                         //追加人数を取得
                         // 最多が最少より小さい設定 (最少を先に上げた時など) は最少と同じとみなす。負の上限は Next が例外を出す
-                        int additionalCount = rand.Next(Math.Max(0, options.Max - options.Min) + 1);
+                        int additionalCount = rand.Next(Math.Max(0, max - min) + 1);
 
                         additionalList.AddRange(Enumerable.Repeat(roleType, additionalCount).ToList());
                     }
@@ -234,16 +236,12 @@ namespace TownOfHostL.Roles
             }
 
             //Dictionaryに変換
-            foreach (var (roleTypes, options) in RandomAssignOptionsCollection)
+            foreach (var roleTypes in RandomAssignOptionsCollection.Keys)
             {
-                if (roleTypes == CustomRoleTypes.Impostor)
-                {
-                    int impAssignCount = Math.Min(numImpostors, rand.Next(options.Min, Math.Max(options.Min, options.Max) + 1));
-                    AssignCount.Add(roleTypes, impAssignCount);
-                }
-                else
-                    AssignCount.Add(roleTypes, otherRoleTypesList.Count(x => x == roleTypes));
+                if (roleTypes == CustomRoleTypes.Impostor) AssignCount.Add(roleTypes, numImpostors);
+                else AssignCount.Add(roleTypes, otherRoleTypesList.Count(x => x == roleTypes));
             }
+            ImpostorCountOverride = numImpostors;
         }
         ///<summary>
         ///役職のアサイン抽選

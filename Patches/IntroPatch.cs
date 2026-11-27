@@ -150,7 +150,7 @@ class BeginCrewmatePatch
         var pc = PlayerControl.LocalPlayer;
         if (teamToDisplay.Contains(pc) is false) teamToDisplay.Add(pc);
 
-        int numImpostors = Main.NormalOptions.NumImpostors;
+        int numImpostors = TownOfHostL.Roles.RoleAssignManager.ImpostorCountOverride ?? Main.NormalOptions.NumImpostors;
 
         if (!Options.ChangeIntro.GetBool())
         {

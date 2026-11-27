@@ -27,7 +27,7 @@ public sealed class Egoist : RoleBase, ISidekickable, IKiller, ISchrodingerCatOw
             {
                 AssignRoleType = CustomRoleTypes.Impostor,
                 IsInitiallyAssignableCallBack =
-                    () => Main.RealOptionsData.GetInt(Int32OptionNames.NumImpostors) > 1,
+                    () => (TownOfHostL.Roles.RoleAssignManager.ImpostorCountOverride ?? Main.RealOptionsData.GetInt(Int32OptionNames.NumImpostors)) > 1,
                 AssignCountRule = new(1, 1, 1)
             },
             flags: RoleFlags.NeutralKiller | RoleFlags.CountedAsKiller | RoleFlags.ImpostorTeammate,

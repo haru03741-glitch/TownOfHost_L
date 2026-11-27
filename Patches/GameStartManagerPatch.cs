@@ -338,7 +338,8 @@ namespace TownOfHostL
             {
                 try
                 {
-                    __result = Main.NormalOptions.NumImpostors;
+                    // ランダムのアサイン・人数ごとの構成で決めた数があれば、本編の「インポスター数」よりそちらを使う
+                    __result = TownOfHostL.Roles.RoleAssignManager.ImpostorCountOverride ?? Main.NormalOptions.NumImpostors;
                     return false;
                 }
                 catch
