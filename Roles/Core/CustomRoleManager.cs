@@ -343,6 +343,7 @@ public static partial class CustomRoleManager
         GameEndCountAdjustersOthers.Clear();
         GameEndByCountHoldersOthers.Clear();
         TaskWinBlockersOthers.Clear();
+        RoleHoldings.ResetShared();
     }
     public static void CreateInstance()
     {

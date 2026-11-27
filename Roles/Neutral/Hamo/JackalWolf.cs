@@ -228,7 +228,7 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
 
         {
 
-            AddRole?.OnDestroy();
+            DestroyInnerRole(AddRole);
 
         }
 

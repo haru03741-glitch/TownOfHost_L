@@ -161,7 +161,7 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
     {
         if (AddRole is not null)
         {
-            AddRole?.OnDestroy();
+            DestroyInnerRole(AddRole);
         }
         AddRole = null;
         haverole = CustomRoles.NotAssigned;
