@@ -154,9 +154,14 @@ public static partial class CustomRoleManager
                 var capTarget = appearanceTarget;
                 _ = new LateTask(() =>
                 {
-                    if (capKiller == null || capTarget == null || capTarget.Data == null || capTarget.Data.Disconnected) return;
-                    // 待つ間に殺し手が死んだ・相手が別の手で死んだ時は通さない
-                    if (!capKiller.IsAlive() || !capTarget.IsAlive()) return;
+                    if (capKiller == null || capTarget == null) return;
+                    // 待つ間に殺し手が死んだ・相手が別の手で死んだ・抜けた時は通さない。キルの判定は通したと返してあるので、
+                    // 生きている殺し手の客には、キルの判定で止めた時と同じく失敗の返事を送る (送らないと客のキルの待ちが残りうる)
+                    if (!capKiller.IsAlive() || capTarget.Data == null || capTarget.Data.Disconnected || !capTarget.IsAlive())
+                    {
+                        if (capKiller.IsAlive() && capTarget.Data != null) capKiller.RpcMurderPlayer(capTarget, false);
+                        return;
+                    }
                     Kill.Send(capKiller, capTarget, dissolveBody: false, noBody: false);
                 }, 0.2f, "ViperMurderDelay");
             }
