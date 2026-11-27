@@ -9,7 +9,6 @@ namespace TownOfHostL.Modules;
 
 public static class DeadBodyEraser
 {
-    private static readonly HashSet<byte> noBodyTargets = new();
     private static readonly HashSet<byte> erasedBodies = new();
     // 消した死体ごとの覆い (持ち主ごと)
     private static readonly Dictionary<byte, CoverState> covers = new();
@@ -50,7 +49,6 @@ public static class DeadBodyEraser
     [GameModuleInitializer]
     public static void Init()
     {
-        noBodyTargets.Clear();
         erasedBodies.Clear();
         covers.Clear();
         erasedOnClients.Clear();
@@ -59,20 +57,9 @@ public static class DeadBodyEraser
     public static bool KillWithoutBody(PlayerControl killer, PlayerControl target, CustomDeathReason reason, bool force = true)
     {
         if (!AmongUsClient.Instance.AmHost || killer == null || target == null || !target.IsAlive()) return false;
-        noBodyTargets.Add(target.PlayerId);
-        try
-        {
-            CustomRoleManager.OnCheckMurder(killer, target, target, target, force, deathReason: reason);
-        }
-        finally
-        {
-            noBodyTargets.Remove(target.PlayerId);
-        }
+        CustomRoleManager.OnCheckMurder(killer, target, target, target, force, deathReason: reason, noBody: true);
         return !target.IsAlive();
     }
-
-    public static bool TakeNoBody(PlayerControl target)
-        => target != null && noBodyTargets.Remove(target.PlayerId);
 
     public static void ExileInsteadOfMurder(PlayerControl appearanceKiller, PlayerControl target)
     {

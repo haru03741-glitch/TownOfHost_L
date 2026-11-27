@@ -52,12 +52,15 @@ public static partial class CustomRoleManager
         PlayerControl appearanceKiller, PlayerControl appearanceTarget,
         bool killerMyselfInvoke = false)
         => OnCheckMurder(attemptKiller, attemptTarget, appearanceKiller, appearanceTarget, killerMyselfInvoke, false, 1, CustomDeathReason.Kill);
-    /// <summary>キルの力・ガードの力を見るキルチェック。force はキラーのキルチェックを飛ばす、DontRoleAbility は相手の能力を使わせない</summary>
+    /// <summary>
+    /// キルの力・ガードの力を見るキルチェック。force はキラーのキルチェックを飛ばす、DontRoleAbility は相手の能力を使わせない、
+    /// noBody は通った時に死体を残さずに死なせる
+    /// </summary>
     public static bool OnCheckMurder(
         PlayerControl attemptKiller, PlayerControl attemptTarget,
         PlayerControl appearanceKiller, PlayerControl appearanceTarget,
         bool? force, bool? DontRoleAbility = false, int Killpower = 1,
-        CustomDeathReason deathReason = CustomDeathReason.Kill)
+        CustomDeathReason deathReason = CustomDeathReason.Kill, bool noBody = false)
     {
         var killerMyselfInvoke = force == true;
         Logger.Info($"Attempt  :{attemptKiller.GetNameWithRole()} => {attemptTarget.GetNameWithRole()}", "CheckMurder");
@@ -170,18 +173,15 @@ public static partial class CustomRoleManager
                     if (capKiller == null || capTarget == null || capTarget.Data == null || capTarget.Data.Disconnected) return;
                     // 待つ間に殺し手が死んだ・相手が別の手で死んだ時は通さない
                     if (!capKiller.IsAlive() || !capTarget.IsAlive()) return;
-                    capKiller.RpcMurderPlayer(capTarget);
+                    Kill.Send(capKiller, capTarget, dissolveBody: false, noBody: false);
                 }, 0.2f, "ViperMurderDelay");
-            }
-            else if (TownOfHostL.Modules.DeadBodyEraser.TakeNoBody(appearanceTarget))
-            {
-                TownOfHostL.Modules.DeadBodyEraser.ExileInsteadOfMurder(appearanceKiller, appearanceTarget);
             }
             else
             {
-                if (attemptKiller.GetRoleClass() is IDissolvingKiller dissolver && dissolver.DissolvesBody(appearanceTarget))
-                    TownOfHostL.Modules.DissolveKill.Prepare(appearanceKiller, appearanceTarget);
-                appearanceKiller.RpcMurderPlayer(appearanceTarget);
+                // 死体を残さないのは、頼まれた相手その人が死ぬ時だけ (役職の処理で見た目の相手が替わったら、替わった人には死体を残す)
+                var withoutBody = noBody && appearanceTarget == attemptTarget;
+                var dissolveBody = !withoutBody && attemptKiller.GetRoleClass() is IDissolvingKiller dissolver && dissolver.DissolvesBody(appearanceTarget);
+                Kill.Send(appearanceKiller, appearanceTarget, dissolveBody, withoutBody);
             }
             return true;
         }
