@@ -77,8 +77,10 @@ function Split-Args([string]$s, [int]$start) {
 
 $found = 0; $calls = 0
 $files = Get-ChildItem -Path $root -Recurse -Filter *.cs | Where-Object { $_.FullName -notmatch '\\(build|bin|obj|\.git|\.vs)\\' }
+$sources = @{}
 foreach ($file in $files) {
     $src = Remove-Comments ([System.IO.File]::ReadAllText($file.FullName))
+    $sources[$file.FullName] = $src
     $methodStarts = @($methodRx.Matches($src) | ForEach-Object { $_.Index })
     $groups = @{}
     foreach ($m in $createRx.Matches($src)) {
@@ -117,8 +119,58 @@ foreach ($file in $files) {
 }
 
 Write-Host "設定の Create: $calls 件"
-if ($found -gt 0) {
-    Write-Host "保存のキーが重なりそうな組が $found 個あります。" -ForegroundColor Red
+
+# 作ったのにどこからも読まない設定 (メニューには出るが、変えても何も変わらない)。
+# OptionItem の変数で、宣言と代入 (`X = ...`) のほかに名前が 1 度も出てこない物を探す。
+# 子の設定の SetParent に渡すだけの見出しも「読む」に数える。private の変数は同じファイルの中だけで数える。
+$declRx = [regex]'(?m)^[ \t]*((?:(?:public|private|internal|protected|static|readonly)\s+)*)\w*OptionItem\s+(\w+)\s*(?:;|=(?!=))'
+$unread = 0
+# 宣言された名前だけを数える (全部の識別子を数えると遅い)
+$declNames = [System.Collections.Generic.HashSet[string]]::new()
+foreach ($src in $sources.get_Values()) { foreach ($d in $declRx.Matches($src)) { [void]$declNames.Add($d.Groups[2].Value) } }
+$alternation = ($declNames | ForEach-Object { [regex]::Escape($_) }) -join '|'
+$identRx = [regex]('(?<!\w)(' + $alternation + ')\b(\s*=(?!=|>))?')
+# 名前ごとの「読み」の数 (代入の左辺を除く)。Dictionary は返す時に展開されないよう , を付ける
+function Get-Reads([string]$src) {
+    $reads = [System.Collections.Generic.Dictionary[string, int]]::new()
+    foreach ($m in $identRx.Matches($src)) {
+        if ($m.Groups[2].Success) { continue }
+        $id = $m.Groups[1].Value
+        $c = 0; [void]$reads.TryGetValue($id, [ref]$c); $reads[$id] = $c + 1
+    }
+    , $reads
+}
+$fileReads = @{}
+$globalReads = [System.Collections.Generic.Dictionary[string, int]]::new()
+foreach ($path in $sources.get_Keys()) {
+    $r = Get-Reads $sources[$path]
+    $fileReads[$path] = $r
+    foreach ($kv in $r.GetEnumerator()) {
+        $c = 0; [void]$globalReads.TryGetValue($kv.Key, [ref]$c); $globalReads[$kv.Key] = $c + $kv.Value
+    }
+}
+foreach ($path in $sources.get_Keys()) {
+    $src = $sources[$path]
+    foreach ($d in $declRx.Matches($src)) {
+        $name = $d.Groups[2].Value
+        $isPrivate = -not ($d.Groups[1].Value -match '\b(public|internal|protected)\b')
+        # if の結果を代入すると Dictionary が展開されるので、枝の中で代入する
+        if ($isPrivate) { $table = $fileReads[$path] } else { $table = $globalReads }
+        $reads = 0
+        [void]$table.TryGetValue($name, [ref]$reads)
+        # `OptionItem X;` の宣言そのものは「;」が続くので読みに数えられている
+        if ($d.Value.TrimEnd().EndsWith(';')) { $reads-- }
+        if ($reads -gt 0) { continue }
+        $line = ([regex]::Matches($src.Substring(0, $d.Index), "`n")).Count + 1
+        $rel = [System.IO.Path]::GetRelativePath($root, $path)
+        Write-Host "$rel 行 ${line}: 設定 $name を作っているが、どこからも読んでいない" -ForegroundColor Red
+        $unread++
+    }
+}
+
+if ($found -gt 0 -or $unread -gt 0) {
+    if ($found -gt 0) { Write-Host "保存のキーが重なりそうな組が $found 個あります。" -ForegroundColor Red }
+    if ($unread -gt 0) { Write-Host "読まれない設定が $unread 個あります。使うか、消してください。" -ForegroundColor Red }
     exit 1
 }
-Write-Host "保存のキーが重なりそうな組はありません。"
+Write-Host "保存のキーが重なりそうな組と、読まれない設定はありません。"
