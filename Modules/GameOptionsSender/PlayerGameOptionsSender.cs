@@ -21,6 +21,13 @@ namespace TownOfHostL.Modules
             AllSenders.OfType<PlayerGameOptionsSender>()
             .Where(sender => sender.player.PlayerId == playerId)
             .ToList().ForEach(sender => sender.SetDirty());
+        /// <summary>この人へまだ送っていない設定の変更があるか</summary>
+        public static bool HasPending(byte playerId)
+        {
+            foreach (var sender in AllSenders)
+                if (sender is PlayerGameOptionsSender p && p.player != null && p.player.PlayerId == playerId && p.IsDirty) return true;
+            return false;
+        }
         public static void SetDirtyToAll() =>
             AllSenders.OfType<PlayerGameOptionsSender>()
             .ToList().ForEach(sender => sender.SetDirty());
