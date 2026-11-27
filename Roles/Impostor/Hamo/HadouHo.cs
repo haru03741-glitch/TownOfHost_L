@@ -93,13 +93,13 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
 
     public override void OnDestroy()
     {
-        TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(HadouHo));
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(HadouHo));
         beam?.End();
         CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
 
         if (IsCharging || ShowBeamMark || IsFiring)
         {
-            TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(HadouHo));
+            Holdings.RemoveSpeed(Player.PlayerId, nameof(HadouHo));
             Player.MarkDirtySettings();
             if (AmongUsClient.Instance.AmHost)
             {
@@ -146,7 +146,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         chargeTimer = 0f;
         TownOfHostL.Modules.ClientEffects.Charge(Player, ChargeTime, new Color(1f, 0.55f, 0.2f));
         beam?.BeginCharge(OptionBeamWarning.GetBool() ? HadouHoBeam.SmallWarningSize : 0);
-        TownOfHostL.Modules.PlayerSpeed.Freeze(Player.PlayerId, nameof(HadouHo));
+        Holdings.Freeze(Player.PlayerId, nameof(HadouHo));
         Player.MarkDirtySettings();
         Utils.AllPlayerKillFlash();
         Main.AllPlayerKillCooldown[Player.PlayerId] = 60f;
@@ -173,7 +173,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         HasHit = false;
         _prevCharging = false;
         _prevBeamMark = false;
-        TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(HadouHo));
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(HadouHo));
         Player.MarkDirtySettings();
         beam?.End();
     }
@@ -249,7 +249,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
             {
                 ShowBeamMark = false; _prevBeamMark = false;
                 beam?.End(); IsFiring = false;
-                TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(HadouHo));
+                Holdings.RemoveSpeed(Player.PlayerId, nameof(HadouHo));
                 Player.MarkDirtySettings();
                 Utils.NotifyRoles(); return;
             }
@@ -260,11 +260,11 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
 
             if (!HasHit && SelfDestructOnMiss)
             {
-                TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(HadouHo)); Player.MarkDirtySettings();
+                Holdings.RemoveSpeed(Player.PlayerId, nameof(HadouHo)); Player.MarkDirtySettings();
                 PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = CustomDeathReason.Suicide;
                 Player.RpcMurderPlayerV2(Player); IsFiring = false; return;
             }
-            TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(HadouHo)); Player.MarkDirtySettings();
+            Holdings.RemoveSpeed(Player.PlayerId, nameof(HadouHo)); Player.MarkDirtySettings();
             _ = new LateTask(() =>
             {
                 if (!Player.IsAlive()) { IsFiring = false; return; }
@@ -359,7 +359,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         {
             ShowBeamMark = false; _prevBeamMark = false;
             beam?.End(); IsFiring = false;
-            TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(HadouHo));
+            Holdings.RemoveSpeed(Player.PlayerId, nameof(HadouHo));
             Player.MarkDirtySettings();
             Utils.NotifyRoles(); return;
         }
@@ -369,7 +369,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         ShowBeamMark = false; _prevBeamMark = false;
         beam?.End();
         Utils.NotifyRoles(ForceLoop: true);
-        TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(HadouHo)); Player.MarkDirtySettings();
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(HadouHo)); Player.MarkDirtySettings();
         var charge = OptionChargeTime.GetFloat() - chargeTimer;
         var waittime = OptionBeamTime.GetFloat() + charge;
         _ = new LateTask(() =>

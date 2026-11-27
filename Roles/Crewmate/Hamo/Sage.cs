@@ -117,7 +117,7 @@ public sealed class Sage : RoleBase, IUsePetButton
     public override void OnDestroy()
 
     {
-        TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(Sage));
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(Sage));
 
 
 
@@ -126,7 +126,7 @@ public sealed class Sage : RoleBase, IUsePetButton
 
         {
 
-            TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(Sage));
+            Holdings.RemoveSpeed(Player.PlayerId, nameof(Sage));
 
             Player.MarkDirtySettings();
 
@@ -181,7 +181,7 @@ public sealed class Sage : RoleBase, IUsePetButton
 
 
 
-        TownOfHostL.Modules.PlayerSpeed.Freeze(Player.PlayerId, nameof(Sage));
+        Holdings.Freeze(Player.PlayerId, nameof(Sage));
 
         Player.MarkDirtySettings();
 
@@ -213,7 +213,7 @@ public sealed class Sage : RoleBase, IUsePetButton
 
 
 
-        TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(Sage));
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(Sage));
 
         Player.MarkDirtySettings();
 
@@ -292,7 +292,7 @@ public sealed class Sage : RoleBase, IUsePetButton
 
         {
 
-            TownOfHostL.Modules.PlayerSpeed.Freeze(Player.PlayerId, nameof(Sage));
+            Holdings.Freeze(Player.PlayerId, nameof(Sage));
 
             Player.MarkDirtySettings();
 

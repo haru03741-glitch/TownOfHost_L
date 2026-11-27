@@ -125,7 +125,7 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
 
     public override void OnDestroy()
     {
-        TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(SheriffHadouHo));
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(SheriffHadouHo));
         beam?.End();
         CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
     }
@@ -222,7 +222,7 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
         IsFiring = true;
         IsCharging = true;
         chargeTimer = 0f;
-        TownOfHostL.Modules.PlayerSpeed.Freeze(Player.PlayerId, nameof(SheriffHadouHo));
+        Holdings.Freeze(Player.PlayerId, nameof(SheriffHadouHo));
         Player.MarkDirtySettings();
         Utils.AllPlayerKillFlash();
         Player.SyncSettings();
@@ -246,7 +246,7 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
         chargeTimer = 0f;
         _prevCharging = false;
         _prevBeamMark = false;
-        TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(SheriffHadouHo));
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(SheriffHadouHo));
         Player.MarkDirtySettings();
         beam?.End();
     }
@@ -340,7 +340,7 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
             {
                 ShowBeamMark = false; _prevBeamMark = false;
                 beam?.End(); IsFiring = false;
-                TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(SheriffHadouHo));
+                Holdings.RemoveSpeed(Player.PlayerId, nameof(SheriffHadouHo));
                 Player.MarkDirtySettings();
                 Utils.NotifyRoles(); return;
             }
@@ -351,7 +351,7 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
 
             if (!HasHit && SelfDestructOnMiss)
             {
-                TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(SheriffHadouHo));
+                Holdings.RemoveSpeed(Player.PlayerId, nameof(SheriffHadouHo));
                 Player.MarkDirtySettings();
                 PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = CustomDeathReason.Suicide;
                 Player.RpcMurderPlayerV2(Player);
@@ -361,7 +361,7 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
                 return;
             }
 
-            TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(SheriffHadouHo));
+            Holdings.RemoveSpeed(Player.PlayerId, nameof(SheriffHadouHo));
             Player.MarkDirtySettings();
             nowcool = Cooldown;
             LastCooltime = (int)Cooldown;

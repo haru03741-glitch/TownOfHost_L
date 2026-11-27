@@ -447,7 +447,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
     public override void OnDestroy()
 
     {
-        TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(JackalHadouHo));
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(JackalHadouHo));
 
         beam?.End();
 
@@ -460,7 +460,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         {
 
-            TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(JackalHadouHo));
+            Holdings.RemoveSpeed(Player.PlayerId, nameof(JackalHadouHo));
 
             Player.MarkDirtySettings();
 
@@ -819,7 +819,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
 
 
-        TownOfHostL.Modules.PlayerSpeed.Freeze(Player.PlayerId, nameof(JackalHadouHo));
+        Holdings.Freeze(Player.PlayerId, nameof(JackalHadouHo));
 
         Player.MarkDirtySettings();
 
@@ -901,7 +901,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         _prevBeamMark = false;
 
-        TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(JackalHadouHo));
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(JackalHadouHo));
 
         Player.MarkDirtySettings();
 
@@ -1204,7 +1204,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             beam?.End(); IsFiring = false;
 
-            TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(JackalHadouHo));
+            Holdings.RemoveSpeed(Player.PlayerId, nameof(JackalHadouHo));
 
             Player.MarkDirtySettings(); Player.RpcSetColor((byte)PlayerColor);
 
@@ -1229,7 +1229,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             Player.RpcSetColor((byte)PlayerColor);
 
-            TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(JackalHadouHo));
+            Holdings.RemoveSpeed(Player.PlayerId, nameof(JackalHadouHo));
 
             Player.MarkDirtySettings();
 
@@ -1245,7 +1245,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         Player.RpcSetColor((byte)PlayerColor);
 
-        TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(JackalHadouHo));
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(JackalHadouHo));
 
         Player.MarkDirtySettings();
 

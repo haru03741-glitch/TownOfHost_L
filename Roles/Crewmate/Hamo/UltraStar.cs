@@ -250,13 +250,13 @@ public sealed class UltraStar : RoleBase, IKiller, ISchrodingerCatOwner
 
     public override bool ShowsRoleTo(PlayerControl seer, bool isMeeting) => CanseeAllplayer;
 
-    public override void OnIntroEnd() => TownOfHostL.Modules.PlayerSpeed.Add(Player.PlayerId, nameof(UltraStar), Speed);
+    public override void OnIntroEnd() => Holdings.AddSpeed(Player.PlayerId, nameof(UltraStar), Speed);
 
 
 
     // 試合の途中でウルトラスターになった時も速さを足す。役職が替わる時は OnDestroy で外す
-    public override void OnAddedMidGame() => TownOfHostL.Modules.PlayerSpeed.Add(Player.PlayerId, nameof(UltraStar), Speed);
-    public override void OnDestroy() => TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(UltraStar));
+    public override void OnAddedMidGame() => Holdings.AddSpeed(Player.PlayerId, nameof(UltraStar), Speed);
+    public override void OnDestroy() => Holdings.RemoveSpeed(Player.PlayerId, nameof(UltraStar));
 
 
 

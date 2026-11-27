@@ -85,10 +85,10 @@ public sealed class Destroyer : RoleBase, IImpostor
         crushUntil = Time.time + crushTime;
         lastShownSec = -1;
         CheckMurderPatch.TimeSinceLastKill[Player.PlayerId] = 0f;
-        TownOfHostL.Modules.PlayerSpeed.Freeze(target.PlayerId, "DestroyerVictim");
+        Holdings.Freeze(target.PlayerId, "DestroyerVictim");
         target.MarkDirtySettings();
         slowed = true;
-        TownOfHostL.Modules.PlayerSpeed.Freeze(Player.PlayerId, nameof(Destroyer));
+        Holdings.Freeze(Player.PlayerId, nameof(Destroyer));
         Player.MarkDirtySettings();
         Player.SetKillCooldown(ForceProtect: true);
         StartPet();
@@ -104,12 +104,12 @@ public sealed class Destroyer : RoleBase, IImpostor
         StopPet();
         if (v != null)
         {
-            TownOfHostL.Modules.PlayerSpeed.Remove(v.PlayerId, "DestroyerVictim");
+            Holdings.RemoveSpeed(v.PlayerId, "DestroyerVictim");
             v.MarkDirtySettings();
         }
         if (slowed)
         {
-            TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(Destroyer));
+            Holdings.RemoveSpeed(Player.PlayerId, nameof(Destroyer));
             slowed = false;
             Player.MarkDirtySettings();
         }
@@ -176,8 +176,8 @@ public sealed class Destroyer : RoleBase, IImpostor
         if (playerId == Player.PlayerId)
         {
             var v = victim;
-            TownOfHostL.Modules.PlayerSpeed.Remove(victimId, "DestroyerVictim");
-            TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(Destroyer));
+            Holdings.RemoveSpeed(victimId, "DestroyerVictim");
+            Holdings.RemoveSpeed(Player.PlayerId, nameof(Destroyer));
             victim = null;
             victimId = byte.MaxValue;
             slowed = false;
@@ -186,8 +186,8 @@ public sealed class Destroyer : RoleBase, IImpostor
         }
         if (playerId == victimId)
         {
-            TownOfHostL.Modules.PlayerSpeed.Remove(playerId, "DestroyerVictim");
-            TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(Destroyer));
+            Holdings.RemoveSpeed(playerId, "DestroyerVictim");
+            Holdings.RemoveSpeed(Player.PlayerId, nameof(Destroyer));
             try { Release(); }
             catch (System.Exception ex)
             {
@@ -214,11 +214,11 @@ public sealed class Destroyer : RoleBase, IImpostor
 
     public override void OnDestroy()
     {
-        TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(Destroyer));
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(Destroyer));
         // つぶしている途中に役職が替わった時に、相手の足止めを残さない
         if (victimId != byte.MaxValue)
         {
-            TownOfHostL.Modules.PlayerSpeed.Remove(victimId, "DestroyerVictim");
+            Holdings.RemoveSpeed(victimId, "DestroyerVictim");
             if (victim != null && GameStates.IsInTask) victim.MarkDirtySettings();
         }
         foreach (var t in traces) t.Remove();

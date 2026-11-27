@@ -150,7 +150,7 @@ public sealed class Dollmaster : RoleBase, IImpostor
         }
         puppet = target;
         puppetId = target.PlayerId;
-        PlayerSpeed.Freeze(puppetId, SpeedKey);
+        Holdings.Freeze(puppetId, SpeedKey);
         target.MarkDirtySettings();
         endAt = Time.time + duration;
         nextStepAt = 0f;
@@ -364,7 +364,7 @@ public sealed class Dollmaster : RoleBase, IImpostor
         ventReleasePending = false;
         if (send) PlayerWalker.Stop(target);
         else PlayerWalker.Forget(target);
-        PlayerSpeed.Remove(puppetId, SpeedKey);
+        Holdings.RemoveSpeed(puppetId, SpeedKey);
         // 試合の終わりの後始末では、相手が先に壊れていることがある
         if (target != null && target.Data != null && !target.Data.Disconnected) target.MarkDirtySettings();
         // 元の場所へ戻してから、ほかの人の画面に姿を戻す (会議の時は TempGhost が会議の前に戻し、会議で全員の位置も替わる)

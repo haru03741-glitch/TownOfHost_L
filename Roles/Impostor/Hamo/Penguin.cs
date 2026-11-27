@@ -38,7 +38,7 @@ class Penguin : RoleBase, IImpostor
         if (AbductVictim != null)
         {
             PlayerState.GetByPlayerId(AbductVictim.PlayerId).CanUseMovingPlatform = true;
-            TownOfHostL.Modules.PlayerSpeed.Remove(AbductVictim.PlayerId, "PenguinVictim");
+            Holdings.RemoveSpeed(AbductVictim.PlayerId, "PenguinVictim");
             if (GameStates.IsInTask) AbductVictim.MarkDirtySettings();
         }
         AbductVictim = null;
@@ -89,7 +89,7 @@ class Penguin : RoleBase, IImpostor
         oldpos = Player.GetTruePosition();
         lastTpPos = new(float.MaxValue, float.MaxValue);
         nextTpAt = 0f;
-        TownOfHostL.Modules.PlayerSpeed.Freeze(target.PlayerId, "PenguinVictim");
+        Holdings.Freeze(target.PlayerId, "PenguinVictim");
         target.MarkDirtySettings();
     }
     void RemoveVictim()
@@ -97,7 +97,7 @@ class Penguin : RoleBase, IImpostor
         if (AbductVictim != null)
         {
             PlayerState.GetByPlayerId(AbductVictim.PlayerId).CanUseMovingPlatform = true;
-            TownOfHostL.Modules.PlayerSpeed.Remove(AbductVictim.PlayerId, "PenguinVictim");
+            Holdings.RemoveSpeed(AbductVictim.PlayerId, "PenguinVictim");
             AbductVictim.MarkDirtySettings();
             AbductVictim = null;
         }

@@ -187,15 +187,15 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
     private void SetSpeed(float speed)
     {
         slowed = true;
-        if (speed <= Main.MinSpeed) TownOfHostL.Modules.PlayerSpeed.Freeze(Player.PlayerId, nameof(Nova));
-        else TownOfHostL.Modules.PlayerSpeed.Override(Player.PlayerId, nameof(Nova), speed);
+        if (speed <= Main.MinSpeed) Holdings.Freeze(Player.PlayerId, nameof(Nova));
+        else Holdings.OverrideSpeed(Player.PlayerId, nameof(Nova), speed);
         Player.MarkDirtySettings();
     }
 
     private void RestoreSpeed()
     {
         if (!slowed) return;
-        TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(Nova));
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(Nova));
         slowed = false;
         Player.MarkDirtySettings();
     }
@@ -470,7 +470,7 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
 
     public override void OnDestroy()
     {
-        TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(Nova));
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(Nova));
         RemoveTiles();
     }
 
