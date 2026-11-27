@@ -297,6 +297,8 @@ public sealed class Walkure : RoleBase, ISelfVoter, IKiller
         return false;
     }
 
+    // キルボタンでは、キル以外の能力の押し (サイドキック化・任命・指名など) も受けない
+    public override bool OnCheckPressAsTarget(MurderInfo info) => OnCheckMurderAsTarget(info);
     public override bool OnCheckMurderAsTarget(MurderInfo info)
     {
         info.GuardPower = 9;

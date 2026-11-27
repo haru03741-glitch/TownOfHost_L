@@ -281,6 +281,14 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
 
     }
 
+    // 味方のジャッカル陣営の押しは、キル以外の押し (サイドキック化など) も受けない
+    public override bool OnCheckPressAsTarget(MurderInfo info)
+    {
+        if (info.IsSuicide || !info.AttemptKiller.Is(CountTypes.Jackal) || OptionJJackalCanKillMafia.GetBool()) return true;
+        info.DoKill = false;
+        info.AttemptKiller.SetKillCooldown(ForceProtect: true);
+        return false;
+    }
     public override bool OnCheckMurderAsTarget(MurderInfo info)
 
     {
