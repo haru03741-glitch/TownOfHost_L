@@ -247,7 +247,9 @@ public static class Flashlight
 
         holdUntil[id] = Time.realtimeSinceStartup + HoldSeconds;
         sender.SendRaw(hns.Cast<IGameOptions>());
-        Logger.Info($"{pc.Data?.PlayerName}: 懐中電灯を点ける (視界 {crew:0.00}/{imp:0.00} + {next})", nameof(Flashlight));
+        Logger.Info($"{pc.Data?.PlayerName}: 懐中電灯を点ける (視界 {crew:0.00}/{imp:0.00} + {next}・"
+            + $"map {hns.MapId}・imp {hns.NumImpostors}・max {hns.MaxPlayers}・speed {hns.PlayerSpeedMod:0.###}・kcd {hns.KillCooldown:0.###}・kdist {hns.KillDistance}・"
+            + $"size {crewSize:0.##}/{impSize:0.##}・人数 {count})", nameof(Flashlight));
     }
 
     // かくれんぼ型を送った後、同じ半径の通常の設定へ戻す
