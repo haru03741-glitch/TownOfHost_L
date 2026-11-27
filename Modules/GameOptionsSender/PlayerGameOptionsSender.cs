@@ -184,6 +184,9 @@ namespace TownOfHostL.Modules
             AURoleOptions.SetOpt(opt);
             if (Roles.Impostor.NormalViper.RoleInfo.IsEnable)
                 AURoleOptions.ViperDissolveTime = Roles.Impostor.NormalViper.DissolveTime;
+            // キルと同時に死体を消す役職のキルの間は、見る人の画面で死体がすぐ溶けるようにする
+            if (DissolveKill.Overrides(player.PlayerId))
+                AURoleOptions.ViperDissolveTime = DissolveKill.DissolveSeconds;
             var state = PlayerState.GetByPlayerId(player.PlayerId);
             opt.SetFloat(FloatOptionNames.CrewLightMod, Main.DefaultCrewmateVision);
             opt.SetFloat(FloatOptionNames.ImpostorLightMod, Main.DefaultImpostorVision);

@@ -6,7 +6,7 @@ using TownOfHostL.Roles.Crewmate;
 using TownOfHostL.Roles.Core.Interfaces;
 
 namespace TownOfHostL.Roles.Impostor;
-public sealed class Scavenger : RoleBase, IImpostor
+public sealed class Scavenger : RoleBase, IImpostor, IDissolvingKiller
 {
     public static readonly SimpleRoleInfo RoleInfo =
          SimpleRoleInfo.Create(
@@ -30,24 +30,28 @@ public sealed class Scavenger : RoleBase, IImpostor
         IsEatUpKillLimit = OptionIsEatUpKillLimit.GetBool();
         LimitMaxCount = OptionLimitMaxCount.GetInt();
         EraseBody = OptionEraseBody.GetBool();
+        DissolveBody = OptionDissolveBody.GetBool();
     }
     private static OptionItem OptionKillCooldown;
     private static OptionItem OptionIgnoreBait;
     private static OptionItem OptionIsEatUpKillLimit;
     private static OptionItem OptionLimitMaxCount;
     private static OptionItem OptionEraseBody;
+    private static OptionItem OptionDissolveBody;
     enum OptionName
     {
         ScavengerIgnoreBait,
         ScavengerIsEatUpKillLimit,
         ScavengerLimitMaxCount,
         ScavengerEraseBody,
+        ScavengerDissolveBody,
     }
     private static float KillCooldown;
     public static bool IgnoreBait;
     private static bool IsEatUpKillLimit;
     private static int LimitMaxCount;
     private static bool EraseBody;
+    private static bool DissolveBody;
 
     // 1 人ごとに持つ
     int limitCount;
@@ -61,6 +65,7 @@ public sealed class Scavenger : RoleBase, IImpostor
             .SetValueFormat(OptionFormat.Pieces);
         OptionIgnoreBait = BooleanOptionItem.Create(RoleInfo, OptionName.ScavengerIgnoreBait, false, false);
         OptionEraseBody = BooleanOptionItem.Create(RoleInfo, OptionName.ScavengerEraseBody, true, false);
+        OptionDissolveBody = BooleanOptionItem.Create(RoleInfo, OptionName.ScavengerDissolveBody, true, false).SetParent(OptionEraseBody);
     }
     public override void Add()
     {
@@ -95,6 +100,7 @@ public sealed class Scavenger : RoleBase, IImpostor
             var targetId = target.PlayerId;
 
             target.SetRealKiller(killer);
+            if (DissolvesEaten(target)) Modules.DissolveKill.Prepare(killer, target);
             killer.RpcMurderPlayer(target, true);
             limitCount--;
             Logger.Info($"{killer.GetNameWithRole()}：喰らいつくし 残り{limitCount}回", "Scavenger");
@@ -112,6 +118,13 @@ public sealed class Scavenger : RoleBase, IImpostor
 
         EatUpKill(killer, target);
     }
+
+    // 1 回押しのキルで食べる時だけ (回数つきの時は、2 回押しの食べるキルで送る)
+    public bool DissolvesBody(PlayerControl target) => !IsEatUpKillLimit && DissolvesEaten(target);
+
+    // 食べた死体を溶かして消すか (ベイトの死体は通報させるので消さない)
+    private static bool DissolvesEaten(PlayerControl target)
+        => EraseBody && DissolveBody && (IgnoreBait || !target.Is(CustomRoles.Bait));
 
     private static void EatUpKill(PlayerControl killer, PlayerControl target)
     {

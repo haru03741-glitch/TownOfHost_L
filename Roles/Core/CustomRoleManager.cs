@@ -177,6 +177,8 @@ public static partial class CustomRoleManager
             }
             else
             {
+                if (attemptKiller.GetRoleClass() is IDissolvingKiller dissolver && dissolver.DissolvesBody(appearanceTarget))
+                    TownOfHostL.Modules.DissolveKill.Prepare(appearanceKiller, appearanceTarget);
                 appearanceKiller.RpcMurderPlayer(appearanceTarget);
             }
             return true;

@@ -108,11 +108,14 @@ public static class DeadBodyEraser
         erasedBodies.Add(playerId);
         HideLocal(playerId);
         EraseOnModClients(playerId);
+        // キルの時に溶ける死体にした客の画面では、死体はもう消えている (覆いも合わせ直しも要らない)
+        var dissolved = DissolveKill.TakeHandled(playerId);
+        if (dissolved != null) erasedOnClients[playerId].UnionWith(dissolved);
         if (bodyPos.HasValue)
         {
             Cover(playerId, bodyPos.Value);
             // 本編の客は、送れる客から画面の死体そのものを消す (消せた客からは覆いを外す)
-            ClientBodySync.Request();
+            ClientBodySync.Request(dissolved);
         }
         RemovePet(Utils.GetPlayerById(playerId));
         Logger.Info($"{playerId} の死体を消しました", "DeadBodyEraser");

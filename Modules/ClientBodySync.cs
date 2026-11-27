@@ -174,11 +174,11 @@ public static class ClientBodySync
     /// ホストの手元の死体を消した・動かした後に呼ぶ。本編の客を、画面の死体の合わせ直し待ちに入れる。
     /// 合わせ直せた客には <see cref="DeadBodyEraser.HideCoversFrom"/> と <see cref="DeadBodyMover.HideCoversFrom"/> で覆いを外す。
     /// </summary>
-    public static void Request()
+    public static void Request(HashSet<int> skip = null)
     {
         if (!Enabled || !GameStates.IsInGame || ShipStatus.Instance == null) return;
         foreach (var pc in Main.AllPlayerControls)
-            if (IsVanillaClient(pc)) pending.Add(pc.OwnerId);
+            if (IsVanillaClient(pc) && (skip == null || !skip.Contains(pc.OwnerId))) pending.Add(pc.OwnerId);
         if (pending.Count == 0) return;
         nextCheckAt = Mathf.Max(nextCheckAt, Time.realtimeSinceStartup + StartDelay);
         if (ticking) return;
@@ -229,6 +229,13 @@ public static class ClientBodySync
         if (pending.Count == 0 || now < nextCheckAt) return;
         nextCheckAt = now + CheckInterval;
         if (!Enabled) { pending.Clear(); DeadBodyEraser.CoverUnsynced(null, force: true); return; }
+        // キルの死体を溶かしている間は、通報者の CNO も覆いも出さない (DissolveKill.IsBusy)
+        if (DissolveKill.IsBusy)
+        {
+            if (lastWhy != "dissolving") Logger.Info("死体の合わせ直しを、溶かしている死体が溶け切るまで待ちます", Tag);
+            lastWhy = "dissolving";
+            return;
+        }
         string why = GlobalBlock(now);
         List<Keep> keep = null;
         if (why == null)

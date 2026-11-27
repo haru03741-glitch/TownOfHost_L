@@ -984,6 +984,7 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "AmbitionerKillCoolDecreaseRate","Killcool Decrease Rate","キルクール減少率","击杀冷却降低率",
 "ScavengerIgnoreBait","Ignore Forced Reports of Bait Kill","ベイトキル時の強制レポートを無視する",
 "ScavengerEraseBody","Erase the Body Itself","死体そのものを消す"
+"ScavengerDissolveBody","Dissolve the Body Right After the Kill","キルの直後に死体を溶かして消す"
 "ScavengerIsEatUpKillLimit","Eat Up Kill Limit (Double Click Mode)","能力キルの使用制限(ダブルクリックモード)",
 "ScavengerLimitMaxCount","Number of Eat Up Kill","能力キルの最大回数",
 "TelepathistersCanSeeKillFlash","Can See ""Kill Flash"" for Telepathisters Kills","シスターがキルした時、フラッシュが見える",
