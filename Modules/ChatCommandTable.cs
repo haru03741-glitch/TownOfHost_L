@@ -177,7 +177,7 @@ public static class ChatCommandTable
             Remote = c => Utils.ShowLastResult(c.Player.PlayerId),
         },
         // バグ・要望の報告 (誰でも)。ホストの PC に書き足し、Webhook があれば送る
-        new("/report", "/bug", "/req") { Usage = "CommandUsage.Report", Host = Modules.BugReport.Host, Remote = Modules.BugReport.Remote },
+        new("/bug", "/report", "/req") { Usage = "CommandUsage.Report", Host = Modules.BugReport.Host, Remote = Modules.BugReport.Remote },
         new("/co") { Restrictable = true, Usage = "CommandUsage.Co", Host = CoLog.Co, Remote = CoLog.Co },
         new("/colist", "/cl") { Restrictable = true, Host = CoLog.List, Remote = CoLog.List },
         new("/aco") { Restrictable = true, Usage = "CommandUsage.Aco", Host = CoLog.Aco, Remote = CoLog.Aco },
@@ -525,7 +525,7 @@ public static class ChatCommandTable
     private static readonly string[] CategoryColors = { "8cffff", "b7ff8c", "ff8c8c", "ffb86c", "d9a3ff", "ff9ae8", "ffe08c", "cccccc", "9a9a9a" };
     private static int CategoryOf(string name) => name.ToLowerInvariant() switch
     {
-        "/h" or "/n" or "/r" or "/m" or "/me" or "/rw" or "/l" or "/kl" or "/co" or "/colist" or "/aco" or "/acl" or "/v" or "/id" or "/win" or "/rule" or "/report" => 0,
+        "/h" or "/n" or "/r" or "/m" or "/me" or "/rw" or "/l" or "/kl" or "/co" or "/colist" or "/aco" or "/acl" or "/v" or "/id" or "/win" or "/rule" or "/bug" => 0,
         "/tc" or "/lc" or "/jc" or "/pc" or "/sc" or "/ws" or "/t" or "/say" or "/mw" or "/vo" or "/nc" or "/ns" or "/hn" or "/mm" => 1,
         "/start" or "/end" or "/mt" or "/w" or "/dis" or "/exile" or "/kill" or "/rev" or "/fm" or "/apt" or "/kc" or "/timer" or "/sw" or "/time" or "/brackout" or "/killflash" or "/mode" or "/sr" or "/s" or "/d" or "/cs" => 2,
         "/kick" or "/mute" or "/unmute" or "/ban" or "/kp" or "/aj" or "/mod" or "/rn" or "/offhat" or "/offskin" or "/offvisor" or "/offpet" or "/offskinall" => 3,

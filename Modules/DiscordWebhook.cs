@@ -113,8 +113,17 @@ public static class DiscordWebhook
         Post(content, null);
     }
 
-    /// <summary>本文と、あればゲームログのファイルを送る (別のスレッドで)</summary>
-    static void Post(string content, string logText)
+    /// <summary>短い文と、手元のファイル (画像・動画など) を送る (バグ・要望の報告)。送り先が無ければ何もしない</summary>
+    public static void PostWithFiles(string text, IReadOnlyList<string> paths)
+    {
+        if (!HasUrl) return;
+        var content = Plain(text);
+        if (content.Length > MaxContent) content = content[..MaxContent];
+        Post(content, null, paths);
+    }
+
+    /// <summary>本文と、あればゲームログのファイルや手元のファイルを送る (別のスレッドで)</summary>
+    static void Post(string content, string logText, IReadOnlyList<string> paths = null)
     {
         var url = Main.WebhookURL.Value.Trim();
         // 送る文の @everyone などで人を呼ばないようにする
@@ -129,8 +138,16 @@ public static class DiscordWebhook
             try
             {
                 using var form = new MultipartFormDataContent { { new StringContent(payload, Encoding.UTF8, "application/json"), "payload_json" } };
+                int n = 0;
                 if (logText != null)
-                    form.Add(new ByteArrayContent(Encoding.UTF8.GetBytes(logText)), "files[0]", "gamelog.txt");
+                    form.Add(new ByteArrayContent(Encoding.UTF8.GetBytes(logText)), $"files[{n++}]", "gamelog.txt");
+                if (paths != null)
+                    foreach (var p in paths)
+                    {
+                        if (n >= 10) break; // Discord は 1 通 10 ファイルまで
+                        try { form.Add(new ByteArrayContent(System.IO.File.ReadAllBytes(p)), $"files[{n++}]", System.IO.Path.GetFileName(p)); }
+                        catch (Exception ex) { Logger.Warn($"添付の読み込みに失敗: {ex.Message}", nameof(DiscordWebhook)); }
+                    }
                 using var res = await http.PostAsync(url, form);
                 if (!res.IsSuccessStatusCode) Logger.Warn($"Webhook の送信に失敗: {(int)res.StatusCode}", nameof(DiscordWebhook));
             }

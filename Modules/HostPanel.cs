@@ -314,7 +314,18 @@ public class HostPanel : MonoBehaviour
         if (GameStates.IsInGame) GameSection(ref y, w);
         StreamSection(ref y, w);
         PlayersSection(ref y, w);
+        ReportSection(ref y, w);
         LogSection(ref y, w);
+    }
+
+    // バグ・要望の報告: Windows の入力画面を開いて、文と画像・動画を付けて送る
+    void ReportSection(ref float y, float w)
+    {
+        Section(ref y, w, GetString("HostPanel.Report"));
+        Label(ref y, w, GetString(DiscordWebhook.HasUrl ? "HostPanel.ReportHintWebhook" : "HostPanel.ReportHint"));
+        Row(ref y, w,
+            (GetString(BugReport.FormOpen ? "HostPanel.ReportOpened" : "HostPanel.ReportOpen"), sAction, BugReport.FormOpen ? null : (Action)BugReport.OpenForm),
+            (GetString("HostPanel.ReportFolder"), sAction, (Action)BugReport.OpenFolder));
     }
 
     void LobbySection(ref float y, float w)
