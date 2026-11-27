@@ -6667,7 +6667,7 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "RoleDictionary.BaseRole","Based on","置き換え役職","","","","",""
 "RoleDictionary.Description","Description","説明","","","","",""
 "RoleDictionary.CountNone","Not counted","数えない","","","","",""
-"CmdCat.ModeratorOnly","Host & moderator commands","ホストとモデレーターだけのコマンド","","","","",""
+"CmdCat.ModeratorOnly","Host & moderator commands","ホスト・モデレーター用コマンド","","","","",""
 "CmdCat.HostOnly","Host-only commands","ホストのみのコマンド","","","","",""
 "CmdCat.Everyone","Commands for everyone","みんなが使えるコマンド","","","","",""
 "CmdCat.Sub","{0} commands","{0}のコマンド","","","","",""

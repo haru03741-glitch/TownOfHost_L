@@ -501,22 +501,23 @@ public static class ChatCommandTable
             if (!audiences[who].TryGetValue(cat, out var list)) audiences[who][cat] = list = new();
             list.Add(Line(cmd));
         }
-        var blocks = new List<string>();
+        // ★ のまとまり (みんな / ホストとモデレーター / ホストのみ) ごとにチャットを分け、★ の見出しは大きな字でチャットの頭に出す。
+        // 見出しの行には行の高さを付けない (付けると大きな字が次の行と重なる)
         string[] mainKeys = { "CmdCat.Everyone", "CmdCat.ModeratorOnly", "CmdCat.HostOnly" };
         string[] mainColors = { "8cffff", "7ee0a0", "ffd84a" };
+        bool firstTitle = true;
         for (int who = 0; who < audiences.Length; who++)
         {
-            bool first = true;
+            var blocks = new List<string>();
             foreach (var (cat, lines) in audiences[who])
-            {
-                // 大見出しは、その下の最初のまとまりと同じ通に入れる (見出しだけが前の通に残らない)
-                var main = first ? $"<b><#{mainColors[who]}>★ {GetString(mainKeys[who])}</color></b>\n" : "";
-                first = false;
-                blocks.Add(main + $"<#{CategoryColors[cat]}>■ {string.Format(GetString("CmdCat.Sub"), GetString("CmdCat." + CategoryKeys[cat]))}</color>\n" + string.Join("\n", lines));
-            }
+                blocks.Add($"<#{CategoryColors[cat]}>■ {string.Format(GetString("CmdCat.Sub"), GetString("CmdCat." + CategoryKeys[cat]))}</color>\n" + string.Join("\n", lines));
+            if (blocks.Count == 0) continue;
+            if (asHost && who == 2) blocks.Add("<#9a9a9a>" + GetString("CommandList.HostHint") + "</color>");
+            var title = $"<size=100%><b><#{mainColors[who]}>★ {GetString(mainKeys[who])}</color></b></size>";
+            if (firstTitle) title = $"<size=70%><#ffd84a>【{GetString("CommandList").TrimEnd(':', '：')}】</color></size>\n" + title;
+            firstTitle = false;
+            Utils.SendBlocks(blocks, title, to.PlayerId, "<size=70%><line-height=1.6pic>");
         }
-        if (asHost) blocks.Add("<#9a9a9a>" + GetString("CommandList.HostHint") + "</color>");
-        Utils.SendBlocks(blocks, $"<#ffd84a>【{GetString("CommandList").TrimEnd(':', '：')}】</color>", to.PlayerId, "<size=70%><line-height=1.6pic>");
     }
 
     // /h の一覧のまとまり (並びもこの順)。どこにも当てはまらないコマンドは「その他」
