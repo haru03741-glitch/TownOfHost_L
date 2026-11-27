@@ -395,7 +395,9 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
 
     public bool CanUseImpostorVentButton() => CanVent && (AddRole is IKiller killer ? killer.CanUseImpostorVentButton() : true);
 
-    public bool OnCheckMurderBeforeGuards(MurderInfo info) => AddRole is not IKiller killer || killer.OnCheckMurderBeforeGuards(info);
+    // 中の役職のキル以外の押しも、守りより前に振り分ける。2 回押しが押しを取る時は中の役職へ回さない (キルの判定がそちらを先に振り分ける)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
+        => AddRole is not IKiller killer || (Player.CanDoubleTrigger() && CheckAction) || killer.OnCheckMurderBeforeGuards(info);
 
     public void OnCheckMurderAsKiller(MurderInfo info) { if (AddRole is IKiller killer) killer.OnCheckMurderAsKiller(info); }
 
