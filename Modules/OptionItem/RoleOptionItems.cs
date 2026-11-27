@@ -40,6 +40,13 @@ public class FilterOptionItem : StringOptionItem
 {
     public List<CustomRoles> Sele;
     public Func<CustomRoles[]> NotAssin;
+    // 一緒に 1 つの一覧で選ぶ枠 (自分も入る)。null なら 1 枠だけ
+    public List<FilterOptionItem> Linked;
+    public static void Link(params FilterOptionItem[] items)
+    {
+        var list = new List<FilterOptionItem>(items);
+        foreach (var i in items) i.Linked = list;
+    }
     public (bool impostor, bool madmate, bool crewmate, bool neutral, bool addon) roles;
 
     public FilterOptionItem(string name, int defaultValue, TabGroup tab, bool isSingleValue, bool imp = false, bool mad = false, bool crew = false, bool neu = false, bool addon = false, Func<CustomRoles[]> notassing = null)
@@ -65,7 +72,7 @@ public class FilterOptionItem : StringOptionItem
         return opt;
     }
 
-    bool IsSelectable(CustomRoles role)
+    public bool IsSelectable(CustomRoles role)
     {
         if (role is CustomRoles.NotAssigned) return true;
         if ((NotAssin?.Invoke() ?? Array.Empty<CustomRoles>()).Contains(role)) return false;

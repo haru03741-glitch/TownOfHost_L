@@ -141,6 +141,14 @@ internal sealed class OptEditor
             _rows.Add((opt, name, val, null, null, null, null));
             return row;
         }
+        // 役職を選ぶ設定は ± でなく、押すと役職の一覧が開く
+        if (opt.Item is FilterOptionItem)
+        {
+            val.Width = controls - 0.12f;
+            ctl.Add(PickButton(opt, val, controls, NarrowRowH));
+            _rows.Add((opt, name, val, null, null, null, null));
+            return row;
+        }
         var minus = new Button("-", () => Changed(opt, -1), NarrowFont) { Size = new Vector2(NarrowStepW, NarrowRowH), Repeat = RepeatSeconds };
         var plus = new Button("+", () => Changed(opt, 1), NarrowFont) { Size = new Vector2(NarrowStepW, NarrowRowH), Repeat = RepeatSeconds };
         ctl.Add(minus).Add(val).Add(plus);
@@ -194,6 +202,16 @@ internal sealed class OptEditor
             _rows.Add((opt, name, val, null, null, null, null));
             return row;
         }
+        if (opt.Item is FilterOptionItem)
+        {
+            float pw = StepW * 2f + ValueW + 0.16f;
+            val.Width = pw - 0.12f;
+            row.Add(PickButton(opt, val, pw, RowH - 0.04f));
+            var preset = ResetButton(opt);
+            if (preset != null) row.Add(preset);
+            _rows.Add((opt, name, val, null, null, null, preset));
+            return row;
+        }
         var minus = new Button("-", () => Changed(opt, -1), FontSize) { Size = new Vector2(StepW, RowH - 0.04f), Repeat = RepeatSeconds };
         var plus = new Button("+", () => Changed(opt, 1), FontSize) { Size = new Vector2(StepW, RowH - 0.04f), Repeat = RepeatSeconds };
         row.Add(minus).Add(val).Add(plus);
@@ -204,6 +222,37 @@ internal sealed class OptEditor
     }
 
     private const float InfoW = 0.3f;
+
+    private static readonly Color PickColor = new(0.55f, 0.8f, 1f, 1f);
+
+    // 役職の一覧を開くボタン (中身は値の字)
+    private Button PickButton(MenuOpt opt, Label val, float w, float h)
+    {
+        Button b = null;
+        b = new Button(val, () =>
+        {
+            if (_canEdit != null && !_canEdit()) return;
+            RolePickMenu.Open(opt, Picked);
+        })
+        { Size = new Vector2(w, h), Padding = new Vector2(0.06f, 0.02f), Color = PickColor };
+        return b;
+    }
+
+    // 一覧で選んだ値を書く (± で変えた時と同じ後始末)
+    private void Picked(MenuOpt opt, int index)
+    {
+        if (_canEdit != null && !_canEdit()) return;
+        int before = opt.Index;
+        Busy++;
+        try
+        {
+            if (!opt.Restore(index)) return;
+            AfterStep(opt);
+        }
+        finally { Busy--; }
+        OptHistory.Push(opt, before);
+        Edited(opt);
+    }
 
     // 行の地: 角の丸い板で包み、1 行おきに少し明るくする (k = 節の中で何行目か)
     public const float PlatePad = 0.08f;

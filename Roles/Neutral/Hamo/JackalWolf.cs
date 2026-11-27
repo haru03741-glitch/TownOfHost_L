@@ -179,6 +179,7 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
         OptionHaveRole2 = FilterOptionItem.Create(RoleInfo, OptionName.AssassinHaveRole, 0, false, null, true, false, false, false, false, () => InvalidRoles());
         OptionHaveRole2.SetKeyName("AssassinHaveRole2");
         OptionHaveRole2.SetOptionName(() => "付与する役職(2つ目・ランダムでどちらか)");
+        FilterOptionItem.Link(OptionHaveRole, OptionHaveRole2);
 
 
 

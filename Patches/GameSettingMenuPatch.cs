@@ -426,6 +426,7 @@ public class GameSettingMenuPatch
         SearchBox = SettingsSearchBox.Create(buttonParent, searchPos, SearchBoxWidth, SearchBoxHeight,
             Translator.GetString("MenuSearch.Hint"), OnSearchChanged);
         SettingsUI.JumpMenu.Create(buttonParent, new Vector3(JumpButtonPosition.x, JumpButtonPosition.y, searchPos.z), __instance.gameObject.layer);
+        SettingsUI.RolePickMenu.Create(__instance.transform, __instance.gameObject.layer, 0f);
 
         // 左の列: プリセット・ゲーム・モードの頁と、全般・役職の区分 (出す設定のある物だけ)
         Cats.Clear();
