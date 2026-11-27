@@ -1,6 +1,7 @@
 ﻿<#
 .SYNOPSIS
-    本編の役職 (SetRole) を送る所が、見る人ごとの画面の表 (Modules/RoleView.cs) に記録しているかを、ビルドの前に静的に探す。
+    客へ本編の役職 (SetRole) を送る所が、見る人ごとの画面の表 (Modules/RoleView.cs) に記録しているかを、ビルドの前に静的に探す。
+    ホストの手元だけで付ける所 (CoSetRole・RoleManager.SetRole) は見ない (ホストの画面は表を使わず手元の役職を読む)。
 
 .DESCRIPTION
     RoleView は、見る人の画面に今ある役職と、生きている時の見え方を覚える。送る所が 1 か所でも記録しないと表が実際の画面とずれ、
@@ -49,4 +50,4 @@ if ($found -gt 0) {
     Write-Host "画面の表に記録しない SetRole の送りが $found 個あります。関所から送るか、送った後で RoleView.Note を呼んでください。記録が別の所にある物は、同じ行に「$allow…」と理由を書いてください。" -ForegroundColor Red
     exit 1
 }
-Write-Host 'SetRole の送りは、どれも画面の表に記録しています。'
+Write-Host '客への SetRole の送りは、どれも画面の表に記録しています。'

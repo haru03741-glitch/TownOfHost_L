@@ -16,7 +16,8 @@ namespace TownOfHostL.Modules;
 /// 役職が替わった人の行は消す (PlayerState.SetMainRole)。替えた側が送り直せば、また記録される。
 ///
 /// 画面の表: 見る人の画面に今ある target の役職を、幽霊・一時の見え方 (暗転対策の身代わり・溶かしの Viper など) も含めて覚える。
-/// 本編の SetRole を書く所は、どれも <see cref="Note"/> か関所を通す (tools/check-setrole-entry.ps1)。
+/// 客へ本編の SetRole を書く所は、どれも <see cref="Note"/> か関所を通す (tools/check-setrole-entry.ps1)。
+/// ホストの画面は、手元だけで役職を付ける所 (CoSetRole・RoleManager.SetRole) があるので表を使わず、手元の役職を直に読む。
 /// 役職が替わっても客の画面は変わらないので、こちらは役職替えでは消さない。target が死んだ時は、客が手元で幽霊にするので消す。
 ///
 /// 規則 (<see cref="Default"/>): 表に無い組と、役職の基底が変わった時の見え方を決める。
@@ -81,9 +82,17 @@ public static class RoleView
     /// <summary>target が死んだ。客は手元で幽霊にするので、全員の画面の target を分からないにする</summary>
     internal static void OnDied(PlayerControl target) => Unknown(null, target);
 
-    /// <summary>seer の画面に今ある target の役職 (送った物を覚えている時だけ)</summary>
+    /// <summary>seer の画面に今ある target の役職 (ホストの画面は手元の役職・客の画面は送った物を覚えている時だけ)</summary>
     public static bool TryGetOnScreen(PlayerControl seer, PlayerControl target, out RoleTypes role)
-        => onScreen.TryGetValue((seer.PlayerId, target.PlayerId), out role);
+    {
+        if (seer.AmOwner)
+        {
+            var current = target.Data != null ? target.Data.Role : null;
+            role = current != null ? current.Role : default;
+            return current != null;
+        }
+        return onScreen.TryGetValue((seer.PlayerId, target.PlayerId), out role);
+    }
 
     internal static void RecordForAll(PlayerControl target, RoleTypes role)
     {
