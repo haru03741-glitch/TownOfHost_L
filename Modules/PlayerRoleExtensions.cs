@@ -114,7 +114,7 @@ public static class PlayerRoleExtensions
     {
         if (player == null || !GameStates.IsInGame || player.GetCustomRole() != role) return;
         // 暗転対策の身代わりを戻すまでは送らない (客の追放の演出の締めより前に生存キル役の数を変えると暗転しうる)
-        if (GameStates.IsInTask && !GameStates.CalledMeeting && !GameStates.ExiledAnimate && !AntiBlackout.IsRevertPending) { ApplyVanillaRole(player, role); return; }
+        if (GameStates.IsInTask && !GameStates.InMeetingWindow) { ApplyVanillaRole(player, role); return; }
         _ = new LateTask(() => ApplyVanillaRoleWhenInTask(player, role), 1f, "");
     }
 

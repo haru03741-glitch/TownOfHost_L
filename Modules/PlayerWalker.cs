@@ -68,7 +68,7 @@ public static class PlayerWalker
         if (pc == null || !AmongUsClient.Instance.AmHost) return "host";
         if (ShipStatus.Instance == null || !GameStates.IsInTask || !Main.IsSetRoleFinished) return "not in task";
         if (AmongUsClient.Instance.IsGameOver || GameEndChecker.EndingStarted) return "game over";
-        if (MeetingHud.Instance || ExileController.Instance || MeetingStates.MeetingCalled || AntiBlackout.IsCached || AntiBlackout.IsRevertPending) return "meeting";
+        if (GameStates.InMeetingUntilRevert) return "meeting";
         if (!pc.IsAlive() || pc.Data == null || pc.Data.Disconnected) return "dead";
         // 電文は本人だけへ送る。宛先の無い人へ送ると全員宛てになる
         if (!pc.AmOwner && pc.LacksClient(nameof(PlayerWalker))) return "no client";

@@ -296,7 +296,7 @@ public static class ClientBodySync
         if (ShipStatus.Instance == null || !GameStates.IsInTask || !Main.IsSetRoleFinished) return "not in task";
         if (AmongUsClient.Instance.IsGameOver || GameEndChecker.EndingStarted) return "game over";
         // 本物の会議の画面が客に在る時に届くと、本物の会議を壊す
-        if (MeetingHud.Instance || ExileController.Instance || MeetingStates.MeetingCalled || AntiBlackout.IsCached || AntiBlackout.IsRevertPending) return "meeting";
+        if (GameStates.InMeetingUntilRevert) return "meeting";
         // 役職の送り直しが落ち着く前は、本人の役職の送り直しを重ねない
         if (Revive.IsSettling) return "revive";
         // 動かしている途中の死体は、作り直しが 2 つ重なる

@@ -486,7 +486,7 @@ public static class PlayerControlCheckVanishPatch
         var phantom = __instance;
         Logger.Info($"{phantom.GetNameWithRole()} : CheckVanishStart", "CheckVanish");
         // 死んだ後や会議・追放の演出の間に届いた要求では、役職の能力 (ワンクリックのボタンなど) を起こさず、消えさせもしない
-        if (!phantom.IsAlive() || MeetingHud.Instance || MeetingStates.MeetingCalled || ExileController.Instance || AntiBlackout.IsCached)
+        if (!phantom.IsAlive() || GameStates.InMeetingUntilWrapUp)
         {
             Logger.Info($"{phantom.GetNameWithRole()} : 死後か会議の間なので捨てる", "CheckVanish");
             return false;
@@ -900,7 +900,7 @@ class CoEnterVentPatch
         // 誰かがベントに入った時の処理・今いるベントの記録
         RoleHooks.NowVentId[user.PlayerId] = (byte)id;
         // 死んだ後や会議・追放の演出の間に届いたベントの要求では、役職の能力 (放火魔の焼殺・回数の消費・会議を開くベントなど) を起こさない
-        if (!user.IsAlive() || MeetingHud.Instance || MeetingStates.MeetingCalled || ExileController.Instance || AntiBlackout.IsCached)
+        if (!user.IsAlive() || GameStates.InMeetingUntilWrapUp)
         {
             Logger.Info($"{user.GetNameWithRole()}: 死後か会議の間のベントなので、役職の能力を起こさない", "EnterVent");
             return;

@@ -107,7 +107,7 @@ public static class TempGhost
     {
         if (pc == null || !AmongUsClient.Instance.AmHost) return "host";
         if (!GameStates.IsInTask || AmongUsClient.Instance.IsGameOver) return "not in task";
-        if (MeetingHud.Instance || ExileController.Instance || MeetingStates.MeetingCalled || AntiBlackout.IsCached || AntiBlackout.IsRevertPending) return "meeting";
+        if (GameStates.InMeetingUntilRevert) return "meeting";
         if (Revive.IsSettling) return "settling";
         if (Time.realtimeSinceStartup - Revive.LastMeetingAt < AfterMeetingGap || returnAfterMeeting.Count != 0) return "after meeting";
         if (!pc.IsAlive()) return "dead";
