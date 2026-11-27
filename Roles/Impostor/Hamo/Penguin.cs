@@ -155,9 +155,10 @@ class Penguin : RoleBase, IImpostor
     {
         stopCount = true;
         // 時間切れ状態で会議を迎えたらはしご中でも構わずキルする
+        // 連れ去った相手が別の理由で先に死んでいたら、もう一度殺さず放すだけにする
         if (AbductVictim != null && AbductTimer <= 0f)
         {
-            Player.RpcMurderPlayer(AbductVictim);
+            if (AbductVictim.IsAlive()) Player.RpcMurderPlayer(AbductVictim);
             // 下の会議でのキルでもう一度キルしない
             RemoveVictim();
         }
@@ -165,7 +166,7 @@ class Penguin : RoleBase, IImpostor
         {
             if (!AmongUsClient.Instance.AmHost) return;
             if (AbductVictim == null) return;
-            Player.RpcMurderPlayer(AbductVictim);
+            if (AbductVictim.IsAlive()) Player.RpcMurderPlayer(AbductVictim);
             RemoveVictim();
         }
     }
