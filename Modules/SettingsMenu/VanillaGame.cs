@@ -63,6 +63,16 @@ internal static class VanillaGame
         }
     }
 
+    // 保存しておいた本編の設定を読み込む時、部屋の言語は今の部屋の値のままにする。
+    // 公式鯖は、部屋と違う言語の入った設定を送ったホストを切断する (2026-11-27 公式アジアで実測)
+    public static void KeepRoomLanguage(IGameOptions loaded, IGameOptions current)
+    {
+        if (loaded == null || current == null) return;
+        var keywords = current.Keywords;
+        if (loaded.TryCast<NormalGameOptionsV12>() is { } normal) normal.Keywords = keywords;
+        else if (loaded.TryCast<HideNSeekGameOptionsV12>() is { } hns) hns.Keywords = keywords;
+    }
+
     // 設定画面を閉じた時 (ホスト): 本編の設定を変えていれば本編の保存と同期を回す
     public static void OnMenuClosed()
     {

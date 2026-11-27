@@ -177,6 +177,7 @@ public static class OptionSerializer
         var options = GameOptionsManager.Instance.gameOptionsFactory.FromBytes(bytes);
         // 人が入った時に本編のおすすめの値で上書きされないように
         SettingsUI.VanillaGame.MarkCustom(options);
+        SettingsUI.VanillaGame.KeepRoomLanguage(options, GameOptionsManager.Instance.CurrentGameOptions);
         GameOptionsManager.Instance.GameHostOptions = GameOptionsManager.Instance.CurrentGameOptions = options;
         GameManager.Instance.LogicOptions.SetGameOptions(options);
         GameManager.Instance.LogicOptions.SyncOptions();
