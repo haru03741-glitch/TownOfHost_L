@@ -99,7 +99,8 @@ partial class ReportDeadBodyPatch
             _ = new LateTask(() =>
             {
                 var title = Translator.GetString(data.info);
-                Utils.SendMessage(Utils.ColorString(StringHelper.CodeColor(data.color), title), title: Utils.ColorString(StringHelper.CodeColor(data.color), title));
+                // 見出しと本文に同じ字を入れると 1 通の中に 2 回出るので、本文だけにする (見出しはふだんのシステムメッセージ)
+                Utils.SendMessage(Utils.ColorString(StringHelper.CodeColor(data.color), title));
             }, 3f, "MeetingInfo");
         }
     }

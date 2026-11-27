@@ -82,7 +82,13 @@ namespace TownOfHostL.Roles
             var playerCount = GameData.Instance.PlayerCount;
             Func<CustomRoleTypes, (int min, int max)> range;
             if (PlayerCountComposition.IsOn) range = t => PlayerCountComposition.Get(playerCount, t);
-            else if (AssignMode == AssignAlgorithm.Fixed) return true;
+            else if (AssignMode == AssignAlgorithm.Fixed)
+            {
+                // 固定のアサイン: 有効にした役職の数の合計が人数より多いと、配られない役職が出る
+                int setCount = GetCandidateRoleList(1).Sum(r => r.GetAssignUnitRolesArray().Length);
+                if (setCount > playerCount) WarnOverPlayers(setCount, playerCount);
+                return true;
+            }
             else range = t => (RandomAssignOptionsCollection[t].Min, RandomAssignOptionsCollection[t].Max);
             var result = true;
 
@@ -105,8 +111,22 @@ namespace TownOfHostL.Roles
                 Logger.Warn(msg, "BeginGame");
                 result = false;
             }
+            else
+            {
+                // インポスター・マッドメイト・ニュートラルの最多の合計が人数より多い (クルーは残りを埋めるので数えない)
+                int maxSum = 0;
+                foreach (var type in RandomAssignOptionsCollection.Keys)
+                    if (type != CustomRoleTypes.Crewmate) maxSum += range(type).max;
+                if (maxSum > playerCount) WarnOverPlayers(maxSum, playerCount);
+            }
 
             return result;
+        }
+        static void WarnOverPlayers(int setCount, int playerCount)
+        {
+            var msg = string.Format(GetString("Warning.RoleCountOverPlayers"), setCount, playerCount);
+            Logger.SendInGame(msg);
+            Logger.Warn(msg, "BeginGame");
         }
         /// <summary>
         /// ランダムのアサイン (と人数ごとの構成) で決めたインポスターの数。

@@ -439,53 +439,65 @@ public static partial class Utils
     public static void ShowMyRoleInfo(PlayerControl player, byte PlayerId = byte.MaxValue)
     {
         if (!GameStates.IsInGame) return;
-        string formatTag = "<size=70%><line-height=1.6pic>";
-
-        var sb = new StringBuilder();
-        // 他の役職として見せる役職は、名前・色・設定の一覧をその役職で出す。
-        // 長い説明は正体を書いているので、短い説明を出す
+        // /h r (役職辞典) と同じ形で出す: 大きな役職名 → イントロ → 陣営・置き換え役職・判定 → From → 説明 (1 文 1 行) → 設定
+        // 他の役職として見せる役職は、名前・色・設定の一覧をその役職で出す。長い説明は正体を書いているので、短い説明を出す
         var displayedRole = player.GetRoleClass()?.DisplayedRole;
         var myRole = displayedRole ?? player.GetCustomRole();
         var roleInfoLong = player.GetRoleInfo(displayedRole == null);
-
+        var intro = displayedRole == null ? player.GetRoleInfo(false) : null;
         var roleName = player.GetRoleClass()?.GetRoleKey(true) ?? myRole.ToString();
+        var title = ColorString(GetRoleColor(myRole), GetString("RoleInfoTitle"));
+        SendRoleCard(myRole, GetString(roleName), intro, roleInfoLong, PlayerId, !myRole.IsDontShowOptionRole(), title);
 
-        string RoleInfoTitleString = $"{GetString("RoleInfoTitle")}";
-        string RoleInfoTitle = $"{ColorString(GetRoleColor(myRole), RoleInfoTitleString)}";
-
-        var roleString = $"<size=85%>{GetString(roleName)}</size>".Color(GetRoleColor(myRole).ToReadableColor());
-        var roleInfoString = $"{roleInfoLong}{FromLine(myRole)}</line-height></size>";
-        sb.Append(roleString).Append(formatTag).Append(roleInfoString);
-
-        SendMessageAutoSplitAndClearSB(PlayerId, sb, RoleInfoTitle, formatTag);
-
-        if (!myRole.IsDontShowOptionRole())
-        {
-            formatTag = "<size=65%><line-height=1.5pic>";
-            ShowChildrenSettings(Options.CustomRoleSpawnChances[myRole], ref sb);
-            if (sb.Length > 0)
-            {
-                sb.Insert(0, formatTag);
-                SendMessageAutoSplitAndClearSB(PlayerId, sb, "", formatTag);
-            }
-        }
-
-        formatTag = "<size=70%><line-height=1.6pic>";
         foreach (var subRole in player.GetCustomSubRoles())
         {
-            if (subRole != CustomRoles.NotAssigned)
+            if (subRole == CustomRoles.NotAssigned) continue;
+            // 役職を預かる印の属性は、預かっている役職の説明を出す (その役職そのものなら出さない)
+            var standsFor = AddOnList.Get(subRole)?.StandsFor ?? CustomRoles.NotAssigned;
+            if (standsFor != CustomRoles.NotAssigned && myRole == standsFor) continue;
+            var shown = standsFor != CustomRoles.NotAssigned ? standsFor : subRole;
+            var key = shown.ToString();
+            SendRoleCard(shown, GetString(key), Translator.HasString(key + "Info") ? GetString(key + "Info") : null,
+                GetString($"{key}InfoLong"), PlayerId, false);
+        }
+    }
+
+    /// <summary>
+    /// 役職の説明を役職辞典 (/h r) と同じ形で送る。name は出す名前、intro は名前の下の一言 (無ければ null)、
+    /// infoLong は長い説明 (最後の From は上の行に出すので外す)。withSettings なら設定を別の通で送る
+    /// </summary>
+    static void SendRoleCard(CustomRoles role, string name, string intro, string infoLong, byte PlayerId, bool withSettings, string title = "")
+    {
+        infoLong ??= "";
+        foreach (var tail in new[] { FromLine(role), FromLine(role.VanillaRoleConversion()) })
+            if (tail.Length > 0 && infoLong.EndsWith(tail)) infoLong = infoLong[..^tail.Length];
+        var color = GetRoleColor(role).ToReadableColor();
+        string formatTag = "<size=75%><line-height=1.7pic>";
+
+        // 行の高さを決めると、大きな字の行が次の行と重なる。見出しの 2 行には行の高さを付けず、字の大きさに任せる
+        var sb0 = new StringBuilder();
+        sb0.Append("<size=75%><size=140%><b>").Append(name.Color(color)).Append("</b></size>\n");
+        if (!string.IsNullOrEmpty(intro))
+            sb0.Append("<size=110%>").Append(intro.Trim()).Append("</size>\n");
+        sb0.Append("<line-height=1.7pic>");
+        sb0.Append("<#9aa4b2>").Append(GetString("RoleDictionary.Team")).Append("<pos=34%>").Append(GetString("RoleDictionary.BaseRole"))
+           .Append("<pos=68%>").Append(GetString("Basis")).Append("</color>\n");
+        sb0.Append(RoleTeamText(role)).Append("<pos=34%>").Append(RoleBaseText(role)).Append("<pos=68%>").Append(RoleCountText(role)).Append('\n');
+        var from = Roles.Core.RoleFrom.GetText(role);
+        if (!string.IsNullOrEmpty(from)) sb0.Append(from).Append('\n');
+        var detail = SplitSentences(StripTeamPrefix(infoLong));
+        if (detail.Length > 0)
+            sb0.Append("<#7fdcff>■ ").Append(GetString("RoleDictionary.Description")).Append("</color>\n").Append(detail);
+        SendMessageAutoSplit(sb0.ToString(), false, title, PlayerId, formatTag);
+
+        if (withSettings && Options.CustomRoleSpawnChances.TryGetValue(role, out var opt))
+        {
+            var sb = new StringBuilder();
+            ShowChildrenSettings(opt, ref sb);
+            if (sb.Length > 0)
             {
-                // 役職を預かる印の属性は、預かっている役職の説明を出す (その役職そのものなら出さない)
-                var standsFor = AddOnList.Get(subRole)?.StandsFor ?? CustomRoles.NotAssigned;
-                if (standsFor != CustomRoles.NotAssigned && myRole == standsFor) continue;
-
-                var subroleName = (standsFor != CustomRoles.NotAssigned ? standsFor : subRole).ToString();
-
-                var subroleString = $"<size=85%>{GetString(subroleName)}</size>".Color(GetRoleColor(subRole).ToReadableColor());
-                var subroleInfoString = $"{GetString($"{subroleName}InfoLong")}{FromLine(standsFor != CustomRoles.NotAssigned ? standsFor : subRole)}</line-height></size>";
-
-                sb.Append(subroleString).Append(formatTag).Append(subroleInfoString);
-
+                formatTag = "<size=70%><line-height=1.6pic>";
+                sb.Insert(0, $"{formatTag}<#b7ff8c>■ {GetString("RoleDictionary.Settings")}</color>（{name}）\n");
                 SendMessageAutoSplitAndClearSB(PlayerId, sb, "", formatTag);
             }
         }
@@ -537,40 +549,8 @@ public static partial class Utils
     {
         // 並び: 大きな役職名 → 少し大きなイントロ → 陣営・置き換え役職・判定の表 → From → 説明 (1 文 1 行) → 設定 (別の通)
         var r = role.VanillaRoleConversion();
-        string roleInfoLong = GetRoleInfoLongText(r);
-        // 説明の最後に付く From は上の行で出すので、説明からは外す
-        var fromTail = FromLine(r);
-        if (fromTail.Length > 0 && roleInfoLong.EndsWith(fromTail)) roleInfoLong = roleInfoLong[..^fromTail.Length];
-        var color = GetRoleColor(role).ToReadableColor();
-        string formatTag = "<size=75%><line-height=1.7pic>";
-
-        // 行の高さを決めると、大きな字の行が次の行と重なる。見出しの 2 行には行の高さを付けず、字の大きさに任せる
-        var sb0 = new StringBuilder();
-        sb0.Append("<size=75%><size=140%><b>").Append(GetString(role.ToString()).Color(color)).Append("</b></size>\n");
-        if (Translator.HasString(role + "Info"))
-            sb0.Append("<size=110%>").Append(GetString(role + "Info")).Append("</size>\n");
-        sb0.Append("<line-height=1.7pic>");
-        sb0.Append("<#9aa4b2>").Append(GetString("RoleDictionary.Team")).Append("<pos=34%>").Append(GetString("RoleDictionary.BaseRole"))
-           .Append("<pos=68%>").Append(GetString("Basis")).Append("</color>\n");
-        sb0.Append(RoleTeamText(role)).Append("<pos=34%>").Append(RoleBaseText(role)).Append("<pos=68%>").Append(RoleCountText(role)).Append('\n');
-        var from = Roles.Core.RoleFrom.GetText(role);
-        if (!string.IsNullOrEmpty(from)) sb0.Append(from).Append('\n');
-        var detail = SplitSentences(StripTeamPrefix(roleInfoLong));
-        if (detail.Length > 0)
-            sb0.Append("<#7fdcff>■ ").Append(GetString("RoleDictionary.Description")).Append("</color>\n").Append(detail);
-        SendMessageAutoSplit(sb0.ToString(), false, "", PlayerId, formatTag);
-
-        if (!role.IsDontShowOptionRole() && Options.CustomRoleSpawnChances.TryGetValue(role, out var opt))
-        {
-            var sb = new StringBuilder();
-            ShowChildrenSettings(opt, ref sb);
-            if (sb.Length > 0)
-            {
-                formatTag = "<size=70%><line-height=1.6pic>";
-                sb.Insert(0, $"{formatTag}<#b7ff8c>■ {GetString("RoleDictionary.Settings")}</color>（{GetString(role.ToString())}）\n");
-                SendMessageAutoSplitAndClearSB(PlayerId, sb, "", formatTag);
-            }
-        }
+        SendRoleCard(role, GetString(role.ToString()), Translator.HasString(role + "Info") ? GetString(role + "Info") : null,
+            GetRoleInfoLongText(r), PlayerId, !role.IsDontShowOptionRole());
     }
 
     // 陣営の名前を陣営の色で (属性は「属性」)
