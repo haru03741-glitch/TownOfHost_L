@@ -161,20 +161,18 @@ public sealed class Repeater : RoleBase, ISelfVoter
 
         // 会議が終わった直後、設定秒数を挟んでもう一度緊急会議を開く(リピーターが押したものとして扱う)。
         // 自然にもう一度会議が始まる演出のため、自身の残りボタン数は消費しない。
-        var self = Player;
-        _ = new LateTask(() =>
+        _ = After(() =>
         {
-            if (self == null || !self.IsAlive()) return;
-            var state = PlayerState.GetByPlayerId(self.PlayerId);
+            var state = PlayerState.GetByPlayerId(Player.PlayerId);
             var buttonsBefore = state?.NumberOfRemainingButtons ?? -1;
 
-            ReportDeadBodyPatch.ExReportDeadBody(self, null, false);
+            ReportDeadBodyPatch.ExReportDeadBody(Player, null, false);
 
             if (state != null && buttonsBefore >= 0)
             {
                 state.NumberOfRemainingButtons = buttonsBefore;
             }
-        }, (float)extendMeetingSeconds, "Repeater.ReOpenMeeting");
+        }, (float)extendMeetingSeconds, "Repeater.ReOpenMeeting", LateTaskUntil.Death);
 
         return true;
     }
