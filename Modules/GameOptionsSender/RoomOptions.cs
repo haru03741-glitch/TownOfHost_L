@@ -25,12 +25,19 @@ namespace TownOfHostL.Modules
             var host = gm?.GameHostOptions;
             if (host == null) return;
             var current = gm.CurrentGameOptions;
-            if (current != null && current.Pointer != host.Pointer)
-                Logger.Warn("試合に入る時の今の設定が部屋の設定の器と別の物でした。器の写しで始めます", "RoomOptions");
+            // 試合の基は今の設定から作る (フリープレイなどで器と別の物を指していても、試合の値はそれまでと同じ)
+            var source = current ?? host;
+            if (source.Pointer != host.Pointer)
+                Logger.Warn("試合に入る時の今の設定が部屋の設定の器と別の物でした。今の設定の写しで始めます", "RoomOptions");
             RepairVision(gm, host);
+            if (source.Pointer != host.Pointer) RepairVision(gm, source);
             saved = new OptionBackupData(host);
-            var work = gm.gameOptionsFactory.FromBytes(gm.gameOptionsFactory.ToBytes(host, false));
-            if (work == null) return;
+            var work = gm.gameOptionsFactory.FromBytes(gm.gameOptionsFactory.ToBytes(source, false));
+            if (work == null)
+            {
+                Logger.Warn("試合用の設定の写しを作れませんでした。部屋の設定の器のまま始めます", "RoomOptions");
+                return;
+            }
             Point(gm, work);
             Entered = true;
         }
