@@ -144,6 +144,8 @@ public sealed class SchrodingerCat : RoleBase, IAdditionalWinner, IDeathReasonSe
             opt.SetBool(BoolOptionNames.AnonymousVotes, false);
         }
     }
+    // 陣営が決まる前の猫は、キル以外の押し (サイドキック化・誤射・呪いなど) でも押した人の陣営に決まる
+    public override bool OnCheckPressAsTarget(MurderInfo info) => OnCheckMurderAsTarget(info);
     public override bool OnCheckMurderAsTarget(MurderInfo info)
     {
         var killer = info.AttemptKiller;

@@ -129,6 +129,13 @@ public abstract class RoleBase : IDisposable
     /// <param name="info">キル関係者情報</param>
     /// <returns>false:キル行為を起こさせない</returns>
     public virtual bool OnCheckMurderAsTarget(MurderInfo info) => true;
+    /// <summary>
+    /// キルボタンで押された時の、押し方 (キルか、キル以外の能力か) に依らない反応。キル以外の押しの振り分けより前に呼ぶ。
+    /// 守り (押しがキルの時だけ働く物) はここに書かず <see cref="OnCheckMurderAsTarget"/> に書く。
+    /// 押されたこと自体で起きる物 (シュレディンガーの猫の陣営の決まり方など) だけをここに書く
+    /// </summary>
+    /// <returns>false: 押しをそこで終える</returns>
+    public virtual bool OnCheckPressAsTarget(MurderInfo info) => true;
 
     /// <summary>
     /// ターゲットとしてのMurderPlayer処理

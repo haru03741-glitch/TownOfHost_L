@@ -101,6 +101,14 @@ public static partial class CustomRoleManager
             var doubleTriggerHandled = false;
             if (killer.IsKiller)
             {
+                // 押されたこと自体への相手の反応 (シュレディンガーの猫など) は、押し方の振り分けより先に通す
+                // (キル以外の押しでも、これまで通り相手が反応する)
+                if (!killerMyselfInvoke && info.DontRoleAbility is not true
+                    && attemptTarget.GetRoleClass() is RoleBase pressed && !pressed.OnCheckPressAsTarget(info))
+                {
+                    killer.OnCheckMurderDontKill(info);
+                    return false;
+                }
                 // キルボタンをキル以外に使う押し方 (イビルディバイナーの占いなど) は、ガードより先に振り分ける
                 // 役職が自分で起こす内部のキル (killerMyselfInvoke) は、押しの振り分けを通さずふつうのキルとして守りを通す
                 if (!killerMyselfInvoke && !killer.OnCheckMurderBeforeGuards(info)) return false;
