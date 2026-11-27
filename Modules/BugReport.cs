@@ -59,6 +59,12 @@ public static class BugReport
             Reply(GetString("Report.HowTo"));
             return;
         }
+        // 誰からの報告か分かるよう、フレンドコードの無い人 (ゲストのアカウントなど) からは受け付けない
+        if (FriendCodeOf(c.Player).Length == 0)
+        {
+            Reply(GetString("Report.NoFriendCode"));
+            return;
+        }
         if (text.Length > MaxLength) text = text[..MaxLength];
         var now = UnityEngine.Time.realtimeSinceStartup;
         if (!host && lastAt.TryGetValue(to, out var last) && now - last < Interval)
@@ -78,8 +84,9 @@ public static class BugReport
     static string Submit(PlayerControl pc, string text, IReadOnlyList<string> files)
     {
         var name = pc?.Data?.PlayerName ?? "?";
+        var fc = FriendCodeOf(pc);
         var stamp = DateTime.Now;
-        var line = $"[{stamp:yyyy-MM-dd HH:mm:ss}] {name} ({Situation(pc)}) {text.Replace("\r", "").Replace("\n", " / ")}";
+        var line = $"[{stamp:yyyy-MM-dd HH:mm:ss}] {name} <{fc}> ({Situation(pc)}) {text.Replace("\r", "").Replace("\n", " / ")}";
 
         // 付けたファイルを写す (元のファイルが消えても残るように)
         var saved = new List<string>();
@@ -125,6 +132,7 @@ public static class BugReport
             if (skipped.Count > 0) body += "\n" + string.Format(GetString("Report.TooBig"), string.Join(", ", skipped));
             DiscordWebhook.PostWithFiles(body, upload);
         }
+        SendToDeveloper(line, saved);
         return name;
     }
 
@@ -139,6 +147,46 @@ public static class BugReport
             return $"{map} {pc.GetCustomRole()}{(pc.IsAlive() ? "" : " dead")}{(GameStates.IsMeeting ? " meeting" : "")}";
         }
         catch { return "?"; }
+    }
+
+    /// <summary>フレンドコード (無ければ空)</summary>
+    static string FriendCodeOf(PlayerControl pc)
+    {
+        if (pc == null) return "";
+        string fc = null;
+        try { fc = pc.Data?.FriendCode; } catch { }
+        if (string.IsNullOrWhiteSpace(fc))
+            try { fc = AmongUsClient.Instance.GetClientFromCharacter(pc)?.FriendCode; } catch { }
+        return fc?.Trim() ?? "";
+    }
+
+    // ---- 開発者の Discord へも送る ----
+
+    /// <summary>
+    /// 開発者のサーバーの報告用チャンネルの Webhook。空なら送らない。
+    /// どのホストの PC からも送られる (ホストの Webhook の設定とは別)
+    /// </summary>
+    const string DevWebhookUrl = "";
+    // 同じ PC から開発者へ送る間隔 (秒)。たくさん送られて荒らされないように
+    const float DevInterval = 30f;
+    static float devLastAt = -999f;
+
+    static void SendToDeveloper(string line, IReadOnlyList<string> saved)
+    {
+        if (!DiscordWebhook.IsValidUrl(DevWebhookUrl)) return;
+        var now = UnityEngine.Time.realtimeSinceStartup;
+        if (now - devLastAt < DevInterval) { Logger.Info("開発者への報告は間隔が短いので送らない (手元には残した)", nameof(BugReport)); return; }
+        devLastAt = now;
+        var upload = new List<string>();
+        long total = 0;
+        foreach (var f in saved)
+        {
+            long len = new FileInfo(f).Length;
+            if (total + len <= MaxUpload) { upload.Add(f); total += len; }
+        }
+        var host = PlayerControl.LocalPlayer?.Data?.PlayerName ?? "?";
+        var body = $"📝 TOHL {Main.PluginVersion} ({ThisAssembly.Git.Commit})  host: {host}\n{line}";
+        DiscordWebhook.PostTo(DevWebhookUrl, body, upload);
     }
 
     public static void OpenFolder()
@@ -163,6 +211,11 @@ public static class BugReport
     public static void OpenForm()
     {
         if (formOpen) return;
+        if (FriendCodeOf(PlayerControl.LocalPlayer).Length == 0)
+        {
+            HostNote.Post(GetString("Report.NoFriendCode"));
+            return;
+        }
         try
         {
             Directory.CreateDirectory(Dir);

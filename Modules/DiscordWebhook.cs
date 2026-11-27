@@ -122,10 +122,19 @@ public static class DiscordWebhook
         Post(content, null, paths);
     }
 
-    /// <summary>本文と、あればゲームログのファイルや手元のファイルを送る (別のスレッドで)</summary>
-    static void Post(string content, string logText, IReadOnlyList<string> paths = null)
+    /// <summary>ホストの設定とは別の送り先 (開発者の報告用など) へ、文とファイルを送る</summary>
+    public static void PostTo(string url, string text, IReadOnlyList<string> paths)
     {
-        var url = Main.WebhookURL.Value.Trim();
+        if (!IsValidUrl(url)) return;
+        var content = Plain(text);
+        if (content.Length > MaxContent) content = content[..MaxContent];
+        Post(content, null, paths, url.Trim());
+    }
+
+    /// <summary>本文と、あればゲームログのファイルや手元のファイルを送る (別のスレッドで)</summary>
+    static void Post(string content, string logText, IReadOnlyList<string> paths = null, string toUrl = null)
+    {
+        var url = toUrl ?? Main.WebhookURL.Value.Trim();
         // 送る文の @everyone などで人を呼ばないようにする
         var payload = JsonSerializer.Serialize(new Dictionary<string, object>
         {
