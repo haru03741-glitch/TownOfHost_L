@@ -132,6 +132,8 @@ public static class ClientBodySync
     private static readonly HashSet<int> pending = new();
     // 包みを送って、届いた印 (本人の SnapTo) を待っている人: 本人の NetTransform の netId → (clientId, PlayerId, 送った時刻)
     private static readonly Dictionary<uint, (int ClientId, byte PlayerId, float SentAt)> awaitingAck = new();
+    // 届いた印が来ずに 1 度送り直した客 (clientId)。続けて来なければ (止まっている客など)、送り直さずに覆いへ回す
+    private static readonly HashSet<int> ackRetried = new();
     // 出し終えたら消す CNO と、待ちの期限
     private static readonly List<(CustomNetObject obj, float deadline)> retiring = new();
     private static readonly Dictionary<byte, float> ziplineUntil = new();
@@ -146,6 +148,7 @@ public static class ClientBodySync
     {
         pending.Clear();
         awaitingAck.Clear();
+        ackRetried.Clear();
         retiring.Clear();
         ziplineUntil.Clear();
         round = null;
@@ -201,6 +204,7 @@ public static class ClientBodySync
     {
         pending.Clear();
         awaitingAck.Clear();
+        ackRetried.Clear();
         if (round != null) EndRound(Time.realtimeSinceStartup, RoundGap);
     }
 
@@ -728,9 +732,18 @@ public static class ClientBodySync
                 Logger.Info($"{a.PlayerId} への死体の合わせ直しは届いた印が来ないまま、抜けたか握手したので捨てます", Tag);
                 continue;
             }
-            Logger.Warn($"{a.PlayerId} への死体の合わせ直しが届いた印が {AckTimeout:0} 秒たっても来ないので、合わせ直し待ちへ戻します", Tag);
             DeadBodyEraser.ForgetSynced(a.ClientId);
-            pending.Add(a.ClientId);
+            if (ackRetried.Add(a.ClientId))
+            {
+                Logger.Warn($"{a.PlayerId} への死体の合わせ直しが届いた印が {AckTimeout:0} 秒たっても来ないので、合わせ直し待ちへ戻します", Tag);
+                pending.Add(a.ClientId);
+            }
+            // 続けて来ない客は、止まっていて後でまとめて受け取る見込みがある。送り直しを積まず、この会議までは覆いで隠す
+            else
+            {
+                Logger.Warn($"{a.PlayerId} への死体の合わせ直しが続けて届かないので、送り直さずに覆いで隠します", Tag);
+                DeadBodyEraser.CoverUnsynced(null, force: true);
+            }
         }
     }
 
@@ -744,6 +757,7 @@ public static class ClientBodySync
         {
             if (callId != (byte)RpcCalls.SnapTo || awaitingAck.Count == 0 || !__instance) return;
             if (!awaitingAck.Remove(__instance.NetId, out var a)) return;
+            ackRetried.Remove(a.ClientId);
             Logger.Info($"{a.PlayerId} への死体の合わせ直しが届きました ({Time.realtimeSinceStartup - a.SentAt:0.00} 秒)", Tag);
         }
     }
