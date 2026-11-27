@@ -474,12 +474,27 @@ public static class ChatCommandTable
             if (help != "") sb.Append(" ⇒ ").Append(help);
             return sb.ToString();
         }
+        // 誰でも使える物は種類ごとに並べ、モデレーターも使える物・ホストだけの物は最後に別のまとまりにする
+        bool ForModeratorOnly(ChatCommand cmd) => cmd.ForModerator && cmd.Host != null && cmd.Remote == null;
+        bool ForEveryone(ChatCommand cmd) => cmd.Remote != null || cmd.Local != null;
         var groups = new SortedDictionary<int, List<string>>();
+        var modLines = new List<string>();
+        var hostLines = new List<string>();
         foreach (var cmd in All)
         {
             // 開発者だけのコマンドは、開発者にだけ見せる
             if (cmd.Names[0] is "/dev" or "/log" && !DebugModeManager.AmDebugger) continue;
-            if (!(asHost ? cmd.Host != null || cmd.Local != null : cmd.Remote != null && !cmd.IsRestricted)) continue;
+            if (asHost)
+            {
+                if (cmd.Host == null && cmd.Local == null) continue;
+                if (ForModeratorOnly(cmd)) { modLines.Add(Line(cmd)); continue; }
+                if (!ForEveryone(cmd)) { hostLines.Add(Line(cmd)); continue; }
+            }
+            else
+            {
+                if (moderator && ForModeratorOnly(cmd)) { modLines.Add(Line(cmd)); continue; }
+                if (cmd.Remote == null || cmd.IsRestricted) continue;
+            }
             int cat = CategoryOf(cmd.Names[0]);
             if (!groups.TryGetValue(cat, out var list)) groups[cat] = list = new();
             list.Add(Line(cmd));
@@ -487,12 +502,10 @@ public static class ChatCommandTable
         var blocks = new List<string>();
         foreach (var (cat, lines) in groups)
             blocks.Add($"<#{CategoryColors[cat]}>■ {GetString("CmdCat." + CategoryKeys[cat])}</color>\n" + string.Join("\n", lines));
-        if (moderator)
-        {
-            var lines = All.Where(cmd => cmd.ForModerator && cmd.Host != null && cmd.Remote == null).Select(Line).ToList();
-            if (lines.Count > 0)
-                blocks.Add($"<#ffd84a>■ {GetString("CommandList.Moderator").TrimEnd(':', '：')}</color>\n" + string.Join("\n", lines));
-        }
+        if (modLines.Count > 0)
+            blocks.Add($"<#7ee0a0>■ {GetString("CmdCat.ModeratorOnly")}</color>\n" + string.Join("\n", modLines));
+        if (hostLines.Count > 0)
+            blocks.Add($"<#ffd84a>■ {GetString("CmdCat.HostOnly")}</color>\n" + string.Join("\n", hostLines));
         if (asHost) blocks.Add("<#9a9a9a>" + GetString("CommandList.HostHint") + "</color>");
         Utils.SendBlocks(blocks, $"<#ffd84a>【{GetString("CommandList").TrimEnd(':', '：')}】</color>", to.PlayerId, "<size=70%><line-height=1.6pic>");
     }

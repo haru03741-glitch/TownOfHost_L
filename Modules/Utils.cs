@@ -535,27 +535,25 @@ public static partial class Utils
 
     public static void ShowRoleInfoLong(CustomRoles role, byte PlayerId = byte.MaxValue)
     {
-        // 誰が読んでも分かり、流れても見つけやすいよう、見出しの付いたまとまりに分ける:
-        // 大きな役職名 → 陣営と出どころ → ひとことで → くわしく (1 文 1 行) → 設定
+        // 並び: 大きな役職名 → 少し大きなイントロ → 陣営・置き換え役職・判定の表 → From → 説明 (1 文 1 行) → 設定 (別の通)
         var r = role.VanillaRoleConversion();
         string roleInfoLong = GetRoleInfoLongText(r);
         var color = GetRoleColor(role).ToReadableColor();
         string formatTag = "<size=75%><line-height=1.7pic>";
 
-        var head = new StringBuilder();
-        head.Append("<size=110%><b>").Append($"【{GetString(role.ToString())}】".Color(color)).Append("</b></size>\n");
-        var team = RoleTeamText(role);
-        var from = Roles.Core.RoleFrom.GetText(role);
-        head.Append(team);
-        if (!string.IsNullOrEmpty(from)) head.Append("  ").Append(from);
-
-        var body = new StringBuilder();
+        var sb0 = new StringBuilder();
+        sb0.Append("<size=160%><b>").Append(GetString(role.ToString()).Color(color)).Append("</b></size>\n");
         if (Translator.HasString(role + "Info"))
-            body.Append("<#ffd84a>■ ").Append(GetString("RoleDictionary.Summary")).Append("</color>\n<b>").Append(GetString(role + "Info")).Append("</b>\n");
+            sb0.Append("<size=115%>").Append(GetString(role + "Info")).Append("</size>\n");
+        sb0.Append("<#9aa4b2>").Append(GetString("RoleDictionary.Team")).Append("<pos=34%>").Append(GetString("RoleDictionary.BaseRole"))
+           .Append("<pos=68%>").Append(GetString("Basis")).Append("</color>\n");
+        sb0.Append(RoleTeamText(role)).Append("<pos=34%>").Append(RoleBaseText(role)).Append("<pos=68%>").Append(RoleCountText(role)).Append('\n');
+        var from = Roles.Core.RoleFrom.GetText(role);
+        if (!string.IsNullOrEmpty(from)) sb0.Append(from).Append('\n');
         var detail = SplitSentences(StripTeamPrefix(roleInfoLong));
         if (detail.Length > 0)
-            body.Append("<#7fdcff>■ ").Append(GetString("RoleDictionary.Detail")).Append("</color>\n").Append(detail);
-        SendMessageAutoSplit(formatTag + head + "\n" + body, false, "", PlayerId, formatTag);
+            sb0.Append("<#7fdcff>■ ").Append(GetString("RoleDictionary.Description")).Append("</color>\n").Append(detail);
+        SendMessageAutoSplit(formatTag + sb0, false, "", PlayerId, formatTag);
 
         if (!role.IsDontShowOptionRole() && Options.CustomRoleSpawnChances.TryGetValue(role, out var opt))
         {
@@ -573,16 +571,47 @@ public static partial class Utils
     // 陣営の名前を陣営の色で (属性は「属性」)
     static string RoleTeamText(CustomRoles role)
     {
-        if (role.IsAddOn() || role.IsOtherAddOn()) return "<#ffd98c>■ " + GetString("RoleDictionary.AddOn") + "</color>";
+        if (role.IsAddOn() || role.IsOtherAddOn()) return "<#ffd98c>" + GetString("RoleDictionary.AddOn") + "</color>";
         return role.GetCustomRoleTypes() switch
         {
-            CustomRoleTypes.Impostor => "<#ff5a5a>■ " + GetString("TeamImpostor") + "</color>",
-            CustomRoleTypes.Madmate => "<#ff7340>■ " + GetString("Madmate") + "</color>",
-            CustomRoleTypes.Neutral => "<#d9a6ff>■ " + GetString("Neutral") + "</color>",
-            CustomRoleTypes.Unit => "<#99ff99>■ " + GetString("RoleDictionary.Unit") + "</color>",
-            _ => "<#8cd9ff>■ " + GetString("TeamCrewmate") + "</color>",
+            CustomRoleTypes.Impostor => "<#ff5a5a>" + GetString("TeamImpostor") + "</color>",
+            CustomRoleTypes.Madmate => "<#ff7340>" + GetString("Madmate") + "</color>",
+            CustomRoleTypes.Neutral => "<#d9a6ff>" + GetString("Neutral") + "</color>",
+            CustomRoleTypes.Unit => "<#99ff99>" + GetString("RoleDictionary.Unit") + "</color>",
+            _ => "<#8cd9ff>" + GetString("TeamCrewmate") + "</color>",
         };
     }
+
+    // 本編のどの役職として動くか (置き換え役職)。属性には無いので「-」
+    static string RoleBaseText(CustomRoles role)
+    {
+        if (role.IsAddOn() || role.IsOtherAddOn()) return "-";
+        var rt = role.GetRoleTypes();
+        var key = rt.ToString();
+        var name = Translator.HasString(key) ? GetString(key) : key;
+        var col = rt is RoleTypes.Impostor or RoleTypes.Shapeshifter or RoleTypes.Phantom or RoleTypes.ImpostorGhost ? "ff5a5a" : "8cd9ff";
+        return $"<#{col}>{name}</color>";
+    }
+
+    // 勝ち負けを決める時に、どの側として数えるか (判定)
+    static string RoleCountText(CustomRoles role)
+    {
+        var info = role.GetRoleInfo();
+        if (info == null) return "-";
+        var c = info.CountType;
+        switch (c)
+        {
+            case CountTypes.Crew: return "<#8cd9ff>" + GetString("TeamCrewmate") + "</color>";
+            case CountTypes.Impostor: return "<#ff5a5a>" + GetString("TeamImpostor") + "</color>";
+            case CountTypes.None:
+            case CountTypes.OutOfGame: return GetString("RoleDictionary.CountNone");
+        }
+        var key = c.ToString();
+        if (!Translator.HasString(key)) return key;
+        var col = Enum.TryParse<CustomRoles>(key, out var cr) ? GetRoleColor(cr).ToReadableColor() : color2;
+        return GetString(key).Color(col);
+    }
+    static readonly Color color2 = Color.white;
 
     // 説明の頭の「(クルー陣営):」「[クルー陣営]」は陣営の行で出すので外す
     static readonly System.Text.RegularExpressions.Regex TeamPrefix = new(@"^\s*(\([^\n()]{1,20}\)\s*[:：]?|\[[^\n\[\]]{1,20}\]|【[^\n【】]{1,20}】)\s*\n?");

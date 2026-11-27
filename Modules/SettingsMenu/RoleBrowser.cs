@@ -77,15 +77,24 @@ internal static class RoleCatalog
 
         var list = new List<RoleEntry>();
         RoleEntry group = null;
+        RoleEntry lastRole = null;
         foreach (var o in OptionItem.AllOptions)
         {
             if (o.Tab != tab || o.Parent != null) continue;
             if (roleOf.TryGetValue(o, out var role))
             {
                 group = null;
-                list.Add(RoleOf(o, role, tab));
+                list.Add(lastRole = RoleOf(o, role, tab));
                 continue;
             }
+            // 役職のすぐ後ろの、親の付いていない設定 (ライトの視界・サングラスの視界など) は、その役職のカードに入れる。
+            // 見出しの無い「属性 N 件」のカードを、役職の間にばらばらに作らない
+            if (group == null && lastRole != null && o is not TextOptionItem && !o.IsHeader)
+            {
+                AddTree(lastRole, o);
+                continue;
+            }
+            lastRole = null;
             // 役職でない親の無い項目: 見出し (文字の項目・IsHeader の項目) で新しいまとまりを始める
             if (group == null || o is TextOptionItem || o.IsHeader)
             {
