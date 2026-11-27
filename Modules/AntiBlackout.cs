@@ -89,7 +89,7 @@ public static partial class AntiBlackout
         foreach (var target in Main.AllAlivePlayerControls)
         {
             if (target.PlayerId == ExiledPlayerId || dummies.Contains(target)) continue;
-            if (RoleView.IsKillerRole(RoleView.Living(target, seer))) return true;
+            if (RoleView.IsKillerRole(RoleView.Screen(target, seer))) return true;
         }
         return false;
     }
@@ -157,7 +157,7 @@ public static partial class AntiBlackout
             bool desync = RoleView.IsDesync(pc);
             // 身代わりも死者の幽霊化も送らない (自分のキル役で生存インポスターが足りる)。頭数が並ぶ時の手当て (下の BalanceView) だけ送る
             // 伏せた追放者は、追放の締めで死が届くと自分のキル役で足りなくなるので、自分がキル役でも身代わりを送る
-            bool selfKiller = pc.IsAlive() && !(hiddenExiled != null && pc.PlayerId == hiddenExiled.PlayerId) && desync && RoleView.IsKillerRole(RoleView.Living(pc, pc));
+            bool selfKiller = pc.IsAlive() && !(hiddenExiled != null && pc.PlayerId == hiddenExiled.PlayerId) && desync && RoleView.IsKillerRole(RoleView.Screen(pc, pc));
             // 身代わりのインポスターの外に、生きたキル役が既に見えている画面 (役職の能力でキル役になった本人・その仲間) には身代わりを足さない。
             // 足すとその画面の生存インポスターが増え、追放の演出の締めで試合が終わったとみなして暗転する (2026-11-09 実機で確認)。
             // 死者を幽霊のクルーにする分は送る (会議中は全員を生きているとして送るので、死んだキル役の ImpostorGhost も生存インポスターに数えられる)
@@ -171,7 +171,7 @@ public static partial class AntiBlackout
             var count = 0;
 
             // 自分の画面で自分がキル役でない身代わり (犬のいるパブロフのオーナーなど) には、他に身代わりがいれば自分を送らない (キルのボタンが出る)
-            bool skipSelf = list.Count > 1 && list.Contains(pc) && !RoleView.IsKillerRole(RoleView.Living(pc, pc));
+            bool skipSelf = list.Count > 1 && list.Contains(pc) && !RoleView.IsKillerRole(RoleView.Screen(pc, pc));
             foreach (var dummy in list)
             {
                 if (noDummies) break;
@@ -183,7 +183,7 @@ public static partial class AntiBlackout
                 if (replaced) dummyRole = RoleTypes.Impostor;
                 // キルの後に、本人の手元と同じ役職を本人へ送り直すと、本編が役職を作り直してキルクールを 10 秒・能力のクールを 0 にする。
                 // 手元が既にその役職なら身代わりとして数えられているので送らない (会議の締めは会議明けに本編がクールを戻すので送る)
-                if (killer != null && dummy.PlayerId == pc.PlayerId && dummyRole == RoleView.Living(pc, pc)) continue;
+                if (killer != null && dummy.PlayerId == pc.PlayerId && dummyRole == RoleView.Screen(pc, pc)) continue;
                 sender.WriteSetRole(dummy, pc, dummyRole, transient: true);
                 count++;
                 // デシンクの人の画面と、デシンクの役職・インポスターに差し替えた身代わり (会議明けの配り直しが見え方へ戻してしまう) は、演出の後で戻す。
@@ -272,7 +272,7 @@ public static partial class AntiBlackout
         {
             if (target.PlayerId == ExiledPlayerId) continue;
             alive++;
-            if (RoleView.IsKillerRole(RoleView.Living(target, pc))) killers.Add(target);
+            if (RoleView.IsKillerRole(RoleView.Screen(target, pc))) killers.Add(target);
         }
         int visible = killers.Count;
         if (visible == 0) return 0;

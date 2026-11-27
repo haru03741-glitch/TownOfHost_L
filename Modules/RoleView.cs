@@ -110,6 +110,13 @@ public static class RoleView
         return onScreen.TryGetValue((seer.PlayerId, target.PlayerId), out role);
     }
 
+    /// <summary>
+    /// seer の画面に今ある target の役職。表に無い組は生きている時の見え方で代える
+    /// (試合の始めの配りは、他人の見え方を SetRole でなく GameData で送るので表に入らない)
+    /// </summary>
+    public static RoleTypes Screen(PlayerControl target, PlayerControl seer)
+        => TryGetOnScreen(seer, target, out var role) ? role : Living(target, seer);
+
     internal static void RecordForAll(PlayerControl target, RoleTypes role)
     {
         foreach (var seer in Main.AllPlayerControls) Record(seer, target, role);
