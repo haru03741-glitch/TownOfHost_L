@@ -78,7 +78,9 @@ public sealed class ChainShifter : RoleBase
         OptionShiftInactiveTime = FloatOptionItem.Create(RoleInfo, OptionName.ChainShifterShiftInactiveTime, new(10f, 60f, 2.5f), 10f, false)
            .SetValueFormat(OptionFormat.Seconds);
         OptionShiftedRole = StringOptionItem.Create(RoleInfo, OptionName.ChainShifterShiftedRole, cRolesString, 1, false);
-        OptionShiftWhenKilled = BooleanOptionItem.Create(RoleInfo, OptionName.ChainShifterShiftWhenKilled, false, false);
+        OptionShiftWhenKilled = BooleanOptionItem.Create(RoleInfo, OptionName.ChainShifterShiftWhenKilled, true, false)
+            // 既定値をこれまでの動き (オン) に変えた時に、保存済みのオフを引き継がないよう鍵を変えた
+            .SetKeyName("ChainShifterShiftByKill");
     }
     public override void Add()
     {
