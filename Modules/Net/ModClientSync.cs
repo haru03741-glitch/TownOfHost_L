@@ -706,4 +706,19 @@ public static class ModClientSync
 
     /// <summary>結果画面に出し終えた時</summary>
     public static void OnEndShown() => endReady = false;
+
+    // 客がロビーに戻った時は、前の試合の役職を「届いている」扱いにしない。
+    // 結果が届かずに終わった試合 (ホストの切断・作り直しなど) の後だと、次の試合のイントロが前の試合の役職
+    // (第三陣営など) の画面になる。次の試合の役職が届くまでは本編のイントロのまま出す
+    [HarmonyLib.HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.Start))]
+    [TownOfHostL.Core.Modes.PatchBundle(TownOfHostL.Core.Modes.PatchBundles.Core)]
+    static class LobbyForgetRolesPatch
+    {
+        public static void Postfix()
+        {
+            if (!AmongUsClient.Instance || AmongUsClient.Instance.AmHost) return;
+            rolesReady = false;
+            RemoteHud = RoleHudState.None;
+        }
+    }
 }

@@ -1168,7 +1168,17 @@ public static class StandardIntroHelper
     /// <summary>基底がファントムの phantom を、イントロの時に viewer の画面でどう見せるか</summary>
     private static RoleTypes PhantomViewAtIntro(PlayerControl phantom, PlayerControl viewer)
     {
-        if (viewer.PlayerId == phantom.PlayerId || viewer.GetCustomRole().JoinsImpostorTeam() || !SeesAsKillerAtIntro(viewer))
+        if (viewer.PlayerId == phantom.PlayerId) return RoleTypes.Phantom;
+        var vr = viewer.GetCustomRole();
+        if ((vr.IsImpostor() || vr.JoinsImpostorTeam()) && !(vr.GetRoleInfo()?.IsDesyncImpostor ?? false))
+        {
+            // インポスターの画面でファントムに見えるとインポスターの仲間になる (イントロの相方・赤い名前)。
+            // 基底がファントムでもインポスターの組でない人 (妖狐などの第三陣営のデシンク) は、クルーの形で見せる
+            var pr = phantom.GetCustomRole();
+            bool phantomIsTeammate = (pr.IsImpostor() || pr.JoinsImpostorTeam()) && !(pr.GetRoleInfo()?.IsDesyncImpostor ?? false);
+            return phantomIsTeammate ? RoleTypes.Phantom : RoleTypes.Crewmate;
+        }
+        if (!SeesAsKillerAtIntro(viewer))
             return RoleTypes.Phantom;
         // キルを持つ人の画面では、仲間でなければキルの対象 (Scientist など) にする
         var role = RoleView.Default(phantom, viewer);
