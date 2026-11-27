@@ -411,7 +411,7 @@ public static class ChatCommandTable
 
     // 役職名が無い /r と /n r は有効な役職の一覧、/h r は使い方
     private static void ShowActiveRoles(byte sendTo) => Utils.ShowActiveRoles(sendTo);
-    private static void ShowRoleHelp(byte sendTo) => ChatCommands.GetRolesInfo("", sendTo);
+    private static void ShowRoleHelp(byte sendTo) => Utils.ShowRoleHelpIndex(sendTo);
 
     private static void ShowNow(ChatCommandContext c, byte sendTo)
     {
@@ -459,15 +459,18 @@ public static class ChatCommandTable
     {
         if (to == null) return;
         var moderator = !asHost && Modules.Moderators.Is(to);
-        var sb = new System.Text.StringBuilder(GetString("CommandList"));
+        // 流れて途中から読んでも分かるよう、1 行 1 コマンドで、コマンドの名前だけを水色にする
+        // (色の指定を増やすと 1 通に入るコマンドが減り、通数が増えて流れやすくなる)
+        var sb = new System.Text.StringBuilder();
+        sb.Append("<#ffd84a>【").Append(GetString("CommandList").TrimEnd(':', '：')).Append("】</color>");
         void Add(ChatCommand cmd)
         {
-            sb.Append('\n').Append(cmd.Names[0]);
+            sb.Append("\n<#7fdcff>").Append(cmd.Names[0]).Append("</color>");
             if (cmd.Names.Length > 1) sb.Append(" (").Append(string.Join(" ", cmd.Names.Skip(1))).Append(')');
             var usage = cmd.UsageText;
             if (usage != "") sb.Append(' ').Append(usage);
             var help = cmd.HelpText;
-            if (help != "") sb.Append(" - ").Append(help);
+            if (help != "") sb.Append(" ⇒ ").Append(help);
         }
         foreach (var cmd in All)
         {
@@ -477,7 +480,7 @@ public static class ChatCommandTable
         }
         if (moderator)
         {
-            sb.Append("\n\n").Append(GetString("CommandList.Moderator"));
+            sb.Append("\n\n<#ffd84a>【").Append(GetString("CommandList.Moderator").TrimEnd(':', '：')).Append("】</color>");
             foreach (var cmd in All)
                 if (cmd.ForModerator && cmd.Host != null && cmd.Remote == null) Add(cmd);
         }

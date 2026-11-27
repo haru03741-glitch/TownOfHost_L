@@ -884,8 +884,8 @@ public static partial class Utils
                 first = false;
                 lastTab = tab;
                 if (sb.Length > 0) sb.Append('\n');
-                sb.Append('<').Append(GetRoleColorCode(role)).Append('>').Append(GetRoleName(role)).Append("</color> ")
-                    .Append(RoleChanceCount(role, roleAssignRandomMode));
+                sb.Append('<').Append(GetRoleColorCode(role)).Append('>').Append(GetRoleName(role)).Append("</color>")
+                    .Append(RoleChanceCountColumns(role, roleAssignRandomMode));
             }
             if (sb.Length > 0) blocks.Add(sb.ToString());
             sb.Clear();
@@ -897,6 +897,28 @@ public static partial class Utils
     /// 役職の出現率と人数の短い書き方 (「×1」「50%×1」)。出現率は 100% でない時に出す
     /// (割り当てが固定でも 100% 未満は確率で抜けるので)。ランダム割り当ての時は 100% も出す
     /// </summary>
+    /// <summary>
+    /// /h r (役職名なし) の案内。使い方と例だけを 1 通で出す (役職の一覧は /n r で見られると添える)。
+    /// 役職の名前を全部並べると何通にもなって流れるので、ここでは並べない
+    /// </summary>
+    public static void ShowRoleHelpIndex(byte PlayerId = byte.MaxValue)
+    {
+        bool hide = Options.HideGameSettings.GetBool() && PlayerId != byte.MaxValue;
+        var first = hide ? new List<CustomRoles>()
+            : RoleOrder.Sort(CustomRolesHelper.AllStandardRoles).Where(r => r.IsEnable() && !r.IsVanilla() && r != CustomRoles.NormalImpostor).Take(1).ToList();
+        var example = GetRoleName(first.Count > 0 ? first[0] : CustomRoles.Sheriff);
+        var text = string.Format(GetString("RoleHelpIndexUsage"), example);
+        if (!hide) text += "\n" + GetString("RoleHelpIndexActive");
+        SendMessageAutoSplit("<size=80%><line-height=1.7pic>" + text, true, $"【{GetString("RoleHelpIndexTitle")}】".Color(Color.yellow), PlayerId, "<size=80%><line-height=1.7pic>");
+    }
+    public static string RoleChanceCountColumns(CustomRoles role, bool alwaysChance = false)
+    {
+        // 役職名の長さに関係なく、% と ×N が縦にそろうよう、決まった位置から書く。
+        // 出現率は数字と同じ幅の空白 (U+2007) で 3 桁にそろえ、位置の指定は 1 つで済ませる (1 通に入る行を減らさない)
+        string chance = role.GetChance().ToString();
+        var text = $"<pos=60%>{new string(' ', Math.Max(0, 3 - chance.Length))}{chance}%×{role.GetCount()}";
+        return role.IsPairRole() ? text + GetString("Pair") : text;
+    }
     public static string RoleChanceCount(CustomRoles role, bool alwaysChance = false)
     {
         int chance = role.GetChance();

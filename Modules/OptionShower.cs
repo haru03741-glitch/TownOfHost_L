@@ -14,6 +14,8 @@ namespace TownOfHostL
     public static class OptionShower
     {
         public static int currentPage = 0;
+        /// <summary>Shift + Tab で隠している間は true (Tab を押すとまた出る)</summary>
+        public static bool Hidden = false;
         public static List<string> pages = new();
         static OptionShower()
         {

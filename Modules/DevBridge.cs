@@ -149,6 +149,17 @@ static class DevBridge
                     sb.AppendLine("MAPCLICK " + TownOfHostL.SettingsUI.SpawnMapView.ClickScreen(new Vector3(float.Parse(p[0]), Screen.height - float.Parse(p[1]), 0f)));
                     break;
                 }
+            case "chat":
+                {
+                    // チャット欄へ字を入れて送る (入力欄の字の判定も通す)
+                    var chat = HudManager.Instance.Chat;
+                    var area = chat.freeChatField.textArea;
+                    ChatInput.SetText(area, a.Length > 1 ? a[1] : "", a.Length > 1 ? a[1].Length : 0);
+                    sb.AppendLine("FIELD " + area.text);
+                    chat.SendChat();
+                    sb.AppendLine("SENT");
+                    break;
+                }
             case "dict":
                 RoleDictionary.Toggle();
                 sb.AppendLine("DICT");

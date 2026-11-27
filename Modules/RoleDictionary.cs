@@ -50,7 +50,19 @@ public class RoleDictionary : MonoBehaviour
             else SetOpen(false);
             return;
         }
-        if (!typing) return;
+        if (!typing)
+        {
+            // 矢印キー: ↑↓ で役職を選び、←→ で陣営のタブを替える。/ で検索欄へ
+            if (Input.GetKeyDown(KeyCode.DownArrow)) MoveSelection(1);
+            else if (Input.GetKeyDown(KeyCode.UpArrow)) MoveSelection(-1);
+            else if (Input.GetKeyDown(KeyCode.RightArrow)) MoveTab(1);
+            else if (Input.GetKeyDown(KeyCode.LeftArrow)) MoveTab(-1);
+            else if (Input.GetKeyDown(KeyCode.Slash) || Input.GetKeyDown(KeyCode.KeypadDivide)) SetTyping(true);
+            return;
+        }
+        // 検索中も ↑↓ で選べる
+        if (Input.GetKeyDown(KeyCode.DownArrow)) MoveSelection(1);
+        else if (Input.GetKeyDown(KeyCode.UpArrow)) MoveSelection(-1);
         var changed = false;
         var sb = new StringBuilder(search ?? "");
         foreach (var c in Input.inputString ?? "")
@@ -88,7 +100,30 @@ public class RoleDictionary : MonoBehaviour
     [TownOfHostL.Core.Modes.PatchBundle(TownOfHostL.Core.Modes.PatchBundles.Core)]
     static class MovePatch
     {
-        public static bool Prefix() => !Typing;
+        // 開いている間は矢印キーで辞典を動かすので、自分のキャラは動かさない
+        public static bool Prefix() => !open;
+    }
+
+    static void MoveSelection(int delta)
+    {
+        if (listDirty) BuildList();
+        if (shown.Count == 0) return;
+        int at = shown.FindIndex(x => x.Role == selected);
+        at = at < 0 ? 0 : Mathf.Clamp(at + delta, 0, shown.Count - 1);
+        selected = shown[at].Role;
+        detailDirty = true;
+        scrollToSelected = true;
+    }
+
+    static void MoveTab(int delta)
+    {
+        var tabs = MyRoles().Count > 0 ? Tabs : TabsNoMine;
+        int at = Array.IndexOf(tabs, tab);
+        at = ((at < 0 ? 0 : at) + delta + tabs.Length) % tabs.Length;
+        tab = tabs[at];
+        listDirty = true;
+        detailDirty = true;
+        listScroll = 0;
     }
 
     public static void CheckHotkey()
@@ -119,6 +154,8 @@ public class RoleDictionary : MonoBehaviour
         public CustomRoles Role;
         public string Name;
         public string Shown;
+        /// <summary>一覧の名前の下に薄く出す、ひとことの説明 (無ければ空)</summary>
+        public string Summary;
         public Tab Team;
         public Color Color;
     }
@@ -126,6 +163,9 @@ public class RoleDictionary : MonoBehaviour
     static List<Entry> all;
     static readonly Dictionary<CustomRoles, Entry> extra = new();
     static readonly List<Entry> shown = new();
+    // 一覧に並べる行。Entry が null の行は陣営の見出し (「すべて」と検索の時に陣営の境へ入れる)
+    static readonly List<(Entry entry, Tab team, int count)> rows = new();
+    static bool scrollToSelected;
     static bool listDirty = true, detailDirty = true;
     static GUIContent detailContent = GUIContent.none;
     static float detailHeight;
@@ -137,10 +177,13 @@ public class RoleDictionary : MonoBehaviour
         var name = Plain(Utils.GetRoleName(role));
         if (name.Length == 0) return null;
         var color = Utils.GetRoleColor(role);
+        var summary = Translator.HasString(role + "Info") ? Plain(GetString(role + "Info")) : "";
+        if (summary.Length > 34) summary = summary[..33] + "…";
         return new Entry
         {
             Role = role,
             Name = name,
+            Summary = summary,
             Shown = $"<color=#{ColorUtility.ToHtmlStringRGB(Readable(color))}>{name}</color>",
             Team = TeamOf(role),
             Color = color,
@@ -233,24 +276,61 @@ public class RoleDictionary : MonoBehaviour
         listDirty = false;
         if (all == null) BuildAll();
         shown.Clear();
+        rows.Clear();
         var q = (search ?? "").Trim();
         if (tab == Tab.Mine)
         {
             foreach (var r in MyRoles())
-                if (EntryOf(r) is { } me) shown.Add(me);
+                if (EntryOf(r) is { } me) { shown.Add(me); rows.Add((me, me.Team, 0)); }
             if (shown.Count > 0 && !shown.Any(e => e.Role == selected)) { selected = shown[0].Role; detailDirty = true; }
             listScroll = 0f;
             return;
         }
+        // 名前で当たる物を先に、説明の文で当たる物 (「キル」「タスク」など) を後に並べる
+        var bySummary = new List<Entry>();
         foreach (var e in all)
         {
             if (tab != Tab.All && e.Team != tab) continue;
             if (onlyEnabled && !SafeEnabled(e.Role)) continue;
-            if (q.Length > 0 && e.Name.IndexOf(q, StringComparison.OrdinalIgnoreCase) < 0 && e.Role.ToString().IndexOf(q, StringComparison.OrdinalIgnoreCase) < 0) continue;
+            if (q.Length > 0 && e.Name.IndexOf(q, StringComparison.OrdinalIgnoreCase) < 0 && e.Role.ToString().IndexOf(q, StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                if (e.Summary.Length > 0 && e.Summary.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0) bySummary.Add(e);
+                continue;
+            }
             shown.Add(e);
         }
+        // 見出しは陣営の境へ (名前で当たった物・説明で当たった物、それぞれ陣営順のまま)
+        void AddRows(List<Entry> list)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                var e = list[i];
+                if (tab == Tab.All && (i == 0 || list[i - 1].Team != e.Team))
+                {
+                    int n = 0;
+                    for (int j = i; j < list.Count && list[j].Team == e.Team; j++) n++;
+                    rows.Add((null, e.Team, n));
+                }
+                rows.Add((e, e.Team, 0));
+            }
+        }
+        AddRows(shown);
+        if (bySummary.Count > 0)
+        {
+            rows.Add((null, Tab.All, -bySummary.Count)); // 「説明で当たった役職」の見出し
+            foreach (var e in bySummary) rows.Add((e, e.Team, 0));
+            shown.AddRange(bySummary);
+        }
         if (shown.Count > 0 && !shown.Any(e => e.Role == selected)) { selected = shown[0].Role; detailDirty = true; }
-        listScroll = Mathf.Min(listScroll, Mathf.Max(0f, shown.Count * RowH - 1f));
+        listScroll = Mathf.Min(listScroll, Mathf.Max(0f, ListHeight() - 1f));
+    }
+
+    static float RowHeight(int i) => rows[i].entry == null ? HeadRowH : RowH;
+    static float ListHeight()
+    {
+        float h = 0f;
+        for (int i = 0; i < rows.Count; i++) h += RowHeight(i);
+        return h;
     }
 
     static bool SafeEnabled(CustomRoles role)
@@ -311,7 +391,7 @@ public class RoleDictionary : MonoBehaviour
         var c = Readable(Utils.GetRoleColor(role));
         sb.Append($"<size={Mathf.RoundToInt(BigFont)}><b><color=#{ColorUtility.ToHtmlStringRGB(c)}>{Plain(Utils.GetRoleName(role))}</color></b></size>\n");
         if (isMine) sb.Append($"<color=#{ColorUtility.ToHtmlStringRGB(TeamColor(Tab.Mine))}>★ {GetString(role.IsAddOn() || role.IsOtherAddOn() || role == CustomRoles.Lovers ? "RoleDictionary.MyAddOn" : "RoleDictionary.MyRole")}</color>   ");
-        sb.Append($"<color=#{ColorUtility.ToHtmlStringRGB(TeamColor(team))}>{TeamName(team)}</color>");
+        sb.Append($"<b><color=#{ColorUtility.ToHtmlStringRGB(TeamColor(team))}>■ {TeamName(team)}</color></b>");
         var from = RoleFrom.GetText(role);
         if (from.Length > 0) sb.Append("   ").Append(Rich(from));
         sb.Append('\n');
@@ -391,7 +471,8 @@ public class RoleDictionary : MonoBehaviour
     static float Scale => sw / 1920f;
     static int Font => Mathf.Max(12, Mathf.RoundToInt(22f * Scale));
     static float BigFont => Font * 1.6f;
-    static float RowH => 50f * Scale;
+    static float RowH => 64f * Scale;
+    static float HeadRowH => 36f * Scale;
     static float Pad => 10f * Scale;
     static GUIStyle sWindow, sTitle, sRow, sRowOn, sTab, sTabOn, sDetail, sField, sFieldOn, sSmall, sClose, sPanel, sOnChip;
     static Texture2D Bar
@@ -475,40 +556,103 @@ public class RoleDictionary : MonoBehaviour
             var t = tabs[i];
             var num = t == Tab.Mine ? mine.Count : teamCounts.TryGetValue(t, out var tc) ? tc : 0;
             var label = $"<color=#{ColorUtility.ToHtmlStringRGB(TeamColor(t))}>{(t == Tab.Mine ? "★ " : "")}{TeamName(t)}</color> <size={Mathf.RoundToInt(Font * 0.75f)}><color=#8f9ab3>{num}</color></size>";
-            if (GUI.Button(new Rect(wx + Pad + tw * i + 2f, ty, tw - 4f, th), label, t == tab ? sTabOn : sTab)) { tab = t; listDirty = true; detailDirty = true; listScroll = 0; }
+            var tr = new Rect(wx + Pad + tw * i + 2f, ty, tw - 4f, th);
+            if (GUI.Button(tr, label, t == tab ? sTabOn : sTab)) { tab = t; listDirty = true; detailDirty = true; listScroll = 0; }
+            // タブの下に陣営の色の帯 (選んでいるタブは太く濃く)
+            if (type == EventType.Repaint)
+            {
+                var old = GUI.color;
+                var tcol = TeamColor(t);
+                bool on = t == tab;
+                GUI.color = new Color(tcol.r, tcol.g, tcol.b, on ? 1f : 0.35f);
+                var bh = (on ? 5f : 3f) * Scale;
+                ImguiTex.Draw(new Rect(tr.x + 6f * Scale, tr.yMax - bh - 2f * Scale, tr.width - 12f * Scale, bh), Bar);
+                GUI.color = old;
+            }
         }
 
         if (all == null || builtLang != (TranslationController.InstanceExists ? TranslationController.Instance.currentLanguage?.languageID.ToString() : "")) { all = null; listDirty = true; detailDirty = true; }
         if (listDirty) BuildList();
 
         var top = ty + th + Pad;
-        var bodyH = wy + wh - top - Pad;
-        var lx = wx + Pad; var lw = ww * 0.30f;
+        var keysH = 30f * Scale;
+        var bodyH = wy + wh - top - Pad - keysH;
+        // 窓の一番下に、操作の案内
+        GUI.Label(new Rect(wx + Pad * 2f, wy + wh - keysH - Pad * 0.5f, ww - Pad * 4f, keysH), GetString("RoleDictionary.Keys"), sSmall);
+        var lx = wx + Pad; var lw = ww * 0.32f;
         GUI.Box(new Rect(lx, top, lw, bodyH), GUIContent.none, sPanel);
-        var listH = shown.Count * RowH;
+        var listH = ListHeight();
         var maxL = Mathf.Max(0f, listH - bodyH + Pad);
+        if (scrollToSelected)
+        {
+            // ↑↓ で選んだ役職が見える所まで一覧を送る
+            scrollToSelected = false;
+            float y0 = 0f;
+            for (int i = 0; i < rows.Count; i++)
+            {
+                if (rows[i].entry != null && rows[i].entry.Role == selected)
+                {
+                    // 一番上の役職の時は陣営の見出しも見せる
+                    float want = i > 0 && rows[i - 1].entry == null ? y0 - HeadRowH : y0;
+                    if (want < listScroll) listScroll = want;
+                    else if (y0 + RowH > listScroll + bodyH - Pad) listScroll = y0 + RowH - bodyH + Pad;
+                    break;
+                }
+                y0 += RowHeight(i);
+            }
+        }
         if (type == EventType.ScrollWheel && Inside(e.mousePosition, lx, top, lw, bodyH)) { listScroll += e.delta.y * RowH; e.Use(); }
         listScroll = Mathf.Clamp(listScroll, 0f, maxL);
         if (maxL > 0f) listScroll = GUI.VerticalScrollbar(new Rect(lx + lw - 16f * Scale, top, 16f * Scale, bodyH), listScroll, bodyH, 0f, listH + Pad);
-        var first = Mathf.Max(0, Mathf.FloorToInt(listScroll / RowH));
-        for (var i = first; i < shown.Count; i++)
         {
-            var y = top + Pad * 0.5f + i * RowH - listScroll;
-            if (y + RowH > top + bodyH) break;
-            var en = shown[i];
-            var r = new Rect(lx + Pad * 0.5f, y, lw - Pad - 18f * Scale, RowH - 4f * Scale);
-            if (GUI.Button(r, "  " + en.Shown, en.Role == selected ? sRowOn : sRow)) { selected = en.Role; detailDirty = true; }
-            if (type == EventType.Repaint)
+            float y = top + Pad * 0.5f - listScroll;
+            var rw = lw - Pad - 18f * Scale;
+            for (var i = 0; i < rows.Count; i++)
             {
-                var old = GUI.color;
-                GUI.color = Readable(en.Color);
-                ImguiTex.Draw(new Rect(r.x + 4f * Scale, r.y + r.height * 0.2f, 5f * Scale, r.height * 0.6f), Bar);
-                if (SafeEnabled(en.Role))
+                var h = RowHeight(i);
+                if (y < top) { y += h; continue; }
+                if (y + h > top + bodyH) break;
+                var (en, team, count) = rows[i];
+                if (en == null)
                 {
-                    GUI.color = new Color(0.45f, 1f, 0.6f);
-                    GUI.Label(new Rect(r.xMax - 60f * Scale, r.y, 54f * Scale, r.height), "ON", sOnChip);
+                    // 陣営の見出し: 陣営の色の薄い帯に、陣営の名前と数
+                    var hr = new Rect(lx + Pad * 0.5f, y + 2f * Scale, rw, h - 4f * Scale);
+                    var hc = count < 0 ? new Color(0.62f, 0.84f, 1f) : TeamColor(team);
+                    if (type == EventType.Repaint)
+                    {
+                        var old = GUI.color;
+                        GUI.color = new Color(hc.r, hc.g, hc.b, 0.18f);
+                        ImguiTex.Draw(hr, Bar);
+                        GUI.color = hc;
+                        ImguiTex.Draw(new Rect(hr.x, hr.yMax - 2f * Scale, hr.width, 2f * Scale), Bar);
+                        GUI.color = old;
+                    }
+                    var title = count < 0 ? GetString("RoleDictionary.SummaryHits") : TeamName(team);
+                    GUI.Label(new Rect(hr.x + Pad, hr.y, hr.width - Pad * 2f, hr.height),
+                        $"<b><color=#{ColorUtility.ToHtmlStringRGB(hc)}>■ {title}</color></b>  <color=#8f9ab3>{Math.Abs(count)}</color>", sSmall);
                 }
-                GUI.color = old;
+                else
+                {
+                    var r = new Rect(lx + Pad * 0.5f, y, rw, h - 4f * Scale);
+                    // 名前と、その下にひとことの説明 (押さなくても何をする役職か分かるように)
+                    var text = en.Summary.Length > 0
+                        ? $"  {en.Shown}\n  <size={Mathf.RoundToInt(Font * 0.72f)}><color=#9aa6c0>{en.Summary}</color></size>"
+                        : "  " + en.Shown;
+                    if (GUI.Button(r, text, en.Role == selected ? sRowOn : sRow)) { selected = en.Role; detailDirty = true; }
+                    if (type == EventType.Repaint)
+                    {
+                        var old = GUI.color;
+                        GUI.color = Readable(en.Color);
+                        ImguiTex.Draw(new Rect(r.x + 4f * Scale, r.y + r.height * 0.15f, 6f * Scale, r.height * 0.7f), Bar);
+                        if (SafeEnabled(en.Role))
+                        {
+                            GUI.color = new Color(0.45f, 1f, 0.6f);
+                            GUI.Label(new Rect(r.xMax - 60f * Scale, r.y, 54f * Scale, r.height), "ON", sOnChip);
+                        }
+                        GUI.color = old;
+                    }
+                }
+                y += h;
             }
         }
         if (shown.Count == 0) GUI.Label(new Rect(lx + Pad, top + Pad, lw - Pad * 2, RowH), GetString("RoleDictionary.None"), sSmall);

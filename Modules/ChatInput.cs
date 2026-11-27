@@ -259,12 +259,27 @@ internal static class ChatInputPatches
         // 通した文字でも位置は進める (進めないと、後の文字を前の位置の文字と取り違える)
         char real = Advance(c);
         if (__result) return;
-        if (__instance.Pointer == ChatInput.ChatArea)
+        if (__instance.Pointer == ChatInput.ChatArea || IsHostChatField(__instance))
         {
             if (!char.IsControl(real)) __result = true;
             return;
         }
         if (real != c) __result = VanillaAllows(__instance, real);
+    }
+
+    // ホストのチャット欄なら、まだ一度も開いていない (欄の設定が済んでいない) 時でも ★ や【】などを全部通す
+    private static bool IsHostChatField(TextBoxTMP box)
+    {
+        try
+        {
+            if (AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost || !HudManager.InstanceExists) return false;
+            var chat = HudManager.Instance.Chat;
+            if (chat == null || chat.freeChatField == null || chat.freeChatField.textArea == null) return false;
+            if (chat.freeChatField.textArea.Pointer != box.Pointer) return false;
+            ChatInput.Apply(chat.freeChatField);
+            return true;
+        }
+        catch { return false; }
     }
 
     // 切られる 0x80 以上の文字の判定。本編は文字 (漢字・かな・ハングル・アクセント付きの字など) を通すので、

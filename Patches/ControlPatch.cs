@@ -68,7 +68,13 @@ namespace TownOfHostL
                 //カスタム設定切り替え
                 if (Input.GetKeyDown(KeyCode.Tab))
                 {
-                    OptionShower.Next();
+                    // Shift + Tab で一覧を隠す・出す
+                    if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) OptionShower.Hidden = !OptionShower.Hidden;
+                    else
+                    {
+                        OptionShower.Hidden = false;
+                        OptionShower.Next();
+                    }
                 }
                 for (var i = 0; i < 9; i++)
                 {

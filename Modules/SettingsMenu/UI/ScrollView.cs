@@ -137,6 +137,7 @@ internal sealed class ScrollView : Widget
         // 組んだ直後 (中身がまだ無い) は位置が 0 なので控えない (控えると前の位置を消してしまう)
         if (_filled) Remember();
         _filled = true;
+        _bottom = float.NaN;
         Content = content;
         var go = Inner.Set(content);
         float h = Inner.LastSize.y;
@@ -153,6 +154,35 @@ internal sealed class ScrollView : Widget
         float y = Tag != null && Positions.TryGetValue(Tag, out var p) ? p : 0f;
         var ip = s.Inner.localPosition;
         s.Inner.localPosition = new Vector3(ip.x, Math.Clamp(y, 0f, Math.Max(0f, h - Size.y)), ip.z);
+        s.UpdateScrollBars();
+        if (s.ScrollbarY) s.ScrollbarY.gameObject.SetActive(h > Size.y);
+        ApplyCells();
+    }
+
+    // 前に控えた位置 (Tag ごと)。無ければ 0
+    public static float RememberedY(string tag) => tag != null && Positions.TryGetValue(tag, out var p) ? p : 0f;
+
+    // 足した物の下端 (中身の根から見た y)。NaN = まだ足していない
+    private float _bottom = float.NaN;
+
+    /// <summary>
+    /// 中身の下に w を作り足す (中身は作り直さない)。中身は縦に並べる箱で、w は同じ幅・同じ揃えで並ぶ物を渡す。
+    /// 設定画面を開いた時に、見える所だけ先に作り、残りを次のフレームから少しずつ足すのに使う
+    /// </summary>
+    public void Append(Widget w, float gap)
+    {
+        if (Inner == null || !Inner.Alive || !_content || w == null) return;
+        if (float.IsNaN(_bottom)) _bottom = -Inner.LastSize.y / 2f;
+        var go = Inner.Append(w, _content, Inner.BaseOrder + 2, out var size);
+        if (!go) return;
+        float center = _bottom - gap - size.y / 2f;
+        go.transform.localPosition = new Vector3(0f, center, 0f);
+        _bottom = center - size.y / 2f;
+        float h = Inner.LastSize.y / 2f - _bottom;
+        BuildCells(_content);
+        var s = Scroller;
+        if (!s) { ApplyCells(); return; }
+        s.SetBounds(new FloatRange(0f, Math.Max(0f, h - Size.y)), null);
         s.UpdateScrollBars();
         if (s.ScrollbarY) s.ScrollbarY.gameObject.SetActive(h > Size.y);
         ApplyCells();

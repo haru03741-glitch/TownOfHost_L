@@ -1437,6 +1437,9 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "Message.HelpRoleNone","Role descriptions (/r <role>, /h r <role>, /n r <role>) are only available in Japanese.","/r 役職名 (/h r 役職名・/n r 役職名でも可)\nを入力すると、その役職の説明が出ます。",
 "Message.SelectRolesUsage","Usage: /sr <player ID> <role> (IDs: /id, /sr list to show, /sr clear to clear)","使い方: /sr プレイヤーID 役職 (ID は /id で確認、/sr list で一覧、/sr clear で解除)","","","","",""
 "Message.RoleAmbiguous","Several roles match {0}: {1}","「{0}」に当たる役職が複数あります: {1}","","","","",""
+"RoleHelpIndexTitle","Role descriptions","役職の説明","","","","",""
+"RoleHelpIndexUsage","Type a role name after /h r to see what it does.\n<#7fdcff><b>Example: /h r {0}</b></color>\n(/r {0} works too)","<#7fdcff><b>/h r 役職名</b></color> と送ると、その役職の説明が出ます。\n<#7fdcff><b>例: /h r {0}</b></color>\n(/r {0} でも出ます。名前は一部だけでも大丈夫)","","","","",""
+"RoleHelpIndexActive","<#ffd84a>The roles in this game: /n r</color>","<#ffd84a>今回入っている役職の一覧は /n r で見られます</color>","","","","",""
 "Message.SelectRolesLobbyOnly","This command is only available in the lobby.","このコマンドはロビーでのみ使用できます。",
 "Message.SelectRolesNoPlayer","Player not found: {0}","プレイヤーが見つかりません: {0}",
 "Message.SelectRolesNoRole","Role not found: {0}","役職が見つかりません: {0}",
@@ -1620,7 +1623,7 @@ PanAlive25,\nBread was served by the bakery.\nㅤ,\nパン屋は{0}に向けて�
 "Preset_5","Preset 5","プリセット5","预设5","設定檔 5","Сохранение 5","Predefinição 5"
 "Standard","Standard","スタンダード","标准","普通","Стандартный","Padrão"
 "GameMode","Game Mode","ゲームモード","游戏模式","遊戲模式","Игровой Режим","Modo de Jogo"
-"PressTabToNextPage","Press Tab or Number for Next Page...","Tabキーまたは数字キーを押して次のページへ...","按下tab键查看更多...","按下Tab以顯示下一頁...","Нажмите Tab или Цифру чтобы перейти на следующую страницу...","Aperte Tab ou Números para Passar a Página..."
+"PressTabToNextPage","Press Tab or Number for Next Page (Shift+Tab to hide)...","Tabキーまたは数字キーで次のページへ (Shift+Tabで隠す)...","按下tab键查看更多...","按下Tab以顯示下一頁...","Нажмите Tab или Цифру чтобы перейти на следующую страницу...","Aperte Tab ou Números para Passar a Página..."
 "RoleSummaryText","Game End Player-Roles List:","ゲーム終了時の役職一覧:","游戏结束时玩家的职业:","遊戲結束時玩家的職業:","Игроки и роли в конце игры:","Lista de Classes dos Jogadores ao Final do Jogo:"
 "doOverride","Override Tasks","タスク上書き(1以上)","特别设置任务数","特別設定任務","Изменить задания","Ignorar Tarefas (Mínimo1)"
 "doOverride%role%","%role% Override Tasks","%role%のタスク上書き(1以上)","%role% 特别设置任务数","%role% 特別設定任務",
@@ -4539,7 +4542,7 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "RoleDictionary.Unit","Units","ユニット"
 "RoleDictionary.AddOn","Add-ons","属性"
 "RoleDictionary.Search","Search","検索"
-"RoleDictionary.SearchHint","Role name","役職名"
+"RoleDictionary.SearchHint","Name or word (e.g. kill)","役職名や言葉 (例: キル)"
 "RoleDictionary.OnlyEnabled","Enabled only","有効な役職だけ"
 "RoleDictionary.PlayAs","Play as this role","この役職で遊ぶ"
 "RoleDictionary.None","No roles found","該当する役職がありません"
@@ -6478,6 +6481,8 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "RoleDictionary.Summary","Summary","ひとことで","","","","",""
 "RoleDictionary.Detail","How it works","くわしく","","","","",""
 "RoleDictionary.MineTitle","Your role and add-ons","あなたの役職と属性","","","","",""
+"RoleDictionary.Keys","↑↓ Pick a role   ←→ Change team   / Search   Esc Close","↑↓ 役職を選ぶ   ←→ 陣営を替える   / 検索   Esc 閉じる","","","","",""
+"RoleDictionary.SummaryHits","Found in descriptions","説明に言葉が入っている役職","","","","",""
 "SpawnPin.SettingsHint","Click the map to add a pin, click a pin to remove it","地図を押すとピンを置く・ピンを押すと消す","","","","",""
 "CommandUsage.Co","[role]","[役職名 / ベント系 / 占い系]","","","","",""
 "CommandUsage.Aco","[add-on]","[属性名]","","","","",""

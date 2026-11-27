@@ -134,6 +134,8 @@ internal sealed class SectionPage
         _entries.Clear();
         _shownOpts.Clear();
         _all = new List<Group>();
+        _visible.Clear();
+        _pendingFrom = 0;
         _editor.Clear();
         _built = false;
         _menu = IntPtr.Zero;
@@ -148,13 +150,16 @@ internal sealed class SectionPage
         _editor.Clear();
         _hits.Clear();
         _preview = null;
+        _visible.Clear();
+        _pendingFrom = 0;
         _onBuild?.Invoke();
         _all = _groups();
         _builtTopKey = _topKey?.Invoke() ?? 0;
         bool edit = CanEdit();
+        _buildEdit = edit;
 
         float rowW = RowW;
-        var rows = new Stack(false) { Gap = 0.06f, Width = rowW };
+        var rows = new Stack(false) { Gap = RowGap, Width = rowW };
         var watch = new List<MenuOpt>();
         foreach (var g in _all) watch.AddRange(g.Opts);
         _editor.Watch(watch);
@@ -164,7 +169,7 @@ internal sealed class SectionPage
             top.Align = Align.Start;
             rows.Add(top);
         }
-        var visible = new List<(Group g, List<MenuOpt> shown, int values)>();
+        _hasTop = top != null;
         foreach (var g in _all)
         {
             var shown = new List<MenuOpt>();
@@ -176,46 +181,84 @@ internal sealed class SectionPage
                 if (!opt.IsText) values++;
             }
             _shownOpts.AddRange(shown);
-            if (values > 0) visible.Add((g, shown, values));
+            if (values > 0) _visible.Add((g, shown, values));
         }
-        foreach (var (g, shown, values) in visible)
-        {
-            var e = new Entry { Group = g, Changed = AnyChanged(g) };
-            if (_entries.Count > 0 || top != null) rows.Add(new Spacer(rowW, 0.16f));
-            string title = $"{g.Title}  <size=70%><color=#B8C0CC>{string.Format(Translator.GetString("SettingsUI.Count"), values)}</color></size>";
-            e.Head = new Box(new Label(title, 1.65f) { Bold = true, Color = HeadText, Width = rowW - 0.3f, MinFontSize = 1.1f })
-            {
-                Size = new Vector2(rowW, HeadH + 0.06f),
-                Padding = new Vector2(0.15f, 0.04f),
-                Color = HeadLine,
-                Fill = HeadFill,
-                Align = Align.Start,
-            };
-            rows.Add(e.Head);
-            // 行ごとに地を交互に濃淡 (横に長い行でも目で追いやすく)
-            int k = 0;
-            foreach (var opt in shown)
-            {
-                Widget r;
-                if (opt.IsText)
-                {
-                    // 親のある見出し (設定の途中の小見出し): 字だけ
-                    var tc = opt.NameColor;
-                    r = new Label(opt.Label, OptEditor.NarrowFont) { Bold = true, Width = rowW - RowPad * 2f - opt.Depth * 0.2f, Color = tc == Color.white ? SubText : MenuOpt.Readable(tc) };
-                }
-                else r = _editor.NarrowRow(opt, edit, rowW - RowPad * 2f, opt.Depth * 0.2f);
-                var plated = OptEditor.Plated(r, rowW, k++);
-                if (HasPreview && GamePreview.Has(opt) && plated is Plate plate) _hits.Add((opt, plate));
-                rows.Add(plated);
-                var map = SpawnMapView.After(opt, rowW, edit);
-                if (map != null) rows.Add(map);
-            }
-            _entries.Add(e);
-        }
+        // 目次は全部の節で先に作る (見出しの箱は節を作った時に入る)
+        foreach (var v in _visible) _entries.Add(new Entry { Group = v.g, Changed = AnyChanged(v.g) });
+
+        // 開いた時に見える所 (欄の高さほど) だけ先に作り、残りの節は次のフレームから少しずつ足す。
+        // 前に下の方までスクロールしていた時は、その位置を出せるよう全部作る
+        bool defer = ScrollView.RememberedY(_tag) < 0.01f;
+        int built = 0;
+        while (_pendingFrom < _visible.Count && (!defer || built < FirstRows))
+            built += AddGroup(rows, _pendingFrom++);
         _editor.Refresh();
         _list = new ScrollView(new Vector2(ListW, H), rows) { Tag = _tag };
         _screen.Set(new Stack(true, _list, Side(edit)) { Gap = 0.15f, Align = Align.Start });
         _marked = null;
+        MarkShown();
+    }
+
+    // 開いた時にまとめて作る行の数。残りは Tick で 1 フレームに数節ずつ足す
+    private const int FirstRows = 14;
+    private const float RowGap = 0.06f;
+    private const float PumpMs = 6f;
+    private readonly List<(Group g, List<MenuOpt> shown, int values)> _visible = new();
+    private int _pendingFrom;
+    private bool _buildEdit, _hasTop;
+
+    // 節を 1 つ (間の空き・見出し・行) target に並べる。並べた行の数を返す
+    private int AddGroup(Stack target, int i)
+    {
+        var (g, shown, values) = _visible[i];
+        float rowW = RowW;
+        bool edit = _buildEdit;
+        var e = _entries[i];
+        if (i > 0 || _hasTop) target.Add(new Spacer(rowW, 0.16f));
+        string title = $"{g.Title}  <size=70%><color=#B8C0CC>{string.Format(Translator.GetString("SettingsUI.Count"), values)}</color></size>";
+        e.Head = new Box(new Label(title, 1.65f) { Bold = true, Color = HeadText, Width = rowW - 0.3f, MinFontSize = 1.1f })
+        {
+            Size = new Vector2(rowW, HeadH + 0.06f),
+            Padding = new Vector2(0.15f, 0.04f),
+            Color = HeadLine,
+            Fill = HeadFill,
+            Align = Align.Start,
+        };
+        target.Add(e.Head);
+        // 行ごとに地を交互に濃淡 (横に長い行でも目で追いやすく)
+        int k = 0;
+        foreach (var opt in shown)
+        {
+            Widget r;
+            if (opt.IsText)
+            {
+                // 親のある見出し (設定の途中の小見出し): 字だけ
+                var tc = opt.NameColor;
+                r = new Label(opt.Label, OptEditor.NarrowFont) { Bold = true, Width = rowW - RowPad * 2f - opt.Depth * 0.2f, Color = tc == Color.white ? SubText : MenuOpt.Readable(tc) };
+            }
+            else r = _editor.NarrowRow(opt, edit, rowW - RowPad * 2f, opt.Depth * 0.2f);
+            var plated = OptEditor.Plated(r, rowW, k++);
+            if (HasPreview && GamePreview.Has(opt) && plated is Plate plate) _hits.Add((opt, plate));
+            target.Add(plated);
+            var map = SpawnMapView.After(opt, rowW, edit);
+            if (map != null) target.Add(map);
+        }
+        return shown.Count;
+    }
+
+    // まだ作っていない節を、時間の許す分 (all なら全部) 足す
+    private void Pump(bool all)
+    {
+        if (_pendingFrom >= _visible.Count || _list == null || !Built) return;
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        do
+        {
+            var chunk = new Stack(false) { Gap = RowGap, Width = RowW };
+            AddGroup(chunk, _pendingFrom++);
+            _list.Append(chunk, RowGap);
+        }
+        while (_pendingFrom < _visible.Count && (all || sw.Elapsed.TotalMilliseconds < PumpMs));
+        _editor.Refresh();
         MarkShown();
     }
 
@@ -317,6 +360,8 @@ internal sealed class SectionPage
     private void Jump(int n)
     {
         if (n < 0 || n >= _entries.Count || _list == null) return;
+        // まだ作っていない節へ飛ぶ時は、残りを先に全部作る
+        if (n >= _pendingFrom) Pump(true);
         var head = _entries[n].Head?.BackRenderer;
         var s = _list.Scroller;
         if (!head || !s) return;
@@ -442,6 +487,7 @@ internal sealed class SectionPage
     // 毎フレーム (頁が見えている間): カーソルが乗った図のある行の図に切り替え、図を動かす
     public void Tick()
     {
+        Pump(false);
         if (_resetArmedAt > 0f && Time.unscaledTime - _resetArmedAt > ResetArmSeconds)
         {
             _resetArmedAt = -100f;

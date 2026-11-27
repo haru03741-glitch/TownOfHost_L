@@ -710,6 +710,23 @@ internal sealed class UiScreen
         return go;
     }
 
+    /// <summary>
+    /// 今の中身を捨てずに、parent (中身の中の物) の子として w を作り足す。描く順は order から (parent の子と同じ深さを渡す)。
+    /// 足した物の大きさは size に返す (置き場は呼んだ側が決める)
+    /// </summary>
+    public GameObject Append(Widget w, Transform parent, int order, out Vector2 size)
+    {
+        size = Vector2.zero;
+        if (!Root || w == null || !parent) return null;
+        Version++;
+        var ctx = new BuildCtx(_slots, Root.gameObject.layer) { ClickMask = ClickMask };
+        var go = w.Build(parent, ctx, MaxWidth, out size);
+        _inner.AddRange(ctx.Screens);
+        Order(go.transform, order);
+        if (ClickMask) ScrollView.Masked(go.transform);
+        return go;
+    }
+
     internal const string BackName = "Back", FillName = "Fill", BadgeName = "Badge", FrontName = "Front";
 
     // 描く順の起点。部品は深いほど後に描く

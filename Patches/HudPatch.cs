@@ -95,7 +95,7 @@ class HudManagerPatch
     public static void UpdateOptionShower()
     {
         if (optionShowerText == null) return;
-        if (GameStates.IsLobby && !GameStates.IsFreePlay && !GameSettingMenu.Instance)
+        if (GameStates.IsLobby && !GameStates.IsFreePlay && !GameSettingMenu.Instance && !OptionShower.Hidden)
         {
             optionShowerText.gameObject.SetActive(true);
 
