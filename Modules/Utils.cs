@@ -1567,6 +1567,11 @@ public static partial class Utils
             //    SelfName = $"{$"<color={Main.ModColor}>TownOfHost_Y</color> v{Main.PluginVersion}\n\n".Color(Color.white)}</align>"
             //     + $"<line-height=6em>\n</line-height>" + SelfName + "<line-height=6em>\n</line-height>ㅤ";
 
+            // 会議では、生きている人のうち最後の人の名前の下に装置の残り時間を出す (hamo と同じ)
+            string plateText = isForMeeting ? TownOfHostL.Modules.DeviceTimer.MeetingPlateText(seer) : "";
+            var plateTarget = plateText != "" ? TownOfHostL.Modules.DeviceTimer.MeetingPlateTarget() : null;
+            if (plateTarget != null && TownOfHostL.Core.NativeObject.Same(plateTarget, seer)) SelfName.Append("\r\n").Append(plateText);
+
             // ミーティングテキスト
             string name = MeetingDisplayText.AddTextForVanilla(seer, SelfName.ToString(), SelfSuffix.ToString(), SelfRoleName, isForMeeting);
             //適用
@@ -1576,13 +1581,14 @@ public static partial class Utils
             // ただしホストの名前だけは全員へ必ず送る。ホストの手元の名前はホストから見た表示 (役職名入り) に書き換わっており、
             // 一度も送らない人には、その名前がチャットの名前の戻しなどから届いて役職が透けることがある
             bool fullLoop = everyoneNeedsSeenNames || TownOfHostL.Core.NameParts.NeedsSeenNames(seer);
-            if (fullLoop || !seer.AmOwner)
+            if (fullLoop || !seer.AmOwner || plateTarget != null)
             {
                 foreach (var target in Main.AllPlayerControls)
                 {
                     //targetがseer自身の場合は何もしない
                     if (TownOfHostL.Core.NativeObject.Same(target, seer)) continue;
-                    if (!fullLoop && !target.AmOwner) continue;
+                    bool isPlateTarget = plateTarget != null && TownOfHostL.Core.NativeObject.Same(target, plateTarget);
+                    if (!fullLoop && !target.AmOwner && !isPlateTarget) continue;
                     // 見られる人 1 人分の例外 (その人の役職の表示や印) で、後ろの人の名前を配り損ねない
                     try
                     {
@@ -1622,6 +1628,7 @@ public static partial class Utils
 
                         //全てのテキストを合成します。
                         string TargetName = $"{TargetRoleText}{TargetPlayerName}{TargetDeathReason}{TargetMark}{TargetSuffix}";
+                        if (isPlateTarget) TargetName += "\r\n" + plateText;
 
                         // バニラ視点にMOD名/Versionを記載
                         TargetName = MeetingDisplayText.AddTextForVanilla(target, TargetName, TargetSuffix.ToString(), TargetRoleText, isForMeeting);

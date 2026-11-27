@@ -4662,6 +4662,7 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "DeviceTimeLimitCamera","Cameras / door log time","カメラ・ドアログの持ち時間"
 "DeviceTimeLimitVital","Vitals time","バイタルの持ち時間"
 "DeviceTimeLimitShowInMeeting","Post remaining time at meetings","会議で残り時間を表示"
+"DeviceTimeLimitShowOnPlate","Also show under the last player's name","最後の人の名前の下にも表示"
 "DeviceTimeLimit.Title","[Devices]","【装置】"
 "DeviceTimeLimit.Exhausted","{0} has run out of time and can no longer be used.","{0} の持ち時間が尽きました。もう使えません。"
 "DeviceTimeLimit.Admin","Admin","アドミン"

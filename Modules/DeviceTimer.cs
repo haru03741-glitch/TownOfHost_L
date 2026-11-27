@@ -24,6 +24,7 @@ public static class DeviceTimer
     static OptionItem cameraLimit;
     static OptionItem vitalLimit;
     static OptionItem showInMeeting;
+    static OptionItem plateOnName;
     static OptionItem turnLimit, turnAdmin, turnCamera, turnVital;
     static OptionItem reviveCount, reviveAdmin, reviveCamera, reviveVital;
     static OptionItem canSee, canSeeImp, canSeeMad, canSeeCrew, canSeeNeu;
@@ -64,6 +65,7 @@ public static class DeviceTimer
         reviveAdmin = FloatOptionItem.Create("ReviveAddAdmin", new(0f, 300f, 5f), 15f, TabGroup.ModMainSettings, false).SetParent(reviveCount).SetValueFormat(OptionFormat.Seconds).SetGameMode(CustomGameMode.Standard);
         reviveCamera = FloatOptionItem.Create("ReviveAddCamAndLog", new(0f, 300f, 5f), 15f, TabGroup.ModMainSettings, false).SetParent(reviveCount).SetValueFormat(OptionFormat.Seconds).SetGameMode(CustomGameMode.Standard);
         reviveVital = FloatOptionItem.Create("ReviveAddVital", new(0f, 300f, 5f), 15f, TabGroup.ModMainSettings, false).SetParent(reviveCount).SetValueFormat(OptionFormat.Seconds).SetGameMode(CustomGameMode.Standard);
+        plateOnName = Flag("DeviceTimeLimitShowOnPlate", true, showInMeeting);
         canSee = Flag("CanSeeTimeLimit", false, showInMeeting);
         canSeeImp = Flag("CanseeImpTimeLimit", true, canSee);
         canSeeMad = Flag("CanseeMadTimeLimit", true, canSee);
@@ -85,6 +87,7 @@ public static class DeviceTimer
     {
         for (var i = 0; i < bonus.Length; i++) bonus[i] = 0f;
         bonusAdded = false;
+        plateSnapshot = null;
         lastBonusCheck = 0f;
         ResetAll();
     }
@@ -147,6 +150,41 @@ public static class DeviceTimer
     }
 
     static float Remaining(Kind kind) => Mathf.Max(0f, Limit(kind) - used[(int)kind]);
+
+    // 会議の始めに残り時間を写しておく (会議ごとに戻す設定だと、会議の始めに使った分が 0 に戻るため)
+    static string plateSnapshot;
+
+    static string PlateBody()
+    {
+        var parts = new List<string>();
+        foreach (var k in new[] { Kind.Admin, Kind.Camera, Kind.Vital })
+        {
+            if (Limit(k) <= 0f) continue;
+            parts.Add($"{KindName(k)}:{(GameExhausted(k) ? "×" : $"{Mathf.CeilToInt(Remaining(k))}s")}");
+        }
+        return string.Join("　", parts);
+    }
+
+    /// <summary>
+    /// 会議で、生きている人のうちいちばん最後の人の名前の下に出す装置の残り時間 (hamo と同じ)。
+    /// 出さない時は空。死んでいる人はいつでも見える。
+    /// </summary>
+    public static string MeetingPlateText(PlayerControl seer)
+    {
+        if (!IsActive || showInMeeting == null || !showInMeeting.GetBool() || plateOnName == null || !plateOnName.GetBool()) return "";
+        if (seer == null || (seer.IsAlive() && !CanSeeInMeeting(seer))) return "";
+        var body = plateSnapshot ?? PlateBody();
+        return body == "" ? "" : $"<size=60%>{body}</size>";
+    }
+
+    /// <summary>名前の下に残り時間を出す人 (生きている人のうち PlayerId がいちばん大きい人)</summary>
+    public static PlayerControl MeetingPlateTarget()
+    {
+        PlayerControl last = null;
+        foreach (var p in Main.AllAlivePlayerControls)
+            if (last == null || p.PlayerId > last.PlayerId) last = p;
+        return last;
+    }
 
     /// <summary>その位置の近くにある装置。無ければ null</summary>
     static Kind? NearKind(Vector2 pos)
@@ -250,6 +288,12 @@ public static class DeviceTimer
         _ => "DeviceTimeLimit.Vital",
     });
 
+    [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.OnDestroy))]
+    static class MeetingEndPatch
+    {
+        public static void Postfix() => plateSnapshot = null;
+    }
+
     [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.Start))]
     static class MeetingStartPatch
     {
@@ -259,6 +303,7 @@ public static class DeviceTimer
             lastSeen.Clear();
             CheckBonus();
             for (var i = 0; i < turnUsed.Length; i++) turnUsed[i] = 0f;
+            plateSnapshot = PlateBody();
             if (showInMeeting.GetBool())
             {
                 var lines = new List<string>();

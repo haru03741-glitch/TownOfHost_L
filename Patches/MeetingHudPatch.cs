@@ -368,6 +368,13 @@ public static partial class MeetingHudPatch
 
                 pva.NameText.text += sb.ToString();
 
+                // 装置の残り時間 (数えているのはホストだけなので、ホストの画面だけ)
+                if (AmongUsClient.Instance.AmHost && target == TownOfHostL.Modules.DeviceTimer.MeetingPlateTarget())
+                {
+                    var plate = TownOfHostL.Modules.DeviceTimer.MeetingPlateText(seer);
+                    if (plate != "") pva.NameText.text += "\n" + plate;
+                }
+
                 if (!pva.AmDead && Showi < 3)
                 {
                     pva.NameText.text = MeetingDisplayText.AddTextForClient(pva.NameText.text, Showi);
