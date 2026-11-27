@@ -697,7 +697,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
     {
 
-
+        if (info.IsSuicide) return;
 
         nowcool = KillCooldown;
 
