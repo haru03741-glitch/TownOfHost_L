@@ -304,23 +304,23 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
 
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // 指名の押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
 
     {
 
-        if (!Is(info.AttemptKiller) || info.IsSuicide) return;
-
-        info.DoKill = false;
+        if (!Is(info.AttemptKiller) || info.IsSuicide) return true;
 
 
 
-        if (!nominateMode || ShikigamiIds.Count >= 1) return;
+
+        if (!nominateMode || ShikigamiIds.Count >= 1) return false;
 
 
 
         (_, var target) = info.AttemptTuple;
 
-        if (!IsValidShikigamiTarget(target)) return;
+        if (!IsValidShikigamiTarget(target)) return false;
 
 
 
@@ -331,6 +331,7 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
         AddShikigami(target);
 
         Utils.NotifyRoles(SpecifySeer: Player);
+        return false;
 
     }
 

@@ -145,40 +145,35 @@ public sealed class Pirate : RoleBase, IKiller
         return state.AllTasksCount <= 0 ? 100 : state.CompletedTasksCount * 100 / state.AllTasksCount;
     }
     public override void ApplyGameOptions(IGameOptions opt) => opt.SetVision(HasImpostorVision);
+    // 一味にできない相手への押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
+    {
+        if (isMadeGang) return true;
+
+        var (killer, target) = info.AttemptTuple;
+        if ((!CanImpostorBeGang && target.Is(CustomRoleTypes.Impostor))
+            || (!CanMadmateBeGang && target.Is(CustomRoleTypes.Madmate))
+            || (!CanNeutralBeGang && target.Is(CustomRoleTypes.Neutral)))
+        {
+            killer.RpcProtectedMurderPlayer(target);
+            return false;
+        }
+        return true;
+    }
     public void OnCheckMurderAsKiller(MurderInfo info)
     {
-        (var killer, var target) = info.AttemptTuple;
-        // ガード持ちに関わらず能力発動する直接キル役職
-
+        // ガード持ちに関わらず能力発動する直接キル役職 (役職に関わらない守りは通らない)。
+        // それでも守護者などで守りの力が勝ったキルでは一味にしない (相手が死なないのに一味に数えてしまう)
+        if (!info.CanKill || info.CheckHasGuard()) return;
         if (isMadeGang) return;
 
-        if (!CanImpostorBeGang && target.Is(CustomRoleTypes.Impostor))
-        {
-            DontKill(info);
-            return;
-        }
-        if (!CanMadmateBeGang && target.Is(CustomRoleTypes.Madmate))
-        {
-            DontKill(info);
-            return;
-        }
-        if (!CanNeutralBeGang && target.Is(CustomRoleTypes.Neutral))
-        {
-            DontKill(info);
-            return;
-        }
+        var (killer, target) = info.AttemptTuple;
 
         Gang = target;
         Logger.Info($"{killer.GetNameWithRole()} : 一味にした[{target.GetNameWithRole()}]", "Pirate");
 
         Utils.NotifyRoles(SpecifySeer: killer);
         isMadeGang = true;
-    }
-    private void DontKill(MurderInfo info)
-    {
-        (var killer, var target) = info.AttemptTuple;
-        killer.RpcProtectedMurderPlayer(target);
-        info.CanKill = false;
     }
 
     // 一味の対象海賊

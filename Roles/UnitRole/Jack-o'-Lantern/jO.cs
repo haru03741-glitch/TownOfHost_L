@@ -78,16 +78,15 @@ public sealed class JO : RoleBase, IKiller
     bool DidntDetectPlayer(byte playerId) => DidntDetectPlayers.Contains(playerId);
 
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // 役職検知の押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
-        if (!info.CanKill) return;
 
         var (killer, target) = info.AttemptTuple;
-        info.DoKill = false;
 
         // 検知済みのプレイヤーなら省略
-        if (DetectedPlayer(target.PlayerId)) return;
-        if (DidntDetectPlayer(target.PlayerId)) return;
+        if (DetectedPlayer(target.PlayerId)) return false;
+        if (DidntDetectPlayer(target.PlayerId)) return false;
 
         Logger.Info($"{killer.GetNameWithRole()}：役職検知→{target.GetNameWithRole()}", "jO");
 
@@ -96,13 +95,13 @@ public sealed class JO : RoleBase, IKiller
         {
             Logger.Info($"{killer.GetNameWithRole()}：役職検知(ランタン)キャンセル", "jO");
             DidntDetect(target.PlayerId);
-            return;
+            return false;
         }
         else if (target.Is(CustomRoleTypes.Neutral) && !canDetectNeutral)
         {
             Logger.Info($"{killer.GetNameWithRole()}：役職検知Ⓝキャンセル", "jO");
             DidntDetect(target.PlayerId);
-            return;
+            return false;
         }
 
         // 検知、リスト登録
@@ -113,6 +112,7 @@ public sealed class JO : RoleBase, IKiller
 
         // キルクールリセット
         killer.SetKillCooldown();
+        return false;
     }
 
     // 検知時、無効な対象の時

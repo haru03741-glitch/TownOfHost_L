@@ -108,29 +108,29 @@ namespace TownOfHostL.Roles.Neutral
         public override bool OnInvokeSabotage(SystemTypes systemType) => CanUseSabotage;
         public void ApplySchrodingerCatOptions(IGameOptions option) => ApplyGameOptions(option);
 
-        public void OnCheckMurderAsKiller(MurderInfo info)
+        // サイドキック化の 1 回押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+        public bool OnCheckMurderBeforeGuards(MurderInfo info)
         {
             (var killer, var target) = info.AttemptTuple;
 
             if (target != null && target.Is(CustomRoles.JSidekick))
             {
-                info.DoKill = false;
                 Logger.Info($"cantKillSidekick jackal: {killer?.name}, sidekick: {target?.name}", "Jackal");
-                return;
+                return false;
             }
 
-            if (canSidekickCount <= 0) return;
+            if (canSidekickCount <= 0) return true;
 
             if (killer.CheckDoubleTrigger(target, () => { SetSidekick(killer, target); }))
             {
                 sidekickTarget.Remove(target.PlayerId);
-                return;
+                return true;
             }
 
             //サイドキック中のターゲットはキルができない
             sidekickTarget.Add(target.PlayerId);
 
-            info.DoKill = false;
+            return false;
         }
         public void SetSidekick(PlayerControl jackal, PlayerControl sidekick)
         {

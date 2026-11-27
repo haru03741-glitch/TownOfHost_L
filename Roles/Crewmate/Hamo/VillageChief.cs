@@ -351,24 +351,17 @@ public sealed class VillageChief : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
 
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
-
+    // 任命の押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
+        if (!Is(info.AttemptKiller) || info.IsSuicide) return true;
 
-        if (!Is(info.AttemptKiller) || info.IsSuicide) return;
-
-
-
-        info.DoKill = false;
-
-        if (!appointMode || hasAppointed || nowcool > 0f) return;
-
-
+        if (!appointMode || hasAppointed || nowcool > 0f) return false;
 
         (_, var target) = info.AttemptTuple;
 
         DoAppoint(target);
-
+        return false;
     }
 
 

@@ -158,39 +158,59 @@ public sealed class SillySheriff : RoleBase, IKiller, ISchrodingerCatOwner
     {
         opt.SetVision(false);
     }
+    // 押しで誤爆するか (OnCheckMurderBeforeGuards で 1 度だけ決め、相手も殺す誤爆の時に OnCheckMurderAsKiller へ渡す)
+    bool misfirePending;
+    // 弾切れの押しと、相手を殺さない誤爆はキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
+    {
+        misfirePending = false;
+        if (!Is(info.AttemptKiller) || info.IsSuicide) return true;
+        (var killer, var target) = info.AttemptTuple;
+
+        if (ShotLimit <= 0) return false;
+
+        int chance = IRandom.Instance.Next(1, 101);
+        // chance は 1〜100。キルできる相手は probability% で、キルできない相手は (100 - probability)% で誤爆する
+        if ((CanBeKilledBy(target) && chance <= probability) || (!CanBeKilledBy(target) && chance > probability))
+        {
+            // 相手も殺す誤爆はキルなので、守りを通す (本人の死は OnCheckMurderAsKiller で起こす)
+            if (MisfireKillsTarget.GetBool())
+            {
+                misfirePending = true;
+                return true;
+            }
+            ShotLimit--;
+            Logger.Info($"{killer.GetNameWithRole()} : 残り{ShotLimit}発", "SillySheriff");
+            Misfire(killer, target);
+            return false;
+        }
+        return true;
+    }
+    void Misfire(PlayerControl killer, PlayerControl target)
+    {
+        //自殺処理
+        PlayerState.GetByPlayerId(killer.PlayerId).DeathReason = CustomDeathReason.Misfire;
+        switch (nowSuicideMotion)
+        {
+            case SuicideMotionOption.Default://自殺モーション起こさない＝自身が自爆
+                Kill.Suicide(killer);
+                break;
+            case SuicideMotionOption.MotionKilled://相手に切られる
+                Kill.Force(target, killer);
+                break;
+        }
+    }
     public void OnCheckMurderAsKiller(MurderInfo info)
     {
         if (!Is(info.AttemptKiller) || info.IsSuicide || !info.CanKill) return;
         (var killer, var target) = info.AttemptTuple;
 
-        if (ShotLimit <= 0)
-        {
-            info.DoKill = false;
-            return;
-        }
         ShotLimit--;
         Logger.Info($"{killer.GetNameWithRole()} : 残り{ShotLimit}発", "SillySheriff");
-        int chance = IRandom.Instance.Next(1, 101);
-        // chance は 1〜100。キルできる相手は probability% で、キルできない相手は (100 - probability)% で誤爆する
-        if ((CanBeKilledBy(target) && chance <= probability) || (!CanBeKilledBy(target) && chance > probability))
+        if (misfirePending)
         {
-            //自殺処理
-            PlayerState.GetByPlayerId(killer.PlayerId).DeathReason = CustomDeathReason.Misfire;
-            switch (nowSuicideMotion)
-            {
-                case SuicideMotionOption.Default://自殺モーション起こさない＝自身が自爆
-                    Kill.Suicide(killer);
-                    break;
-                case SuicideMotionOption.MotionKilled://相手に切られる
-                    Kill.Force(target, killer);
-                    break;
-            }
-
-            if (!MisfireKillsTarget.GetBool())
-            {
-                info.DoKill = false;
-                return;
-            }
+            misfirePending = false;
+            Misfire(killer, target);
         }
 
         switch (nowKillMotion)

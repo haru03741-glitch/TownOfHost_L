@@ -44,11 +44,11 @@ public sealed class Telekinetic : RoleBase, IImpostor
 
     public float CalculateKillCooldown() => KillCooldown;
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // 念力の押しはキルでないので、守りより前に振り分ける (中の自爆のキルが守りを通す)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
         var (killer, target) = info.AttemptTuple;
         // 通常のキルは起こさない
-        info.CanKill = false;
 
         // キルモーションなし（相手の自爆）を起こす
         if (CustomRoleManager.OnCheckMurder(Player, target, target, target, true,
@@ -60,5 +60,6 @@ public sealed class Telekinetic : RoleBase, IImpostor
 
         // 自身は全くキルしないことになるのでキルクールセットする
         killer.SetKillCooldown();
+        return false;
     }
 }

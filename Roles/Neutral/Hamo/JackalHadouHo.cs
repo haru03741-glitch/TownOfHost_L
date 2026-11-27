@@ -655,11 +655,12 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
 
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // 発射役の SK 化の押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
 
     {
 
-        if (info.IsSuicide) return;
+        if (info.IsSuicide) return true;
 
 
 
@@ -667,7 +668,6 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         {
 
-            info.DoKill = false;
 
             (_, var target) = info.AttemptTuple;
 
@@ -686,9 +686,16 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             Utils.NotifyRoles(SpecifySeer: Player);
 
-            return;
+            return false;
 
         }
+
+        return true;
+    }
+
+    public void OnCheckMurderAsKiller(MurderInfo info)
+
+    {
 
 
 
@@ -1772,21 +1779,21 @@ public sealed class Tama : RoleBase, IKiller
 
 
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // 装填の押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
 
     {
 
-        info.DoKill = false;
 
-        if (!JackalHadouHo.GetTamaCanLoad()) return;
+        if (!JackalHadouHo.GetTamaCanLoad()) return false;
 
 
 
         var (killer, target) = info.AttemptTuple;
 
-        if (hasLoaded || isLoading) return;
+        if (hasLoaded || isLoading) return false;
 
-        if (target.PlayerId != OwnerId) return;
+        if (target.PlayerId != OwnerId) return false;
 
 
 
@@ -1809,6 +1816,8 @@ public sealed class Tama : RoleBase, IKiller
         Utils.NotifyRoles(SpecifySeer: Player);
 
         Utils.SendMessage(GetString("TamaLoaded"), Player.PlayerId);
+
+        return false;
 
     }
 

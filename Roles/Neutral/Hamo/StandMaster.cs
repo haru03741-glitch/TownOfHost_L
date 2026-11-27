@@ -460,48 +460,29 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
 
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
-
+    // スタンド作成の押しとキルを持たない押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
-
-        var (killer, target) = info.AttemptTuple;
-
-
+        var target = info.AttemptTarget;
 
         if (!standCreated && !standHadDied)
-
         {
-
-            info.DoKill = false;
-
             CreateStand(target);
 
             _ = new LateTask(() => { if (Player.IsAlive()) Player.RpcResetAbilityCooldown(); },
-
                 0.1f, "StandMaster.ResetPhantomCD");
 
-            return;
-
+            return false;
         }
 
-
-
-        if (EnableKillAbility || (standHadDied && StandDeathGrantsKill))
-
-        {
-
-            killer.ResetKillCooldown();
-
-            killer.SetKillCooldown(ForceProtect: true);
-
-            return;
-
-        }
-
-
-
-        info.DoKill = false;
-
+        return EnableKillAbility || (standHadDied && StandDeathGrantsKill);
+    }
+    public void OnCheckMurderAsKiller(MurderInfo info)
+    {
+        // ここへ来るのはキルの押しだけ
+        var killer = info.AttemptKiller;
+        killer.ResetKillCooldown();
+        killer.SetKillCooldown(ForceProtect: true);
     }
 
 

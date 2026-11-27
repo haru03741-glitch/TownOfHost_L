@@ -82,13 +82,13 @@ public sealed class PlatonicLover : RoleBase, IKiller
         Logger.Info($"PlatonicLover:dead, Turn:{TurnNumber} > {limitTurn}", "PlatonicLover");
     }
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // 恋人にする押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
         (var killer, var target) = info.AttemptTuple;
         // ガード持ちに関わらず能力発動する直接キル役職
 
         isMadeLover = true;
-        info.DoKill = false;
         killer.RpcProtectedMurderPlayer(target);
         target.RpcProtectedMurderPlayer(target);
         Logger.Info($"{killer.GetNameWithRole()} : 恋人を作った", "PlatonicLover");
@@ -98,6 +98,7 @@ public sealed class PlatonicLover : RoleBase, IKiller
         target.RpcSetCustomRole(CustomRoles.Lovers);
 
         Utils.NotifyRoles();
+        return false;
     }
 
     public bool OverrideKillButtonText(out string text)

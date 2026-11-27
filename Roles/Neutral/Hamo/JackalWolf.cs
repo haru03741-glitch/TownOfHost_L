@@ -395,6 +395,8 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
 
     public bool CanUseImpostorVentButton() => CanVent && (AddRole is IKiller killer ? killer.CanUseImpostorVentButton() : true);
 
+    public bool OnCheckMurderBeforeGuards(MurderInfo info) => AddRole is not IKiller killer || killer.OnCheckMurderBeforeGuards(info);
+
     public void OnCheckMurderAsKiller(MurderInfo info) { if (AddRole is IKiller killer) killer.OnCheckMurderAsKiller(info); }
 
     public void OnCheckMurderDontKill(MurderInfo info) { if (AddRole is IKiller killer) killer.OnCheckMurderDontKill(info); }
