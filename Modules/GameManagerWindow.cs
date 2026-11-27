@@ -55,7 +55,8 @@ public static class GameManagerWindow
     // 窓の最中に試合が終わると窓は閉じずに残るので、試合の外では窓の最中と見ない (次の試合の始めに Init で戻る)
     public static bool InWindow => phase != Phase.Idle && GameStates.IsInGame;
     /// <summary>窓の暗さを掛けている人か (人ごとの設定を組む時に視界を狭める)</summary>
-    public static bool IsDimmed(byte playerId) => dimmed.Count > 0 && dimmed.Contains(playerId);
+    // 窓の最中に試合が終わると暗さの印も残るので、試合の外では見ない
+    public static bool IsDimmed(byte playerId) => dimmed.Count > 0 && GameStates.IsInGame && dimmed.Contains(playerId);
 
     /// <summary>
     /// クルーの視界の倍率に掛けると、停電中でもインポスターの視界 (停電の影響を受けない) と同じ半径になる値。
@@ -109,26 +110,25 @@ public static class GameManagerWindow
         tempMode = mode;
         onSend = send;
         onClosed = closed;
-        Step(client, StartWindow);
+        try { StartWindow(); }
+        catch (Exception ex) { Fail(client, ex); }
     }
 
+    // 試合中は毎フレーム呼ばれるので、窓が無い間は何も作らずに返す
     private static void Update()
     {
+        if (phase == Phase.Idle || Time.realtimeSinceStartup < nextAt) return;
         var client = AmongUsClient.Instance;
-        if (!client || !client.AmHost || !GameStates.IsInGame || phase == Phase.Idle) return;
-        if (Time.realtimeSinceStartup < nextAt) return;
-        Step(client, () => Advance(client));
+        if (!client || !client.AmHost || !GameStates.IsInGame) return;
+        try { Advance(client); }
+        catch (Exception ex) { Fail(client, ex); }
     }
 
-    // 窓の 1 段を進める。失敗したら通常の GameManager を必ず戻す
-    private static void Step(InnerNetClient client, Action act)
+    // 窓の 1 段が失敗した。通常の GameManager を必ず戻す
+    private static void Fail(InnerNetClient client, Exception ex)
     {
-        try { act(); }
-        catch (Exception ex)
-        {
-            Logger.Exception(ex, nameof(GameManagerWindow));
-            Recover(client);
-        }
+        Logger.Exception(ex, nameof(GameManagerWindow));
+        Recover(client);
     }
 
     private static void StartWindow()
@@ -198,9 +198,14 @@ public static class GameManagerWindow
         Logger.Info("窓を閉じた", nameof(GameManagerWindow));
         // 暗転を明ける。出し直した GameManager は全員に同じ設定を配ったので、人ごとの設定を送り直す。懐中電灯も消えるので点け直す
         dimmed.Clear();
-        Utils.MarkEveryoneDirtySettings();
-        Flashlight.RequestAll();
-        Revive.BeginSettling();
+        // ここで例外が出ても、閉じた時の処理 (使い手の後始末) は必ず呼ぶ
+        try
+        {
+            Utils.MarkEveryoneDirtySettings();
+            Flashlight.RequestAll();
+            Revive.BeginSettling();
+        }
+        catch (Exception ex) { Logger.Exception(ex, nameof(GameManagerWindow)); }
         var closed = onClosed;
         onSend = null;
         onClosed = null;
