@@ -609,23 +609,6 @@ static partial class ExtendedPlayerControl
         killer.MurderPlayer(target, SucceededFlags);
     }
     public const MurderResultFlags SucceededFlags = MurderResultFlags.Succeeded | MurderResultFlags.DecisionByHost;
-    public static void RpcMurderPlayer(this PlayerControl killer, PlayerControl target)
-    {
-        killer.RpcMurderPlayer(target, true);
-    }
-    public static void RpcMurderPlayerV2(this PlayerControl killer, PlayerControl target)
-    {
-        if (target == null) target = killer;
-        if (AmongUsClient.Instance.AmClient)
-        {
-            killer.MurderPlayer(target);
-        }
-        MessageWriter messageWriter = AmongUsClient.Instance.StartRpcImmediately(killer.NetId, (byte)RpcCalls.MurderPlayer, SendOption.Reliable, -1);
-        messageWriter.WriteNetObject(target);
-        messageWriter.Write((int)SucceededFlags);
-        AmongUsClient.Instance.FinishRpcImmediately(messageWriter);
-        Utils.NotifyRoles();
-    }
     public static void RpcProtectedMurderPlayer(this PlayerControl killer, PlayerControl target = null)
     {
         //killerが死んでいる場合は実行しない

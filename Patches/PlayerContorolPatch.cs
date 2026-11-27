@@ -859,7 +859,7 @@ class SetColorPatch
         if (AmongUsClient.Instance.IsGameStarted && ModeCatalog.Current.KillsOnColorChange)
         {
             //ゲーム中に色を変えた場合
-            __instance.RpcMurderPlayer(__instance);
+            Roles.Core.Kill.Suicide(__instance);
         }
         return true;
     }
