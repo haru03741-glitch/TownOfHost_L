@@ -318,7 +318,7 @@ public class HostPanel : MonoBehaviour
         LogSection(ref y, w);
     }
 
-    // バグ・要望の報告: Windows の入力画面を開いて、文と画像・動画を付けて送る
+    // バグ・要望の報告: ゲームの中の報告の窓を開いて、文と画像・動画を付けて送る
     void ReportSection(ref float y, float w)
     {
         Section(ref y, w, GetString("HostPanel.Report"));

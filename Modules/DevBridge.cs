@@ -172,6 +172,24 @@ static class DevBridge
                 RoleDictionary.Toggle();
                 sb.AppendLine("DICT");
                 break;
+            case "report":
+                ReportWindow.Toggle();
+                sb.AppendLine("REPORT " + ReportWindow.IsOpen);
+                break;
+            case "reporttext":
+                ReportWindow.DevInsert(a.Length > 1 ? a[1].Replace("\\n", "\n") : "");
+                sb.AppendLine("REPORTTEXT");
+                break;
+            case "reportact":
+                sb.AppendLine("REPORTACT " + ReportWindow.DevAct(a.Length > 1 ? a[1] : ""));
+                break;
+            case "screenshot":
+                {
+                    var path = System.IO.Path.Combine(Environment.CurrentDirectory, "TOHL_DATA", "devshot.png");
+                    ScreenCapture.CaptureScreenshot(path);
+                    sb.AppendLine("SHOT " + path);
+                    break;
+                }
             case "find":
                 foreach (var t in UnityEngine.Object.FindObjectsOfType<Transform>().Where(t => t.name.Contains(a[1])))
                     sb.AppendLine($"{PathOf(t)} active={t.gameObject.activeInHierarchy} pos={t.position}");

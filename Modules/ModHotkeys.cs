@@ -282,8 +282,6 @@ public static class ModHotkeys
         {
             if (Recording != null && !PanelOpen) CancelRecording();
             UpdateRecording();
-            // 報告の入力画面 (別の窓) で送られた物を、本編の側で受け取る
-            BugReport.Pump();
         }
 
         static Texture2D Solid(Color c)

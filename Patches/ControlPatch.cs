@@ -16,7 +16,7 @@ namespace TownOfHostL
         public static void Postfix()
         {
             if (!Input.anyKeyDown) return;
-            if (SettingsSearchBox.IsTyping || SettingsUI.TextField.Typing || RoleDictionary.Typing || ModHotkeys.Recording != null) return;
+            if (SettingsSearchBox.IsTyping || SettingsUI.TextField.Typing || RoleDictionary.Typing || ReportWindow.Typing || ModHotkeys.Recording != null) return;
             RoleDictionary.CheckHotkey();
             // 客の間はホストの設定が届いている (同じ版の TOHL のホストと握手できた) 時だけ。届いていなければ一覧も出ず、コピーは自分の設定になる
             if (TownOfHostL.Core.VanillaHideAndSeek.IsClientMode && OptionItem.HasRemoteValues) ControllerManagerUpdatePatch.OptionViewKeys();
@@ -94,7 +94,7 @@ namespace TownOfHostL
             // どの操作もそのフレームに押されたキーで始まる。何も押されていないフレームは、キーの組ごとの配列も作らずに抜ける
             if (!Input.anyKeyDown) return;
             // 設定画面の検索欄に字を打っている間は、キー操作として受け取らない
-            if (SettingsSearchBox.IsTyping || SettingsUI.TextField.Typing || RoleDictionary.Typing || ModHotkeys.Recording != null) return;
+            if (SettingsSearchBox.IsTyping || SettingsUI.TextField.Typing || RoleDictionary.Typing || ReportWindow.Typing || ModHotkeys.Recording != null) return;
             OptionViewKeys();
             if (GameStates.IsLobby)
             {

@@ -256,6 +256,7 @@ public partial class Main : BasePlugin
         AddComponent<TownOfHostL.Modules.HostPanel>();
         AddComponent<TownOfHostL.Modules.HostPanelButton>();
         AddComponent<TownOfHostL.Modules.RoleDictionary>();
+        AddComponent<TownOfHostL.Modules.ReportWindow>();
         // TOHL のキー操作の割り当て (本編のキーボード割り当ての画面の横に出す)
         TownOfHostL.Modules.ModHotkeys.Init(Config);
         AddComponent<TownOfHostL.Modules.ModHotkeys.Panel>();

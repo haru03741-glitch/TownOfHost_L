@@ -20,7 +20,7 @@ namespace TownOfHostL
                 if (PlayerControl.LocalPlayer.Is(CustomRoleTypes.Impostor) && Options.ImpostorOperateVisibility.GetBool()) return;
 
                 // カメラの大きさを変えるのはホイールを回した時だけ。回していないフレームはカメラを引かない
-                float scroll = TownOfHostL.Modules.RoleDictionary.IsOpen || !Application.isFocused ? 0f : Input.mouseScrollDelta.y;
+                float scroll = TownOfHostL.Modules.RoleDictionary.IsOpen || TownOfHostL.Modules.ReportWindow.IsOpen || !Application.isFocused ? 0f : Input.mouseScrollDelta.y;
                 if (scroll != 0f)
                 {
                     float size = Camera.main.orthographicSize;
