@@ -23,7 +23,7 @@ public sealed class Rainbow : RoleBase
         player
     )
     {
-        CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(() => true);
+        Holdings.Subscribe(CustomRoleManager.EveryoneNeedsSeenNamesOthers, () => true);
         DontSeeTaskTurn = OptionDontSeeTaskTurn.GetBool();
     }
 

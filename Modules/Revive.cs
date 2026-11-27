@@ -74,6 +74,13 @@ public static class Revive
     public static bool WasRevived(byte playerId) => revived.Contains(playerId);
     /// <summary>復活の SetRole が落ち着くまでの間か。この間に会議を開かない。</summary>
     public static bool IsSettling => Time.realtimeSinceStartup < settlingUntil;
+    /// <summary>
+    /// 会議が閉じてから、追放の演出と暗転対策の戻しが終わるまでの間か (ホストのみ)。
+    /// 本編のホストは追放の演出の間の通報も通すが、この間に会議を開くと、暗転対策の予約 (死の送り・役職の戻し) が次の会議の中で走る
+    /// </summary>
+    static bool InAfterMeetingWindow
+        => !MeetingHud.Instance
+        && (ExileController.Instance || GameStates.ExiledAnimate || AntiBlackout.IsCached || AntiBlackout.IsRevertPending);
     /// <summary>落ち着くまで預かっている通報があるか</summary>
     public static bool HasHeldReport => hasHeldReport;
     /// <summary>最後に会議・追放の画面が出ていた時刻 (Time.realtimeSinceStartup)</summary>
@@ -89,7 +96,8 @@ public static class Revive
     /// </summary>
     public static bool HoldReport(PlayerControl reporter, NetworkedPlayerInfo target)
     {
-        if (!IsSettling) return false;
+        bool window = InAfterMeetingWindow;
+        if (!IsSettling && !window) return false;
         // 役職の能力で確認なしに開く会議の旗は、預かった通報と一緒に預かる (立てたままにすると次の通報が素通りする)
         bool force = ReportDeadBodyPatch.ForceReport;
         ReportDeadBodyPatch.ForceReport = false;
@@ -99,7 +107,7 @@ public static class Revive
             heldTarget = target;
             heldForce = force;
             hasHeldReport = true;
-            Logger.Info($"役職の SetRole の直後なので通報を預かる: {reporter?.GetNameWithRole()} => {target?.PlayerName ?? "ボタン"}", "Revive");
+            Logger.Info($"{(window ? "会議明けの暗転対策の戻しの前" : "役職の SetRole の直後")}なので通報を預かる: {reporter?.GetNameWithRole()} => {target?.PlayerName ?? "ボタン"}", "Revive");
         }
         return true;
     }
@@ -138,13 +146,10 @@ public static class Revive
         var client = AmongUsClient.Instance;
         if (!client || !client.AmHost || !GameStates.IsInGame) return;
         float now = Time.realtimeSinceStartup;
-        if (MeetingHud.Instance || ExileController.Instance)
-        {
-            lastMeetingAt = now;
-            // 預かっている間に別の経路で会議が開いたら、預かった通報は捨てる
-            if (hasHeldReport) ClearHeldReport();
-        }
-        if (hasHeldReport && !IsSettling && GameStates.IsInTask && !GameStates.IsMeeting) FlushHeldReport();
+        if (MeetingHud.Instance || ExileController.Instance) lastMeetingAt = now;
+        // 預かっている間に別の経路で会議が開いたら、預かった通報は捨てる (追放の演出の間に預かった物は残す)
+        if (MeetingHud.Instance && hasHeldReport) ClearHeldReport();
+        if (hasHeldReport && !IsSettling && !InAfterMeetingWindow && GameStates.IsInTask && !GameStates.IsMeeting) FlushHeldReport();
 
         if (pending.Count == 0 || now < nextReviveAt || !CanRunNow(now)) return;
         while (pending.Count > 0)

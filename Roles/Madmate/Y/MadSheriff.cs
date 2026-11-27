@@ -68,24 +68,34 @@ public sealed class MadSheriff : RoleBase, IKiller
     {
         opt.SetVision(Options.AddOnRoleOptions[(CustomRoles.MadSheriff, CustomRoles.AddLight)].GetBool());
     }
+    // 相手を殺さない誤射はキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
+    {
+        if (!Is(info.AttemptKiller) || info.IsSuicide) return true;
+        // 相手も殺す誤射はキルなので、守りを通す (本人の死は OnCheckMurderAsKiller で起こす)
+        if (MisfireKillsTarget) return true;
+
+        Misfire(info.AttemptKiller, info.AttemptTarget);
+        return false;
+    }
     public void OnCheckMurderAsKiller(MurderInfo info)
     {
         if (!Is(info.AttemptKiller) || info.IsSuicide) return;
-        (var killer, var target) = info.AttemptTuple;
-        // ガード持ちに関わらず能力発動する直接キル役職
+        Misfire(info.AttemptKiller, info.AttemptTarget);
+    }
+    void Misfire(PlayerControl killer, PlayerControl target)
+    {
         //自殺処理
         PlayerState.GetByPlayerId(killer.PlayerId).DeathReason = CustomDeathReason.Misfire;
         switch (nowSuicideMotion)
         {
             case SuicideMotionOption.Default://自殺モーション起こさない＝自身が自爆
-                killer.RpcMurderPlayer(killer);
+                Kill.Suicide(killer);
                 break;
             case SuicideMotionOption.MotionKilled://相手に切られる
-                target.RpcMurderPlayer(killer);
+                Kill.Force(target, killer);
                 break;
         }
-
-        if (!MisfireKillsTarget) info.DoKill = false;
     }
 
     public bool OverrideKillButtonText(out string text)

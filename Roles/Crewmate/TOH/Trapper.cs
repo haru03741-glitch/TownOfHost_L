@@ -46,7 +46,7 @@ public sealed class Trapper : RoleBase
 
         var killer = info.AttemptKiller;
         var speedKey = $"Trapper{Player.PlayerId}";
-        TownOfHostL.Modules.PlayerSpeed.Freeze(killer.PlayerId, speedKey);
+        TownOfHostL.Modules.PlayerSpeed.Freeze(killer.PlayerId, speedKey); // 役職が外れても残す (罠の足止めは下の遅らせた処理で外す)
         ReportDeadBodyPatch.CannotReportList.Add(killer.PlayerId);
         killer.MarkDirtySettings();
         _ = new LateTask(() =>

@@ -228,7 +228,7 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
 
         {
 
-            AddRole?.OnDestroy();
+            DestroyInnerRole(AddRole);
 
         }
 
@@ -281,6 +281,14 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
 
     }
 
+    // 味方のジャッカル陣営の押しは、キル以外の押し (サイドキック化など) も受けない
+    public override bool OnCheckPressAsTarget(MurderInfo info)
+    {
+        if (info.IsSuicide || !info.AttemptKiller.Is(CountTypes.Jackal) || OptionJJackalCanKillMafia.GetBool()) return true;
+        info.DoKill = false;
+        info.AttemptKiller.SetKillCooldown(ForceProtect: true);
+        return false;
+    }
     public override bool OnCheckMurderAsTarget(MurderInfo info)
 
     {
@@ -394,6 +402,10 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
     public bool CanUseSabotageButton() => CanUseSabotage && (AddRole is IKiller killer ? killer.CanUseSabotageButton() : true);
 
     public bool CanUseImpostorVentButton() => CanVent && (AddRole is IKiller killer ? killer.CanUseImpostorVentButton() : true);
+
+    // 中の役職のキル以外の押しも、守りより前に振り分ける。2 回押しが押しを取る時は中の役職へ回さない (キルの判定がそちらを先に振り分ける)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
+        => AddRole is not IKiller killer || (Player.CanDoubleTrigger() && CheckAction) || killer.OnCheckMurderBeforeGuards(info);
 
     public void OnCheckMurderAsKiller(MurderInfo info) { if (AddRole is IKiller killer) killer.OnCheckMurderAsKiller(info); }
 

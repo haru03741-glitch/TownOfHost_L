@@ -105,7 +105,7 @@ public sealed class MadAvenger : RoleBase, IKillFlashSeeable, IDeathReasonSeeabl
         if (Utils.AllAlivePlayersCount < Count || Main.AllAlivePlayerControls.Count(pc => pc.Is(CustomRoleTypes.Impostor)) > 0)
         {
             MyState.DeathReason = CustomDeathReason.Suicide;
-            Player.RpcMurderPlayer(Player);
+            Kill.Suicide(Player);
             Logger.Info("まだ生きてるんだから駄目だよ!!", "MadAvenger");
             return false;
         }
@@ -124,7 +124,7 @@ public sealed class MadAvenger : RoleBase, IKillFlashSeeable, IDeathReasonSeeabl
             // 客の追放の演出の締めより前に死を送ると、暗転対策で合わせた頭数が崩れて暗転しうる
             AntiBlackout.RunAfterRevert(() =>
             {
-                if (Player != null && Player.IsAlive()) Player.RpcMurderPlayer(Player);
+                if (Player != null && Player.IsAlive()) Kill.Suicide(Player);
             });
         }
         Skill = false;
@@ -248,7 +248,7 @@ public sealed class MadAvenger : RoleBase, IKillFlashSeeable, IDeathReasonSeeabl
                 pc.SetRealKiller(Player);
                 var state = PlayerState.GetByPlayerId(pc.PlayerId);
                 state.DeathReason = CustomDeathReason.Bombed;
-                pc.RpcMurderPlayer(pc);
+                Kill.Suicide(pc);
                 state.SetDead(CustomDeathReason.Bombed);
                 killcount++;
             }

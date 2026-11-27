@@ -90,7 +90,7 @@ public sealed class Terrorist : RoleBase
             otherPlayer.SetRealKiller(Player);
             var playerState = PlayerState.GetByPlayerId(otherPlayer.PlayerId);
             playerState.DeathReason = CustomDeathReason.Bombed;
-            otherPlayer.RpcMurderPlayer(otherPlayer);
+            Kill.Suicide(otherPlayer);
             playerState.SetDead(CustomDeathReason.Bombed);
         }
         CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Terrorist);

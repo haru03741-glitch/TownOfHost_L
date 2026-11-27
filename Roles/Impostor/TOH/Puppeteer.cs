@@ -28,7 +28,7 @@ public sealed class Puppeteer : RoleBase, IImpostor
     )
     {
 
-        CustomRoleManager.OnFixedUpdateOthers.Add(OnFixedUpdateOthers);
+        Holdings.Subscribe(CustomRoleManager.OnFixedUpdateOthers, OnFixedUpdateOthers);
     }
     /// <summary>
     /// Key: ターゲットのPlayerId, Value: パペッティア
@@ -45,15 +45,16 @@ public sealed class Puppeteer : RoleBase, IImpostor
             Puppets.Remove(targetId);
     }
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // 人形にするのはキルでないので、守りより前に振り分ける (人形にした人の守りを使わせない。守りは人形が殺す人で通す)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
-        if (!info.CanKill) return; //キル出来ない相手には無効
+        if (info.IsSuicide) return true;
         var (puppeteer, target) = info.AttemptTuple;
 
         Puppets[target.PlayerId] = this;
         puppeteer.SetKillCooldown();
         Utils.NotifyRoles(SpecifySeer: puppeteer);
-        info.DoKill = false;
+        return false;
     }
     public override void OnReportDeadBody(PlayerControl _, NetworkedPlayerInfo __)
     {
@@ -93,9 +94,9 @@ public sealed class Puppeteer : RoleBase, IImpostor
             var KillRange = GameManager.Instance.LogicOptions.GetKillDistance();
             if (min.Value <= KillRange && puppet.CanMove && target.CanMove)
             {
-                RPC.PlaySound(Player.PlayerId, Sounds.KillSound);
-                target.SetRealKiller(Player);
-                puppet.RpcMurderPlayer(target);
+                // 人形のキルも相手の守りを通す。守られても人形は 1 回で解ける (毎フレーム守りを使わせない)
+                if (Kill.Attempt(puppet, target, realKiller: Player))
+                    RPC.PlaySound(Player.PlayerId, Sounds.KillSound);
                 Utils.MarkEveryoneDirtySettings();
                 Puppets.Remove(puppet.PlayerId);
                 Utils.NotifyRoles();

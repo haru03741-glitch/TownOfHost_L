@@ -322,12 +322,28 @@ static partial class ExtendedPlayerControl
         }
         // 試合の勝者が決まった後は送らない
         if (CustomWinnerHolder.WinnerTeam is not CustomWinner.Default) return;
+        // まだ送っていない設定 (クールの長さの変更など) があると、数え直しが先に届いて客は古い長さで数え直す。
+        // 設定は 0.2 秒ごとにまとめて送るので、その時は設定を先に送ってから数え直す
+        if (!sync && PlayerGameOptionsSender.HasPending(target.PlayerId)) sync = true;
         if (sync)
         {
             target.SyncSettings();
-            _ = new LateTask(() => target?.RpcResetAbilityCooldown(), 0.2f, "RpcResetAbilityCooldown.Sync");
+            // 待つ間に会議が始まったら送らない (会議明けに本編が数え直す)
+            bool inWindow = GameStates.InMeetingWindow;
+            _ = new LateTask(() =>
+            {
+                if (!inWindow && GameStates.InMeetingWindow) return;
+                ResetAbilityCooldownNow(target);
+            }, 0.2f, "RpcResetAbilityCooldown.Sync");
             return;
         }
+        ResetAbilityCooldownNow(target);
+    }
+    private static void ResetAbilityCooldownNow(PlayerControl target)
+    {
+        // 待つ間にロビーへ戻った・抜けた時は送らない
+        if (target == null || !AmongUsClient.Instance.AmHost || !GameStates.IsInGame) return;
+        if (CustomWinnerHolder.WinnerTeam is not CustomWinner.Default) return;
         Logger.Info($"アビリティクールダウンのリセット:{target.name}({target.PlayerId})", "RpcResetAbilityCooldown");
         if (PlayerControl.LocalPlayer == target)
         {
@@ -593,23 +609,6 @@ static partial class ExtendedPlayerControl
         killer.MurderPlayer(target, SucceededFlags);
     }
     public const MurderResultFlags SucceededFlags = MurderResultFlags.Succeeded | MurderResultFlags.DecisionByHost;
-    public static void RpcMurderPlayer(this PlayerControl killer, PlayerControl target)
-    {
-        killer.RpcMurderPlayer(target, true);
-    }
-    public static void RpcMurderPlayerV2(this PlayerControl killer, PlayerControl target)
-    {
-        if (target == null) target = killer;
-        if (AmongUsClient.Instance.AmClient)
-        {
-            killer.MurderPlayer(target);
-        }
-        MessageWriter messageWriter = AmongUsClient.Instance.StartRpcImmediately(killer.NetId, (byte)RpcCalls.MurderPlayer, SendOption.Reliable, -1);
-        messageWriter.WriteNetObject(target);
-        messageWriter.Write((int)SucceededFlags);
-        AmongUsClient.Instance.FinishRpcImmediately(messageWriter);
-        Utils.NotifyRoles();
-    }
     public static void RpcProtectedMurderPlayer(this PlayerControl killer, PlayerControl target = null)
     {
         //killerが死んでいる場合は実行しない

@@ -108,11 +108,10 @@ public sealed class Dollmaster : RoleBase, IImpostor
 
     private bool CanAct => canMakeKill || canMakeReport;
 
-    public override void Add() => CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
+    public override void Add() => Holdings.Subscribe(CustomRoleManager.LowerOthers, GetLowerTextOthers);
 
     public override void OnDestroy()
     {
-        CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
         // 試合の終わりの後始末では送らない (相手の歩きは次の試合に持ち越されず、相手が先に壊れていることもある)
         Release(send: GameStates.IsInTask && !GameEndChecker.EndingStarted);
     }
@@ -150,7 +149,7 @@ public sealed class Dollmaster : RoleBase, IImpostor
         }
         puppet = target;
         puppetId = target.PlayerId;
-        PlayerSpeed.Freeze(puppetId, SpeedKey);
+        Holdings.Freeze(puppetId, SpeedKey);
         target.MarkDirtySettings();
         endAt = Time.time + duration;
         nextStepAt = 0f;
@@ -235,7 +234,7 @@ public sealed class Dollmaster : RoleBase, IImpostor
             var from = puppet.GetTruePosition();
             float range = puppet.MaxReportDistance;
             var body = Object.FindObjectsOfType<DeadBody>()
-                .Where(b => b != null && !b.Reported && Vector2.Distance(from, b.TruePosition) <= range)
+                .Where(b => b != null && !b.Reported && DeadBodyState.IsPresent(b) && Vector2.Distance(from, b.TruePosition) <= range)
                 .OrderBy(b => Vector2.Distance(from, b.TruePosition))
                 .FirstOrDefault();
             var info = body == null ? null : GameData.Instance.GetPlayerById(body.ParentId);
@@ -260,9 +259,9 @@ public sealed class Dollmaster : RoleBase, IImpostor
         var killer = puppet;
         Logger.Info($"{Player.GetNameWithRole()} → {killer.GetNameWithRole()} に {chosen.GetNameWithRole()} をキルさせる", nameof(Dollmaster));
         Release(send: true);
-        RPC.PlaySound(Player.PlayerId, Sounds.KillSound);
-        chosen.SetRealKiller(Player);
-        killer.RpcMurderPlayer(chosen);
+        // 操った人のキルも、相手の守りを通す
+        if (Kill.Attempt(killer, chosen, realKiller: Player))
+            RPC.PlaySound(Player.PlayerId, Sounds.KillSound);
         Utils.MarkEveryoneDirtySettings();
         Utils.NotifyRoles();
     }
@@ -364,7 +363,7 @@ public sealed class Dollmaster : RoleBase, IImpostor
         ventReleasePending = false;
         if (send) PlayerWalker.Stop(target);
         else PlayerWalker.Forget(target);
-        PlayerSpeed.Remove(puppetId, SpeedKey);
+        Holdings.RemoveSpeed(puppetId, SpeedKey);
         // 試合の終わりの後始末では、相手が先に壊れていることがある
         if (target != null && target.Data != null && !target.Data.Disconnected) target.MarkDirtySettings();
         // 元の場所へ戻してから、ほかの人の画面に姿を戻す (会議の時は TempGhost が会議の前に戻し、会議で全員の位置も替わる)

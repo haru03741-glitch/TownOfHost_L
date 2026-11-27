@@ -201,7 +201,7 @@ public sealed class GrudgeSheriff : RoleBase
             if (!CanBeKilledBy(target))
             {
                 PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = CustomDeathReason.Misfire;
-                Player.RpcMurderPlayer(Player);
+                Kill.Suicide(Player);
                 Utils.MarkEveryoneDirtySettings();
                 KillWaitPlayerSelect = null;
                 KillWaitPlayer = null;
@@ -215,8 +215,8 @@ public sealed class GrudgeSheriff : RoleBase
             
             ShotLimit--;
             Logger.Info($"{Player.GetNameWithRole()} : 残り{ShotLimit}発", "GrudgeSheriff");
-            target.SetRealKiller(Player);
-            Player.RpcMurderPlayer(target);
+            // 近づいた時の直撃も、キルボタンのキルと同じく相手の守りを通す
+            Kill.Attempt(Player, target, realKiller: Player);
 
             Player.RpcResetAbilityCooldown();
             Player.MarkDirtySettings();

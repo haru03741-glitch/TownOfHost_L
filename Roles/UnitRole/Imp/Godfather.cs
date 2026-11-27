@@ -31,15 +31,12 @@ public sealed class Godfather : RoleBase, IImpostor
         LockDistance = OptionGodfatherLockDistance.GetFloat();
         JanitorSeeSelectedTiming = OptionJanitorSeeSelectedTiming.GetBool();
 
-        CustomRoleManager.MarkOthers.Add(GetMarkOthers);
-        CustomRoleManager.NameColorOthers.Add(OverrideNameColorByJanitorTarget);
-        CustomRoleManager.KillBlockersOthers.Add(IsLockedByJanitor);
+        Holdings.SubscribeShared(CustomRoleManager.MarkOthers, GetMarkOthers);
+        Holdings.SubscribeShared(CustomRoleManager.NameColorOthers, OverrideNameColorByJanitorTarget);
+        Holdings.SubscribeShared(CustomRoleManager.KillBlockersOthers, IsLockedByJanitor);
     }
     public override void OnDestroy()
     {
-        CustomRoleManager.MarkOthers.Remove(GetMarkOthers);
-        CustomRoleManager.NameColorOthers.Remove(OverrideNameColorByJanitorTarget);
-        CustomRoleManager.KillBlockersOthers.Remove(IsLockedByJanitor);
         godfather = null;
     }
 
@@ -63,6 +60,10 @@ public sealed class Godfather : RoleBase, IImpostor
     {
         var (killer, target) = info.AttemptTuple;
 
+        // キル出来ない相手・守りで止まるキルはジャニターの的にせず、普通のキルと同じく止める
+        // (会議前の死は守りを通らないので、守りが働いても相手が死んでしまう)
+        if (!info.CanKill || info.CheckHasGuard()) return;
+
         //ジャニターが死亡している場合killをそのまま行う
         if (!janitor.IsAlive()) return;
 
@@ -80,7 +81,7 @@ public sealed class Godfather : RoleBase, IImpostor
         JanitorTarget.Add(target.PlayerId);
 
         // ターゲットの足止め
-        TownOfHostL.Modules.PlayerSpeed.Freeze(target.PlayerId, "Godfather");
+        Holdings.Freeze(target.PlayerId, "Godfather");
         target.MarkDirtySettings();
         Logger.Info($"{target.GetNameWithRole()} : ターゲット足止め", "G&J");
 
@@ -119,10 +120,10 @@ public sealed class Godfather : RoleBase, IImpostor
             if (target.IsAlive())
             {
                 target.SetRealKiller(Player);
-                target.RpcMurderPlayer(target, true);
+                Kill.Suicide(target);
 
                 // ターゲットの足止め解除
-                TownOfHostL.Modules.PlayerSpeed.Remove(target.PlayerId, "Godfather");
+                Holdings.RemoveSpeed(target.PlayerId, "Godfather");
                 target.MarkDirtySettings();
                 Logger.Info($"{target.GetNameWithRole()} : ジャニター未掃除のターゲット死亡", "G&J");
             }

@@ -52,12 +52,15 @@ public static partial class CustomRoleManager
         PlayerControl appearanceKiller, PlayerControl appearanceTarget,
         bool killerMyselfInvoke = false)
         => OnCheckMurder(attemptKiller, attemptTarget, appearanceKiller, appearanceTarget, killerMyselfInvoke, false, 1, CustomDeathReason.Kill);
-    /// <summary>キルの力・ガードの力を見るキルチェック。force はキラーのキルチェックを飛ばす、DontRoleAbility は相手の能力を使わせない</summary>
+    /// <summary>
+    /// キルの力・ガードの力を見るキルチェック。force はキラーのキルチェックを飛ばす、DontRoleAbility は相手の能力を使わせない、
+    /// noBody は通った時に死体を残さずに死なせる
+    /// </summary>
     public static bool OnCheckMurder(
         PlayerControl attemptKiller, PlayerControl attemptTarget,
         PlayerControl appearanceKiller, PlayerControl appearanceTarget,
         bool? force, bool? DontRoleAbility = false, int Killpower = 1,
-        CustomDeathReason deathReason = CustomDeathReason.Kill)
+        CustomDeathReason deathReason = CustomDeathReason.Kill, bool noBody = false)
     {
         var killerMyselfInvoke = force == true;
         Logger.Info($"Attempt  :{attemptKiller.GetNameWithRole()} => {attemptTarget.GetNameWithRole()}", "CheckMurder");
@@ -89,53 +92,45 @@ public static partial class CustomRoleManager
         }
 
         var killerRole = attemptKiller.GetRoleClass();
-        var targetRole = attemptTarget.GetRoleClass();
 
         if (!FirstTurnMeeting.AllowKill(info, deathReason)) return false;
 
         // キラーがキル能力持ちなら
         if (killerRole is IKiller killer)
         {
+            var doubleTriggerHandled = false;
             if (killer.IsKiller)
             {
-                // キルボタンをキル以外に使う押し方 (イビルディバイナーの占いなど) は、ガードより先に振り分ける
-                if (!killer.OnCheckMurderBeforeGuards(info)) return false;
-                // 役職に関わらないガード (ガーディング・メディック・背徳者など)
-                if (TryKillGuards(info)) { }
-                // ターゲットのキルチェック処理実行
-                else if (targetRole != null && info.DontRoleAbility is not true)
+                // 押されたこと自体への相手の反応 (シュレディンガーの猫など) は、押し方の振り分けより先に通す
+                // (キル以外の押しでも、これまで通り相手が反応する)
+                if (!killerMyselfInvoke && info.DontRoleAbility is not true
+                    && attemptTarget.GetRoleClass() is RoleBase pressed && !pressed.OnCheckPressAsTarget(info))
                 {
-                    if (!targetRole.OnCheckMurderAsTarget(info))
-                    {
-                        killer.OnCheckMurderDontKill(info);
-                        return false;
-                    }
+                    killer.OnCheckMurderDontKill(info);
+                    return false;
                 }
-                // 守護者 のガード
-                if (info.KillPower > info.GuardPower && TownOfHostL.Roles.Crewmate.Guardian.FindGuardianFor(attemptTarget.PlayerId) != null)
+                // キルボタンをキル以外に使う押し方 (イビルディバイナーの占いなど) は、ガードより先に振り分ける
+                // 役職が自分で起こす内部のキル (killerMyselfInvoke) は、押しの振り分けを通さずふつうのキルとして守りを通す
+                if (!killerMyselfInvoke && !killer.OnCheckMurderBeforeGuards(info)) return false;
+                // IDoubleTrigger の役職の 1 回押しもキルでないので、ガードより先に振り分ける
+                // (後で振り分けると、押した相手の守りの回数が減り、守護者が身代わりになる)
+                doubleTriggerHandled = DoubleTrigger.OnCheckMurderAsKiller(info);
+                if (doubleTriggerHandled && !info.DoKill) return false;
+                if (!CheckGuards(info, out guardianGuarded))
                 {
-                    info.GuardPower = 1;
-                    guardianGuarded = true;
+                    killer.OnCheckMurderDontKill(info);
+                    return false;
                 }
             }
-            // キラーのキルチェック処理実行 (IDoubleTrigger の役職は 1 回押しと 2 回押しを先に振り分ける)
-            if (!DoubleTrigger.OnCheckMurderAsKiller(info) && !killerMyselfInvoke)
+            else doubleTriggerHandled = DoubleTrigger.OnCheckMurderAsKiller(info);
+            // キラーのキルチェック処理実行 (IDoubleTrigger の役職は上で 1 回押しと 2 回押しを振り分けた)
+            if (!doubleTriggerHandled && !killerMyselfInvoke)
             {
                 killer.OnCheckMurderAsKiller(info);
             }
             // ガードの力によるガード
-            if (info.KillPower <= info.GuardPower && killer.IsKiller)
+            if (killer.IsKiller && ResolveGuard(info, guardianGuarded))
             {
-                info.IsGuard = true;
-                info.CanKill = false;
-                if (guardianGuarded)
-                {
-                    var guardian = TownOfHostL.Roles.Crewmate.Guardian.FindGuardianFor(attemptTarget.PlayerId);
-                    guardian?.Sacrifice(attemptTarget);
-                    Utils.AddGameLog("Guardian", attemptTarget.ColoredName() + ":  " + string.Format(Translator.GetString("GuardMaster.Guard"), attemptKiller.ColoredName()));
-                }
-                attemptKiller.RpcProtectedMurderPlayer(attemptTarget);
-                Utils.NotifyRoles();
                 killer.OnCheckMurderDontKill(info);
                 return false;
             }
@@ -167,17 +162,23 @@ public static partial class CustomRoleManager
                 var capTarget = appearanceTarget;
                 _ = new LateTask(() =>
                 {
-                    if (capKiller == null || capTarget == null || capTarget.Data == null || capTarget.Data.Disconnected) return;
-                    capKiller.RpcMurderPlayer(capTarget);
+                    if (capKiller == null || capTarget == null) return;
+                    // 待つ間に殺し手が死んだ・相手が別の手で死んだ・抜けた時は通さない。キルの判定は通したと返してあるので、
+                    // 生きている殺し手の客には、キルの判定で止めた時と同じく失敗の返事を送る (送らないと客のキルの待ちが残りうる)
+                    if (!capKiller.IsAlive() || capTarget.Data == null || capTarget.Data.Disconnected || !capTarget.IsAlive())
+                    {
+                        if (capKiller.IsAlive() && capTarget.Data != null) capKiller.RpcMurderPlayer(capTarget, false);
+                        return;
+                    }
+                    Kill.Send(capKiller, capTarget, dissolveBody: false, noBody: false);
                 }, 0.2f, "ViperMurderDelay");
-            }
-            else if (TownOfHostL.Modules.DeadBodyEraser.TakeNoBody(appearanceTarget))
-            {
-                TownOfHostL.Modules.DeadBodyEraser.ExileInsteadOfMurder(appearanceKiller, appearanceTarget);
             }
             else
             {
-                appearanceKiller.RpcMurderPlayer(appearanceTarget);
+                // 死体を残さないのは、頼まれた相手その人が死ぬ時だけ (役職の処理で見た目の相手が替わったら、替わった人には死体を残す)
+                var withoutBody = noBody && appearanceTarget == attemptTarget;
+                var dissolveBody = !withoutBody && attemptKiller.GetRoleClass() is IDissolvingKiller dissolver && dissolver.DissolvesBody(appearanceTarget);
+                Kill.Send(appearanceKiller, appearanceTarget, dissolveBody, withoutBody);
             }
             return true;
         }
@@ -341,6 +342,7 @@ public static partial class CustomRoleManager
         GameEndCountAdjustersOthers.Clear();
         GameEndByCountHoldersOthers.Clear();
         TaskWinBlockersOthers.Clear();
+        RoleHoldings.ResetShared();
     }
     public static void CreateInstance()
     {
@@ -532,6 +534,46 @@ public static partial class CustomRoleManager
             try { onRevived(playerId); }
             catch (Exception ex) { Logger.Exception(ex, "OnPlayerRevivedOthers"); }
         }
+    }
+    /// <summary>
+    /// 相手側の守りの段 (殺し手の役職に依らない)。役職に関わらない守り (ガーディング・メディック・背徳者など)、
+    /// なければ相手の役職のキルチェック、そのあと守護者。相手の役職がキルを止めた時は false。
+    /// 守りの力は <see cref="MurderInfo.GuardPower"/> に積まれ、決着は <see cref="ResolveGuard"/> で付ける
+    /// </summary>
+    internal static bool CheckGuards(MurderInfo info, out bool guardianGuarded)
+    {
+        guardianGuarded = false;
+        var attemptTarget = info.AttemptTarget;
+        if (TryKillGuards(info)) { }
+        else if (attemptTarget.GetRoleClass() is RoleBase targetRole && info.DontRoleAbility is not true)
+        {
+            if (!targetRole.OnCheckMurderAsTarget(info)) return false;
+        }
+        if (info.KillPower > info.GuardPower && TownOfHostL.Roles.Crewmate.Guardian.FindGuardianFor(attemptTarget.PlayerId) != null)
+        {
+            info.GuardPower = 1;
+            guardianGuarded = true;
+        }
+        return true;
+    }
+    /// <summary>
+    /// キルの力が守りの力以下なら、守られた見せ方をしてキルを止める (止めた時は true)。守護者が守ったなら守護者が身代わりになる
+    /// </summary>
+    internal static bool ResolveGuard(MurderInfo info, bool guardianGuarded)
+    {
+        if (!info.CheckHasGuard()) return false;
+        var (attemptKiller, attemptTarget) = info.AttemptTuple;
+        info.IsGuard = true;
+        info.CanKill = false;
+        if (guardianGuarded)
+        {
+            var guardian = TownOfHostL.Roles.Crewmate.Guardian.FindGuardianFor(attemptTarget.PlayerId);
+            guardian?.Sacrifice(attemptTarget);
+            Utils.AddGameLog("Guardian", attemptTarget.ColoredName() + ":  " + string.Format(Translator.GetString("GuardMaster.Guard"), attemptKiller.ColoredName()));
+        }
+        attemptKiller.RpcProtectedMurderPlayer(attemptTarget);
+        Utils.NotifyRoles();
+        return true;
     }
     private static bool TryKillGuards(MurderInfo info)
     {

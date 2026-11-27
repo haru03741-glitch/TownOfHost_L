@@ -139,7 +139,7 @@ public sealed class Walkure : RoleBase, ISelfVoter, IKiller
     public Walkure(PlayerControl player)
         : base(RoleInfo, player)
     {
-        if (OptionShowRoleToRevealed.GetBool()) CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(AnyRevealed);
+        if (OptionShowRoleToRevealed.GetBool()) Holdings.Subscribe(CustomRoleManager.EveryoneNeedsSeenNamesOthers, AnyRevealed);
         meetingRevealCount = 0;
         isDead = false;
         isExiled = false;
@@ -297,6 +297,8 @@ public sealed class Walkure : RoleBase, ISelfVoter, IKiller
         return false;
     }
 
+    // キルボタンでは、キル以外の能力の押し (サイドキック化・任命・指名など) も受けない
+    public override bool OnCheckPressAsTarget(MurderInfo info) => OnCheckMurderAsTarget(info);
     public override bool OnCheckMurderAsTarget(MurderInfo info)
     {
         info.GuardPower = 9;
@@ -405,7 +407,7 @@ public sealed class Walkure : RoleBase, ISelfVoter, IKiller
             if (order == 0) target.RpcExileV3(CustomDeathReason.FollowingSuicide);
             else _ = new LateTask(() => { if (target != null && target.IsAlive()) target.RpcExileV3(CustomDeathReason.FollowingSuicide); }, 0.3f * order, "WalkureFollowExile");
         }
-        else target.RpcMurderPlayerV2(target);
+        else Kill.Suicide(target);
         Logger.Info($"{target.GetNameWithRole().RemoveHtmlTags()} follows Walkure.", "Walkure");
     }
 
@@ -524,7 +526,7 @@ public sealed class Walkure : RoleBase, ISelfVoter, IKiller
         }
         else
         {
-            actor.RpcMurderPlayerV2(actor);
+            Kill.Suicide(actor);
         }
 
         Logger.Info($"{actor.GetNameWithRole().RemoveHtmlTags()} self-destructed by Walkure reflection ({source}).", "Walkure");

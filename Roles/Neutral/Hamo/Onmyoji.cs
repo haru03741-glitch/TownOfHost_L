@@ -304,23 +304,23 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
 
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // 指名の押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
 
     {
 
-        if (!Is(info.AttemptKiller) || info.IsSuicide) return;
-
-        info.DoKill = false;
+        if (!Is(info.AttemptKiller) || info.IsSuicide) return true;
 
 
 
-        if (!nominateMode || ShikigamiIds.Count >= 1) return;
+
+        if (!nominateMode || ShikigamiIds.Count >= 1) return false;
 
 
 
         (_, var target) = info.AttemptTuple;
 
-        if (!IsValidShikigamiTarget(target)) return;
+        if (!IsValidShikigamiTarget(target)) return false;
 
 
 
@@ -331,6 +331,7 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
         AddShikigami(target);
 
         Utils.NotifyRoles(SpecifySeer: Player);
+        return false;
 
     }
 
@@ -569,7 +570,11 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
 
 
-        ApplyModeDesync(nominateMode);
+        // 暗転対策の身代わりを戻すまでは送らない (先に送ると、客の追放の締めの頭数が崩れて暗転しうる)
+        AntiBlackout.RunAfterRevert(() =>
+        {
+            if (Player.GetRoleClass() == this) ApplyModeDesync(nominateMode);
+        });
 
         Player.RpcResetAbilityCooldown();
 
@@ -1364,7 +1369,20 @@ public sealed class Shikigami : RoleBase, IUsePhantomButton, IKillFlashSeeable, 
 
         if (dead == null) return false;
 
-        AddDeadBodyArrow(dead.PlayerId, dead.GetTruePosition());
+        var pos = dead.GetTruePosition();
+        AddDeadBodyArrow(dead.PlayerId, pos);
+
+        // ヴァイパーの死体は溶け切ると客の画面から消えるので、その頃に矢印を外す (同じ人の新しい死体の矢印は外さない)
+        if (info.AppearanceKiller != null && info.AppearanceKiller.Is(RoleTypes.Viper))
+        {
+            byte id = dead.PlayerId;
+            _ = new LateTask(() =>
+            {
+                if (!deadBodyPositions.TryGetValue(id, out var now) || now != pos) return;
+                RemoveDeadBodyArrow(id);
+                Utils.NotifyRoles(SpecifySeer: Player);
+            }, TownOfHostL.Modules.DissolveKill.ViperSeconds + TownOfHostL.Modules.DissolveKill.KillSettle, "OnmyojiViperBodyArrow", true);
+        }
 
         return false;
 
@@ -1389,7 +1407,7 @@ public sealed class Shikigami : RoleBase, IUsePhantomButton, IKillFlashSeeable, 
 
         Player.SetRealKiller(Player);
 
-        Player.RpcMurderPlayerV2(Player);
+        Kill.Suicide(Player);
 
     }
 
@@ -1565,7 +1583,7 @@ public sealed class Shikigami : RoleBase, IUsePhantomButton, IKillFlashSeeable, 
 
         Player.SetRealKiller(owner ?? Player);
 
-        Player.RpcMurderPlayerV2(Player);
+        Kill.Suicide(Player);
 
     }
 

@@ -241,7 +241,7 @@ public static class SuddenDeath
             if (!IsPlayer(pc) || Teams.ContainsKey(pc.PlayerId)) continue;
             Logger.Warn($"{pc.Data?.PlayerName} => チームに入っていない", "SuddenDeath");
             PlayerState.GetByPlayerId(pc.PlayerId).DeathReason = CustomDeathReason.etc;
-            pc.RpcMurderPlayerV2(pc);
+            Kill.Suicide(pc);
         }
     }
 
@@ -460,7 +460,7 @@ public static class SuddenDeath
                 var otherState = PlayerState.GetByPlayerId(other.PlayerId);
                 if (otherState != null) otherState.DeathReason = CustomDeathReason.Vote;
                 other.SetRealKiller(player);
-                other.RpcMurderPlayerV2(other);
+                Kill.Suicide(other);
             }
             return true;
         }
@@ -471,7 +471,7 @@ public static class SuddenDeath
     static bool CheckSabotage(out GameOverReason reason)
     {
         if (!GameEndRules.BySabotage(out reason)) return false;
-        foreach (var pc in Main.AllAlivePlayerControls.ToArray()) pc.RpcMurderPlayerV2(pc);
+        foreach (var pc in Main.AllAlivePlayerControls.ToArray()) Kill.Suicide(pc);
         CustomWinnerHolder.ResetAndSetWinner(CustomWinner.None);
         return true;
     }

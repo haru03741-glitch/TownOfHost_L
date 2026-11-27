@@ -29,7 +29,7 @@ public sealed class Mare : RoleBase, IImpostor
         player
     )
     {
-        CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(() => Utils.IsActive(SystemTypes.Electrical));
+        Holdings.Subscribe(CustomRoleManager.EveryoneNeedsSeenNamesOthers, () => Utils.IsActive(SystemTypes.Electrical));
         KillCooldownInLightsOut = OptionKillCooldownInLightsOut.GetFloat();
         SpeedInLightsOut = OptionSpeedInLightsOut.GetFloat();
 
@@ -60,8 +60,8 @@ public sealed class Mare : RoleBase, IImpostor
     public override void ApplyGameOptions(IGameOptions opt)
     {
         // 停電中だけ加速する
-        if (IsActivateKill) TownOfHostL.Modules.PlayerSpeed.Add(Player.PlayerId, "Mare", SpeedInLightsOut);
-        else TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, "Mare");
+        if (IsActivateKill) Holdings.AddSpeed(Player.PlayerId, "Mare", SpeedInLightsOut);
+        else Holdings.RemoveSpeed(Player.PlayerId, "Mare");
     }
     private void ActivateKill(bool activate)
     {

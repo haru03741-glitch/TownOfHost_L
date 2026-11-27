@@ -34,7 +34,7 @@ public static class TargetDeadArrow
 
         foreach (var body in AllBody)
         {
-            if (!DeadBodyList.Contains(body))
+            if (!DeadBodyList.Contains(body) && TownOfHostL.Modules.DeadBodyState.IsPresent(body))
             {
                 DeadBodyList.Add(body);
                 targetBody = body;
@@ -211,7 +211,8 @@ public static class TargetDeadArrow
         foreach (var arrowInfo in arrowList)
         {
             var target = arrowInfo.To;
-            if (seerIsDead || target == null)
+            // 溶け切ったヴァイパーの死体は、死体の物が残っても客の画面には無い
+            if (seerIsDead || target == null || TownOfHostL.Modules.DeadBodyState.IsDissolved(target))
             {
                 TargetArrows.Remove(arrowInfo);
                 update = true;

@@ -98,7 +98,7 @@ public sealed class LoveCutter : RoleBase
             }
             pc.SetRealKiller(Player);
             playerState.DeathReason = CustomDeathReason.Bombed;
-            pc.RpcMurderPlayerV2(pc);
+            Kill.Suicide(pc);
             playerState.SetDead(CustomDeathReason.Bombed);
         }
         CustomWinnerHolder.ResetAndSetWinner(CustomWinner.LoveCutter);

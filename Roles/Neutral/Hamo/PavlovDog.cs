@@ -246,19 +246,18 @@ public sealed class PavlovOwner : RoleBase, IKiller, IAdditionalWinner, ISchrodi
         RefreshState();
     }
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // 刷り込みの押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
-        info.DoKill = false;
 
-        if (!AmongUsClient.Instance.AmHost) return;
-        if (!info.CanKill) return;
-        if (!CanImprintNow()) return;
-        if (RemainingImprintCount <= 0) return;
-        if (!Player.IsAlive()) return;
+        if (!AmongUsClient.Instance.AmHost) return false;
+        if (!CanImprintNow()) return false;
+        if (RemainingImprintCount <= 0) return false;
+        if (!Player.IsAlive()) return false;
 
         var target = info.AttemptTarget;
-        if (target == null || !target.IsAlive()) return;
-        if (PavlovDog.IsPavlovTeam(target)) return;
+        if (target == null || !target.IsAlive()) return false;
+        if (PavlovDog.IsPavlovTeam(target)) return false;
 
         RemainingImprintCount--;
         RefreshState(force: true);
@@ -266,7 +265,7 @@ public sealed class PavlovOwner : RoleBase, IKiller, IAdditionalWinner, ISchrodi
         if (PavlovDog.GetOwnerSuicideOnImpostor() && target.GetCustomRole().IsImpostor())
         {
             Suicide();
-            return;
+            return false;
         }
 
         Player.RpcProtectedMurderPlayer(target);
@@ -280,6 +279,7 @@ public sealed class PavlovOwner : RoleBase, IKiller, IAdditionalWinner, ISchrodi
 
         Player.MarkDirtySettings();
         Utils.NotifyRoles();
+        return false;
     }
 
     void Suicide()
@@ -290,7 +290,7 @@ public sealed class PavlovOwner : RoleBase, IKiller, IAdditionalWinner, ISchrodi
         if (state == null) return;
 
         state.DeathReason = CustomDeathReason.Suicide;
-        Player.RpcMurderPlayerV2(Player);
+        Kill.Suicide(Player);
     }
 
     public bool CheckWin(ref CustomRoles winnerRole)
@@ -503,7 +503,7 @@ public abstract class PavlovDogBase : RoleBase, IKiller, IAdditionalWinner, ISch
         if (state == null) return;
 
         state.DeathReason = CustomDeathReason.Suicide;
-        Player.RpcMurderPlayerV2(Player);
+        Kill.Suicide(Player);
 
         IsRampage = false;
         RampageTimer = null;

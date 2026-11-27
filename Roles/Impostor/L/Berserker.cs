@@ -112,8 +112,13 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammat
     public bool IsRampaging => rampaging;
     public bool CanKillTeammates => trance && rampaging;
 
-    public override void Add() => CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
-    public override void OnDestroy() => CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
+    public override void Add() => Holdings.Subscribe(CustomRoleManager.LowerOthers, GetLowerTextOthers);
+    public override void OnDestroy()
+    {
+        // 暴走の途中で役職が替わった時に、鬼の体・見え方・加速を残さない (試合の終わりの後始末では送らない)
+        // クールは新しい役職を付ける側が決めるので、ここでは送らない (同じ相手へクールの電文を重ねない)
+        if (rampaging && GameStates.IsInTask && !GameEndChecker.EndingStarted) EndRampage(release: true, restartCooldowns: false);
+    }
 
     public float CalculateKillCooldown() => rampaging ? rampageKillCooldown : killCooldown;
 
@@ -147,7 +152,7 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammat
         chillUntil = float.PositiveInfinity;
         // 暗転が始まる前に名前を送る (暗い間も自分の名前の下の文字は見える)
         Utils.NotifyRoles();
-        PlayerSpeed.Multiply(Player.PlayerId, SpeedKey, rampageSpeed);
+        Holdings.MultiplySpeed(Player.PlayerId, SpeedKey, rampageSpeed);
         Player.MarkDirtySettings();
         SeekerBody.Apply(Player, OnApplied, () => EndRampage(release: false));
         Logger.Info($"暴走: {Player.GetNameWithRole()}", nameof(Berserker));
@@ -246,7 +251,8 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammat
         Utils.NotifyRoles(SpecifySeer: Player);
     }
 
-    private void EndRampage(bool release)
+    /// <param name="restartCooldowns">false なら、キルと能力のクールを始め直さない (役職が替わる時は、新しい役職を付ける側が決める)</param>
+    private void EndRampage(bool release, bool restartCooldowns = true)
     {
         if (!rampaging) return;
         rampaging = false;
@@ -256,13 +262,13 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammat
         endAt = float.PositiveInfinity;
         RestoreTranceViews();
         SeerCamouflage.End(Player);
-        PlayerSpeed.Remove(Player.PlayerId, SpeedKey);
+        Holdings.RemoveSpeed(Player.PlayerId, SpeedKey);
         if (release) SeekerBody.Release(Player);
         if (Player.IsAlive())
         {
-            Player.ResetKillCooldown();
+            if (restartCooldowns) Player.ResetKillCooldown();
             Player.MarkDirtySettings();
-            if (!GameStates.IsMeeting && release)
+            if (restartCooldowns && !GameStates.IsMeeting && release)
             {
                 Player.SetKillCooldown();
                 // 鬼の体を外す SetRole ではボタンのクールが始まらない (終えてすぐまた暴走できてしまう) ので、ここで始め直す

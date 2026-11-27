@@ -84,7 +84,7 @@ public static class Lovers
 
             lover.SetRealKiller(target);
             PlayerState.GetByPlayerId(lover.PlayerId).DeathReason = CustomDeathReason.FollowingSuicide;
-            lover.RpcMurderPlayer(lover);
+            Kill.Suicide(lover);
             Logger.Info($"{target.GetNameWithRole()}のLover後追い:{lover.GetNameWithRole()}", "KillFollowingSuicide");
         }
     }

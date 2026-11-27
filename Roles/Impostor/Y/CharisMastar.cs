@@ -81,15 +81,14 @@ public sealed class CharismaStar : RoleBase, IImpostor
         GatherChoosePlayer = new();
     }
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // 1 回押しの指名はキルでないので、守りより前に振り分ける。2 回押しと回数切れの押しはキルとして守りを通す
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
-        if (!info.CanKill) return;
-
         // 集合回数がまだあるならダブルクリック有効
         if (GatherLimitCount > 0)
         {
             var (killer, target) = info.AttemptTuple;
-            info.DoKill = killer.CheckDoubleTrigger(target, () =>
+            return killer.CheckDoubleTrigger(target, () =>
             {
                 // 集めるターゲット登録
                 GatherChoosePlayer.Add(target.PlayerId);
@@ -98,18 +97,22 @@ public sealed class CharismaStar : RoleBase, IImpostor
                 Utils.NotifyRoles(SpecifySeer: killer);
             });
         }
-        if (info.DoKill) // 指名時はクールリセットしない
+        return true;
+    }
+    public void OnCheckMurderAsKiller(MurderInfo info)
+    {
+        if (!info.CanKill) return;
+
+        // 指名の押しは BeforeGuards で終わっているので、ここへ来るのはキルの押しだけ (クールをリセットする)
+        // アビリティクールリセット
+        Player.RpcResetAbilityCooldown();
+        // ホストが集合後のキルクールが0.1のままになってしまう為ここでもリセット
+        if (Player == PlayerControl.LocalPlayer)
         {
-            // アビリティクールリセット
-            Player.RpcResetAbilityCooldown();
-            // ホストが集合後のキルクールが0.1のままになってしまう為ここでもリセット
-            if (Player == PlayerControl.LocalPlayer)
+            _ = new LateTask(() =>
             {
-                _ = new LateTask(() =>
-                {
-                    Player.SetKillCooldown(KillCooldown);
-                }, 0.2f, "CharismaStar_HostSetKillCooldown");
-            }
+                Player.SetKillCooldown(KillCooldown);
+            }, 0.2f, "CharismaStar_HostSetKillCooldown");
         }
     }
     public override bool OnCheckVanish(ref float killCooldown, ref bool canResetAbilityCooldown)
@@ -153,7 +156,7 @@ public sealed class CharismaStar : RoleBase, IImpostor
                 {
                     target.SetRealKiller(Player);
                     PlayerState.GetByPlayerId(targetId).DeathReason = CustomDeathReason.NotGather;
-                    target.RpcMurderPlayer(target);
+                    Kill.Suicide(target);
                     // キルフラッシュを自視点に鳴らす
                     Player.KillFlash();
                 }

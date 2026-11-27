@@ -75,10 +75,10 @@ public sealed class CursedWolf : RoleBase, IImpostor
         switch (nowKillMotion)
         {
             case KillMotionOption.MotionKill://自身がキル
-                target.RpcMurderPlayer(killer);
+                Kill.Force(target, killer);
                 break;
             case KillMotionOption.MotionSuicide://相手が自爆
-                killer.RpcMurderPlayer(killer);
+                Kill.Suicide(killer);
                 break;
         }
         // 呪殺した後のキルクールは通常の半分

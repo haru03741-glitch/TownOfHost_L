@@ -247,6 +247,10 @@ public static class Flashlight
         int count = GameData.Instance ? GameData.Instance.PlayerCount : 4;
         hns.SetRecommendations(Mathf.Max(count, 4), true);
         hns.MapId = normal.MapId;
+        // 部屋そのものの値 (最大人数・言語) は部屋の設定と同じにする。公式鯖は、部屋と違う言語の入った設定を客へ送ったホストを
+        // その場で切断する (かくれんぼ型の既定の言語のままだと日本語の部屋で切られる・2026-11-27 公式アジアで実測)
+        hns.MaxPlayers = normal.MaxPlayers;
+        hns.Keywords = normal.Keywords;
         hns.NumImpostors = normal.NumImpostors;
         hns.PlayerSpeedMod = normal.GetFloat(FloatOptionNames.PlayerSpeedMod);
         hns.KillCooldown = normal.GetFloat(FloatOptionNames.KillCooldown);
@@ -259,7 +263,9 @@ public static class Flashlight
 
         holdUntil[id] = Time.realtimeSinceStartup + HoldSeconds;
         sender.SendRaw(hns.Cast<IGameOptions>());
-        Logger.Info($"{pc.Data?.PlayerName}: 懐中電灯を点ける (視界 {crew:0.00}/{imp:0.00} + {next})", nameof(Flashlight));
+        Logger.Info($"{pc.Data?.PlayerName}: 懐中電灯を点ける (視界 {crew:0.00}/{imp:0.00} + {next}・"
+            + $"map {hns.MapId}・imp {hns.NumImpostors}・max {hns.MaxPlayers}・kw {(uint)hns.Keywords}・speed {hns.PlayerSpeedMod:0.###}・kcd {hns.KillCooldown:0.###}・kdist {hns.KillDistance}・"
+            + $"size {crewSize:0.##}/{impSize:0.##}・人数 {count})", nameof(Flashlight));
     }
 
     // かくれんぼ型を送った後、同じ半径の通常の設定へ戻す

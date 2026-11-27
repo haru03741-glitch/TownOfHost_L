@@ -21,6 +21,13 @@ namespace TownOfHostL.Modules
             AllSenders.OfType<PlayerGameOptionsSender>()
             .Where(sender => sender.player.PlayerId == playerId)
             .ToList().ForEach(sender => sender.SetDirty());
+        /// <summary>この人へまだ送っていない設定の変更があるか</summary>
+        public static bool HasPending(byte playerId)
+        {
+            foreach (var sender in AllSenders)
+                if (sender is PlayerGameOptionsSender p && p.player != null && p.player.PlayerId == playerId && p.IsDirty) return true;
+            return false;
+        }
         public static void SetDirtyToAll() =>
             AllSenders.OfType<PlayerGameOptionsSender>()
             .ToList().ForEach(sender => sender.SetDirty());
@@ -38,6 +45,9 @@ namespace TownOfHostL.Modules
         bool skippedLastSend;
         // 最後に送った設定の、能力のクールの長さ
         float sentEngineerCooldown, sentShapeshifterCooldown, sentPhantomCooldown;
+        bool hasSentCooldowns;
+        // 役職が能力を使えない間に置く、能力のクールの長さ (これ以上は「使えない」とみなす)
+        const float LockedAbilityCooldown = 255f;
 
         /// <summary>この人へ最後に送った設定の、その役職の能力のクールの長さ</summary>
         public float SentAbilityCooldown(RoleTypes role) => role switch
@@ -62,9 +72,16 @@ namespace TownOfHostL.Modules
             if (player != null && Flashlight.IsHolding(player.PlayerId)) return;
             var opt = BuildGameOptions();
             if (opt == null) return;
-            sentEngineerCooldown = opt.GetFloat(FloatOptionNames.EngineerCooldown);
-            sentShapeshifterCooldown = opt.GetFloat(FloatOptionNames.ShapeshifterCooldown);
-            sentPhantomCooldown = opt.GetFloat(FloatOptionNames.PhantomCooldown);
+            float engineer = opt.GetFloat(FloatOptionNames.EngineerCooldown);
+            float shapeshifter = opt.GetFloat(FloatOptionNames.ShapeshifterCooldown);
+            float phantom = opt.GetFloat(FloatOptionNames.PhantomCooldown);
+            // 使えない間のクール (255 秒) から使える長さへ下がった能力は、客の手元では 255 秒の数えが続くので、設定を送った後で数え直す
+            bool unlocked = hasSentCooldowns
+                && (Unlocks(sentEngineerCooldown, engineer) || Unlocks(sentShapeshifterCooldown, shapeshifter) || Unlocks(sentPhantomCooldown, phantom));
+            sentEngineerCooldown = engineer;
+            sentShapeshifterCooldown = shapeshifter;
+            sentPhantomCooldown = phantom;
+            hasSentCooldowns = true;
             if (player.AmOwner)
             {
                 foreach (var com in GameManager.Instance.LogicComponents)
@@ -80,7 +97,25 @@ namespace TownOfHostL.Modules
             else
             {
                 SendBuiltOptions(opt);
+                // 客の接続が引けずに送れなかった時は、客の手元のクールが分からないので比べ直さない
+                if (skippedLastSend) { hasSentCooldowns = false; return; }
             }
+            if (unlocked) RestartAbilityCooldownAfterUnlock();
+        }
+
+        static bool Unlocks(float before, float after) => before >= LockedAbilityCooldown && after < LockedAbilityCooldown;
+
+        // 設定が届いてから数え直す (RpcResetAbilityCooldown の sync と同じ待ち)。
+        // 会議の窓 (呼ばれてから暗転対策の戻しまで) の間は送らない (会議明けに本編が数え直す)
+        void RestartAbilityCooldownAfterUnlock()
+        {
+            if (!GameStates.IsInTask || GameStates.InMeetingWindow) return;
+            var target = player;
+            _ = new LateTask(() =>
+            {
+                if (!GameStates.IsInTask || GameStates.InMeetingWindow || target == null || !target.IsAlive()) return;
+                target.RpcResetAbilityCooldown();
+            }, 0.2f, "AbilityCooldown.Unlocked");
         }
 
         protected override bool ShouldSend(Il2CppStructArray<byte> optionArray)
@@ -184,6 +219,9 @@ namespace TownOfHostL.Modules
             AURoleOptions.SetOpt(opt);
             if (Roles.Impostor.NormalViper.RoleInfo.IsEnable)
                 AURoleOptions.ViperDissolveTime = Roles.Impostor.NormalViper.DissolveTime;
+            // キルと同時に死体を消す役職のキルの間は、見る人の画面で死体がすぐ溶けるようにする
+            if (DissolveKill.Overrides(player.PlayerId))
+                AURoleOptions.ViperDissolveTime = DissolveKill.DissolveSeconds;
             var state = PlayerState.GetByPlayerId(player.PlayerId);
             opt.SetFloat(FloatOptionNames.CrewLightMod, Main.DefaultCrewmateVision);
             opt.SetFloat(FloatOptionNames.ImpostorLightMod, Main.DefaultImpostorVision);

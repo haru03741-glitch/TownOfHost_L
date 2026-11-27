@@ -66,7 +66,7 @@ public sealed class MadKaiser : RoleBase
 
     {
         // クルーの陣営の全員の画面で、この役職の名前の欄 (タスクの進みで変わる) を組み直す
-        CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(() => true);
+        Holdings.Subscribe(CustomRoleManager.EveryoneNeedsSeenNamesOthers, () => true);
 
         RequiredTaskPercent = OptionRequiredTaskPercent.GetInt();
 

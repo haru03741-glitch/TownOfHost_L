@@ -65,9 +65,9 @@ public sealed class EvilBlender : RoleBase, IImpostor, IUsePhantomButton
 
         limittimer = 0;
 
-        CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
+        Holdings.Subscribe(CustomRoleManager.LowerOthers, GetLowerTextOthers);
 
-        CustomRoleManager.OnFixedUpdateOthers.Add(OtherFixUpdates);
+        Holdings.Subscribe(CustomRoleManager.OnFixedUpdateOthers, OtherFixUpdates);
 
 
 
@@ -442,7 +442,7 @@ public sealed class EvilBlender : RoleBase, IImpostor, IUsePhantomButton
                     if (state != null) state.DeathReason = CustomDeathReason.Suffocation;
                     pc.SetRealKiller(TownOfHostL.Core.NativeObject.IsAlive(Player) ? Player : null);
                     if (GameStates.ExiledAnimate || AntiBlackout.IsCached) pc.RpcExileV3(CustomDeathReason.Suffocation);
-                    else pc.RpcMurderPlayerV2(pc);
+                    else Kill.Suicide(pc);
                 }
 
                 i++;

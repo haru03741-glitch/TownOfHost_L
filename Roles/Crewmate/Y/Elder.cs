@@ -70,7 +70,7 @@ public sealed class Elder : RoleBase
         {
             // killer側も死亡する
             PlayerState.GetByPlayerId(killer.PlayerId).DeathReason = CustomDeathReason.CounterAttack; //死因：反撃
-            target.RpcMurderPlayer(killer);
+            Kill.Force(target, killer);
             return true;
         }
 
@@ -123,7 +123,7 @@ public sealed class Elder : RoleBase
         {
             // プレイヤーを死亡させる
             MyState.DeathReason = CustomDeathReason.Senility; //死因：老衰
-            Player.RpcMurderPlayer(Player);
+            Kill.Suicide(Player);
             // タスクが終わっていない場合、クルーメイトにする
             if (!IsTaskFinished) {
                 ChangeRole();

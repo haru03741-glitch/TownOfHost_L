@@ -27,7 +27,7 @@ public sealed class Workaholic : RoleBase
         () => (CannotWinAtDeath && player.Data.IsDead) ? HasTask.False : HasTask.ForRecompute
     )
     {
-        CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(() => Seen);
+        Holdings.Subscribe(CustomRoleManager.EveryoneNeedsSeenNamesOthers, () => Seen);
         Seen = OptionSeen.GetBool();
         TaskSeen = OptionTaskSeen.GetBool();
         CannotWinAtDeath = OptionCannotWinAtDeath.GetBool();
@@ -81,7 +81,7 @@ public sealed class Workaholic : RoleBase
             //    if (otherPlayer == Player) continue;
 
             //    otherPlayer.SetRealKiller(Player);
-            //    otherPlayer.RpcMurderPlayer(otherPlayer);
+            //    Kill.Suicide(otherPlayer);
             //    var playerState = PlayerState.GetByPlayerId(otherPlayer.PlayerId);
             //    playerState.DeathReason = CustomDeathReason.Bombed;
             //    playerState.SetDead();

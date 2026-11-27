@@ -92,7 +92,8 @@ public sealed class Totocalcio : RoleBase, IKiller, IAdditionalWinner
     public bool CanUseKillButton() => Player.IsAlive() && betTargetCount > 0;
     public bool CanUseImpostorVentButton() => false;
     public override void ApplyGameOptions(IGameOptions opt) => opt.SetVision(false);
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // 賭けの押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
         (var killer, var target) = info.AttemptTuple;
         // ガード持ちに関わらず能力発動する直接キル役職
@@ -103,7 +104,7 @@ public sealed class Totocalcio : RoleBase, IKiller, IAdditionalWinner
         Logger.Info($"{killer.GetNameWithRole()} : {target.GetRealName(Options.GetNameChangeModes() == NameChange.Crew)}に賭けた", "Totocalcio");
 
         Utils.NotifyRoles(SpecifySeer : killer);
-        info.DoKill = false;
+        return false;
     }
 
     public bool OverrideKillButtonText(out string text)

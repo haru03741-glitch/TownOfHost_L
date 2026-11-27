@@ -133,7 +133,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
 
 
-        CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
+        Holdings.Subscribe(CustomRoleManager.LowerOthers, GetLowerTextOthers);
 
     }
 
@@ -447,12 +447,11 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
     public override void OnDestroy()
 
     {
-        TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(JackalHadouHo));
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(JackalHadouHo));
 
         beam?.End();
 
 
-        CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
 
 
 
@@ -460,7 +459,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         {
 
-            TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(JackalHadouHo));
+            Holdings.RemoveSpeed(Player.PlayerId, nameof(JackalHadouHo));
 
             Player.MarkDirtySettings();
 
@@ -656,11 +655,12 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
 
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // 発射役の SK 化の押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
 
     {
 
-        if (info.IsSuicide) return;
+        if (info.IsSuicide) return true;
 
 
 
@@ -668,7 +668,6 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         {
 
-            info.DoKill = false;
 
             (_, var target) = info.AttemptTuple;
 
@@ -687,11 +686,18 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             Utils.NotifyRoles(SpecifySeer: Player);
 
-            return;
+            return false;
 
         }
 
+        return true;
+    }
 
+    public void OnCheckMurderAsKiller(MurderInfo info)
+
+    {
+
+        if (info.IsSuicide) return;
 
         nowcool = KillCooldown;
 
@@ -819,7 +825,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
 
 
-        TownOfHostL.Modules.PlayerSpeed.Freeze(Player.PlayerId, nameof(JackalHadouHo));
+        Holdings.Freeze(Player.PlayerId, nameof(JackalHadouHo));
 
         Player.MarkDirtySettings();
 
@@ -901,7 +907,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         _prevBeamMark = false;
 
-        TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(JackalHadouHo));
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(JackalHadouHo));
 
         Player.MarkDirtySettings();
 
@@ -1204,7 +1210,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             beam?.End(); IsFiring = false;
 
-            TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(JackalHadouHo));
+            Holdings.RemoveSpeed(Player.PlayerId, nameof(JackalHadouHo));
 
             Player.MarkDirtySettings(); Player.RpcSetColor((byte)PlayerColor);
 
@@ -1229,13 +1235,13 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             Player.RpcSetColor((byte)PlayerColor);
 
-            TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(JackalHadouHo));
+            Holdings.RemoveSpeed(Player.PlayerId, nameof(JackalHadouHo));
 
             Player.MarkDirtySettings();
 
             PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = CustomDeathReason.Suicide;
 
-            Player.RpcMurderPlayerV2(Player);
+            Kill.Suicide(Player);
 
             IsFiring = false; return;
 
@@ -1245,7 +1251,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         Player.RpcSetColor((byte)PlayerColor);
 
-        TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(JackalHadouHo));
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(JackalHadouHo));
 
         Player.MarkDirtySettings();
 
@@ -1679,8 +1685,8 @@ public sealed class Tama : RoleBase, IKiller
 
     {
         // 仲間 (ジャッカルの陣営) の画面にたまの役職名を出す。見る側の役職は他人の名前を組み直さないことがある
-        CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(() => true);
-        CustomRoleManager.GameEndCountAdjustersOthers.Add(AdjustGameEndCounts);
+        Holdings.Subscribe(CustomRoleManager.EveryoneNeedsSeenNamesOthers, () => true);
+        Holdings.Subscribe(CustomRoleManager.GameEndCountAdjustersOthers, AdjustGameEndCounts);
 
         OwnerId = byte.MaxValue;
 
@@ -1773,21 +1779,21 @@ public sealed class Tama : RoleBase, IKiller
 
 
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // 装填の押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
 
     {
 
-        info.DoKill = false;
 
-        if (!JackalHadouHo.GetTamaCanLoad()) return;
+        if (!JackalHadouHo.GetTamaCanLoad()) return false;
 
 
 
         var (killer, target) = info.AttemptTuple;
 
-        if (hasLoaded || isLoading) return;
+        if (hasLoaded || isLoading) return false;
 
-        if (target.PlayerId != OwnerId) return;
+        if (target.PlayerId != OwnerId) return false;
 
 
 
@@ -1810,6 +1816,8 @@ public sealed class Tama : RoleBase, IKiller
         Utils.NotifyRoles(SpecifySeer: Player);
 
         Utils.SendMessage(GetString("TamaLoaded"), Player.PlayerId);
+
+        return false;
 
     }
 

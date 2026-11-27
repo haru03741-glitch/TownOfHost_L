@@ -135,29 +135,40 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
     {
         opt.SetVision(false);
     }
+    // 弾切れの押しと、相手を殺さない誤射はキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
+    {
+        if (!Is(info.AttemptKiller) || info.IsSuicide) return true;
+        (var killer, var target) = info.AttemptTuple;
+
+        if (ShotLimit <= 0) return false;
+        // 相手も殺す誤射はキルなので、守りを通す (本人の死は OnCheckMurderAsKiller で起こす)
+        if (CanBeKilledBy(target) || MisfireKillsTarget()) return true;
+
+        ShotLimit--;
+        Logger.Info($"{killer.GetNameWithRole()} : 残り{ShotLimit}発", "Sheriff");
+        PlayerState.GetByPlayerId(killer.PlayerId).DeathReason = CustomDeathReason.Misfire;
+        Kill.Suicide(killer);
+        return false;
+    }
     public void OnCheckMurderAsKiller(MurderInfo info)
     {
         if (!Is(info.AttemptKiller) || info.IsSuicide || !info.CanKill) return;
         (var killer, var target) = info.AttemptTuple;
 
-        if (ShotLimit <= 0)
-        {
-            info.DoKill = false;
-            return;
-        }
         ShotLimit--;
         Logger.Info($"{killer.GetNameWithRole()} : 残り{ShotLimit}発", "Sheriff");
         if (!CanBeKilledBy(target))
         {
+            // 村長の設定で、任命されたシェリフの誤射は相手も道連れにする (ここへ来るのは相手を殺す誤射だけ)
             PlayerState.GetByPlayerId(killer.PlayerId).DeathReason = CustomDeathReason.Misfire;
-            killer.RpcMurderPlayer(killer);
-            // 村長の設定で、任命されたシェリフの誤射は相手も道連れにする
-            if (IsAppointed && VillageChief.SheriffMisfireKillsTarget.GetBool()) return;
-            info.DoKill = false;
+            Kill.Suicide(killer);
             return;
         }
         killer.ResetKillCooldown();
     }
+    // 村長の設定で、任命されたシェリフの誤射は相手も道連れにする
+    bool MisfireKillsTarget() => IsAppointed && VillageChief.SheriffMisfireKillsTarget.GetBool();
     public override int? UsesRemaining => ShotLimit;
     public override string GetProgressText(bool comms = false) => Utils.ColorString(CanUseKillButton() ? Color.yellow : Color.gray, $"〈{ShotLimit}〉");
     public static bool CanBeKilledBy(PlayerControl player)

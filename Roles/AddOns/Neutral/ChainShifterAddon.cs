@@ -55,6 +55,7 @@ public static class ChainShifterAddon
         if (info.IsMeeting) return;
 
         if (Player == null) return;
+        if (!ChainShifter.ShiftWhenKilled) return;
 
         if (info.AttemptTarget?.PlayerId == Player?.PlayerId)
         {

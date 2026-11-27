@@ -76,7 +76,10 @@ public sealed class Escalationer : RoleBase, IImpostor
 
             foreach (var player in Main.AllPlayerControls)
             {
-                TownOfHostL.Modules.PlayerSpeed.Add(player.PlayerId, SpeedKey, TownOfHostL.Modules.PlayerSpeed.GetAdd(player.PlayerId, SpeedKey) + SpeedUpRate);
+                var speed = TownOfHostL.Modules.PlayerSpeed.GetAdd(player.PlayerId, SpeedKey) + SpeedUpRate;
+                // 会議で戻す時は、会議の前に役職が替わっても戻るよう役職の持ち物にする。戻さない時は試合の終わりまで続く
+                if (SpeedAndCoolReset) Holdings.AddSpeed(player.PlayerId, SpeedKey, speed);
+                else TownOfHostL.Modules.PlayerSpeed.Add(player.PlayerId, SpeedKey, speed); // 役職が外れても残す
             }
             Utils.SyncAllSettings();
         }
@@ -91,7 +94,7 @@ public sealed class Escalationer : RoleBase, IImpostor
         nowKillcool = KillCooldown;
         Player.ResetKillCooldown();
 
-        TownOfHostL.Modules.PlayerSpeed.RemoveFromAll(SpeedKey);
+        Holdings.RemoveSpeedFromAll(SpeedKey);
         Utils.SyncAllSettings();
     }
 }

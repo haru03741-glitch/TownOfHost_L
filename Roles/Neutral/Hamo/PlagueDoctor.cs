@@ -53,10 +53,10 @@ public sealed class PlagueDoctor : RoleBase, IKiller
 
             InfectInfos = new(GameData.Instance.PlayerCount);
             //他視点用のMarkメソッド登録
-            CustomRoleManager.MarkOthers.Add(GetMarkOthers);
-            CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
-            CustomRoleManager.OnFixedUpdateOthers.Add(OnFixedUpdateOthers);
-            CustomRoleManager.OnMurderPlayerOthers.Add(OnMurderPlayerOthers);
+            Holdings.Subscribe(CustomRoleManager.MarkOthers, GetMarkOthers);
+            Holdings.Subscribe(CustomRoleManager.LowerOthers, GetLowerTextOthers);
+            Holdings.Subscribe(CustomRoleManager.OnFixedUpdateOthers, OnFixedUpdateOthers);
+            Holdings.Subscribe(CustomRoleManager.OnMurderPlayerOthers, OnMurderPlayerOthers);
         }
     }
     // 自分だけ外す (全員分を消すと、残った医師の処理が一覧の先頭を引けなくなる)
@@ -324,7 +324,7 @@ public sealed class PlagueDoctor : RoleBase, IKiller
                 player.SetRealKiller(null);
                 var state = PlayerState.GetByPlayerId(player.PlayerId);
                 state.DeathReason = CustomDeathReason.Infected;
-                player.RpcMurderPlayer(player);
+                Kill.Suicide(player);
                 state.SetDead(CustomDeathReason.Infected);
             }
             foreach (var plagueDoctor in Main.AllPlayerControls.Where(p => p.Is(CustomRoles.PlagueDoctor)))

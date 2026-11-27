@@ -300,7 +300,7 @@ public sealed class Spectre : RoleBase, IKiller, IUsePhantomButton
             LeftAliveTime = 0f;
             var state = PlayerState.GetByPlayerId(Player.PlayerId);
             if (state != null) state.DeathReason = CustomDeathReason.Starved;
-            Player.RpcMurderPlayerV2(Player);
+            Kill.Suicide(Player);
             Logger.Info($"{Player.GetNameWithRole()}: 餓死", "Spectre");
             return;
         }

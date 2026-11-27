@@ -43,6 +43,7 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
     static OptionItem OptionSwallowRange;
     static OptionItem OptionShowArrow;
     static OptionItem OptionHasImpostorVision;
+    static OptionItem OptionEraseBody;
 
     float EatCooldown => OptionEatCooldown.GetFloat();
 
@@ -58,7 +59,8 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
         EaterEatIncreaseRate,
         EaterSwallowRange,
         EaterSwallowCooldownIncreaseRate,
-        EaterMeetingReduceRate
+        EaterMeetingReduceRate,
+        EaterEraseBody
     }
 
     sealed class PendingSwallowInfo
@@ -117,6 +119,7 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
         OptionSwallowRange = FloatOptionItem.Create(RoleInfo, OptionName.EaterSwallowRange, new(1.25f, 5f, 0.25f), 1.75f, false)
         .SetValueFormat(OptionFormat.Multiplier);
         OptionShowArrow = BooleanOptionItem.Create(RoleInfo, "EaterShowArrow", true, false);
+        OptionEraseBody = BooleanOptionItem.Create(RoleInfo, OptionName.EaterEraseBody, true, false);
     }
 
     public override void ApplyGameOptions(IGameOptions opt)
@@ -148,6 +151,8 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
 
     public void OnCheckMurderAsKiller(MurderInfo info)
     {
+        // キル出来ない相手・守りで止まるキルは飲み込まない (飲み込んだ後の死は守りを通らないので、守りが働いても相手が死んでしまう)
+        if (!info.CanKill || info.CheckHasGuard()) return;
         var (killer, target) = info.AttemptTuple;
         info.DoKill = false;
         killer.SetKillCooldown(OptionSwallowTime.GetFloat(), ForceProtect: true);
@@ -175,9 +180,29 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
         if (deadBodyPositions.TryGetValue(info.AppearanceTarget.PlayerId, out var oldPos)) GetArrow.Remove(Player.PlayerId, oldPos);
         deadBodyPositions[info.AppearanceTarget.PlayerId] = pos;
         GetArrow.Add(Player.PlayerId, pos);
-        if (info.AppearanceKiller.GetCustomRole() is CustomRoles.Viper) Viperkilledplayers[info.AppearanceTarget.PlayerId] = Utils.ViperDissolveTime;
+        // ヴァイパーの死体は溶け切ると客の画面から消えるので、その頃に矢印を外す (OnFixedUpdate)
+        if (info.AppearanceKiller.Is(RoleTypes.Viper)) Viperkilledplayers[info.AppearanceTarget.PlayerId] = DissolveKill.ViperSeconds + DissolveKill.KillSettle;
 
         return OptionShowArrow.GetBool();
+    }
+
+    // 溶けるヴァイパーの死体の見積もりを数え下ろし、溶け切った物の矢印を外す
+    void TickDissolvingBodies()
+    {
+        List<byte> done = null;
+        foreach (var id in Viperkilledplayers.Keys.ToArray())
+        {
+            float left = Viperkilledplayers[id] - Time.fixedDeltaTime;
+            Viperkilledplayers[id] = left;
+            if (left <= 0f) (done ??= new()).Add(id);
+        }
+        if (done == null) return;
+        foreach (var id in done)
+        {
+            Viperkilledplayers.Remove(id);
+            if (deadBodyPositions.Remove(id, out var pos)) GetArrow.Remove(Player.PlayerId, pos);
+        }
+        Utils.NotifyRoles(SpecifySeer: Player);
     }
 
     public override void OnFixedUpdate(PlayerControl player)
@@ -188,6 +213,7 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
             eatCooldownTimer = EatCooldown;
         }
         if (!AmongUsClient.Instance.AmHost) return;
+        if (Viperkilledplayers.Count > 0) TickDissolvingBodies();
         if (GameStates.IsInTask && pendingSwallow != null)
         {
             if (!Player.IsAlive())
@@ -261,6 +287,8 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
         {
             reason = DontReportReason.Eat;
             EatenBodies.Add(target.PlayerId);
+            // 食べた死体そのものも消す (食べた印は、覆いの下の死体の通報を止めるために残す)
+            if (OptionEraseBody.GetBool()) Modules.DeadBodyEraser.Erase(target.PlayerId);
             deadBodyPositions.Where(poss => poss.Key == target.PlayerId).Do(poss => GetArrow.Remove(Player.PlayerId, poss.Value));
             eatOrSwallowCount++;
             Logger.Info($"食べた数：{eatOrSwallowCount}", "Eater");

@@ -211,7 +211,15 @@ public sealed class NiceHacker : RoleBase, IUsePetButton
     public override void AfterMeetingTasks()
     {
         history.Clear();
-        if (hackMode && Player.IsAlive()) SetMode(false);
+        if (hackMode && Player.IsAlive())
+        {
+            hackMode = false;
+            // 暗転対策の身代わりを戻すまでは送らない (先に送ると、客の追放の締めの頭数が崩れて暗転しうる)
+            AntiBlackout.RunAfterRevert(() =>
+            {
+                if (Player.GetRoleClass() == this && !hackMode) SetMode(false);
+            });
+        }
         else hackMode = false;
     }
 

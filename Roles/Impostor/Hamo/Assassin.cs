@@ -44,8 +44,8 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
         isDeadCache = new();
         GuessId = byte.MaxValue;
         cancallmeetingkill = OptionCanCallMeetingKill.GetBool();
-        CustomRoleManager.GameEndCountAdjustersOthers.Add(CountWaitingAssassins);
-        CustomRoleManager.GameEndByCountHoldersOthers.Add(IsMerlinCollected);
+        Holdings.Subscribe(CustomRoleManager.GameEndCountAdjustersOthers, CountWaitingAssassins);
+        Holdings.Subscribe(CustomRoleManager.GameEndByCountHoldersOthers, IsMerlinCollected);
     }
     /// <summary>マーリンを当てている間は人数で終わらない</summary>
     private static bool IsMerlinCollected() => assassin?.NowState is AssassinMeeting.Collected;
@@ -161,7 +161,7 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
     {
         if (AddRole is not null)
         {
-            AddRole?.OnDestroy();
+            DestroyInnerRole(AddRole);
         }
         AddRole = null;
         haverole = CustomRoles.NotAssigned;
@@ -478,6 +478,9 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
     public float CalculateKillCooldown() => AddRole is IImpostor impostor ? impostor.CalculateKillCooldown() : Options.DefaultKillCooldown;
     public bool CanUseSabotageButton() => AddRole is IImpostor impostor ? impostor.CanUseSabotageButton() : true;
     public bool CanUseImpostorVentButton() => AddRole is IImpostor impostor ? impostor.CanUseImpostorVentButton() : true;
+    // 中の役職のキル以外の押しも、守りより前に振り分ける。2 回押しが押しを取る時は中の役職へ回さない (キルの判定がそちらを先に振り分ける)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
+        => AddRole is not IImpostor impostor || (Player.CanDoubleTrigger() && CheckAction) || impostor.OnCheckMurderBeforeGuards(info);
     public void OnCheckMurderAsKiller(MurderInfo info) { if (AddRole is IImpostor impostor) impostor.OnCheckMurderAsKiller(info); }
     public void OnCheckMurderDontKill(MurderInfo info) { if (AddRole is IImpostor impostor) impostor.OnCheckMurderDontKill(info); }
     public void OnMurderPlayerAsKiller(MurderInfo info) { if (AddRole is IImpostor impostor) impostor.OnMurderPlayerAsKiller(info); }

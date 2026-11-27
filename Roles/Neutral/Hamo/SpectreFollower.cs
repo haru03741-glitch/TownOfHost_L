@@ -18,7 +18,7 @@ static class SpectreTeam
         var state = PlayerState.GetByPlayerId(me.PlayerId);
         if (state != null) state.DeathReason = CustomDeathReason.FollowingSuicide;
         me.SetRealKiller(spectre.Player);
-        me.RpcMurderPlayerV2(me);
+        Kill.Suicide(me);
         Logger.Info($"{me.GetNameWithRole()}: 妖狐の後を追った", "SpectreTeam");
     }
     /// <summary>会議で親が死んだ (追放・推察) 時は、会議明けに一緒に死ぬ</summary>
@@ -211,7 +211,7 @@ public sealed class SpectreImmoralist : RoleBase, IKillFlashSeeable, IUsePetButt
         if (!GameStates.IsInTask || GameStates.InMeetingWindow) return;
         var state = PlayerState.GetByPlayerId(Player.PlayerId);
         if (state != null) state.DeathReason = CustomDeathReason.Suicide;
-        Player.RpcMurderPlayerV2(Player);
+        Kill.Suicide(Player);
         Logger.Info($"{Player.GetNameWithRole()}: 自決", "SpectreImmoralist");
     }
 

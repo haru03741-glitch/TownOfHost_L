@@ -84,7 +84,8 @@ public sealed class GrudgeCharger : RoleBase, IImpostor
         chargeCount = 0;
         KillWaitPlayer = null;
     }
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // キルボタンはチャージに使う (キルでないので、守りより前に振り分ける)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
         var killer = info.AttemptKiller;
         chargeCount++;
@@ -97,7 +98,7 @@ public sealed class GrudgeCharger : RoleBase, IImpostor
         Utils.NotifyRoles(SpecifySeer: Player);
 
         killer.SetKillCooldown();
-        info.DoKill = false;
+        return false;
     }
     public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
     {

@@ -112,7 +112,7 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
 
     public override void Add()
     {
-        CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
+        Holdings.Subscribe(CustomRoleManager.LowerOthers, GetLowerTextOthers);
         BeamColorModeValue = OptionBeamColorMode.GetValue();
         BeamUnlockTaskCount = OptionBeamUnlockTask.GetInt();
         SelfDestructOnMiss = OptionSelfDestructOnMiss.GetBool();
@@ -125,9 +125,8 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
 
     public override void OnDestroy()
     {
-        TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(SheriffHadouHo));
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(SheriffHadouHo));
         beam?.End();
-        CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
     }
 
     public override void ApplyGameOptions(IGameOptions opt)
@@ -222,7 +221,7 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
         IsFiring = true;
         IsCharging = true;
         chargeTimer = 0f;
-        TownOfHostL.Modules.PlayerSpeed.Freeze(Player.PlayerId, nameof(SheriffHadouHo));
+        Holdings.Freeze(Player.PlayerId, nameof(SheriffHadouHo));
         Player.MarkDirtySettings();
         Utils.AllPlayerKillFlash();
         Player.SyncSettings();
@@ -246,7 +245,7 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
         chargeTimer = 0f;
         _prevCharging = false;
         _prevBeamMark = false;
-        TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(SheriffHadouHo));
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(SheriffHadouHo));
         Player.MarkDirtySettings();
         beam?.End();
     }
@@ -340,7 +339,7 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
             {
                 ShowBeamMark = false; _prevBeamMark = false;
                 beam?.End(); IsFiring = false;
-                TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(SheriffHadouHo));
+                Holdings.RemoveSpeed(Player.PlayerId, nameof(SheriffHadouHo));
                 Player.MarkDirtySettings();
                 Utils.NotifyRoles(); return;
             }
@@ -351,17 +350,17 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
 
             if (!HasHit && SelfDestructOnMiss)
             {
-                TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(SheriffHadouHo));
+                Holdings.RemoveSpeed(Player.PlayerId, nameof(SheriffHadouHo));
                 Player.MarkDirtySettings();
                 PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = CustomDeathReason.Suicide;
-                Player.RpcMurderPlayerV2(Player);
+                Kill.Suicide(Player);
                 IsFiring = false;
                 Utils.AddGameLog("SheriffHadouHo",
                     string.Format(Translator.GetString("SheriffHadouHoMissLog"), Player.ColoredName()));
                 return;
             }
 
-            TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(SheriffHadouHo));
+            Holdings.RemoveSpeed(Player.PlayerId, nameof(SheriffHadouHo));
             Player.MarkDirtySettings();
             nowcool = Cooldown;
             LastCooltime = (int)Cooldown;
@@ -417,7 +416,11 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
         if (!AmongUsClient.Instance.AmHost || !Player.IsAlive()) return;
         nowcool = Cooldown;
         LastCooltime = (int)Cooldown;
-        ApplyModeDesync(beamMode);
+        // 暗転対策の身代わりを戻すまでは送らない (先に送ると、客の追放の締めの頭数が崩れて暗転しうる)
+        AntiBlackout.RunAfterRevert(() =>
+        {
+            if (Player.GetRoleClass() == this) ApplyModeDesync(beamMode);
+        });
     }
 
     string BeamColor => (BeamColorMode)BeamColorModeValue == BeamColorMode.Yellow ? "#f8cd46" : "#00CFFF";

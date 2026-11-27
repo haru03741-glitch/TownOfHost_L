@@ -460,48 +460,29 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
 
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
-
+    // スタンド作成の押しとキルを持たない押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
-
-        var (killer, target) = info.AttemptTuple;
-
-
+        var target = info.AttemptTarget;
 
         if (!standCreated && !standHadDied)
-
         {
-
-            info.DoKill = false;
-
             CreateStand(target);
 
             _ = new LateTask(() => { if (Player.IsAlive()) Player.RpcResetAbilityCooldown(); },
-
                 0.1f, "StandMaster.ResetPhantomCD");
 
-            return;
-
+            return false;
         }
 
-
-
-        if (EnableKillAbility || (standHadDied && StandDeathGrantsKill))
-
-        {
-
-            killer.ResetKillCooldown();
-
-            killer.SetKillCooldown(ForceProtect: true);
-
-            return;
-
-        }
-
-
-
-        info.DoKill = false;
-
+        return EnableKillAbility || (standHadDied && StandDeathGrantsKill);
+    }
+    public void OnCheckMurderAsKiller(MurderInfo info)
+    {
+        // ここへ来るのはキルの押しだけ
+        var killer = info.AttemptKiller;
+        killer.ResetKillCooldown();
+        killer.SetKillCooldown(ForceProtect: true);
     }
 
 
@@ -753,11 +734,14 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
 
 
-        stand.RpcSetRoleDesync(RoleTypes.Crewmate, stand.GetClientId());
-
-        foreach (var imp in Main.AllAlivePlayerControls.Where(pc => pc.GetCustomRole().IsImpostor()))
-
-            imp.RpcSetRoleDesync(RoleTypes.Impostor, stand.GetClientId());
+        // 暗転対策の身代わりを戻すまでは送らない (先に送ると、客の追放の締めの頭数が崩れて暗転しうる)
+        AntiBlackout.RunAfterRevert(() =>
+        {
+            if (Player.GetRoleClass() != this || stand == null || !stand.IsAlive() || standPlayerId != stand.PlayerId) return;
+            stand.RpcSetRoleDesync(RoleTypes.Crewmate, stand.GetClientId());
+            foreach (var imp in Main.AllAlivePlayerControls.Where(pc => pc.GetCustomRole().IsImpostor()))
+                imp.RpcSetRoleDesync(RoleTypes.Impostor, stand.GetClientId());
+        });
 
 
 
@@ -1090,7 +1074,7 @@ public sealed class Stand : RoleBase, ILNKiller
 
         Player.SetRealKiller(owner ?? Player);
 
-        Player.RpcMurderPlayerV2(Player);
+        Kill.Suicide(Player);
 
     }
 

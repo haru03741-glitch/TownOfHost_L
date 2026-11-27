@@ -44,8 +44,8 @@ public sealed class MadConnecter : RoleBase, IKiller, IKillFlashSeeable, IDeadBo
         // 前の試合の値を持ち越さないよう毎回決める (どれも 0 なら 1)
         maxTask = count != 0 ? count : 1;
 
-        CustomRoleManager.MarkOthers.Add(GetMarkOthers);
-        CustomRoleManager.SuffixOthers.Add(GetSuffixOthers);
+        Holdings.Subscribe(CustomRoleManager.MarkOthers, GetMarkOthers);
+        Holdings.Subscribe(CustomRoleManager.SuffixOthers, GetSuffixOthers);
     }
 
     static OptionItem OptionCanVent;
@@ -127,14 +127,14 @@ public sealed class MadConnecter : RoleBase, IKiller, IKillFlashSeeable, IDeadBo
     private bool ConnectsImpostor(byte impostorId)
         => ConnectImpostorId.Contains(impostorId);
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // コネクトの押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
         // ガード持ちに関わらず能力発動する直接キル役職
         (var killer, var target) = info.AttemptTuple;
-        info.DoKill = false;
 
         // 視認前、またはインポスターでない、または既に繋がっている場合は関係ない
-        if (!KnowsImpostor() || !target.Is(CustomRoleTypes.Impostor) || ConnectsImpostor(target.PlayerId)) return;
+        if (!KnowsImpostor() || !target.Is(CustomRoleTypes.Impostor) || ConnectsImpostor(target.PlayerId)) return false;
 
         // インポスターとコネクト
         ConnectImpostorId.Add(target.PlayerId);
@@ -151,6 +151,7 @@ public sealed class MadConnecter : RoleBase, IKiller, IKillFlashSeeable, IDeadBo
 
         // 表示更新
         Utils.NotifyRoles();
+        return false;
     }
 
     // タスク完了ごとに呼ばれる

@@ -38,7 +38,7 @@ public sealed class JClient : RoleBase, IAdditionalWinner
         CanAlsoBeExposedToJackal = OptionCanAlsoBeExposedToJackal.GetBool();
         AfterJackalDead = (AfterJackalDeadMode)OptionAfterJackalDead.GetValue();
 
-        CustomRoleManager.MarkOthers.Add(GetMarkOthers);
+        Holdings.Subscribe(CustomRoleManager.MarkOthers, GetMarkOthers);
     }
 
     private static OptionItem OptionCanVent;

@@ -51,7 +51,8 @@ namespace TownOfHostL.Roles.Impostor
         }
         public void OnCheckMurderAsKiller(MurderInfo info)
         {
-            if (!info.CanKill) return; //キル出来ない相手には無効
+            // キル出来ない相手・守りで止まるキルは噛まない (噛んだ後の死は守りを通らないので、守りが働いても相手が死んでしまう)
+            if (!info.CanKill || info.CheckHasGuard()) return;
             var (killer, target) = info.AttemptTuple;
 
             if (target.Is(CustomRoles.Bait)) return;
@@ -85,6 +86,38 @@ namespace TownOfHostL.Roles.Impostor
                 }
             }
         }
+        public override void OnDestroy()
+        {
+            // 噛んだ人が死ぬ前に役職が替わった時は、ヴァンパイアの死後と同じく噛まれた本人の死として起こす
+            // (残すと、噛まれた人が死なないまま動く床にも乗れなくなる)。試合の終わりの後始末では起こさない
+            if (BittenPlayers.Count == 0 || !GameStates.IsInTask || GameEndChecker.EndingStarted) return;
+            var vampireId = Player.PlayerId;
+            var bitten = new List<byte>(BittenPlayers.Keys);
+            BittenPlayers.Clear();
+            // 役職の替わりの途中でキルを送らないよう、次のフレームで起こす
+            _ = new LateTask(() => KillBittenAfterRoleChange(vampireId, bitten), 0f, "Vampire.BittenAfterRoleChange");
+        }
+        private static void KillBittenAfterRoleChange(byte vampireId, List<byte> bitten)
+        {
+            if (!GameStates.IsInGame || GameEndChecker.EndingStarted) return;
+            // 会議の窓の間は客へ死を送らないので、明けるまで待つ (試合が閉じれば遅らせた処理ごと捨てられる)
+            if (GameStates.InMeetingWindow)
+            {
+                _ = new LateTask(() => KillBittenAfterRoleChange(vampireId, bitten), 1f, "Vampire.BittenAfterRoleChange");
+                return;
+            }
+            var vampire = Utils.GetPlayerById(vampireId);
+            foreach (var targetId in bitten)
+            {
+                var target = Utils.GetPlayerById(targetId);
+                if (target == null) continue;
+                PlayerState.GetByPlayerId(targetId).CanUseMovingPlatform = true;
+                if (!target.IsAlive()) continue;
+                PlayerState.GetByPlayerId(targetId).DeathReason = CustomDeathReason.Bite;
+                if (vampire != null) target.SetRealKiller(vampire);
+                Kill.Suicide(target);
+            }
+        }
         public override void OnReportDeadBody(PlayerControl _, NetworkedPlayerInfo __)
         {
             foreach (var targetId in BittenPlayers.Keys)
@@ -113,7 +146,7 @@ namespace TownOfHostL.Roles.Impostor
                 {
                     PlayerState.GetByPlayerId(target.PlayerId).DeathReason = CustomDeathReason.Bite;
                     target.SetRealKiller(vampire);
-                    target.RpcMurderPlayer(target);
+                    Kill.Suicide(target);
                     Logger.Info($"Vampireに噛まれている{target.name}を梯子の上かヴァンパイアの死後にキルしました。", "Vampire.KillBitten");
                 }
                 else

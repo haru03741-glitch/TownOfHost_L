@@ -63,6 +63,8 @@ public sealed class Evolver : RoleBase, IImpostor, IUsePhantomButton
 
         RemoveBodyAfterEvolve = OptionRemoveBody.GetBool();
 
+        EraseBody = OptionEraseBody.GetBool();
+
         EatRange = OptionEatRange.GetFloat();
 
         ReduceRate = OptionReduceRate.GetFloat();
@@ -94,7 +96,7 @@ public sealed class Evolver : RoleBase, IImpostor, IUsePhantomButton
 
         if (!RemoveBodyAfterEvolve)
 
-            CustomRoleManager.MarkOthers.Add(GetMarkOthers);
+            Holdings.SubscribeShared(CustomRoleManager.MarkOthers, GetMarkOthers);
 
     }
 
@@ -104,8 +106,6 @@ public sealed class Evolver : RoleBase, IImpostor, IUsePhantomButton
 
     {
 
-        // GetMarkOthers は static なので登録は 1 つに畳まれる。最後の 1 人が消える時だけ外す (途中で 1 人だけ役職が替わった時に、残りの印まで消さない)
-        if (!CustomRoleManager.AllActiveRoles.Values.Any(r => r is Evolver && r != this)) CustomRoleManager.MarkOthers.Remove(GetMarkOthers);
 
     }
 
@@ -115,7 +115,7 @@ public sealed class Evolver : RoleBase, IImpostor, IUsePhantomButton
 
     static OptionItem OptionHasOtherKillCooldown, OptionKillCooldown;
 
-    static OptionItem OptionPlayAnimation, OptionRemoveBody, OptionEatRange;
+    static OptionItem OptionPlayAnimation, OptionRemoveBody, OptionEraseBody, OptionEatRange;
 
     static OptionItem OptionReduceRate, OptionReduceRateMultiplier;
 
@@ -127,7 +127,7 @@ public sealed class Evolver : RoleBase, IImpostor, IUsePhantomButton
 
     static bool HasOtherVision, ReceiveVisionEffect, HasOtherKillCooldown;
 
-    static bool PlayAnimation, RemoveBodyAfterEvolve;
+    static bool PlayAnimation, RemoveBodyAfterEvolve, EraseBody;
 
     static float Vision, DefaultKillCooldown, EatRange;
 
@@ -145,7 +145,7 @@ public sealed class Evolver : RoleBase, IImpostor, IUsePhantomButton
 
         EvolverHasOtherKillCooldown, EvolverHasOtherKillRange, EvolverKillRange,
 
-        EvolverPlayAnimation, EvolverRemoveBody, EvolverEatRange,
+        EvolverPlayAnimation, EvolverRemoveBody, EvolverEraseBody, EvolverEatRange,
 
         EvolverReduceRate, EvolverReduceRateMultiplier,
 
@@ -188,6 +188,8 @@ public sealed class Evolver : RoleBase, IImpostor, IUsePhantomButton
         OptionPlayAnimation = BooleanOptionItem.Create(RoleInfo, OptionName.EvolverPlayAnimation, true, false);
 
         OptionRemoveBody = BooleanOptionItem.Create(RoleInfo, OptionName.EvolverRemoveBody, false, false);
+
+        OptionEraseBody = BooleanOptionItem.Create(RoleInfo, OptionName.EvolverEraseBody, true, false);
 
         OptionEatRange = FloatOptionItem.Create(RoleInfo, OptionName.EvolverEatRange, new(0.5f, 5f, 0.25f), 1.5f, false)
 
@@ -455,6 +457,9 @@ public sealed class Evolver : RoleBase, IImpostor, IUsePhantomButton
 
             if (EatenBodies.Contains(id)) continue;
 
+            // 溶け切ったヴァイパーの死体は、客の画面にはもう無い
+            if (DeadBodyState.IsDissolved(db)) continue;
+
             var pos = (Vector2)db.TruePosition;
 
             var dist = Vector2.Distance(myPos, pos);
@@ -507,7 +512,7 @@ public sealed class Evolver : RoleBase, IImpostor, IUsePhantomButton
 
     bool BodyStillExists(byte bodyId)
 
-        => Object.FindObjectsOfType<DeadBody>().Any(b => b.ParentId == bodyId)
+        => Object.FindObjectsOfType<DeadBody>().Any(b => b.ParentId == bodyId && DeadBodyState.IsPresent(b))
 
         && !EatenBodies.Contains(bodyId);
 
@@ -606,6 +611,10 @@ public sealed class Evolver : RoleBase, IImpostor, IUsePhantomButton
 
 
         EatenBodies.Add(bodyId);
+
+        // 食べた死体そのものも消す (食べた印は、覆いの下の死体の通報を止めるために残す)
+
+        if (EraseBody) DeadBodyEraser.Erase(bodyId);
 
 
 

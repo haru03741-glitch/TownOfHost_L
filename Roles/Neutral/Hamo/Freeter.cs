@@ -247,19 +247,19 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
 
 
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // 賭けの押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
 
     {
 
         var (freeter, target) = info.AttemptTuple;
 
-        info.DoKill = false;
 
 
 
-        if (BetTargetId != byte.MaxValue) return;
+        if (BetTargetId != byte.MaxValue) return false;
 
-        if (target.PlayerId == freeter.PlayerId) return;
+        if (target.PlayerId == freeter.PlayerId) return false;
 
 
 
@@ -299,6 +299,7 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
         freeter.ResetKillCooldown();
 
         freeter.SetKillCooldown(ForceProtect: true);
+        return false;
 
     }
 
@@ -451,8 +452,9 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
         AntiBlackout.RunAfterRevert(() =>
         {
             if (Player == null || !Player.IsAlive()) return;
-            state.SetDead(CustomDeathReason.Suicide);
-            Player.RpcMurderPlayerV2(Player);
+            // 死の確定はキルの後の処理に任せる (先に死を記録すると、キルの入口が死んでいるとみなして送らない)
+            state.DeathReason = CustomDeathReason.Suicide;
+            Kill.Suicide(Player);
             SendMessage(GetString("Freeter_UnemployedDeath"), Player.PlayerId);
         });
 

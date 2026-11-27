@@ -156,7 +156,8 @@ internal static class PresetStore
         try
         {
             var gm = GameOptionsManager.Instance;
-            var opts = gm?.CurrentGameOptions;
+            // 試合中の CurrentGameOptions はホスト自身の人ごとの設定 (暗転中は視界 0 など) に置き換わっているので、部屋の設定を書く
+            var opts = gm?.GameHostOptions ?? gm?.CurrentGameOptions;
             if (opts == null) return null;
             return Convert.ToBase64String(gm.gameOptionsFactory.ToBytes(opts, false));
         }
@@ -174,6 +175,7 @@ internal static class PresetStore
             if (opts == null || gm.CurrentGameOptions == null || opts.GameMode != gm.CurrentGameOptions.GameMode) return;
             // 人が入った時に本編のおすすめの値で上書きされないように
             VanillaGame.MarkCustom(opts);
+            VanillaGame.KeepRoomLanguage(opts, gm.CurrentGameOptions);
             // 保存されるのはホストの設定の方 (今の設定と別に持っている) なので両方を置き換える
             gm.GameHostOptions = opts;
             gm.CurrentGameOptions = opts;

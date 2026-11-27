@@ -305,7 +305,7 @@ public static class ChatCommandTable
         new("/kill")
         {
             Usage = "CommandUsage.PlayerId",
-            Host = c => { if (c.Args.Length > 1 && int.TryParse(c.Args[1], out int id)) Utils.GetPlayerById(id)?.RpcMurderPlayer(Utils.GetPlayerById(id)); },
+            Host = c => { if (c.Args.Length > 1 && int.TryParse(c.Args[1], out int id)) TownOfHostL.Roles.Core.Kill.Suicide(Utils.GetPlayerById(id)); },
         },
         // 読み上げの声はホストだけが変える
         new("/vo", "/voice") { Host = HostVoice },

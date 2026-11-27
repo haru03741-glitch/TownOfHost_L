@@ -351,24 +351,17 @@ public sealed class VillageChief : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
 
 
-    public void OnCheckMurderAsKiller(MurderInfo info)
-
+    // 任命の押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
+        if (!Is(info.AttemptKiller) || info.IsSuicide) return true;
 
-        if (!Is(info.AttemptKiller) || info.IsSuicide) return;
-
-
-
-        info.DoKill = false;
-
-        if (!appointMode || hasAppointed || nowcool > 0f) return;
-
-
+        if (!appointMode || hasAppointed || nowcool > 0f) return false;
 
         (_, var target) = info.AttemptTuple;
 
         DoAppoint(target);
-
+        return false;
     }
 
 
@@ -525,7 +518,7 @@ public sealed class VillageChief : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
             PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = CustomDeathReason.Suicide;
 
-            Player.RpcMurderPlayer(Player);
+            Kill.Suicide(Player);
 
 
             return;
@@ -582,7 +575,7 @@ public sealed class VillageChief : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
         );
 
-
+        SendAppointNotice(target);
 
 
         Utils.NotifyRoles();
@@ -590,6 +583,21 @@ public sealed class VillageChief : RoleBase, IKiller, ISelfVoter, IUsePetButton
     }
 
 
+
+    // 任命を設定の送信先へチャットで知らせる (前の役職は書かない)
+    private void SendAppointNotice(PlayerControl target)
+    {
+        var to = NotifyTargetOptions[NotifyTarget.GetValue()];
+        if (to == "None") return;
+        var text = "<color=#f5a623>" + string.Format(GetString("VillageChiefAppointNotice"), Player.ColoredName(), target.ColoredName()) + "</color>";
+        if (to == "Everyone")
+        {
+            SendMessage(text);
+            return;
+        }
+        if (to is "VillageChiefOnly" or "VillageChiefAndSheriff") SendMessage(text, Player.PlayerId);
+        if (to is "SheriffOnly" or "VillageChiefAndSheriff") SendMessage(text, target.PlayerId);
+    }
 
     private void ApplyModeDesync(bool toAppointMode)
 
@@ -683,7 +691,11 @@ public sealed class VillageChief : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
             spawnWaitTimer = 0f;
 
-            ApplyModeDesync(appointMode);
+            // 暗転対策の身代わりを戻すまでは送らない (先に送ると、客の追放の締めの頭数が崩れて暗転しうる)
+            AntiBlackout.RunAfterRevert(() =>
+            {
+                if (Player.GetRoleClass() == this) ApplyModeDesync(appointMode);
+            });
 
         }, Main.LagTime, "Reset-VillageChief");
 

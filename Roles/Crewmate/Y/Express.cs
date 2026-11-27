@@ -45,8 +45,8 @@ public sealed class Express : RoleBase
     public override void Add()
     {
         // スピード設定
-        TownOfHostL.Modules.PlayerSpeed.Override(Player.PlayerId, "Express", Speed);
+        Holdings.OverrideSpeed(Player.PlayerId, "Express", Speed);
     }
     // 役職が替わった時は速さを戻す
-    public override void OnDestroy() => TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, "Express");
+    public override void OnDestroy() => Holdings.RemoveSpeed(Player.PlayerId, "Express");
 }

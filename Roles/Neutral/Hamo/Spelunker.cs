@@ -479,7 +479,7 @@ public sealed class Spelunker : RoleBase, ISystemTypeUpdateHook
 
             if (!CanDieNow(checkMeeting: true)) return;
 
-            TownOfHostL.Modules.PlayerSpeed.Freeze(Player.PlayerId, nameof(Spelunker));
+            Holdings.Freeze(Player.PlayerId, nameof(Spelunker));
 
             Player.SyncSettings();
 
@@ -491,7 +491,7 @@ public sealed class Spelunker : RoleBase, ISystemTypeUpdateHook
 
         {
 
-            TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, nameof(Spelunker));
+            Holdings.RemoveSpeed(Player.PlayerId, nameof(Spelunker));
 
             Player.SyncSettings();
 
@@ -533,9 +533,10 @@ public sealed class Spelunker : RoleBase, ISystemTypeUpdateHook
 
 
 
-        state.SetDead(reason);
+        // 死因だけを先に書き、死の確定はキルの後の処理に任せる (先に死を記録すると、キルの入口が死んでいるとみなして送らない)
+        state.DeathReason = reason;
 
-        Player.RpcMurderPlayerV2(Player);
+        Kill.Suicide(Player);
 
     }
 

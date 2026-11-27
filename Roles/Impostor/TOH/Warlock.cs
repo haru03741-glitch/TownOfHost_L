@@ -61,27 +61,24 @@ public sealed class Warlock : RoleBase, IImpostor
         AURoleOptions.ShapeshifterCooldown = IsCursed ? 1f : Options.DefaultKillCooldown;
         AURoleOptions.ShapeshifterDuration = 1f;
     }
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // 呪いはキルでないので、守りより前に振り分ける (呪った人の守りを使わせない。守りは呪いで殺される人で通す)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
-        //自殺なら関係ない
-        if (info.IsSuicide || !info.CanKill) return;
+        //自殺なら関係ない・変身中は通常キル
+        if (info.IsSuicide || Shapeshifting) return true;
 
         var (killer, target) = info.AttemptTuple;
-        if (!Shapeshifting)
-        {//変身してない
-            if (!IsCursed)
-            {//まだ呪っていない
-                IsCursed = true;
-                CursedPlayer = target;
-                //呪える相手は一人だけなのでキルボタン無効化
-                killer.SetKillCooldown(255f);
-                // 変身のクールを 1 秒にした設定が届いてから数え直す
-                killer.RpcResetAbilityCooldown(sync: true);
-            }
-            //どちらにしてもキルは無効
-            info.DoKill = false;
+        if (!IsCursed)
+        {//まだ呪っていない
+            IsCursed = true;
+            CursedPlayer = target;
+            //呪える相手は一人だけなのでキルボタン無効化
+            killer.SetKillCooldown(255f);
+            // 変身のクールを 1 秒にした設定が届いてから数え直す
+            killer.RpcResetAbilityCooldown(sync: true);
         }
-        //変身中は通常キル
+        //どちらにしてもキルは無効
+        return false;
     }
     public override void OnShapeshift(PlayerControl target)
     {
@@ -107,9 +104,9 @@ public sealed class Warlock : RoleBase, IImpostor
                 }
                 var nearest = candidateList.OrderBy(c => c.Value).FirstOrDefault();
                 var killTarget = nearest.Key;
-                killTarget.SetRealKiller(Player);
-                Logger.Info($"{killTarget.GetNameWithRole()}was killed", "Warlock");
-                CursedPlayer.RpcMurderPlayer(killTarget);
+                // 呪いのキルも、殺される人の守りを通す
+                if (Kill.Attempt(CursedPlayer, killTarget, realKiller: Player))
+                    Logger.Info($"{killTarget.GetNameWithRole()}was killed", "Warlock");
                 Player.ResetKillCooldown();
                 CursedPlayer = null;
             }

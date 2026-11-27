@@ -89,9 +89,10 @@ public sealed class Charger : RoleBase, IImpostor
         killLimit = killCountAtStartGame;
         chargeCount = 0;
     }
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // キルボタンはチャージに使う (キルでないので、守りより前に振り分ける)。溜めた分の発射はふつうのキルとして守りを通す
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
-        if (isChargeShot) return;
+        if (isChargeShot) return true;
 
         var killer = info.AttemptKiller;
         chargeCount++;
@@ -104,7 +105,7 @@ public sealed class Charger : RoleBase, IImpostor
         Utils.NotifyRoles(SpecifySeer: Player);
         killer.SetKillCooldown(chargeKillCooldown);
 
-        info.DoKill = false;
+        return false;
     }
 
     public override void AfterMeetingTasks()

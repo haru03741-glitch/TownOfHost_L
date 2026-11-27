@@ -28,6 +28,14 @@ jobs:
         shell: pwsh
         run: ./tools/check-lang-keys.ps1
 
+      - name: Check role holdings
+        shell: pwsh
+        run: ./tools/check-role-holdings.ps1
+
+      - name: Check kill entry
+        shell: pwsh
+        run: ./tools/check-kill-entry.ps1
+
       - name: Build (Release)
         run: dotnet build TownOfHost.csproj -c Release -o build/
 

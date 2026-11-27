@@ -119,7 +119,7 @@ public sealed class FireWorks : RoleBase, IImpostor
                             {
                                 PlayerState.GetByPlayerId(fireTarget.PlayerId).DeathReason = CustomDeathReason.Bombed;
                                 fireTarget.SetRealKiller(Player);
-                                fireTarget.RpcMurderPlayer(fireTarget);
+                                Kill.Suicide(fireTarget);
                             }
                             // 範囲が重なる花火で同じ人を 2 回死なせない
                             break;
@@ -132,7 +132,7 @@ public sealed class FireWorks : RoleBase, IImpostor
                         if (totalAlive != 1)
                         {
                             MyState.DeathReason = CustomDeathReason.Misfire;
-                            Player.RpcMurderPlayer(Player);
+                            Kill.Suicide(Player);
                         }
                     }
                     Player.MarkDirtySettings();

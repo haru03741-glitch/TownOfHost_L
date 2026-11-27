@@ -66,14 +66,28 @@ public abstract class RoleBase : IDisposable
         var playerId = Player.PlayerId;
         try { OnDestroy(); }
         catch (Exception ex) { Logger.Exception(ex, $"{GetType().Name}.OnDestroy {playerId}"); }
+        holdings?.Release($"{GetType().Name} {playerId}");
         CustomRoleManager.AllActiveRoles.Remove(playerId);
         Player = null;
     }
 #pragma warning restore CA1816
+    private RoleHoldings holdings;
+    /// <summary>
+    /// この役職が自分や他の人・全体に掛けた物 (速さ・他の人向けの登録)。役職が外れる時に、OnDestroy の後でまとめて外れる
+    /// </summary>
+    protected RoleHoldings Holdings => holdings ??= new(this);
+    /// <summary>中の役職 (<see cref="CreateInnerRole"/> で作った物) を壊す。OnDestroy を呼び、中の役職の持ち物を外す</summary>
+    protected static void DestroyInnerRole(RoleBase inner)
+    {
+        if (inner == null) return;
+        try { inner.OnDestroy(); }
+        catch (Exception ex) { Logger.Exception(ex, $"{inner.GetType().Name}.OnDestroy (inner)"); }
+        inner.holdings?.Release($"{inner.GetType().Name} (inner)");
+    }
     /// <summary>
     /// この役職の中に持たせる別の役職を作る (アサシンが持つ役職など)。中の役職は AllActiveRoles に載せない
     /// (同じ人の役職は 1 つだけ)。全員の役職へ配るフックは、外の役職の override から中へ回す。
-    /// 壊す時は Dispose ではなく OnDestroy を呼ぶ (Dispose は外の役職の登録も消す)
+    /// 壊す時は Dispose ではなく <see cref="DestroyInnerRole"/> を呼ぶ (Dispose は外の役職の登録も消す)
     /// </summary>
     protected RoleBase CreateInnerRole(SimpleRoleInfo roleInfo)
     {
@@ -115,6 +129,13 @@ public abstract class RoleBase : IDisposable
     /// <param name="info">キル関係者情報</param>
     /// <returns>false:キル行為を起こさせない</returns>
     public virtual bool OnCheckMurderAsTarget(MurderInfo info) => true;
+    /// <summary>
+    /// キルボタンで押された時の、押し方 (キルか、キル以外の能力か) に依らない反応。キル以外の押しの振り分けより前に呼ぶ。
+    /// 守り (押しがキルの時だけ働く物) はここに書かず <see cref="OnCheckMurderAsTarget"/> に書く。
+    /// 押されたこと自体で起きる物 (シュレディンガーの猫の陣営の決まり方など) だけをここに書く
+    /// </summary>
+    /// <returns>false: 押しをそこで終える</returns>
+    public virtual bool OnCheckPressAsTarget(MurderInfo info) => true;
 
     /// <summary>
     /// ターゲットとしてのMurderPlayer処理

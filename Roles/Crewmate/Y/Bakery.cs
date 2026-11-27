@@ -32,10 +32,10 @@ public sealed class Bakery : RoleBase, ISoloWinner
         () => IsNeutral(player) ? HasTask.False : HasTask.True
     )
     {
-        CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(() => IsPoisoned());
+        Holdings.Subscribe(CustomRoleManager.EveryoneNeedsSeenNamesOthers, () => IsPoisoned());
         ChangeChances = OptionChangeChances.GetInt();
 
-        CustomRoleManager.MarkOthers.Add(GetMarkOthers);
+        Holdings.SubscribeShared(CustomRoleManager.MarkOthers, GetMarkOthers);
     }
     // 同じ役職が複数いる時に、1 人の作成や破棄で他の持ち主の分まで消さないよう、共有の一覧は試合の開始で空にし、破棄では自分の分だけ外す
     [TownOfHostL.Attributes.GameModuleInitializer]
@@ -43,8 +43,6 @@ public sealed class Bakery : RoleBase, ISoloWinner
     public override void OnDestroy()
     {
         nBakeries.Remove(this);
-        // GetMarkOthers は static なので登録は 1 つに畳まれる。最後の 1 人が消える時だけ外す
-        if (!CustomRoleManager.AllActiveRoles.Values.Any(r => r is Bakery && r != this)) CustomRoleManager.MarkOthers.Remove(GetMarkOthers);
     }
 
     public static OptionItem OptionChangeChances;

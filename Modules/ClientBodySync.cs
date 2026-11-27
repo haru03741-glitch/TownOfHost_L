@@ -43,6 +43,10 @@ namespace TownOfHostL.Modules;
 /// 合わない客は合うまで待ち、その間は覆い (<see cref="DeadBodyEraser"/>) のまま。
 /// 送った客からは覆いを外す。会議の始まりが開いている地図とタスクの窓を閉じる点は残る。
 /// </para>
+/// <para>
+/// 会議の始まりを処理した客は、自分を席へ動かす SnapTo を配る (同じ包みの位置の戻しで、その位置自体は捨てられる)。
+/// ホストの受け口でこれを見て届いた印にし、来なければ合わせ直し待ちへ戻す (2026-11-27 実機: 送ってから 0.13〜0.30 秒で届いた)。
+/// </para>
 /// </summary>
 public static class ClientBodySync
 {
@@ -121,8 +125,15 @@ public static class ClientBodySync
         public float KillersUntil;
     }
 
+    // 偽の会議を受けた客は、自分の体を会議の席へ動かす SnapTo を全員へ配る。送ってからこれだけ待っても来なければ、届かなかったとみなす
+    private const float AckTimeout = 3f;
+
     // 合わせ直しを待っている客 (clientId)
     private static readonly HashSet<int> pending = new();
+    // 包みを送って、届いた印 (本人の SnapTo) を待っている人: 本人の NetTransform の netId → (clientId, PlayerId, 送った時刻)
+    private static readonly Dictionary<uint, (int ClientId, byte PlayerId, float SentAt)> awaitingAck = new();
+    // 届いた印が来ずに 1 度送り直した客 (clientId)。続けて来なければ (止まっている客など)、送り直さずに覆いへ回す
+    private static readonly HashSet<int> ackRetried = new();
     // 出し終えたら消す CNO と、待ちの期限
     private static readonly List<(CustomNetObject obj, float deadline)> retiring = new();
     private static readonly Dictionary<byte, float> ziplineUntil = new();
@@ -136,6 +147,8 @@ public static class ClientBodySync
     public static void Init()
     {
         pending.Clear();
+        awaitingAck.Clear();
+        ackRetried.Clear();
         retiring.Clear();
         ziplineUntil.Clear();
         round = null;
@@ -151,14 +164,34 @@ public static class ClientBodySync
            && GameOptionsManager.Instance != null && GameOptionsManager.Instance.currentGameMode is GameModes.Normal or GameModes.NormalFools;
 
     /// <summary>
+    /// 今消した死体を、本編の客の画面で合わせ直す見込みがあるか。あれば覆いは先に出さず、
+    /// 合わせ直せなかった客にだけ後から出す (<see cref="DeadBodyEraser.CoverUnsynced"/>)
+    /// </summary>
+    public static bool WillSync => Enabled && GameStates.IsInGame && ShipStatus.Instance != null;
+
+    /// <summary>
+    /// 待っても画面の死体を合わせ直せない客か。役職や生き返りなど、試合の途中ですぐには変わらない理由だけを見る
+    /// (ベントの中・変身の途中などの、しばらく待てば送れる理由は入れない)
+    /// </summary>
+    public static bool CannotSync(PlayerControl pc)
+    {
+        if (pc == null || pc.Data == null) return true;
+        if (Revive.WasRevived(pc.PlayerId) || TempGhost.IsGhost(pc) || SeekerBody.IsMasked(pc.PlayerId)) return true;
+        if (!pc.IsAlive())
+            // 死んだばかりで幽霊の役職がまだ付いていない人は、付けば送れるので待つ
+            return pc.roleAssigned || pc.Data.Role?.Role is RoleTypes.GuardianAngel;
+        return RoleBlock(pc, RoleView.Living(pc, pc)) == "role";
+    }
+
+    /// <summary>
     /// ホストの手元の死体を消した・動かした後に呼ぶ。本編の客を、画面の死体の合わせ直し待ちに入れる。
     /// 合わせ直せた客には <see cref="DeadBodyEraser.HideCoversFrom"/> と <see cref="DeadBodyMover.HideCoversFrom"/> で覆いを外す。
     /// </summary>
-    public static void Request()
+    public static void Request(HashSet<int> skip = null)
     {
         if (!Enabled || !GameStates.IsInGame || ShipStatus.Instance == null) return;
         foreach (var pc in Main.AllPlayerControls)
-            if (IsVanillaClient(pc)) pending.Add(pc.OwnerId);
+            if (IsVanillaClient(pc) && (skip == null || !skip.Contains(pc.OwnerId))) pending.Add(pc.OwnerId);
         if (pending.Count == 0) return;
         nextCheckAt = Mathf.Max(nextCheckAt, Time.realtimeSinceStartup + StartDelay);
         if (ticking) return;
@@ -170,6 +203,8 @@ public static class ClientBodySync
     public static void OnReportDeadBody()
     {
         pending.Clear();
+        awaitingAck.Clear();
+        ackRetried.Clear();
         if (round != null) EndRound(Time.realtimeSinceStartup, RoundGap);
     }
 
@@ -190,7 +225,7 @@ public static class ClientBodySync
             if (!ticking) return;
             try { Step(Time.realtimeSinceStartup); }
             catch (System.Exception ex) { Logger.Exception(ex, Tag); }
-            if (pending.Count == 0 && round == null && retiring.Count == 0)
+            if (pending.Count == 0 && round == null && retiring.Count == 0 && awaitingAck.Count == 0)
             {
                 ticking = false;
                 return;
@@ -201,6 +236,7 @@ public static class ClientBodySync
     private static void Step(float now)
     {
         StepRetiring(now);
+        StepAcks(now);
         if (round != null)
         {
             StepRound(now);
@@ -208,7 +244,14 @@ public static class ClientBodySync
         }
         if (pending.Count == 0 || now < nextCheckAt) return;
         nextCheckAt = now + CheckInterval;
-        if (!Enabled) { pending.Clear(); return; }
+        if (!Enabled) { pending.Clear(); DeadBodyEraser.CoverUnsynced(null, force: true); return; }
+        // キルの死体を溶かしている間は、通報者の CNO も覆いも出さない (DissolveKill.IsBusy)
+        if (DissolveKill.IsBusy)
+        {
+            if (lastWhy != "dissolving") Logger.Info("死体の合わせ直しを、溶かしている死体が溶け切るまで待ちます", Tag);
+            lastWhy = "dissolving";
+            return;
+        }
         string why = GlobalBlock(now);
         List<Keep> keep = null;
         if (why == null)
@@ -221,21 +264,24 @@ public static class ClientBodySync
         if (why == null)
         {
             var sb = new System.Text.StringBuilder();
-            bool any = false;
+            HashSet<int> ready = null;
             foreach (var pc in Targets())
             {
                 string block = ClientBlock(pc, keep);
-                if (block == null) any = true;
+                if (block == null) (ready ??= new()).Add(pc.OwnerId);
                 else sb.Append(pc.PlayerId).Append(':').Append(block).Append(' ');
             }
-            if (any)
+            if (ready != null)
             {
                 lastWhy = null;
+                // 待たせている客には覆いを出す (待ちの上限を過ぎた死体だけ)
+                DeadBodyEraser.CoverUnsynced(ready);
                 StartRound(keep, now);
                 return;
             }
             why = sb.ToString();
         }
+        DeadBodyEraser.CoverUnsynced(null);
         // 待っている理由は、変わった時だけ記録する
         if (why == lastWhy) return;
         lastWhy = why;
@@ -272,14 +318,17 @@ public static class ClientBodySync
         blocked = false;
         var list = new List<Keep>();
         Vector3 offset = PlayerControl.LocalPlayer.KillAnimations[0].BodyOffset;
-        foreach (var body in Object.FindObjectsOfType<DeadBody>())
+        // ホストの手元で隠した死体もキルの演出が終わるまでは見る (キルと同じ時に消すと、客の手元ではまだ演出の途中)
+        foreach (var body in Object.FindObjectsOfType<DeadBody>(true))
         {
-            if (body == null || !body.gameObject.activeSelf) continue;
+            if (body == null) continue;
             if (!body.enabled) bodyBusyAt = now;
+            if (!body.gameObject.activeSelf) continue;
             var viper = body.TryCast<ViperDeadBody>();
-            if (viper != null && viper.victimDissolving)
+            if (viper != null && viper.maxDissolveTime > 0f)
             {
-                // 溶けている途中の死体は、作り直すと溶けない死体になる。溶け切った死体は客の画面にも無いので残さない
+                // 溶ける死体は、作り直すと溶けない死体になる。溶け切るまで待つ。
+                // 溶け切った死体は客の画面にも無いので残さない (本編は溶け切ると victimDissolving を下ろすが、死体の物は残す)
                 if (viper.dissolveCurrentTime > 0f) blocked = true;
                 continue;
             }
@@ -519,6 +568,7 @@ public static class ClientBodySync
         var sids = new Dictionary<uint, ushort>();
         ushort[] parentSids = null;
         int sent = 0;
+        var synced = new List<PlayerControl>();
         foreach (var pc in Targets())
         {
             if (ClientBlock(pc, keep) != null) continue;
@@ -605,14 +655,111 @@ public static class ClientBodySync
             for (int i = 0; i < snaps + keep.Count; i++) SnapToBudget.Record();
             if (current != null) options.NoteSent(current);
 
+            synced.Add(pc);
             pending.Remove(pc.OwnerId);
+            awaitingAck[pc.NetTransform.NetId] = (pc.OwnerId, pc.PlayerId, now);
             DeadBodyEraser.HideCoversFrom(pc.OwnerId);
             DeadBodyMover.HideCoversFrom(pc.OwnerId);
             sent++;
             Logger.Info($"{pc.PlayerId} の画面の死体を合わせ直しました ({(dead ? $"死者・{RoleView.Ghost(pc, pc)}" : role.ToString())}・能力のクール {ability:0.0}・残す死体 {keep.Count}・位置 {snaps}・{length} バイト)", Tag);
         }
         if (sent == 0) Logger.Info("死体の合わせ直しは、送れる客がいなかったので次へ回します", Tag);
+        else SendSeatFix(synced);
         return sent;
+    }
+
+    /// <summary>
+    /// 会議の始まりを受けた客は、自分の体を会議の席へ動かし、その位置を全員へ配る。送った客とホストは同じ包みの通し番号で
+    /// その位置を捨てるが、送らなかった客 (待っている客・同じ版の客) の画面では席に立ったまま残る。
+    /// その客たちへ、送った人の本当の位置を、本人へ送ったのと同じ通し番号で送る (後から届く席の位置は古い番号で捨てられる)
+    /// </summary>
+    private static void SendSeatFix(List<PlayerControl> synced)
+    {
+        var client = AmongUsClient.Instance;
+        var syncedClients = new HashSet<int>();
+        foreach (var pc in synced) syncedClients.Add(pc.OwnerId);
+        int fixedClients = 0;
+        foreach (var target in Main.AllPlayerControls)
+        {
+            if (!target || target.AmOwner || CustomNetObject.Is(target) || target.Data == null || target.Data.Disconnected) continue;
+            if (target.OwnerId < 0 || syncedClients.Contains(target.OwnerId)) continue;
+            if (!SnapToBudget.HasHeadroom(synced.Count + BudgetReserve))
+            {
+                Logger.Warn("SnapTo の財布が足りないので、会議の席の位置の戻しを送れませんでした", Tag);
+                break;
+            }
+            var m = MessageWriter.Get(SendOption.Reliable);
+            try
+            {
+                m.StartMessage(6);
+                m.Write(client.GameId);
+                m.WritePacked(target.OwnerId);
+                foreach (var pc in synced)
+                {
+                    if (!pc) continue;
+                    var nt = pc.NetTransform;
+                    WriteSnapTo(m, nt, pc.transform.position, nt.lastSequenceId);
+                }
+                m.EndMessage();
+                client.SendOrDisconnect(m);
+            }
+            finally
+            {
+                m.Recycle();
+            }
+            for (int i = 0; i < synced.Count; i++) SnapToBudget.Record();
+            fixedClients++;
+        }
+        if (fixedClients > 0) Logger.Info($"合わせ直さなかった {fixedClients} 人の画面へ、会議の席の位置の戻しを送りました ({synced.Count} 人分)", Tag);
+    }
+
+    // 届いた印が来ないまま待ちすぎた人は、包みが届かなかったか途中で捨てられたとみなし、合わせ直し待ちへ戻す
+    // (外した覆いは、待つ間に CoverUnsynced が出し直す)
+    private static void StepAcks(float now)
+    {
+        if (awaitingAck.Count == 0) return;
+        List<uint> expired = null;
+        foreach (var (netId, a) in awaitingAck)
+            if (now - a.SentAt > AckTimeout) (expired ??= new()).Add(netId);
+        if (expired == null) return;
+        foreach (var netId in expired)
+        {
+            var a = awaitingAck[netId];
+            awaitingAck.Remove(netId);
+            var pc = Utils.GetPlayerById(a.PlayerId);
+            if (pc == null || pc.OwnerId != a.ClientId || !IsVanillaClient(pc))
+            {
+                Logger.Info($"{a.PlayerId} への死体の合わせ直しは届いた印が来ないまま、抜けたか握手したので捨てます", Tag);
+                continue;
+            }
+            DeadBodyEraser.ForgetSynced(a.ClientId);
+            if (ackRetried.Add(a.ClientId))
+            {
+                Logger.Warn($"{a.PlayerId} への死体の合わせ直しが届いた印が {AckTimeout:0} 秒たっても来ないので、合わせ直し待ちへ戻します", Tag);
+                pending.Add(a.ClientId);
+            }
+            // 続けて来ない客は、止まっていて後でまとめて受け取る見込みがある。送り直しを積まず、この会議までは覆いで隠す
+            else
+            {
+                Logger.Warn($"{a.PlayerId} への死体の合わせ直しが続けて届かないので、送り直さずに覆いで隠します", Tag);
+                DeadBodyEraser.CoverUnsynced(null, force: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// ホストが客から SnapTo を受けた時 (番号で捨てる前)。合わせ直しを送った本人からなら、偽の会議まで処理された印として記録する
+    /// </summary>
+    [HarmonyLib.HarmonyPatch(typeof(CustomNetworkTransform), nameof(CustomNetworkTransform.HandleRpc))]
+    private static class AckPatch
+    {
+        public static void Prefix(CustomNetworkTransform __instance, byte callId)
+        {
+            if (callId != (byte)RpcCalls.SnapTo || awaitingAck.Count == 0 || !__instance) return;
+            if (!awaitingAck.Remove(__instance.NetId, out var a)) return;
+            ackRetried.Remove(a.ClientId);
+            Logger.Info($"{a.PlayerId} への死体の合わせ直しが届きました ({Time.realtimeSinceStartup - a.SentAt:0.00} 秒)", Tag);
+        }
     }
 
     // 死体の持ち主へ送る通し番号。同じ人の死体が 2 つあれば、2 つ目は 1 つ進める

@@ -142,7 +142,7 @@ public sealed class Ballooner : RoleBase, IImpostor, IUsePhantomButton
         if (!target.IsAlive()) return;
         PlayerState.GetByPlayerId(target.PlayerId).DeathReason = CustomDeathReason.Bombed;
         target.SetRealKiller(Player);
-        target.RpcMurderPlayerV2(target);
+        Kill.Suicide(target);
     }
 
     internal static bool IsInExplosionRange(PlayerControl source, PlayerControl target, float radius)

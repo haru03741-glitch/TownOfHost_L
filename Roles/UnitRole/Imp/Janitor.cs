@@ -35,8 +35,8 @@ public sealed class Janitor : RoleBase, IImpostor
         IsAliveAfterGodfatherDead = OptionJanitorIsAliveAfterGodfatherDead.GetBool();
         JanitorCanKill = OptionJanitorCanKill.GetBool();
         JanitorKillCooldown = OptionJanitorKillCooldown.GetFloat();
-        CustomRoleManager.OnPlayerDeadOthers.Add(OnPlayerDead);
-        CustomRoleManager.OnPlayerRevivedOthers.Add(OnPlayerRevived);
+        Holdings.Subscribe(CustomRoleManager.OnPlayerDeadOthers, OnPlayerDead);
+        Holdings.Subscribe(CustomRoleManager.OnPlayerRevivedOthers, OnPlayerRevived);
     }
     /// <summary>ジャニターが生き返ったら後追いの旗を戻し、ゴッドファーザーが生き返ったら掃除に戻す</summary>
     private static void OnPlayerRevived(byte playerId)
@@ -93,18 +93,18 @@ public sealed class Janitor : RoleBase, IImpostor
     }
 
     public float CalculateKillCooldown() => canNormalKill ? JanitorKillCooldown : CleanCooldown;
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // 掃除の押しはキルでないので、守りより前に振り分ける (押した相手の守りを使わせない)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
         // ゴッドファーザー死亡後、設定により通常キル可
-        if (canNormalKill) return;
+        if (canNormalKill) return true;
 
         // Janitorは必ずキルを防ぐ
-        info.DoKill = false;
 
         var (killer, target) = info.AttemptTuple;
 
         // ターゲットがいない場合、ターゲットが対象じゃない場合は処理しない
-        if (JanitorTarget.Count <= 0 || !JanitorTarget.Contains(target.PlayerId)) return;
+        if (JanitorTarget.Count <= 0 || !JanitorTarget.Contains(target.PlayerId)) return false;
 
         // ターゲットの状態を取得
         var targetPlayerState = PlayerState.GetByPlayerId(target.PlayerId);
@@ -127,6 +127,7 @@ public sealed class Janitor : RoleBase, IImpostor
 
         // バニラの表示更新:ターゲットの名前色、マーク表示更新の為全員をまわす
         Utils.NotifyRoles(ForceLoop: true);
+        return false;
     }
 
     public static void KillSuicide(byte deadTargetId)
@@ -138,7 +139,7 @@ public sealed class Janitor : RoleBase, IImpostor
         isSuiside = true;
         PlayerState.GetByPlayerId(janitor.PlayerId).DeathReason = CustomDeathReason.FollowingSuicide;
         janitor.SetRealKiller(godfather);
-        janitor.RpcMurderPlayer(janitor);
+        Kill.Suicide(janitor);
         Logger.Info($"{janitor.GetNameWithRole()}の後追い:{godfather.GetNameWithRole()}", "KillFollowingSuicide");
     }
     public static void VoteSuicide(byte deadTargetId)

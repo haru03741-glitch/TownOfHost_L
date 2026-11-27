@@ -130,7 +130,7 @@ public sealed class Tuna : RoleBase
             if (stopTimer >= StopTime)
             {
                 PlayerState.GetByPlayerId(player.PlayerId).DeathReason = CustomDeathReason.Suicide;
-                player.RpcMurderPlayerV2(player);
+                Kill.Suicide(player);
                 stopTimer = 0f;
                 isStopped = false;
             }

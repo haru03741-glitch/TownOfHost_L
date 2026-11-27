@@ -108,6 +108,11 @@ public static partial class AntiBlackout
     private static bool revertPending;
     public static bool IsRevertPending => revertPending;
 
+    // 追放者を伏せて票を締めた時の追放者。客の画面では追放の締めまで (GameData が届くまで) 生きているので、
+    // キル役なら本人・仲間・Impostor と送られた画面で生存インポスターに数えられ、追放の締めで暗転しうる。
+    // 戻しまでの間は全員の画面で生きたクルーに見せ、死も戻しの後で送る (追放者がキル役かどうかで判定が変わらないようにする)
+    private static int hiddenExiledId = -1;
+
     public static void SetRoleChange(PlayerControl killer = null, bool fillCrew = false)
     {
         if (CustomWinnerHolder.WinnerTeam != CustomWinner.Default) return;
@@ -127,6 +132,20 @@ public static partial class AntiBlackout
 
         Logger.Info($"SetDummyImpostor type: {recognizeType}, count:{list.Count}", "AntiBlackout");
         var deadPlayers = Main.AllDeadPlayerControls.Where(x => !x.Data.Disconnected).ToList();
+        PlayerControl hiddenExiled = null;
+        if (fillCrew)
+        {
+            hiddenExiledId = -1;
+            if (OverrideExiledPlayer && ExiledPlayerId >= 0)
+            {
+                var ex = Utils.GetPlayerById((byte)ExiledPlayerId);
+                if (ex != null && ex.IsAlive() && !ex.Data.Disconnected)
+                {
+                    hiddenExiled = ex;
+                    hiddenExiledId = ex.PlayerId;
+                }
+            }
+        }
         var exiledForFill = fillCrew ? GetExiledForFill(list) : null;
 
         foreach (var pc in Main.AllPlayerControls.Where(x => !x.Data.Disconnected))
@@ -137,7 +156,8 @@ public static partial class AntiBlackout
             // その画面には生存インポスターがいない。追放の演出の締めでクルーの勝ちとみなして暗転する (2026-11-10 実機で確認)
             bool desync = RoleView.IsDesync(pc);
             // 身代わりも死者の幽霊化も送らない (自分のキル役で生存インポスターが足りる)。頭数が並ぶ時の手当て (下の BalanceView) だけ送る
-            bool selfKiller = pc.IsAlive() && desync && RoleView.IsKillerRole(RoleView.Living(pc, pc));
+            // 伏せた追放者は、追放の締めで死が届くと自分のキル役で足りなくなるので、自分がキル役でも身代わりを送る
+            bool selfKiller = pc.IsAlive() && !(hiddenExiled != null && pc.PlayerId == hiddenExiled.PlayerId) && desync && RoleView.IsKillerRole(RoleView.Living(pc, pc));
             // 身代わりのインポスターの外に、生きたキル役が既に見えている画面 (役職の能力でキル役になった本人・その仲間) には身代わりを足さない。
             // 足すとその画面の生存インポスターが増え、追放の演出の締めで試合が終わったとみなして暗転する (2026-11-09 実機で確認)。
             // 死者を幽霊のクルーにする分は送る (会議中は全員を生きているとして送るので、死んだキル役の ImpostorGhost も生存インポスターに数えられる)
@@ -178,6 +198,15 @@ public static partial class AntiBlackout
                     if (!desyncDummies.TryGetValue(clientId, out var sent)) desyncDummies[clientId] = sent = (pc, new());
                     if (!sent.dummies.Contains(dummy)) sent.dummies.Add(dummy);
                 }
+            }
+            if (hiddenExiled != null)
+            {
+                sender.StartRpc(hiddenExiled.NetId, RpcCalls.SetRole)
+                    .Write((ushort)RoleTypes.Crewmate)
+                    .Write(true)
+                    .EndRpc();
+                count++;
+                if (hiddenExiled.PlayerId == pc.PlayerId) AbilityCooldownClock.Clear(pc.PlayerId);
             }
             int lacking = 0;
             if (fillCrew)
@@ -281,7 +310,8 @@ public static partial class AntiBlackout
     /// 会議明けの役職の配り直しは、この組を飛ばす (演出の締めより前に戻すと、客の画面の生存インポスターが 0 人になって暗転する)
     /// </summary>
     public static bool IsPendingDummy(PlayerControl dummy, int viewerClientId)
-        => desyncDummies.TryGetValue(viewerClientId, out var sent) && sent.dummies.Contains(dummy);
+        => (revertPending && dummy != null && dummy.PlayerId == hiddenExiledId)
+        || (desyncDummies.TryGetValue(viewerClientId, out var sent) && sent.dummies.Contains(dummy));
 
     /// <summary>身代わりのインポスターとして送った人を、見え方の表 (RoleView) どおりに戻す</summary>
     private static void RevertDesyncDummies()
@@ -305,7 +335,13 @@ public static partial class AntiBlackout
                     count++;
                     if (dummy.PlayerId == seer.PlayerId) AbilityCooldownClock.Clear(seer.PlayerId);
                 }
-                if (count > 0) { sender.EndMessage(); sender.SendMessage(); }
+                if (count > 0)
+                {
+                    sender.EndMessage();
+                    sender.SendMessage();
+                    // SetRole の直後に会議が届くと本編の客の会議の画面が壊れるので、落ち着くまで通報を預かる
+                    Revive.BeginSettling();
+                }
                 else sender.stream.Recycle();
                 logger.Info($"身代わりを見え方へ戻した: {seer.name} の画面 ({count} 人)");
             }
@@ -373,6 +409,7 @@ public static partial class AntiBlackout
     private static void RevertFilledCrewCore()
     {
         revertPending = false;
+        hiddenExiledId = -1;
         RevertDesyncDummies();
         if (deferredDead.Count > 0)
         {
@@ -380,7 +417,8 @@ public static partial class AntiBlackout
             {
                 if (info == null || !deferredDead.TryGetValue(info.PlayerId, out var val)) continue;
                 info.IsDead = val.isDead;
-                info.Disconnected = val.Disconnected;
+                // 控えを取った後 (待たせている間) に切断した人を、つながっているように戻さない
+                info.Disconnected = val.Disconnected || info.Disconnected;
             }
             deferredDead.Clear();
             SendGameData();
@@ -413,6 +451,7 @@ public static partial class AntiBlackout
             {
                 sender.EndMessage();
                 sender.SendMessage();
+                Revive.BeginSettling();
             }
             else
             {
@@ -431,7 +470,7 @@ public static partial class AntiBlackout
             if (info == null) continue;
             if (isDeadCache.TryGetValue(info.PlayerId, out var val))
             {
-                if (filledIds.Contains(info.PlayerId))
+                if (filledIds.Contains(info.PlayerId) || info.PlayerId == hiddenExiledId)
                 {
                     deferredDead[info.PlayerId] = val;
                     continue;
@@ -480,10 +519,12 @@ public static partial class AntiBlackout
         isDeadCache.Clear();
         IsCached = false;
         recognizeType = RecognizeType.Impostor;
+        ExiledPlayerId = -1;
         filledCrew.Clear();
         deferredDead.Clear();
         desyncDummies.Clear();
         afterRevert.Clear();
         revertPending = false;
+        hiddenExiledId = -1;
     }
 }
