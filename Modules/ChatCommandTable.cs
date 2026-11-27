@@ -330,6 +330,14 @@ public static class ChatCommandTable
             Host = c => Modules.MeetingTimeManager.UseRoleAbility(c.Player),
             Remote = c => Modules.MeetingTimeManager.UseRoleAbility(c.Player),
         },
+        new("/psy", "/psychic")
+        {
+            // 打った人が分かると霊媒師だと割れるので、他の人のチャット欄から押し出す
+            Hidden = true,
+            Usage = "CommandUsage.PlayerId",
+            Host = Roles.Crewmate.Psychic.MeetingCommand,
+            Remote = Roles.Crewmate.Psychic.MeetingCommand,
+        },
         new("/tc", "/teamchat")
         {
             Usage = "CommandUsage.TeamChat",

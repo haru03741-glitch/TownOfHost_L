@@ -1118,6 +1118,16 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "FortuneTellerConfirmCamp","Make it a Camp Confirmation, Not Role",役職でなく陣営確認にする,
 "FortuneTellerKillerOnly","Check only Killer",キルできる役職のみ確認できる,
 "PsychicMaxCheckRole","Role of The Deceased Can Be Checked Count","霊媒できる回数",
+"PsychicMeetingCommand","Can use /psy (ID) in meetings","会議中にコマンド (/psy ID) で霊媒できる",
+"PsychicCmd.Disabled","The Psychic cannot use commands in this room.","この部屋では霊媒師はコマンドを使えません。",
+"PsychicCmd.NotNow","You can use this only while alive during a meeting.","会議中に生きている間だけ使えます。",
+"PsychicCmd.CantUse","You cannot use your ability now (not enough tasks or no uses left).","今は霊媒できません (タスクが足りないか、回数が残っていません)。",
+"PsychicCmd.Usage","Usage: /psy (ID of a dead player)","使い方: /psy (死んだ人の ID)",
+"PsychicCmd.NotDead","You can only check dead players.","霊媒できるのは死んだ人だけです。",
+"PsychicCmd.Already","You have already checked that player.","その人はもう霊媒しました。",
+"PsychicCmd.NotKiller","Not a killer","キル役職ではない",
+"PsychicCmd.Result","{0}: {1}\n(Uses left: {2})","{0}: {1}\n(残り {2} 回)",
+"CmdHelp.psy","Psychic: check a dead player's role in a meeting","霊媒師: 会議中に死んだ人の役職を見る",
 "LoyalDoggyMasterSeeMasterMark","Master Finds Himself Master","ご主人は自身がご主人だと分かる",
 "LoyalDoggyIgnoreTaskAfterDeadMaster","After the Death of Master, Task Be Lost","ご主人死亡後はタスクが無くなる",
 "LoyalDoggyIsInfoPoor","After the Death of Master, Unable to Use Devices such as Admin,Camera,etc.","ご主人死亡後、アドミン・カメラ等の機器が使用できない",
@@ -2068,6 +2078,7 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "Tuna","Tuna","マグロ"
 "Onmyoji","Onmyoji","陰陽師"
 "Zombie","Zombie","ゾンビ"
+"ZombieNeedKilledCount","Times Zombies must be killed to win (0 = any)","勝つのに要るゾンビがキルされた回数 (0 で条件なし)"
 "Shikigami","Shikigami","式神"
 "RedLovers","Red Lovers","レッドラバーズ","恋人","戀人","Любовники","Amantes","Amantes"
 "YellowLovers","Yellow Lovers","イエローラバーズ","恋人","戀人","Любовники","Amantes","Amantes"

@@ -51,6 +51,11 @@ public sealed class Vendetta : RoleBase, IKiller, IAdditionalWinner
 
     PlayerControl Target = null;
     private bool isChooseTarget = false;
+    /// <summary>対象を選ぶ会議か (まだ選んでいない・能力を使える会議。初手強制会議で能力を使えない時は次の会議)</summary>
+    bool ChoosingNow => !isChooseTarget && !FirstTurnMeeting.CantAbilityNow;
+    // この会議が対象を選ぶ会議だった
+    bool hadChance;
+    public override void OnStartMeeting() => hadChance = Player.IsAlive() && ChoosingNow;
     private bool killedThisTurn = false;
     private bool selfKill = false;
 
@@ -91,7 +96,7 @@ public sealed class Vendetta : RoleBase, IKiller, IAdditionalWinner
     {
         // 既定値
         var (votedForId, numVotes, doVote) = base.ModifyVote(voterId, sourceVotedForId, isIntentional);
-        if (MeetingStates.FirstMeeting && voterId == Player.PlayerId && Player.IsAlive())
+        if (ChoosingNow && voterId == Player.PlayerId && Player.IsAlive())
         {
             if (sourceVotedForId != Player.PlayerId && sourceVotedForId < 253)
             {
@@ -113,7 +118,7 @@ public sealed class Vendetta : RoleBase, IKiller, IAdditionalWinner
 
     public override string GetSuffix(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)
     {
-        if (!MeetingStates.FirstMeeting || !isForMeeting || !Player.IsAlive())
+        if (!ChoosingNow || !isForMeeting || !Player.IsAlive())
         {
             return string.Empty;
         }
@@ -146,6 +151,8 @@ public sealed class Vendetta : RoleBase, IKiller, IAdditionalWinner
         // 最初の会議で対象を選ばなかった (投票しなかった) ら自滅する
         if (!isChooseTarget)
         {
+            // 選ぶ会議の前 (能力を使えない初手強制会議の後) は待つ
+            if (!hadChance) return;
             Main.AfterMeetingDeathPlayers.TryAdd(Player.PlayerId, CustomDeathReason.Suicide);
             Logger.Info($"Didn't select target. {Player.name} is suicide.", "Vendetta");
             return;

@@ -33,12 +33,18 @@ public sealed class Zombie : RoleBase
         );
 
     static OptionItem OptionCanVent;
+    /// <summary>勝つのに要る、ゾンビがキルされた (感染させた) 回数。0 なら数えない</summary>
+    static OptionItem OptionNeedKilledCount;
     static readonly HashSet<byte> PendingInfectionTargets = new();
+    // この試合でゾンビがキルされて感染させた回数 (会議中に預けた分は会議の後に数える)
+    static int infectedCount;
+    enum OptionName { ZombieNeedKilledCount }
 
     [GameModuleInitializer]
     public static void ResetRuntimeData()
     {
         PendingInfectionTargets.Clear();
+        infectedCount = 0;
     }
 
     public Zombie(PlayerControl player)
@@ -50,6 +56,14 @@ public sealed class Zombie : RoleBase
     {
         SoloWinOption.Create(RoleInfo, defo: 15);
         OptionCanVent = BooleanOptionItem.Create(RoleInfo, GeneralOption.CanVent, true, false);
+        OptionNeedKilledCount = IntegerOptionItem.Create(RoleInfo, OptionName.ZombieNeedKilledCount, new(0, 15, 1), 0, false)
+            .SetValueFormat(OptionFormat.Times);
+    }
+
+    public override string GetProgressText(bool comms = false)
+    {
+        var need = OptionNeedKilledCount?.GetInt() ?? 0;
+        return need <= 0 ? "" : Utils.ColorString(RoleInfo.RoleColor, $"({infectedCount}/{need})");
     }
 
     public override bool CanClickUseVentButton => OptionCanVent?.GetBool() ?? true;
@@ -115,6 +129,7 @@ public sealed class Zombie : RoleBase
         if (killer.GetCustomRole() is CustomRoles.GM or CustomRoles.Zombie) return;
 
 
+        infectedCount++;
         killer.RpcChangeRole(CustomRoles.Zombie);
         Utils.NotifyRoles(ForceLoop: true);
         Logger.Info($"{killer.GetNameWithRole().RemoveHtmlTags()} -> Zombie", nameof(Zombie));
@@ -141,6 +156,8 @@ public sealed class Zombie : RoleBase
 
         if (winner is not CustomWinner.Crewmate) return false;
         if (HasAliveKillerSide()) return false;
+        // ゾンビがキルされた回数が足りなければ乗っ取らない
+        if (infectedCount < (OptionNeedKilledCount?.GetInt() ?? 0)) return false;
 
         var aliveZombies = AllAlivePlayerControls
             .Where(pc => pc != null && pc.Is(CustomRoles.Zombie) && pc.Data?.Disconnected != true)

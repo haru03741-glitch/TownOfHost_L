@@ -36,6 +36,21 @@ public sealed class Duelist : RoleBase, IAdditionalWinner, IAdditionalWinGranter
 
     private static HashSet<Duelist> Duelists = new(15);
     PlayerControl Archenemy;
+    /// <summary>宿敵を選ぶ会議か (まだ選んでいない・能力を使える会議。初手強制会議で能力を使えない時は次の会議)</summary>
+    bool ChoosingNow => Archenemy == null && !FirstTurnMeeting.CantAbilityNow;
+    // この会議が宿敵を選ぶ会議だった
+    bool hadChance;
+    public override void OnStartMeeting() => hadChance = Player.IsAlive() && ChoosingNow;
+    public override void AfterMeetingTasks()
+    {
+        // 選ぶ会議で誰も選ばなかった (投票しなかった) ら自滅する
+        if (hadChance && Archenemy == null && Player.IsAlive())
+        {
+            MeetingHudPatch.TryAddAfterMeetingDeathPlayers(CustomDeathReason.Suicide, Player.PlayerId);
+            Logger.Info($"宿敵を選ばなかったので {Player.GetNameWithRole()} は自滅", "Duelist");
+        }
+        hadChance = false;
+    }
 
     public override void Add()
     {
@@ -45,7 +60,7 @@ public sealed class Duelist : RoleBase, IAdditionalWinner, IAdditionalWinGranter
     {
         // 既定値
         var (votedForId, numVotes, doVote) = base.ModifyVote(voterId, sourceVotedForId, isIntentional);
-        if (MeetingStates.FirstMeeting && voterId == Player.PlayerId && Player.IsAlive())
+        if (ChoosingNow && voterId == Player.PlayerId && Player.IsAlive())
         {
             if (sourceVotedForId != Player.PlayerId && sourceVotedForId < 253)
             {
@@ -65,7 +80,7 @@ public sealed class Duelist : RoleBase, IAdditionalWinner, IAdditionalWinGranter
 
     public override string GetSuffix(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)
     {
-        if (!MeetingStates.FirstMeeting || !isForMeeting || !Player.IsAlive()) return string.Empty;
+        if (!ChoosingNow || !isForMeeting || !Player.IsAlive()) return string.Empty;
 
         //seenが省略の場合seer
         seen ??= seer;
