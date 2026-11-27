@@ -75,7 +75,7 @@ public sealed class CursedWolf : RoleBase, IImpostor
         switch (nowKillMotion)
         {
             case KillMotionOption.MotionKill://自身がキル
-                target.RpcMurderPlayer(killer);
+                Kill.Force(target, killer);
                 break;
             case KillMotionOption.MotionSuicide://相手が自爆
                 Kill.Suicide(killer);

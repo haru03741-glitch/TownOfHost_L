@@ -63,7 +63,7 @@ public sealed class Jack : RoleBase, IImpostor
         {
             if (!killer.IsAlive() || !target.IsAlive()) return;
             target.SetRealKiller(killer);
-            killer.RpcMurderPlayer(target, true);
+            Kill.Force(killer, target);
 
             removeKillLimit--;
             Logger.Info($"{killer.GetNameWithRole()}：役職消去キル残り{removeKillLimit}回", "Jack");

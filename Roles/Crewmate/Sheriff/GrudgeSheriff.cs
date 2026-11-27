@@ -216,7 +216,7 @@ public sealed class GrudgeSheriff : RoleBase
             ShotLimit--;
             Logger.Info($"{Player.GetNameWithRole()} : 残り{ShotLimit}発", "GrudgeSheriff");
             target.SetRealKiller(Player);
-            Player.RpcMurderPlayer(target);
+            Kill.Force(Player, target);
 
             Player.RpcResetAbilityCooldown();
             Player.MarkDirtySettings();

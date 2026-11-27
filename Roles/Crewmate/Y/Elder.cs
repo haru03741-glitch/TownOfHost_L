@@ -70,7 +70,7 @@ public sealed class Elder : RoleBase
         {
             // killer側も死亡する
             PlayerState.GetByPlayerId(killer.PlayerId).DeathReason = CustomDeathReason.CounterAttack; //死因：反撃
-            target.RpcMurderPlayer(killer);
+            Kill.Force(target, killer);
             return true;
         }
 

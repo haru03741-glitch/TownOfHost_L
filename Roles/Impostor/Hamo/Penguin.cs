@@ -114,7 +114,7 @@ class Penguin : RoleBase, IImpostor
             if (target != AbductVictim)
             {
                 //拉致中は拉致相手しか切れない
-                Player.RpcMurderPlayer(AbductVictim);
+                Kill.Force(Player, AbductVictim);
                 Player.ResetKillCooldown();
                 info.DoKill = false;
             }
@@ -158,7 +158,7 @@ class Penguin : RoleBase, IImpostor
         // 連れ去った相手が別の理由で先に死んでいたら、もう一度殺さず放すだけにする
         if (AbductVictim != null && AbductTimer <= 0f)
         {
-            if (AbductVictim.IsAlive()) Player.RpcMurderPlayer(AbductVictim);
+            if (AbductVictim.IsAlive()) Kill.Force(Player, AbductVictim);
             // 下の会議でのキルでもう一度キルしない
             RemoveVictim();
         }
@@ -166,7 +166,7 @@ class Penguin : RoleBase, IImpostor
         {
             if (!AmongUsClient.Instance.AmHost) return;
             if (AbductVictim == null) return;
-            if (AbductVictim.IsAlive()) Player.RpcMurderPlayer(AbductVictim);
+            if (AbductVictim.IsAlive()) Kill.Force(Player, AbductVictim);
             RemoveVictim();
         }
     }

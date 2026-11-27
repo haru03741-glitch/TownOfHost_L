@@ -109,7 +109,7 @@ namespace TownOfHostL.Roles.Neutral
 
             if (!killer.Is(CustomRoleTypes.Impostor)) //インポスター以外からのキル
             {
-                target.RpcMurderPlayer(killer);
+                Kill.Force(target, killer);
             }
 
             info.CanKill = false;

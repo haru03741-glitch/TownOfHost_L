@@ -261,7 +261,7 @@ public sealed class Dollmaster : RoleBase, IImpostor
         Release(send: true);
         RPC.PlaySound(Player.PlayerId, Sounds.KillSound);
         chosen.SetRealKiller(Player);
-        killer.RpcMurderPlayer(chosen);
+        Kill.Force(killer, chosen);
         Utils.MarkEveryoneDirtySettings();
         Utils.NotifyRoles();
     }

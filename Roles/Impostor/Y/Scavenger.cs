@@ -100,8 +100,7 @@ public sealed class Scavenger : RoleBase, IImpostor, IDissolvingKiller
             var targetId = target.PlayerId;
 
             target.SetRealKiller(killer);
-            if (DissolvesEaten(target)) Modules.DissolveKill.Prepare(killer, target);
-            killer.RpcMurderPlayer(target, true);
+            Kill.Force(killer, target, dissolveBody: DissolvesEaten(target));
             limitCount--;
             Logger.Info($"{killer.GetNameWithRole()}：喰らいつくし 残り{limitCount}回", "Scavenger");
 

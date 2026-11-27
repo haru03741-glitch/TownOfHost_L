@@ -95,7 +95,7 @@ public sealed class Puppeteer : RoleBase, IImpostor
             {
                 RPC.PlaySound(Player.PlayerId, Sounds.KillSound);
                 target.SetRealKiller(Player);
-                puppet.RpcMurderPlayer(target);
+                Kill.Force(puppet, target);
                 Utils.MarkEveryoneDirtySettings();
                 Puppets.Remove(puppet.PlayerId);
                 Utils.NotifyRoles();

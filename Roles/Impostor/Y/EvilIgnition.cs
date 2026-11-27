@@ -96,7 +96,7 @@ public sealed class EvilIgnition : RoleBase, IImpostor
     {
         if (!killer.IsAlive() || !target.IsAlive()) return;
         target.SetRealKiller(killer);
-        killer.RpcMurderPlayer(target, true);
+        Kill.Force(killer, target);
         Logger.Info($"{killer.GetNameWithRole()}：発火 発火先→{target.GetNameWithRole()} || 残り{ignitionCount}回", "EvilFire");
 
         //爆破処理はホストのみ

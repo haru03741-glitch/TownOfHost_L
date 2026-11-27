@@ -182,7 +182,7 @@ public sealed class SillySheriff : RoleBase, IKiller, ISchrodingerCatOwner
                     Kill.Suicide(killer);
                     break;
                 case SuicideMotionOption.MotionKilled://相手に切られる
-                    target.RpcMurderPlayer(killer);
+                    Kill.Force(target, killer);
                     break;
             }
 
