@@ -544,6 +544,7 @@ public static class ClientBodySync
         var sids = new Dictionary<uint, ushort>();
         ushort[] parentSids = null;
         int sent = 0;
+        var synced = new List<PlayerControl>();
         foreach (var pc in Targets())
         {
             if (ClientBlock(pc, keep) != null) continue;
@@ -630,6 +631,7 @@ public static class ClientBodySync
             for (int i = 0; i < snaps + keep.Count; i++) SnapToBudget.Record();
             if (current != null) options.NoteSent(current);
 
+            synced.Add(pc);
             pending.Remove(pc.OwnerId);
             DeadBodyEraser.HideCoversFrom(pc.OwnerId);
             DeadBodyMover.HideCoversFrom(pc.OwnerId);
@@ -637,7 +639,53 @@ public static class ClientBodySync
             Logger.Info($"{pc.PlayerId} の画面の死体を合わせ直しました ({(dead ? $"死者・{RoleView.Ghost(pc, pc)}" : role.ToString())}・能力のクール {ability:0.0}・残す死体 {keep.Count}・位置 {snaps}・{length} バイト)", Tag);
         }
         if (sent == 0) Logger.Info("死体の合わせ直しは、送れる客がいなかったので次へ回します", Tag);
+        else SendSeatFix(synced);
         return sent;
+    }
+
+    /// <summary>
+    /// 会議の始まりを受けた客は、自分の体を会議の席へ動かし、その位置を全員へ配る。送った客とホストは同じ包みの通し番号で
+    /// その位置を捨てるが、送らなかった客 (待っている客・同じ版の客) の画面では席に立ったまま残る。
+    /// その客たちへ、送った人の本当の位置を、本人へ送ったのと同じ通し番号で送る (後から届く席の位置は古い番号で捨てられる)
+    /// </summary>
+    private static void SendSeatFix(List<PlayerControl> synced)
+    {
+        var client = AmongUsClient.Instance;
+        var syncedClients = new HashSet<int>();
+        foreach (var pc in synced) syncedClients.Add(pc.OwnerId);
+        int fixedClients = 0;
+        foreach (var target in Main.AllPlayerControls)
+        {
+            if (!target || target.AmOwner || CustomNetObject.Is(target) || target.Data == null || target.Data.Disconnected) continue;
+            if (target.OwnerId < 0 || syncedClients.Contains(target.OwnerId)) continue;
+            if (!SnapToBudget.HasHeadroom(synced.Count + BudgetReserve))
+            {
+                Logger.Warn("SnapTo の財布が足りないので、会議の席の位置の戻しを送れませんでした", Tag);
+                break;
+            }
+            var m = MessageWriter.Get(SendOption.Reliable);
+            try
+            {
+                m.StartMessage(6);
+                m.Write(client.GameId);
+                m.WritePacked(target.OwnerId);
+                foreach (var pc in synced)
+                {
+                    if (!pc) continue;
+                    var nt = pc.NetTransform;
+                    WriteSnapTo(m, nt, pc.transform.position, nt.lastSequenceId);
+                }
+                m.EndMessage();
+                client.SendOrDisconnect(m);
+            }
+            finally
+            {
+                m.Recycle();
+            }
+            for (int i = 0; i < synced.Count; i++) SnapToBudget.Record();
+            fixedClients++;
+        }
+        if (fixedClients > 0) Logger.Info($"合わせ直さなかった {fixedClients} 人の画面へ、会議の席の位置の戻しを送りました ({synced.Count} 人分)", Tag);
     }
 
     // 死体の持ち主へ送る通し番号。同じ人の死体が 2 つあれば、2 つ目は 1 つ進める
