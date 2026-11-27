@@ -66,7 +66,7 @@ public sealed class SpeedBooster : RoleBase
                 var target = targetPlayers[rand.Next(0, targetPlayers.Count)];
                 Logger.Info("スピードブースト先:" + target.GetNameWithRole(), "SpeedBooster");
                 BoostTarget = target.PlayerId;
-                TownOfHostL.Modules.PlayerSpeed.Multiply(BoostTarget, $"SpeedBooster{playerId}", UpSpeed);
+                TownOfHostL.Modules.PlayerSpeed.Multiply(BoostTarget, $"SpeedBooster{playerId}", UpSpeed); // 役職が外れても残す (相手に渡した加速)
                 target.MarkDirtySettings();
             }
             else //ターゲットが0ならアップ先をプレイヤーをnullに
