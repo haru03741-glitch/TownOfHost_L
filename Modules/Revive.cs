@@ -78,7 +78,7 @@ public static class Revive
     /// 会議が閉じてから、追放の演出と暗転対策の戻しが終わるまでの間か (ホストのみ)。
     /// 本編のホストは追放の演出の間の通報も通すが、この間に会議を開くと、暗転対策の予約 (死の送り・役職の戻し) が次の会議の中で走る
     /// </summary>
-    static bool InAfterMeetingWindow
+    public static bool InAfterMeetingWindow
         => !MeetingHud.Instance
         && (ExileController.Instance || GameStates.ExiledAnimate || AntiBlackout.IsCached || AntiBlackout.IsRevertPending);
     /// <summary>落ち着くまで預かっている通報があるか</summary>
