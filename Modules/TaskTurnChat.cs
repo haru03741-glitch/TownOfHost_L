@@ -32,9 +32,29 @@ public static class TaskTurnChat
     /// <summary>会議の後 (その日の終わりの処理から 1 回だけ呼ぶ)</summary>
     public static void AfterMeeting()
     {
-        if (!IsOn || !AmongUsClient.Instance.AmHost) return;
+        if (!AmongUsClient.Instance.AmHost) return;
         // 暗転対策の身代わりを戻す前に生死を送ると、客の画面の生死が崩れるので、戻した後にする
-        _ = new LateTask(() => AntiBlackout.RunAfterRevert(OpenForAll), Delay, "TaskTurnChat.AfterMeeting");
+        _ = new LateTask(() => AntiBlackout.RunAfterRevert(() =>
+        {
+            OpenForAll();
+            OpenForDead();
+        }), Delay, "TaskTurnChat.AfterMeeting");
+    }
+
+    /// <summary>
+    /// 死んでいる人のチャット欄を開く (設定に関わらず)。
+    /// 追放された人は、暗転対策で会議の終わりの間だけ手元で生きている扱いになっており、本編がチャット欄を閉じたままにする。
+    /// 生死を戻した後には誰も開け直さないので、霊界でチャットが出なくなる。それを開け直す
+    /// </summary>
+    public static void OpenForDead()
+    {
+        if (!AmongUsClient.Instance.AmHost || !GameStates.IsInTask) return;
+        foreach (var pc in Main.AllPlayerControls)
+        {
+            if (pc == null || pc.Data == null || !pc.Data.IsDead) continue;
+            try { Open(pc); }
+            catch (Exception ex) { Logger.Exception(ex, "TaskTurnChat.Dead"); }
+        }
     }
 
     /// <summary>生きている人全員のチャット欄を開く (ホストだけ)</summary>
