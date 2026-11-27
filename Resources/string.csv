@@ -1700,11 +1700,11 @@ PanAlive25,\nBread was served by the bakery.\nㅤ,\nパン屋は{0}に向けて�
 "nameChangeMode.Color","Color","色名",
 "ExtendedChat","Extended Chat","拡張チャット",,,,
 "SelectMaster","Select Master","ご主人を選べ"
-"DoCounsel","Do Counsel","投票でカウンセル",
-"AbilityVote","Ability Vote","投票で能力発動",
-"DictatorVote","Ability Vote","投票で独裁投票",
-"ChairmanVote","Ability Vote","他人投票で強制SKIP",
-"ForecastVote","Ability Vote","投票で占う",
+"DoCounsel","Self-vote → Counsel","自投票→カウンセル",
+"AbilityVote","Self-vote → Ability","自投票→能力発動",
+"DictatorVote","Self-vote → Dictate","自投票→独裁",
+"ChairmanVote","Self-vote → Force skip","自投票→強制SKIP",
+"ForecastVote","Self-vote → Forecast","自投票→占う",
 "DuelistVote","Decide Archenemy","投票で宿敵を決めろ",
 "VendettaVote","Decide Target","投票で対象を決めろ",
 
@@ -4081,6 +4081,12 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "Vote.ConnectSaver","Vote(tow)→ ability to activate","誰かに投票(2人選択)→対象の命を接続"
 "Vote.Madonna","Vote→Confession","誰かに投票→告白"
 "Vote.Dictator","Vote → DictatorAbility","誰かに投票 → その人を追放"
+"Mode.Chairman","Force Skip Mode","<#204d42>強制スキップ</color>モード"
+"Vote.Chairman","Vote → End the meeting with a skip","誰かに投票 → 会議をスキップで終える"
+"Mode.AntiComplete","AntiComplete Mode","<#ec62a5>アンチコンプ</color>モード"
+"Vote.AntiComplete","Vote → Exile them (you win if their tasks are done)","誰かに投票 → その人を追放 (タスクを終えた人なら勝ち)"
+"Mode.Counselor","Counsel Mode","<#ffc0cb>カウンセル</color>モード"
+"Vote.Counselor","Vote → Counsel","誰かに投票 → カウンセル"
 "Vote.AlienUetuke","Vote(for Impostor) → Precision","仲間のインポスターに投票 → その人に能力を植え付け"
 "Vote.Nue","Vote → Guess Fool.\n\nif guessed fool , you get kill and suicide ability.","投票 → 愚か者を推測\n\n愚か者を推測すると、\n誰か一人をキルした後に自殺する能力が解放されます。"
 "Vote.CrewSatellite","Vote→","投票 → 対象がいた部屋を1つ表示","","","","",""

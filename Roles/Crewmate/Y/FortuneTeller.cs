@@ -1,3 +1,4 @@
+using TownOfHostL.Modules;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -75,10 +76,28 @@ public sealed class FortuneTeller : RoleBase
 
     public override bool NeedsSeenNames => HasForecastResult();
 
+    // 自投票で能力のモードに入り、次に投票した相手に能力を使う (モードでない時の投票はふつうの投票)
+    bool abilityArmed;
+    public override bool CheckAnyVote(byte votedForId, PlayerControl voter)
+    {
+        if (!Is(voter)) return true;
+        abilityArmed = false;
+        if (!(CanAbilityVote()) || !SelfVoteManager.Canuseability()) return true;
+        var pick = SelfVoteManager.SelfVotePick(Player, votedForId, "Mode.Divied", "Vote.Divied");
+        if (pick == SelfVoteManager.PickResult.Cancel) return false;
+        abilityArmed = pick == SelfVoteManager.PickResult.Pick;
+        return true;
+    }
     public override (byte? votedForId, int? numVotes, bool doVote) ModifyVote(byte voterId, byte sourceVotedForId, bool isIntentional)
     {
         // 既定値
         var baseVote = base.ModifyVote(voterId, sourceVotedForId, isIntentional);
+        if (voterId == Player.PlayerId)
+        {
+            var armed = abilityArmed;
+            abilityArmed = false;
+            if (!armed) return baseVote;
+        }
         if (voterId == Player.PlayerId && sourceVotedForId != Player.PlayerId && sourceVotedForId < 253 && Player.IsAlive())
         {
             VoteForecastTarget(sourceVotedForId);

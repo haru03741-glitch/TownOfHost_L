@@ -73,6 +73,49 @@ namespace TownOfHostL.Modules
             return true;
         }
 
+        public enum PickResult
+        {
+            /// <summary>能力と関係ない (ふつうの投票として通す)</summary>
+            Pass,
+            /// <summary>モードの切り替えだけ (この投票は取り消す)</summary>
+            Cancel,
+            /// <summary>能力の相手を選んだ (能力を使い、この投票は取り消す)</summary>
+            Pick,
+        }
+
+        /// <summary>
+        /// 自投票で能力のモードに入り、次に誰かへ投票すると相手を選ぶ。CheckAnyVote で、投票したのが本人の時に呼ぶ。
+        /// モード中に飛ばすと投票のモードへ戻る。モードでない時の投票はふつうの投票
+        /// </summary>
+        public static PickResult SelfVotePick(PlayerControl player, byte votedForId, string modeKey, string voteKey)
+        {
+            if (!CheckSelfVoteMode(player, votedForId, out var status)) return PickResult.Pass;
+            switch (status)
+            {
+                case VoteStatus.Self:
+                    Utils.SendMessage(string.Format(Translator.GetString("SkillMode"), Translator.GetString(modeKey), Translator.GetString(voteKey)) + Translator.GetString("VoteSkillMode"), player.PlayerId);
+                    SetMode(player, true);
+                    return PickResult.Cancel;
+                case VoteStatus.Skip:
+                    Utils.SendMessage(Translator.GetString("VoteSkillFin"), player.PlayerId);
+                    SetMode(player, false);
+                    return PickResult.Cancel;
+                default:
+                    SetMode(player, false);
+                    return PickResult.Pick;
+            }
+        }
+
+        // 前の会議で能力のモードに入ったまま終わっても、次の会議はふつうの投票から始める
+        [HarmonyLib.HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.Start))]
+        static class ResetModePatch
+        {
+            public static void Prefix()
+            {
+                foreach (var id in new List<byte>(CheckVote.Keys)) CheckVote[id] = false;
+            }
+        }
+
         public enum AbilityVoteMode
         {
             NomalVote,

@@ -129,11 +129,29 @@ public sealed class AntiComplete : RoleBase
 
     public override string GetProgressText(bool comms = false) => ColorString(GuardCount > 0 ? RoleInfo.RoleColor : Color.gray, $"〔{GuardCount}〕");
 
+    // 自投票で能力のモードに入り、次に投票した相手に能力を使う (モードでない時の投票はふつうの投票)
+    bool abilityArmed;
+    public override bool CheckAnyVote(byte votedForId, PlayerControl voter)
+    {
+        if (!Is(voter)) return true;
+        abilityArmed = false;
+        if (!(Player.IsAlive()) || !SelfVoteManager.Canuseability()) return true;
+        var pick = SelfVoteManager.SelfVotePick(Player, votedForId, "Mode.AntiComplete", "Vote.AntiComplete");
+        if (pick == SelfVoteManager.PickResult.Cancel) return false;
+        abilityArmed = pick == SelfVoteManager.PickResult.Pick;
+        return true;
+    }
     public override (byte? votedForId, int? numVotes, bool doVote) ModifyVote(byte voterId, byte sourceVotedForId, bool isIntentional)
     {
         // 既定値
         var (votedForId, numVotes, doVote) = base.ModifyVote(voterId, sourceVotedForId, isIntentional);
         var baseVote = (votedForId, numVotes, doVote);
+        if (voterId == Player.PlayerId)
+        {
+            var armed = abilityArmed;
+            abilityArmed = false;
+            if (!armed) return baseVote;
+        }
         if (voterId != Player.PlayerId              // 投票者がアンチコンプ自身でない
             || sourceVotedForId == Player.PlayerId  // 投票先がアンチコンプ自身(自投票)
             || sourceVotedForId >= 253              // 投票先がスキップ253/無投票254

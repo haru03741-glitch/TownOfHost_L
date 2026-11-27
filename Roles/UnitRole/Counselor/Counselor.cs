@@ -1,3 +1,4 @@
+using TownOfHostL.Modules;
 using System.Linq;
 using UnityEngine;
 using AmongUs.GameOptions;
@@ -54,10 +55,28 @@ public sealed class Counselor : RoleBase
         && Main.AllPlayerControls.Where(pc => pc.Is(CustomRoles.MadDilemma)).Any();
     public bool TaskFinished() => IsTaskFinished || MyTaskState.CompletedTasksCount >= TaskTrigger;
 
+    // 自投票で能力のモードに入り、次に投票した相手に能力を使う (モードでない時の投票はふつうの投票)
+    bool abilityArmed;
+    public override bool CheckAnyVote(byte votedForId, PlayerControl voter)
+    {
+        if (!Is(voter)) return true;
+        abilityArmed = false;
+        if (!(CanAbilityVote()) || !SelfVoteManager.Canuseability()) return true;
+        var pick = SelfVoteManager.SelfVotePick(Player, votedForId, "Mode.Counselor", "Vote.Counselor");
+        if (pick == SelfVoteManager.PickResult.Cancel) return false;
+        abilityArmed = pick == SelfVoteManager.PickResult.Pick;
+        return true;
+    }
     public override (byte? votedForId, int? numVotes, bool doVote) ModifyVote(byte voterId, byte sourceVotedForId, bool isIntentional)
     {
         var (votedForId, numVotes, doVote) = base.ModifyVote(voterId, sourceVotedForId, isIntentional);
         var baseVote = (votedForId, numVotes, doVote);
+        if (voterId == Player.PlayerId)
+        {
+            var armed = abilityArmed;
+            abilityArmed = false;
+            if (!armed) return baseVote;
+        }
         if (!isIntentional || !CanAbilityVote() || voterId != Player.PlayerId || sourceVotedForId == Player.PlayerId || sourceVotedForId >= 253)
         {
             if (voterId == Player.PlayerId) Reserved = (false, null);
