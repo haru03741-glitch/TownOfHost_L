@@ -1096,6 +1096,7 @@ public static class PlayerControlDiePatch
         {
             // 死者の最終位置にペットが残るバグ対応
             PetAbility.RemovePet(__instance);
+            RoleView.OnDied(__instance);
         }
     }
 }

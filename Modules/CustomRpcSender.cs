@@ -269,15 +269,18 @@ namespace TownOfHostL
 
     public static class CustomRpcSenderExtensions
     {
-        public static void RpcSetRole(this CustomRpcSender sender, PlayerControl player, RoleTypes role, int targetClientId = -1, bool canOverrideRole = false)
+        /// <summary>
+        /// seer の客宛ての StartMessage の中で、target の本編の役職を role にする RPC を書き、見る人ごとの画面の表に覚える (RoleView.Note)。
+        /// transient: 後で戻す一時の見え方 (生きている時の見え方の表には書かない)
+        /// </summary>
+        public static CustomRpcSender WriteSetRole(this CustomRpcSender sender, PlayerControl target, PlayerControl seer, RoleTypes role, bool transient)
         {
-            sender.AutoStartRpc(player.NetId, (byte)RpcCalls.SetRole, targetClientId)
+            sender.StartRpc(target.NetId, (byte)RpcCalls.SetRole)
                 .Write((ushort)role)
                 .Write(true) //canOverrideRole
                 .EndRpc();
-            // 本人へ届く役職は、客の手元で役職を作り直し、能力のクールを 0 にする
-            if (player != null && (targetClientId == -1 || targetClientId == player.GetClientId())) Modules.AbilityCooldownClock.Clear(player.PlayerId);
-            Logger.Info($"CustomRpcSenderExtensions toClientId:{targetClientId} player:{player?.name}({role})", "RpcSetRole");
+            Modules.RoleView.Note(seer, target, role, transient);
+            return sender;
         }
         public static void RpcMurderPlayer(this CustomRpcSender sender, PlayerControl player, PlayerControl target, int targetClientId = -1)
         {

@@ -232,7 +232,7 @@ public static class DissolveKill
             {
                 m.StartMessage(2);
                 m.WritePacked(killer.NetId);
-                m.Write((byte)RpcCalls.SetRole);
+                m.Write((byte)RpcCalls.SetRole); // 画面の表は呼び元が送った後で覚える
                 m.Write((ushort)role.Value);
                 m.Write(true);
                 m.EndMessage();

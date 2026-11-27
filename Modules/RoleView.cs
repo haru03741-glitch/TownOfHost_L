@@ -15,34 +15,75 @@ namespace TownOfHostL.Modules;
 /// 会議中に AntiBlackout が送る一時的な役職は関所を通らないので記録されない。
 /// 役職が替わった人の行は消す (PlayerState.SetMainRole)。替えた側が送り直せば、また記録される。
 ///
+/// 画面の表: 見る人の画面に今ある target の役職を、幽霊・一時の見え方 (暗転対策の身代わり・溶かしの Viper など) も含めて覚える。
+/// 本編の SetRole を書く所は、どれも <see cref="Note"/> か関所を通す (tools/check-setrole-entry.ps1)。
+/// 役職が替わっても客の画面は変わらないので、こちらは役職替えでは消さない。target が死んだ時は、客が手元で幽霊にするので消す。
+///
 /// 規則 (<see cref="Default"/>): 表に無い組と、役職の基底が変わった時の見え方を決める。
 /// 会議明けの配り直しと復活は、表 → 無ければ規則、の順に引いて送る。
 /// </summary>
 public static class RoleView
 {
     private static readonly Dictionary<(byte seer, byte target), RoleTypes> living = new();
+    private static readonly Dictionary<(byte seer, byte target), RoleTypes> onScreen = new();
 
     [GameModuleInitializer]
-    public static void Init() => living.Clear();
+    public static void Init()
+    {
+        living.Clear();
+        onScreen.Clear();
+    }
 
     // ---- 表 ----
 
+    /// <summary>関所 (生きている時の見え方として送った物) の記録。幽霊の役職は画面の表にだけ書く</summary>
     internal static void Record(PlayerControl seer, PlayerControl target, RoleTypes role)
+        => Note(seer, target, role, transient: false);
+
+    /// <summary>
+    /// seer の画面へ target の SetRole を送ったことを覚える。
+    /// transient: 一時の見え方 (後で戻す) で、生きている時の見え方の表には書かない。
+    /// keepsCooldown: 送る側が能力のクールを続けさせる (同じ包みで残りの秒から始め直す) ので、数えた残りを消さない
+    /// </summary>
+    internal static void Note(PlayerControl seer, PlayerControl target, RoleTypes role, bool transient, bool keepsCooldown = false)
     {
-        if (seer == null || target == null || RoleManager.IsGhostRole(role)) return;
+        if (seer == null || target == null) return;
         // 試合の始めの配り (イントロ中) も覚えるよう、InGame が立つ前から記録する
         if (!AmongUsClient.Instance || !AmongUsClient.Instance.AmHost || AmongUsClient.Instance.GameState != AmongUsClient.GameStates.Started) return;
-        living[(seer.PlayerId, target.PlayerId)] = role;
+        onScreen[(seer.PlayerId, target.PlayerId)] = role;
         // 本人へ役職を送ると、客の手元で役職が作り直され、能力のクールが 0 になる
-        if (seer.PlayerId == target.PlayerId) AbilityCooldownClock.Clear(target.PlayerId);
+        if (seer.PlayerId == target.PlayerId && !keepsCooldown) AbilityCooldownClock.Clear(target.PlayerId);
+        if (transient || RoleManager.IsGhostRole(role)) return;
+        living[(seer.PlayerId, target.PlayerId)] = role;
         SeekerBody.OnRoleSent(target);
     }
 
     internal static void RecordByClientId(int clientId, PlayerControl target, RoleTypes role)
+        => NoteByClientId(clientId, target, role, transient: false);
+
+    internal static void NoteByClientId(int clientId, PlayerControl target, RoleTypes role, bool transient)
     {
         foreach (var seer in Main.AllPlayerControls)
-            if (seer.GetClientId() == clientId) { Record(seer, target, role); return; }
+            if (seer.GetClientId() == clientId) { Note(seer, target, role, transient); return; }
     }
+
+    /// <summary>
+    /// 記録せずに SetRole を送った (試合の始めの配りの一部など)。画面の表のその組を「分からない」にする。
+    /// seer が null なら全員の画面の target
+    /// </summary>
+    internal static void Unknown(PlayerControl seer, PlayerControl target)
+    {
+        if (target == null) return;
+        if (seer != null) { onScreen.Remove((seer.PlayerId, target.PlayerId)); return; }
+        foreach (var pc in Main.AllPlayerControls) onScreen.Remove((pc.PlayerId, target.PlayerId));
+    }
+
+    /// <summary>target が死んだ。客は手元で幽霊にするので、全員の画面の target を分からないにする</summary>
+    internal static void OnDied(PlayerControl target) => Unknown(null, target);
+
+    /// <summary>seer の画面に今ある target の役職 (送った物を覚えている時だけ)</summary>
+    public static bool TryGetOnScreen(PlayerControl seer, PlayerControl target, out RoleTypes role)
+        => onScreen.TryGetValue((seer.PlayerId, target.PlayerId), out role);
 
     internal static void RecordForAll(PlayerControl target, RoleTypes role)
     {

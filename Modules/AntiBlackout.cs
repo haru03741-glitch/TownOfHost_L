@@ -184,13 +184,8 @@ public static partial class AntiBlackout
                 // キルの後に、本人の手元と同じ役職を本人へ送り直すと、本編が役職を作り直してキルクールを 10 秒・能力のクールを 0 にする。
                 // 手元が既にその役職なら身代わりとして数えられているので送らない (会議の締めは会議明けに本編がクールを戻すので送る)
                 if (killer != null && dummy.PlayerId == pc.PlayerId && dummyRole == RoleView.Living(pc, pc)) continue;
-                sender.StartRpc(dummy.NetId, RpcCalls.SetRole)
-                    .Write((ushort)dummyRole)
-                    .Write(true)
-                    .EndRpc();
+                sender.WriteSetRole(dummy, pc, dummyRole, transient: true);
                 count++;
-                // 本人へ届く役職は、客の手元で役職を作り直し、能力のクールを 0 にする
-                if (dummy.PlayerId == pc.PlayerId) AbilityCooldownClock.Clear(pc.PlayerId);
                 // デシンクの人の画面と、デシンクの役職・インポスターに差し替えた身代わり (会議明けの配り直しが見え方へ戻してしまう) は、演出の後で戻す。
                 // 本物のインポスターの身代わりは戻さない (戻すと、演出の締めがホストより遅れた客の画面で生存インポスターが 0 人になる)
                 if ((desync && pc.IsAlive()) || RoleView.IsDesync(dummy) || replaced)
@@ -201,12 +196,8 @@ public static partial class AntiBlackout
             }
             if (hiddenExiled != null)
             {
-                sender.StartRpc(hiddenExiled.NetId, RpcCalls.SetRole)
-                    .Write((ushort)RoleTypes.Crewmate)
-                    .Write(true)
-                    .EndRpc();
+                sender.WriteSetRole(hiddenExiled, pc, RoleTypes.Crewmate, transient: true);
                 count++;
-                if (hiddenExiled.PlayerId == pc.PlayerId) AbilityCooldownClock.Clear(pc.PlayerId);
             }
             int lacking = 0;
             if (fillCrew)
@@ -239,10 +230,7 @@ public static partial class AntiBlackout
                     if (!filledCrew.TryGetValue(clientId, out var filled)) filledCrew[clientId] = filled = new();
                     filled.Add(dead);
                 }
-                sender.StartRpc(dead.NetId, RpcCalls.SetRole)
-                    .Write((ushort)(fill ? RoleTypes.Crewmate : RoleTypes.CrewmateGhost))
-                    .Write(true)
-                    .EndRpc();
+                sender.WriteSetRole(dead, pc, fill ? RoleTypes.Crewmate : RoleTypes.CrewmateGhost, transient: true);
                 count++;
             }
             // 補える死者が足りない時 (追放前に死者がいない 1 対 1 など) は、追放者を数に入れる。
@@ -292,10 +280,7 @@ public static partial class AntiBlackout
         {
             if (visible <= 1 || alive - visible > visible) break;
             if (target.PlayerId == pc.PlayerId) continue;
-            sender.StartRpc(target.NetId, RpcCalls.SetRole)
-                .Write((ushort)RoleTypes.Crewmate)
-                .Write(true)
-                .EndRpc();
+            sender.WriteSetRole(target, pc, RoleTypes.Crewmate, transient: true);
             count++;
             visible--;
             if (!desyncDummies.TryGetValue(clientId, out var sent)) desyncDummies[clientId] = sent = (pc, new());
@@ -328,12 +313,8 @@ public static partial class AntiBlackout
                 foreach (var dummy in dummies)
                 {
                     if (dummy == null || dummy.Data == null || dummy.Data.Disconnected || !dummy.IsAlive()) continue;
-                    sender.StartRpc(dummy.NetId, RpcCalls.SetRole)
-                        .Write((ushort)RoleView.Living(dummy, seer))
-                        .Write(true)
-                        .EndRpc();
+                    sender.WriteSetRole(dummy, seer, RoleView.Living(dummy, seer), transient: true);
                     count++;
-                    if (dummy.PlayerId == seer.PlayerId) AbilityCooldownClock.Clear(seer.PlayerId);
                 }
                 if (count > 0)
                 {
@@ -451,6 +432,7 @@ public static partial class AntiBlackout
                     .Write((ushort)RoleTypes.CrewmateGhost)
                     .Write(true)
                     .EndRpc();
+                RoleView.NoteByClientId(clientId, dead, RoleTypes.CrewmateGhost, transient: true);
                 count++;
             }
             if (count > 0)

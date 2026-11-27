@@ -611,13 +611,13 @@ public static class ClientBodySync
                 WriteFakeMeeting(m, r.Reporter.NetId);
                 snaps = WritePositions(m, pc, sids, dead);
                 if (frozen != null) PlayerGameOptionsSender.WriteOptions(m, frozen);
-                WriteRpc(m, pc.NetId, RpcCalls.SetRole);
+                WriteRpc(m, pc.NetId, RpcCalls.SetRole); // 画面の表は送った後で覚える
                 m.Write((ushort)role);
                 m.Write(true);
                 m.EndMessage();
                 if (dead)
                 {
-                    WriteRpc(m, pc.NetId, RpcCalls.SetRole);
+                    WriteRpc(m, pc.NetId, RpcCalls.SetRole); // 画面の表は送った後で覚える
                     m.Write((ushort)RoleView.Ghost(pc, pc));
                     m.Write(true);
                     m.EndMessage();
@@ -655,6 +655,9 @@ public static class ClientBodySync
             for (int i = 0; i < snaps + keep.Count; i++) SnapToBudget.Record();
             if (current != null) options.NoteSent(current);
 
+            // 同じ包みの守護の電文が能力のクールを残りの秒から始め直すので、数えた残りは消さない
+            RoleView.Note(pc, pc, role, transient: true, keepsCooldown: true);
+            if (dead) RoleView.Note(pc, pc, RoleView.Ghost(pc, pc), transient: true, keepsCooldown: true);
             synced.Add(pc);
             pending.Remove(pc.OwnerId);
             awaitingAck[pc.NetTransform.NetId] = (pc.OwnerId, pc.PlayerId, now);

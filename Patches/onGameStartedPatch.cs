@@ -776,6 +776,7 @@ public class RpcSetRoleReplacer
         writer.Write((ushort)role);
         writer.Write(true);
         AmongUsClient.Instance.FinishRpcImmediately(writer);
+        RoleView.Note(sendTo, target, role, transient: true);
     }
 
     public static bool Prefix(PlayerControl __instance, [HarmonyArgument(0)] RoleTypes roleType)
@@ -838,6 +839,7 @@ public class RpcSetRoleReplacer
                     .Write((ushort)pair.Item2)
                     .Write(false)
                     .EndRpc();
+                RoleView.Note(targetPc, pair.Item1, pair.Item2, transient: true);
             }
             sender.EndMessage();
         }
@@ -889,7 +891,7 @@ public static class StandardIntroHelper
         }
         stream.StartMessage(2);
         stream.WritePacked(PlayerControl.LocalPlayer.NetId);
-        stream.Write((byte)RpcCalls.SetRole);
+        stream.Write((byte)RpcCalls.SetRole); // 画面の表は送った後で、全員の画面のホストを分からないにする (下の Unknown)
         stream.Write((ushort)RoleTypes.Crewmate);
         stream.Write(true);
         stream.EndMessage();
@@ -915,6 +917,7 @@ public static class StandardIntroHelper
         stream.EndMessage();
         AmongUsClient.Instance.SendOrDisconnect(stream);
         stream.Recycle();
+        RoleView.Unknown(null, PlayerControl.LocalPlayer);
 
 
 
