@@ -335,7 +335,13 @@ public static partial class AntiBlackout
                     count++;
                     if (dummy.PlayerId == seer.PlayerId) AbilityCooldownClock.Clear(seer.PlayerId);
                 }
-                if (count > 0) { sender.EndMessage(); sender.SendMessage(); }
+                if (count > 0)
+                {
+                    sender.EndMessage();
+                    sender.SendMessage();
+                    // SetRole の直後に会議が届くと本編の客の会議の画面が壊れるので、落ち着くまで通報を預かる
+                    Revive.BeginSettling();
+                }
                 else sender.stream.Recycle();
                 logger.Info($"身代わりを見え方へ戻した: {seer.name} の画面 ({count} 人)");
             }
@@ -445,6 +451,7 @@ public static partial class AntiBlackout
             {
                 sender.EndMessage();
                 sender.SendMessage();
+                Revive.BeginSettling();
             }
             else
             {
