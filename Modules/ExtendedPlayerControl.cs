@@ -165,9 +165,9 @@ static partial class ExtendedPlayerControl
         }
         NameRpcBatcher.Enqueue(clientId, player.NetId, player.Data.NetId, name, DontShowOnModdedClient);
     }
-    public static void RpcSetRoleDesync(this PlayerControl player, RoleTypes role, int clientId, bool canOverrideRole = false)
+    /// <summary>clientId の客の画面で、player の本編の役職を role にする (いつも上書き可で送る)</summary>
+    public static void RpcSetRoleDesync(this PlayerControl player, RoleTypes role, int clientId)
     {
-        //player: 名前の変更対象
 
         if (player == null) return;
         // -1 は全員宛てになり、見る人ごとの役職 (デシンク) が全員に効いてしまう
