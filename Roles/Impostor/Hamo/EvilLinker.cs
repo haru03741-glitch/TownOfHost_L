@@ -498,21 +498,20 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton, IUsePet
             if (pair.Activated || pair.DummyA == null || pair.DummyB == null) continue;
             int idx = i;
             var colorId = pair.ColorId;
-            var owner = Player;
             var oldA = pair.DummyA;
             var oldB = pair.DummyB;
-            _ = new LateTask(() =>
+            _ = After(() =>
             {
                 // 待つ間に本人が死んだり組が消えたりしたら作らない
-                if (!linkPairs.Contains(pair) || owner == null || !owner.IsAlive()) return;
+                if (!linkPairs.Contains(pair)) return;
                 oldA.Despawn();
                 oldB.Despawn();
-                pair.DummyA = new EvilLinkerDummy(oldA.Position, owner, colorId, activated: true);
-                pair.DummyB = new EvilLinkerDummy(oldB.Position, owner, colorId, activated: true);
+                pair.DummyA = new EvilLinkerDummy(oldA.Position, Player, colorId, activated: true);
+                pair.DummyB = new EvilLinkerDummy(oldB.Position, Player, colorId, activated: true);
                 pair.Activated = true;
                 pair.InRangeA.Clear();
                 pair.InRangeB.Clear();
-            }, idx * 0.6f + 1.0f, $"EvilLinker.Activate.{idx}");
+            }, idx * 0.6f + 1.0f, $"EvilLinker.Activate.{idx}", LateTaskUntil.Death);
         }
 
         cooldownTimer = PlaceCooldown;
@@ -575,24 +574,18 @@ public sealed class EvilLinker : RoleBase, IImpostor, IUsePhantomButton, IUsePet
 
 
 
-    public override void OnMurderPlayerAsTarget(MurderInfo info)
-
+    public override void OnMurderPlayerAsTarget(MurderInfo info) => DespawnPairs();
+    // 生きたまま役職が替わった時も、置いたポータルを消す (役職の毎フレームの処理が止まるので、残すと誰も通れない絵だけが残る)
+    public override void OnDestroy() => DespawnPairs();
+    void DespawnPairs()
     {
-
         foreach (var pair in linkPairs.ToArray())
-
         {
-
             try { pair.DummyA?.Despawn(); } catch { }
-
             try { pair.DummyB?.Despawn(); } catch { }
-
         }
-
         linkPairs.Clear();
-
         pendingDummy = null;
-
     }
 
 
