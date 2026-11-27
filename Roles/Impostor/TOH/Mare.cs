@@ -60,8 +60,8 @@ public sealed class Mare : RoleBase, IImpostor
     public override void ApplyGameOptions(IGameOptions opt)
     {
         // 停電中だけ加速する
-        if (IsActivateKill) TownOfHostL.Modules.PlayerSpeed.Add(Player.PlayerId, "Mare", SpeedInLightsOut);
-        else TownOfHostL.Modules.PlayerSpeed.Remove(Player.PlayerId, "Mare");
+        if (IsActivateKill) Holdings.AddSpeed(Player.PlayerId, "Mare", SpeedInLightsOut);
+        else Holdings.RemoveSpeed(Player.PlayerId, "Mare");
     }
     private void ActivateKill(bool activate)
     {

@@ -80,7 +80,7 @@ public sealed class Godfather : RoleBase, IImpostor
         JanitorTarget.Add(target.PlayerId);
 
         // ターゲットの足止め
-        TownOfHostL.Modules.PlayerSpeed.Freeze(target.PlayerId, "Godfather");
+        Holdings.Freeze(target.PlayerId, "Godfather");
         target.MarkDirtySettings();
         Logger.Info($"{target.GetNameWithRole()} : ターゲット足止め", "G&J");
 
@@ -122,7 +122,7 @@ public sealed class Godfather : RoleBase, IImpostor
                 target.RpcMurderPlayer(target, true);
 
                 // ターゲットの足止め解除
-                TownOfHostL.Modules.PlayerSpeed.Remove(target.PlayerId, "Godfather");
+                Holdings.RemoveSpeed(target.PlayerId, "Godfather");
                 target.MarkDirtySettings();
                 Logger.Info($"{target.GetNameWithRole()} : ジャニター未掃除のターゲット死亡", "G&J");
             }

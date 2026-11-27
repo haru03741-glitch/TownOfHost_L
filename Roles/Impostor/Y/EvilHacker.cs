@@ -121,13 +121,13 @@ public sealed class EvilHacker : RoleBase, IImpostor
     }
     private void Freeze()
     {
-        TownOfHostL.Modules.PlayerSpeed.Freeze(playerId, "EvilHacker");
+        Holdings.Freeze(playerId, "EvilHacker");
         Player.MarkDirtySettings();
     }
     private void EndWarp()
     {
         if (!TownOfHostL.Modules.PlayerSpeed.Has(playerId, "EvilHacker")) return;
-        TownOfHostL.Modules.PlayerSpeed.Remove(playerId, "EvilHacker");
+        Holdings.RemoveSpeed(playerId, "EvilHacker");
         if (Player != null) Player.MarkDirtySettings();
     }
 }
