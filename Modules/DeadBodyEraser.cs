@@ -19,6 +19,15 @@ public static class DeadBodyEraser
     private const int CoverColumns = 6;
     private const int CoverRows = 6;
     private const string CoverPrefix = "<size=70%><line-height=97%><cspace=0.16em>";
+    // 覆いの絵が画面で占める大きさ (世界の長さ。6×6 のマスの字で約 0.85×0.75 を実機の画面で測った)
+    private const float CoverWidth = 0.85f;
+    private const float CoverHeight = 0.75f;
+    // 覆いの絵の長さの上限 (CNO の絵の上限 600 バイトより余裕を持たせる)
+    private const int MaxCoverBytes = 560;
+    // 塗り 1 つの長さ (字の分を除く): <alpha=#FF><mark=#RRGGBB><alpha=#00>…</mark>
+    private const int SegmentBytes = 41;
+    // これより色の違いが小さい行には、区切りを足さない
+    private const float MinSplitGain = 0.05f;
     // 本編の客の画面の死体そのものを消せる見込みがある間は、覆いを出さずに待つ。その上限 (消してから)。
     // 過ぎても消せていない客にだけ覆いを出す (キルの演出が終わるのを待つ分を含める)
     private const float CoverGrace = 2f;
@@ -311,24 +320,97 @@ public static class DeadBodyEraser
         return cover;
     }
 
-    /// <summary><paramref name="pos"/> の床の色で描いた、死体を覆う絵</summary>
+    /// <summary><paramref name="pos"/> の床の色で描いた、死体を覆う絵 (マスごとに、そこに映る床の色で塗る)</summary>
     public static string CoverSpriteAt(Vector2 pos)
-        => CoverArt(ColorUtility.ToHtmlStringRGB(FloorColorSampler.Sample(pos)));
+        => CoverArt(FloorColorSampler.SampleGrid(pos, CoverWidth, CoverHeight, CoverColumns, CoverRows));
 
     /// <summary>死体の絵の真ん中 (覆いを置く所)</summary>
     public static Vector2 CenterOf(DeadBody body) => BodyCenter(body);
 
-    // 絵の大きさは、体を覆う実績のあるポータルの絵 (VanillaHnsPortalMaker) の字の大きさに合わせ、横たわった死体の幅まで広げる
-    private static string CoverArt(string hex)
+    // 絵の大きさは、体を覆う実績のあるポータルの絵 (VanillaHnsPortalMaker) の字の大きさに合わせ、横たわった死体の幅まで広げる。
+    // 字の長さの上限があるので、マスごとには塗れない。各行を 1 つの塗りから始め、色の違いが大きい行から順に区切りを足す。
+    // 塗りの色は、そのまとまりの中のマスの色のうち、ほかのマスとの違いの合計が一番小さい色 (平均すると、床と机の境目で
+    // どちらでもない暗い色になる)
+    private static string CoverArt(Color[,] colors)
     {
-        var row = string.Concat(Enumerable.Repeat("W", CoverColumns));
-        var sb = new System.Text.StringBuilder(CoverPrefix);
-        for (var r = 0; r < CoverRows; r++)
+        var segments = new int[CoverRows];
+        int fixedBytes = System.Text.Encoding.UTF8.GetByteCount(CoverPrefix) + CoverColumns * CoverRows + (CoverRows - 1);
+        int bytes = fixedBytes + CoverRows * SegmentBytes;
+        for (int r = 0; r < CoverRows; r++) segments[r] = 1;
+        while (bytes + SegmentBytes <= MaxCoverBytes)
         {
-            sb.Append($"<alpha=#FF><mark=#{hex}FF><alpha=#00>").Append(row).Append("</mark>");
+            int bestRow = -1;
+            float bestGain = MinSplitGain;
+            for (int r = 0; r < CoverRows; r++)
+            {
+                if (segments[r] >= CoverColumns) continue;
+                float gain = PartitionCost(colors, r, segments[r], out _) - PartitionCost(colors, r, segments[r] + 1, out _);
+                if (gain > bestGain) { bestGain = gain; bestRow = r; }
+            }
+            if (bestRow < 0) break;
+            segments[bestRow]++;
+            bytes += SegmentBytes;
+        }
+
+        var sb = new System.Text.StringBuilder(CoverPrefix);
+        for (int r = 0; r < CoverRows; r++)
+        {
+            PartitionCost(colors, r, segments[r], out var parts);
+            foreach (var (start, end, color) in parts)
+                sb.Append("<alpha=#FF><mark=#").Append(ColorUtility.ToHtmlStringRGB(color)).Append("><alpha=#00>")
+                  .Append('W', end - start).Append("</mark>");
             if (r < CoverRows - 1) sb.Append('\n');
         }
         return sb.ToString();
+    }
+
+    // 行 r のマスを k 個の続いたまとまりに分ける時の、色の違いの合計が一番小さい分け方 (マスは 6 つなので全部を調べる)
+    private static float PartitionCost(Color[,] colors, int r, int k, out List<(int start, int end, Color color)> parts)
+    {
+        int n = CoverColumns;
+        var best = new float[k + 1, n + 1];
+        var from = new int[k + 1, n + 1];
+        for (int a = 0; a <= k; a++)
+            for (int b = 0; b <= n; b++) best[a, b] = float.PositiveInfinity;
+        best[0, 0] = 0f;
+        for (int a = 1; a <= k; a++)
+            for (int b = a; b <= n; b++)
+                for (int c = a - 1; c < b; c++)
+                {
+                    if (float.IsPositiveInfinity(best[a - 1, c])) continue;
+                    float cost = best[a - 1, c] + RunCost(colors, r, c, b, out _);
+                    if (cost < best[a, b]) { best[a, b] = cost; from[a, b] = c; }
+                }
+        parts = new List<(int, int, Color)>();
+        int end = n;
+        for (int a = k; a >= 1; a--)
+        {
+            int start = from[a, end];
+            RunCost(colors, r, start, end, out var color);
+            parts.Insert(0, (start, end, color));
+            end = start;
+        }
+        return best[k, n];
+    }
+
+    // 行 r の [start, end) のマスを 1 色で塗る時の色と、色の違いの合計
+    private static float RunCost(Color[,] colors, int r, int start, int end, out Color color)
+    {
+        float bestCost = float.PositiveInfinity;
+        color = colors[start, r];
+        for (int i = start; i < end; i++)
+        {
+            float cost = 0f;
+            for (int j = start; j < end; j++) cost += ColorDistance(colors[i, r], colors[j, r]);
+            if (cost < bestCost) { bestCost = cost; color = colors[i, r]; }
+        }
+        return bestCost;
+    }
+
+    private static float ColorDistance(Color a, Color b)
+    {
+        float dr = a.r - b.r, dg = a.g - b.g, db = a.b - b.b;
+        return Mathf.Sqrt(dr * dr + dg * dg + db * db);
     }
 
     public static void OnReportDeadBody()
