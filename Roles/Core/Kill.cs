@@ -51,7 +51,8 @@ public static class Kill
 
     private static bool CanDie(PlayerControl target)
     {
-        if (target == null || target.Data == null || target.Data.Disconnected) return false;
+        // 見せるための CNO (中身は PlayerControl) は殺さない
+        if (target == null || target.Data == null || target.Data.Disconnected || TownOfHostL.Core.CustomNetObject.Is(target)) return false;
         if (target.IsAlive()) return true;
         Logger.Info($"{target.GetNameWithRole().RemoveHtmlTags()} は既に死んでいるので、キルを送りません", "Kill");
         return false;
