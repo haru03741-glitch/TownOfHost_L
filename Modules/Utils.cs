@@ -1572,13 +1572,17 @@ public static partial class Utils
             //適用
             seer.RpcSetNamePrivate(name, true, force: NoCache);
 
-            //seerが死んでいる場合など、必要なときのみ第二ループを実行する
-            if (everyoneNeedsSeenNames || TownOfHostL.Core.NameParts.NeedsSeenNames(seer))
+            //seerが死んでいる場合など、必要なときのみ第二ループを実行する。
+            // ただしホストの名前だけは全員へ必ず送る。ホストの手元の名前はホストから見た表示 (役職名入り) に書き換わっており、
+            // 一度も送らない人には、その名前がチャットの名前の戻しなどから届いて役職が透けることがある
+            bool fullLoop = everyoneNeedsSeenNames || TownOfHostL.Core.NameParts.NeedsSeenNames(seer);
+            if (fullLoop || !seer.AmOwner)
             {
                 foreach (var target in Main.AllPlayerControls)
                 {
                     //targetがseer自身の場合は何もしない
                     if (TownOfHostL.Core.NativeObject.Same(target, seer)) continue;
+                    if (!fullLoop && !target.AmOwner) continue;
                     // 見られる人 1 人分の例外 (その人の役職の表示や印) で、後ろの人の名前を配り損ねない
                     try
                     {

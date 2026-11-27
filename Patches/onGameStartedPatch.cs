@@ -178,7 +178,8 @@ class ChangeRoleSettings
                 foreach (var seer in Main.AllPlayerControls)
                 {
                     var pair = (target.PlayerId, seer.PlayerId);
-                    Main.LastNotifyNames[pair] = target.name;
+                    // target.name はホストの手元の表示 (前の試合の役職名入りのこともある)。本当の名前で覚える
+                    Main.LastNotifyNames[pair] = target.Data?.PlayerName ?? target.name;
                 }
             }
 

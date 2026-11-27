@@ -32,8 +32,16 @@ public static class MeetingDisplayText
         (string t, int c) = Bakery.AddMeetingDisplay();
         addText.Append(t); column += c;
 
+        // 会議の名前 (初手強制会議など)。通報:〇〇の死体 と同じ所に出す
+        if (ReportDeadBodyPatch.BannerInfo is { } banner)
+        {
+            addText.Append("<i>");
+            addText.Append(GetString(banner.info).Color(StringHelper.CodeColor(banner.color)));
+            addText.Append("</i>\n");
+            column += 1;
+        }
         // Report
-        if (Options.ShowReportReason.GetBool())
+        else if (Options.ShowReportReason.GetBool())
         {
             var dead = ReportDeadBodyPatch.ReportTarget;
             // 緊急ボタンでの会議

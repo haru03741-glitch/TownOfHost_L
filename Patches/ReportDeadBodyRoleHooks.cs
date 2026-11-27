@@ -11,6 +11,8 @@ partial class ReportDeadBodyPatch
     public static bool ForceReport;
     /// <summary>会議の始めに出す、会議の名前</summary>
     static (string info, string color)? meetingInfo;
+    /// <summary>今の会議の名前 (初手強制会議など)。会議の頭の帯 (通報:〇〇の死体 の所) に出す。会議が終わったら消す</summary>
+    public static (string info, string color)? BannerInfo;
     static int exReportWaited;
     /// <summary>通報できない理由と残り時間</summary>
     public static Dictionary<byte, (float time, RoleBase.DontReportReason reason)> DontReport = new();
@@ -20,6 +22,7 @@ partial class ReportDeadBodyPatch
     {
         ForceReport = false;
         meetingInfo = null;
+        BannerInfo = null;
         exReportWaited = 0;
         DontReport.Clear();
     }
@@ -74,7 +77,7 @@ partial class ReportDeadBodyPatch
         if (State.NumberOfRemainingButtons <= 0 && target is null && Cancelcheck is not false) return;
 
         GameStates.CalledMeeting = true;
-        if (!string.IsNullOrEmpty(Meetinginfo)) meetingInfo = (Meetinginfo, colorcode);
+        if (!string.IsNullOrEmpty(Meetinginfo)) meetingInfo = BannerInfo = (Meetinginfo, colorcode);
         ForceReport = Cancelcheck is false;
         reporter.ReportDeadBody(target);
         ForceReport = false;
@@ -86,6 +89,7 @@ partial class ReportDeadBodyPatch
         {
             GameStates.CalledMeeting = false;
             meetingInfo = null;
+            BannerInfo = null;
         }
     }
 
@@ -103,5 +107,11 @@ partial class ReportDeadBodyPatch
                 Utils.SendMessage(Utils.ColorString(StringHelper.CodeColor(data.color), title));
             }, 3f, "MeetingInfo");
         }
+    }
+
+    [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.OnDestroy))]
+    class BannerInfoClearPatch
+    {
+        public static void Postfix() => BannerInfo = null;
     }
 }
