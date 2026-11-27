@@ -35,8 +35,11 @@ namespace TownOfHostL.Modules;
 /// <see cref="AbilityCooldownClock"/> が数えた値を使う。
 /// </para>
 /// <para>
-/// 送るのは、本人の画面に悪い変化が出ない客だけ: 生きている・作り直しで変わる物を元へ戻せる役職
+/// 送るのは、本人の画面に悪い変化が出ない客だけ: 作り直しで変わる物を元へ戻せる役職
 /// (Scientist・Tracker・Detective は戻せない)・変身や透明の途中でない・ベントやはしごの途中でない。
+/// 死者は、幽霊の役職の CoSetRole が地図のボタンを出さないので、生きた役職 (クルー) を送ってから同じ包みで幽霊の役職を送る
+/// (生きた役職の枝が地図のボタンを出し直し、幽霊の役職の枝が通報のボタンを隠す)。本編の客は canOverride の無い SetRole を
+/// 受けたことのある人への幽霊でない SetRole を捨てるので、ホストの手元でその印が立っている死者には送らない。
 /// 合わない客は合うまで待ち、その間は覆い (<see cref="DeadBodyEraser"/>) のまま。
 /// 送った客からは覆いを外す。会議の始まりが開いている地図とタスクの窓を閉じる点は残る。
 /// </para>
@@ -214,7 +217,7 @@ public static class ClientBodySync
             if (blocked || keep.Count > MaxKeep) why = "bodies";
         }
         // SnapTo の財布が足りない間は、CNO も出さずに待つ (この回に出す殺し手と通報者の分も見込む)
-        if (why == null && !SnapToBudget.HasHeadroom(SnapCount(keep.Count) + (keep.Count + 1) * CnoSnapCost + BudgetReserve)) why = "budget";
+        if (why == null && !SnapToBudget.HasHeadroom(SnapCount(keep.Count, false) + (keep.Count + 1) * CnoSnapCost + BudgetReserve)) why = "budget";
         if (why == null)
         {
             var sb = new System.Text.StringBuilder();
@@ -311,15 +314,25 @@ public static class ClientBodySync
     // この客には今は送れない理由 (送れるなら null)
     private static string ClientBlock(PlayerControl pc, List<Keep> keep)
     {
-        // 死者は、役職の送り直しで地図のボタンが戻らない。生き返った人も、本人の画面では幽霊のまま
-        if (!pc.IsAlive() || Revive.WasRevived(pc.PlayerId) || TempGhost.IsGhost(pc) || SeekerBody.IsMasked(pc.PlayerId)) return "dead";
-        string role = RoleBlock(pc, RoleView.Living(pc, pc));
-        if (role != null) return role;
-        // ベントの中の本人に送ると、本人の画面でだけ外に出る
-        if (pc.inVent || pc.walkingToVent || VentCage.IsCaged(pc) || pc.MyPhysics.Animations.IsPlayingEnterVentAnimation()) return "in vent";
+        if (Revive.WasRevived(pc.PlayerId) || TempGhost.IsGhost(pc) || SeekerBody.IsMasked(pc.PlayerId)) return "revived/ghost";
+        bool dead = !pc.IsAlive();
+        if (dead)
+        {
+            // 本人の画面に canOverride の無い SetRole が届いていると、生きた役職が捨てられ、地図のボタンが戻らない。
+            // 全員宛ての SetRole はホストの手元でも同じ値で CoSetRole を通るので、ホストの手元の印で見る
+            if (pc.roleAssigned) return "role locked";
+            if (pc.Data.Role == null || !pc.Data.Role.IsDead) return "not ghost yet";
+        }
+        else
+        {
+            string role = RoleBlock(pc, RoleView.Living(pc, pc));
+            if (role != null) return role;
+            // ベントの中の本人に送ると、本人の画面でだけ外に出る
+            if (pc.inVent || pc.walkingToVent || VentCage.IsCaged(pc) || pc.MyPhysics.Animations.IsPlayingEnterVentAnimation()) return "in vent";
+        }
         if (PlayerWalker.IsWalking(pc.PlayerId)) return "walking";
         if (SeesAny(pc, keep)) return "body in view";
-        if (EstimateBytes(keep.Count) > MaxPacketBytes) return "too long";
+        if (EstimateBytes(keep.Count, dead) > MaxPacketBytes) return "too long";
         return null;
     }
 
@@ -374,18 +387,28 @@ public static class ClientBodySync
         return false;
     }
 
-    private static int SnapCount(int keepCount)
+    private static int SnapCount(int keepCount, bool withDead)
     {
         int n = keepCount;
-        foreach (var pc in Main.AllAlivePlayerControls)
+        foreach (var pc in PositionHolders(withDead))
             if (pc && !CustomNetObject.Is(pc)) n++;
         foreach (var _ in CustomNetObject.Bodies) n++;
         // 通報者の分 (条件を見る時にはまだ出していない)
         return n + 1;
     }
 
-    private static int EstimateBytes(int keepCount)
-        => BaseBytes + OptionsBytes * 2 + SnapCount(keepCount) * SnapBytes + keepCount * RebuildBytes;
+    private static int EstimateBytes(int keepCount, bool withDead)
+        => BaseBytes + OptionsBytes * 2 + SnapCount(keepCount, withDead) * SnapBytes + keepCount * RebuildBytes;
+
+    // 位置を戻す人。会議の始まりは死者も席へ動かし、死者の画面には死者も映るので、宛先が死者なら死者も戻す
+    private static IEnumerable<PlayerControl> PositionHolders(bool withDead)
+    {
+        foreach (var pc in Main.AllPlayerControls)
+        {
+            if (pc == null || pc.Data == null || pc.Data.Disconnected) continue;
+            if (withDead || pc.IsAlive()) yield return pc;
+        }
+    }
 
     // ---- 1 回の合わせ直し ----
 
@@ -498,11 +521,13 @@ public static class ClientBodySync
         foreach (var pc in Targets())
         {
             if (ClientBlock(pc, keep) != null) continue;
-            int cost = SnapCount(keep.Count);
+            bool dead = !pc.IsAlive();
+            int cost = SnapCount(keep.Count, dead);
             if (!SnapToBudget.HasHeadroom(cost + BudgetReserve)) break;
             parentSids ??= ParentSids(keep);
 
-            var role = RoleView.Living(pc, pc);
+            // 死者は、生きた役職 (クルー) で地図のボタンを出させてから、同じ包みで本人から見た幽霊の役職へ戻す
+            var role = dead ? RoleTypes.Crewmate : RoleView.Living(pc, pc);
             // 役職の送り直しを「作り直しの間だけの設定」と「今の設定」で挟み、作り直しで変わる物を元の値にする:
             // - キルクールは、本編が 10 秒へ書き換える → 設定のキルクールを 0 にしておく。本編は設定が 0 以下だと
             //   キルクールの残りを書き換えないので、残りがそのまま続く。
@@ -533,12 +558,19 @@ public static class ClientBodySync
                 m.Write(client.GameId);
                 m.WritePacked(pc.OwnerId);
                 WriteFakeMeeting(m, r.Reporter.NetId);
-                snaps = WritePositions(m, pc, sids);
+                snaps = WritePositions(m, pc, sids, dead);
                 if (frozen != null) PlayerGameOptionsSender.WriteOptions(m, frozen);
                 WriteRpc(m, pc.NetId, RpcCalls.SetRole);
                 m.Write((ushort)role);
                 m.Write(true);
                 m.EndMessage();
+                if (dead)
+                {
+                    WriteRpc(m, pc.NetId, RpcCalls.SetRole);
+                    m.Write((ushort)RoleView.Ghost(pc, pc));
+                    m.Write(true);
+                    m.EndMessage();
+                }
                 if (restartAbility)
                 {
                     WriteRpc(m, pc.NetId, RpcCalls.ProtectPlayer);
@@ -576,7 +608,7 @@ public static class ClientBodySync
             DeadBodyEraser.HideCoversFrom(pc.OwnerId);
             DeadBodyMover.HideCoversFrom(pc.OwnerId);
             sent++;
-            Logger.Info($"{pc.PlayerId} の画面の死体を合わせ直しました ({role}・能力のクール {ability:0.0}・残す死体 {keep.Count}・位置 {snaps}・{length} バイト)", Tag);
+            Logger.Info($"{pc.PlayerId} の画面の死体を合わせ直しました ({(dead ? $"死者・{RoleView.Ghost(pc, pc)}" : role.ToString())}・能力のクール {ability:0.0}・残す死体 {keep.Count}・位置 {snaps}・{length} バイト)", Tag);
         }
         if (sent == 0) Logger.Info("死体の合わせ直しは、送れる客がいなかったので次へ回します", Tag);
         return sent;
@@ -624,10 +656,10 @@ public static class ClientBodySync
 
     // 会議の始まりは、客の手元の体を全部 (CNO も) 会議の席へ動かす。今の位置へ戻す SnapTo を書き、書いた本数を返す。
     // 死者は生きている客の画面に映らないので戻さない
-    private static int WritePositions(MessageWriter m, PlayerControl self, Dictionary<uint, ushort> sids)
+    private static int WritePositions(MessageWriter m, PlayerControl self, Dictionary<uint, ushort> sids, bool withDead)
     {
         int n = 0;
-        foreach (var pc in Main.AllAlivePlayerControls)
+        foreach (var pc in PositionHolders(withDead))
         {
             if (!pc || CustomNetObject.Is(pc)) continue;
             var nt = pc.NetTransform;
