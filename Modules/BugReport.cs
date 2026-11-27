@@ -74,23 +74,26 @@ public static class BugReport
         }
         lastAt[to] = now;
 
-        var name = Submit(c.Player, text, Array.Empty<string>());
+        // /req は要望 (ログを付けない)。/bug・/report はバグ (ログを自動で付ける)
+        bool isBug = !c.Arg(0).Equals("/req", StringComparison.OrdinalIgnoreCase) && !c.Arg(0).Equals("req", StringComparison.OrdinalIgnoreCase);
+        var name = Submit(c.Player, text, Array.Empty<string>(), isBug);
         Reply(GetString("Report.Thanks") + (SendsToDeveloper ? "\n" + GetString("Report.DevNote") : ""));
         // ホストへは、誰から何が届いたかを知らせる
         if (!host) HostNote.Post(string.Format(GetString("Report.ToHost"), name, text));
     }
 
     /// <summary>報告を残して送る。送った人の名前を返す</summary>
-    static string Submit(PlayerControl pc, string text, IReadOnlyList<string> files)
+    static string Submit(PlayerControl pc, string text, IReadOnlyList<string> files, bool isBug)
     {
         var name = pc?.Data?.PlayerName ?? "?";
         var fc = FriendCodeOf(pc);
         var stamp = DateTime.Now;
-        var line = $"[{stamp:yyyy-MM-dd HH:mm:ss}] {name} <{fc}> ({Situation(pc)}) {text.Replace("\r", "").Replace("\n", " / ")}";
+        var kindLabel = GetString(isBug ? "Report.KindBug" : "Report.KindRequest");
+        var line = $"[{stamp:yyyy-MM-dd HH:mm:ss}] [{kindLabel}] {name} <{fc}> ({Situation(pc)}) {text.Replace("\r", "").Replace("\n", " / ")}";
 
-        // 付けたファイルを写す (元のファイルが消えても残るように)
+        // 付けたファイルを写す (元のファイルが消えても残るように)。バグの報告には、ホストのゲームのログを自動で付ける
         var saved = new List<string>();
-        if (files.Count > 0)
+        if (files.Count > 0 || isBug)
         {
             try
             {
@@ -103,6 +106,7 @@ public static class BugReport
                     File.Copy(f, dest, true);
                     saved.Add(dest);
                 }
+                if (isBug && SaveLogZip(Path.Combine(dir, "log.zip")) is { } log) saved.Insert(0, log);
                 if (saved.Count > 0) line += $"  [{GetString("Report.Attached")}: {string.Join(", ", saved.Select(Path.GetFileName))} → Reports/{Path.GetFileName(dir)}]";
             }
             catch (Exception ex) { Logger.Exception(ex, nameof(BugReport)); }
@@ -132,7 +136,7 @@ public static class BugReport
             if (skipped.Count > 0) body += "\n" + string.Format(GetString("Report.TooBig"), string.Join(", ", skipped));
             DiscordWebhook.PostWithFiles(body, upload);
         }
-        SendToDeveloper(pc, name, fc, text, saved);
+        SendToDeveloper(pc, name, fc, text, saved, isBug);
         return name;
     }
 
@@ -147,6 +151,50 @@ public static class BugReport
             return $"{map} {pc.GetCustomRole()}{(pc.IsAlive() ? "" : " dead")}{(GameStates.IsMeeting ? " meeting" : "")}";
         }
         catch { return "?"; }
+    }
+
+    // 付けるログの長さ (最後の部分だけ)。zip にすると 1/10 ほどになる
+    const int LogTailBytes = 4_000_000;
+
+    /// <summary>
+    /// ホストのゲームのログ (BepInEx/LogOutput.log の最後の部分と、TOHL の試合のログ) を zip にして保存する。作れなければ null。
+    /// ログの中の Windows のユーザー名 (C:\Users\名前\ など) は伏せる
+    /// </summary>
+    static string SaveLogZip(string zipPath)
+    {
+        try
+        {
+            string Mask(string s)
+            {
+                var user = Environment.UserName;
+                if (!string.IsNullOrEmpty(user)) s = s.Replace(@"\Users\" + user + @"\", @"\Users\<user>\", StringComparison.OrdinalIgnoreCase).Replace("/Users/" + user + "/", "/Users/<user>/", StringComparison.OrdinalIgnoreCase);
+                return s;
+            }
+            var bepLog = Path.Combine(BepInEx.Paths.BepInExRootPath, "LogOutput.log");
+            using var zip = System.IO.Compression.ZipFile.Open(zipPath, System.IO.Compression.ZipArchiveMode.Create);
+            void AddText(string entryName, string text)
+            {
+                var e = zip.CreateEntry(entryName, System.IO.Compression.CompressionLevel.Optimal);
+                using var w = new StreamWriter(e.Open(), new UTF8Encoding(false));
+                w.Write(Mask(text));
+            }
+            if (File.Exists(bepLog))
+            {
+                // BepInEx が書いている途中のファイルなので、書き込みを許したまま読む
+                using var fs = new FileStream(bepLog, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                if (fs.Length > LogTailBytes) fs.Seek(-LogTailBytes, SeekOrigin.End);
+                using var sr = new StreamReader(fs, Encoding.UTF8);
+                AddText("LogOutput.log", sr.ReadToEnd());
+            }
+            if (!string.IsNullOrEmpty(GameLog.LastText)) AddText("gamelog.txt", GameLog.LastText);
+            AddText("info.txt", $"TOHL {Main.PluginVersion} ({ThisAssembly.Git.Commit})\nAmong Us {UnityEngine.Application.version}\n{DateTime.Now:yyyy-MM-dd HH:mm:ss}\n");
+            return zipPath;
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"ログを付けられなかった: {ex.Message}", nameof(BugReport));
+            return null;
+        }
     }
 
     /// <summary>フレンドコード (無ければ空)</summary>
@@ -169,15 +217,16 @@ public static class BugReport
     /// </summary>
     const string DevRelayUrl = "";
     static readonly System.Net.Http.HttpClient relayHttp = new() { Timeout = TimeSpan.FromSeconds(60) };
-    static readonly HashSet<string> relayExt = new(StringComparer.OrdinalIgnoreCase) { ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".mp4", ".mov", ".webm", ".mkv", ".avi" };
+    static readonly HashSet<string> relayExt = new(StringComparer.OrdinalIgnoreCase) { ".zip", ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".mp4", ".mov", ".webm", ".mkv", ".avi" };
 
-    static void SendToDeveloper(PlayerControl pc, string name, string fc, string text, IReadOnlyList<string> saved)
+    static void SendToDeveloper(PlayerControl pc, string name, string fc, string text, IReadOnlyList<string> saved, bool isBug)
     {
         if (string.IsNullOrEmpty(DevRelayUrl) || fc.Length == 0) return;
         bool fromHost = pc != null && pc == PlayerControl.LocalPlayer;
         var payload = JsonSerializer.Serialize(new Dictionary<string, string>
         {
             ["kind"] = fromHost ? "host" : "player",
+            ["type"] = isBug ? "bug" : "request",
             ["name"] = name,
             ["friendCode"] = fc,
             ["host"] = PlayerControl.LocalPlayer?.Data?.PlayerName ?? "?",
@@ -191,7 +240,7 @@ public static class BugReport
         long total = 0;
         foreach (var f in saved)
         {
-            if (upload.Count >= 5 || !relayExt.Contains(Path.GetExtension(f))) continue;
+            if (upload.Count >= 6 || !relayExt.Contains(Path.GetExtension(f))) continue;
             long len = new FileInfo(f).Length;
             if (total + len <= MaxUpload) { upload.Add(f); total += len; }
         }
@@ -228,7 +277,7 @@ public static class BugReport
 
     static volatile bool formOpen;
     public static bool FormOpen => formOpen;
-    static readonly ConcurrentQueue<(string text, string[] files)> formResults = new();
+    static readonly ConcurrentQueue<(string text, string[] files, bool isBug)> formResults = new();
     static readonly ConcurrentQueue<string> formErrors = new();
 
     /// <summary>操作盤のボタンから: 報告の入力画面を開く (閉じるまで待たない)</summary>
@@ -268,7 +317,8 @@ public static class BugReport
                         if (fs.ValueKind == JsonValueKind.Array) foreach (var f in fs.EnumerateArray()) { var s = f.GetString(); if (!string.IsNullOrEmpty(s)) files.Add(s); }
                         else if (fs.ValueKind == JsonValueKind.String) files.Add(fs.GetString());
                     }
-                    formResults.Enqueue((text, files.ToArray()));
+                    var isBug = !(root.TryGetProperty("type", out var ty) && ty.GetString() == "request");
+                    formResults.Enqueue((text, files.ToArray(), isBug));
                 }
                 catch (Exception ex) { formErrors.Enqueue(ex.Message); }
                 finally { formOpen = false; }
@@ -292,7 +342,7 @@ public static class BugReport
                 var text = r.text.Trim();
                 if (text.Length > MaxLengthForm) text = text[..MaxLengthForm];
                 if (text.Length == 0 && r.files.Length == 0) continue;
-                Submit(PlayerControl.LocalPlayer, text, r.files);
+                Submit(PlayerControl.LocalPlayer, text, r.files, r.isBug);
                 var note = DiscordWebhook.HasUrl ? GetString("Report.SentWebhook") : GetString("Report.Saved");
                 if (AmongUsClient.Instance && AmongUsClient.Instance.AmConnected) HostNote.Post(note);
                 else Logger.SendInGame(note);
@@ -326,9 +376,16 @@ $l1.Text = {FormLead()}
 $l1.Location = '12,8'; $l1.Size = '536,44'
 $f.Controls.Add($l1)
 
+$rBug = New-Object System.Windows.Forms.RadioButton
+$rBug.Text = '{Q("Report.FormBug")}'; $rBug.Location = '12,54'; $rBug.Size = '260,24'; $rBug.Checked = $true
+$f.Controls.Add($rBug)
+$rReq = New-Object System.Windows.Forms.RadioButton
+$rReq.Text = '{Q("Report.FormRequest")}'; $rReq.Location = '280,54'; $rReq.Size = '268,24'
+$f.Controls.Add($rReq)
+
 $t = New-Object System.Windows.Forms.TextBox
 $t.Multiline = $true; $t.ScrollBars = 'Vertical'; $t.AcceptsReturn = $true
-$t.Location = '12,54'; $t.Size = '536,182'; $t.MaxLength = {MaxLengthForm}
+$t.Location = '12,82'; $t.Size = '536,156'; $t.MaxLength = {MaxLengthForm}
 $f.Controls.Add($t)
 
 $l2 = New-Object System.Windows.Forms.Label
@@ -371,7 +428,8 @@ $ok = New-Object System.Windows.Forms.Button
 $ok.Text = '{Q("Report.FormSend")}'; $ok.Location = '336,430'; $ok.Size = '100,32'
 $ok.Add_Click({{
     if ($t.Text.Trim().Length -eq 0 -and $lb.Items.Count -eq 0) {{ [void][System.Windows.Forms.MessageBox]::Show($f, '{Q("Report.FormEmpty")}'); return }}
-    $json = ConvertTo-Json -Compress -InputObject @{{ text = $t.Text; files = [string[]]@($lb.Items) }}
+    $type = 'bug'; if ($rReq.Checked) {{ $type = 'request' }}
+    $json = ConvertTo-Json -Compress -InputObject @{{ text = $t.Text; type = $type; files = [string[]]@($lb.Items) }}
     [System.IO.File]::WriteAllText($Out, $json, (New-Object System.Text.UTF8Encoding($false)))
     $f.Close()
 }})

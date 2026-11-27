@@ -10,9 +10,10 @@
 // ソースが公開されているので「本物の MOD から来たか」は見分けられない。上の制限で、荒らしの量を抑える。
 
 const MAX_TEXT = 2000;          // 報告の文 (1 行目の情報も入れた全体)
-const MAX_FILES = 5;
+const MAX_FILES = 6;               // 画像・動画 5 個 + バグの報告のログ (log.zip)
 const MAX_TOTAL_BYTES = 9_500_000; // Discord の Webhook の 1 通の上限 (10MB) より少し下
 const ALLOWED_EXT = /\.(png|jpe?g|gif|bmp|webp|mp4|mov|webm|mkv|avi)$/i;
+const LOG_NAME = /^log\.zip$/i;     // バグの報告に自動で付くゲームのログ (1 個だけ)
 const FRIEND_CODE = /^[a-z0-9]{2,16}#\d{4}$/i;
 
 const json = (status, body) =>
@@ -70,10 +71,14 @@ export default {
     const files = form.getAll("files").filter((f) => typeof f === "object" && f && "arrayBuffer" in f);
     if (files.length > MAX_FILES) return json(400, { ok: false, error: "too_many_files" });
     let total = 0;
+    let logs = 0;
     for (const f of files) {
-      if (!ALLOWED_EXT.test(f.name || "")) return json(400, { ok: false, error: "bad_file_type" });
+      const isLog = LOG_NAME.test(f.name || "");
+      if (isLog) logs++;
+      if (!isLog && !ALLOWED_EXT.test(f.name || "")) return json(400, { ok: false, error: "bad_file_type" });
       total += f.size;
     }
+    if (logs > 1) return json(400, { ok: false, error: "bad_file_type" });
     if (total > MAX_TOTAL_BYTES) return json(413, { ok: false, error: "too_large" });
 
     // 間隔: 同じフレンドコードは 60 秒に 1 回・1 日 10 回、同じ回線は 20 秒に 1 回・1 日 30 回
@@ -84,7 +89,7 @@ export default {
     if (byIp) return json(429, { ok: false, error: byIp });
 
     const head = [
-      `📝 **${clean(info.kind === "host" ? "ホストから" : "プレイヤーから", 20)}の報告**  TOHL ${clean(info.version, 20)} (${clean(info.commit, 12)})`,
+      `${info.type === "request" ? "💡 **要望**" : "🐞 **バグ**"}  ${info.kind === "host" ? "ホストから" : "プレイヤーから"}  TOHL ${clean(info.version, 20)} (${clean(info.commit, 12)})`,
       `👤 ${clean(info.name, 40)}  \`${clean(fc, 24)}\`  ・ ホスト: ${clean(info.host, 40)}`,
       `📍 ${clean(info.situation, 80)}`,
     ].join("\n");
