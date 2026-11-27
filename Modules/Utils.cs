@@ -844,6 +844,8 @@ public static partial class Utils
             {
                 // 常時表示しないオプション
                 if (Options.NotShowOption(opt.Name)) continue;
+                // 人数ごとの構成は上で今の人数の分だけ出したので、ここでは人数ごとの表を並べない
+                if (opt == PlayerCountComposition.Enabled) continue;
 
                 // アクティブマップ毎に表示しないオプション
                 if (opt.Name == "MapOption_Skeld" && !Options.IsActiveSkeld) continue;
@@ -1014,6 +1016,8 @@ public static partial class Utils
         foreach (var opt in option.Children.Select((v, i) => new { Value = v, Index = i + 1 }))
         {
             if (opt.Value.Name == "Maximum") continue;//Maximumの項目は飛ばす
+            // 設定画面で隠れている項目 (他の項目の値で出したり隠したりする物) は出さない
+            if (!(opt.Value.EnabledCondition?.Invoke() ?? true)) continue;
             if (opt.Value.Parent.Name == "displayComingOut%type%" && !opt.Value.GetBool()) continue;
 
             if (opt.Value.Parent.Name == "AddOnBuffAssign" && !opt.Value.GetBool()) continue;

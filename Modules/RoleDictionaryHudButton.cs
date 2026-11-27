@@ -39,6 +39,29 @@ public static class RoleDictionaryHudButton
     private static GameObject reportButton, lobbyReportButton;
     private static Sprite reportIcon;
 
+    /// <summary>
+    /// 右上に足したボタン (報告・辞典) の一番左の端と一番下の端 (画面の座標)。出ていなければ false。
+    /// Ping などの字がボタンの下に潜らないよう、字をよける時に使う
+    /// </summary>
+    public static bool TryGetAddedButtonsArea(out float left, out float bottom)
+    {
+        left = float.MaxValue; bottom = float.MaxValue;
+        bool any = false;
+        foreach (var go in new[] { reportButton, lobbyReportButton })
+        {
+            if (!go || !go.activeInHierarchy) continue;
+            foreach (var r in go.GetComponentsInChildren<SpriteRenderer>(false))
+            {
+                if (!r || !r.enabled || !r.sprite) continue;
+                var b = r.bounds;
+                left = Mathf.Min(left, b.min.x);
+                bottom = Mathf.Min(bottom, b.min.y);
+                any = true;
+            }
+        }
+        return any;
+    }
+
     private static GameObject MakeReportButton(PassiveButton source, string name)
     {
         var go = UnityEngine.Object.Instantiate(source.gameObject, source.transform.parent);

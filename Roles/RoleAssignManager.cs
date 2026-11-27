@@ -120,6 +120,8 @@ namespace TownOfHostL.Roles
             LaterAddOnList.Clear();
 
             ImpostorCountOverride = null;
+            // 開始の直前にも「設定する人数」を今の人数に合わせる
+            PlayerCountComposition.FollowPlayerCount();
             if (PlayerCountComposition.IsOn)
             {
                 // 人数ごとに決めた最少と最多で、ランダムのアサインと同じく配る

@@ -85,11 +85,47 @@ public static class PlayerCountComposition
         return (min, Math.Max(min, o.max.GetInt()));
     }
 
+    /// <summary>
+    /// 「設定する人数」を部屋の今の人数に合わせる (ホストだけ)。人が出入りした時と、開始の直前に呼ぶ。
+    /// 設定画面と /n s には、いま効く人数の分だけが出る
+    /// </summary>
+    public static void FollowPlayerCount()
+    {
+        if (EditPlayers == null || !AmongUsClient.Instance || !AmongUsClient.Instance.AmHost || !GameData.Instance) return;
+        var n = Mathf.Clamp(GameData.Instance.PlayerCount, MinPlayers, MaxPlayers);
+        if (EditPlayers.GetInt() == n) return;
+        EditPlayers.SetValue(n - MinPlayers);
+    }
+
+    static float nextFollowAt;
+    static int lastCount = -1;
+    // ロビーの間 0.5 秒ごとに人数を見て、変わった時だけ合わせる (人の出入りの電文より後に人数が揃うので、見て合わせる方が確か)
+    [HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.Update))]
+    [TownOfHostL.Core.Modes.PatchBundle(TownOfHostL.Core.Modes.PatchBundles.Core)]
+    static class FollowInLobbyPatch
+    {
+        public static void Postfix()
+        {
+            float now = Time.unscaledTime;
+            if (now < nextFollowAt) return;
+            nextFollowAt = now + 0.5f;
+            if (!GameData.Instance) return;
+            int count = GameData.Instance.PlayerCount;
+            if (count == lastCount) return;
+            lastCount = count;
+            FollowPlayerCount();
+        }
+    }
+
     // 開始の時に決めたインポスターの数 (本編の「インポスター数」の設定より優先する)。ロビーに戻ったら消す
     [HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.Start))]
     [TownOfHostL.Core.Modes.PatchBundle(TownOfHostL.Core.Modes.PatchBundles.Core)]
     static class LobbyStartPatch
     {
-        public static void Postfix() => RoleAssignManager.ImpostorCountOverride = null;
+        public static void Postfix()
+        {
+            RoleAssignManager.ImpostorCountOverride = null;
+            lastCount = -1;
+        }
     }
 }

@@ -86,6 +86,13 @@ internal static class TohlSpawnEditor
     {
         result = spawn;
         if (!ShipStatus.Instance) return true;
+        // 覚えた「歩いて行ける所」の表があれば、それだけで決める (壁と壁の間のすき間・閉じた所を避け、物理の当たりを何百回も引かない)
+        if (SpawnMask.TryNearest(spawn, SnapRadius, out var near, p => !WallBetween(spawn, p)))
+        {
+            result = near;
+            return true;
+        }
+        if (SpawnMask.HasCurrent) return false;
         if (CanStand(spawn) && SpawnMask.AllowsShip(spawn)) return true;
         // まず壁を越えずに行ける所を探す (壁の向こうの別の部屋や、壁の中の狭いすき間へ飛ばないように)。
         // 見つからない時だけ壁越しも許す (置いた点が壁の中そのものの時など)

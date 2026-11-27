@@ -52,6 +52,8 @@ namespace TownOfHostL
                         aspect.DistanceFromEdge = dist;
                         aspect.AdjustPosition();
                     }
+                    // 右上の報告・辞典のボタンに字が重なる時は、字をボタンの下へずらす
+                    if (!inMenu) AvoidAddedButtons(__instance);
                 }
 
                 // 本編は毎フレーム Ping の字を書き直すので、足す字も毎フレーム付ける。足す字の中身は設定や状態が変わった時にしか変わらないので、組み直すのは 0.25 秒ごと
@@ -62,6 +64,28 @@ namespace TownOfHostL
                     suffix = BuildSuffix();
                 }
                 __instance.text.text += suffix;
+            }
+            static bool shiftedForButtons;
+            static void AvoidAddedButtons(PingTracker ping)
+            {
+                try
+                {
+                    bool has = TownOfHostL.Modules.RoleDictionaryHudButton.TryGetAddedButtonsArea(out var left, out var bottom);
+                    if (!has && !shiftedForButtons) return;
+                    var t = ping.transform;
+                    var rb = ping.text.renderer.bounds;
+                    // 字の右上の角の、字の位置からのずれ (字の中身が変わっても位置と一緒に動くので、毎フレーム測り直す)
+                    float topOff = rb.max.y - t.position.y, rightOff = rb.max.x - t.position.x;
+                    // 本来の位置へ戻してから決める (ずらしを積み重ねない)
+                    aspect.AdjustPosition();
+                    shiftedForButtons = false;
+                    if (!has) return;
+                    var p = t.position;
+                    if (p.x + rightOff <= left || p.y + topOff <= bottom) return;
+                    t.position = new Vector3(p.x, bottom - 0.05f - topOff, p.z);
+                    shiftedForButtons = true;
+                }
+                catch { }
             }
             static string suffix = "";
             static float nextBuildAt;

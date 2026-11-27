@@ -170,6 +170,55 @@ public static class AutoProgress
             if (Streaming.MapVote.ApplyAtGameStart()) Streaming.MapVote.SyncSettings();
             gsm.countDownTimer = 5f;
             gsm.startState = GameStartManager.StartingStates.Countdown;
+            autoCountdown = true;
+        }
+    }
+
+    // ===== 自動スタートの秒読みを、人が抜けても止めない =====
+    // 本編は秒読みの間に人が抜けると秒読みを取り消す。自動スタートで始めた秒読みだけ、人数が最少に足りている間は続ける。
+    // ホストが自分で取り消した時 (取り消しのボタン・/cancel など) は止める: 止めないのは人の出入りと GameStartManager の毎フレームの中から呼ばれた時だけ
+
+    /// <summary>自動スタートで始めた秒読みの最中か</summary>
+    static bool autoCountdown;
+    static bool inLeaveOrUpdate;
+
+    [HarmonyPatch(typeof(AmongUsClient), nameof(AmongUsClient.OnPlayerLeft))]
+    static class PlayerLeftGuardPatch
+    {
+        public static void Prefix() => inLeaveOrUpdate = true;
+        public static System.Exception Finalizer(System.Exception __exception) { inLeaveOrUpdate = false; return __exception; }
+    }
+
+    [HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.Update))]
+    static class StartManagerUpdateGuardPatch
+    {
+        public static void Prefix(GameStartManager __instance)
+        {
+            if (autoCountdown && __instance && __instance.startState == GameStartManager.StartingStates.NotStarting) autoCountdown = false;
+            inLeaveOrUpdate = true;
+        }
+        public static System.Exception Finalizer(System.Exception __exception) { inLeaveOrUpdate = false; return __exception; }
+    }
+
+    [HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.ResetStartState))]
+    static class KeepAutoCountdownPatch
+    {
+        [HarmonyPriority(Priority.First)]
+        public static bool Prefix(GameStartManager __instance)
+        {
+            if (!autoCountdown || !inLeaveOrUpdate || !AmongUsClient.Instance || !AmongUsClient.Instance.AmHost) return true;
+            if (!__instance || __instance.startState != GameStartManager.StartingStates.Countdown || !AutoStart.GetBool()) return true;
+            int alive = 0;
+            foreach (var pc in PlayerControl.AllPlayerControls)
+                if (pc && pc.Data != null && !pc.Data.Disconnected) alive++;
+            // 抜けた人をまだ数えている事があるので 1 人引いて見る
+            if (alive - 1 < AutoStartMinPlayers.GetInt())
+            {
+                autoCountdown = false;
+                return true;
+            }
+            Logger.Info($"自動スタートの秒読み中に人が抜けたが、{alive} 人いるので秒読みを続ける", "AutoStart");
+            return false;
         }
     }
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -19,9 +19,9 @@ internal static class SpawnMask
     // 地図の絵の何点ごとに調べるか
     const int Step = 2;
     // 1 フレームで調べる数 (重くしない)
-    const int PerFrame = 1500;
+    const int PerFrame = 800;
     // 保存の形を変えたら上げる (古いのは調べ直す)
-    const int Version = 1;
+    const int Version = 2;
 
     sealed class Learned
     {
@@ -73,6 +73,8 @@ internal static class SpawnMask
     }
 
     public static bool Has(int id) => Get(id) != null;
+    /// <summary>今のマップの「歩いて行ける所」を覚えているか</summary>
+    public static bool HasCurrent => Has(TohlSpawnEditor.ToStorageMapId((int)GameMap.Current));
 
     /// <summary>地図の絵の点 (左上から) が、覚えた立てる所に入っているか。まだ覚えていなければ true</summary>
     public static bool Allows(int id, int px, int py)
@@ -91,6 +93,61 @@ internal static class SpawnMask
         if (s == null || Get(id) == null) return true;
         var p = s.ToPixel(pos.x, pos.y);
         return Allows(id, Mathf.FloorToInt(p.x), Mathf.FloorToInt(p.y));
+    }
+
+    /// <summary>
+    /// 覚えた「歩いて行ける所」の中で、pos に一番近く、周りにも少し余裕がある所を探す (物理の当たりは使わず表を引くだけなので軽い)。
+    /// pos 自身がそうなら pos のまま。まだ覚えていない・近くに無い時は false
+    /// </summary>
+    public static bool TryNearest(Vector2 pos, float maxDist, out Vector2 result, Func<Vector2, bool> accept = null)
+    {
+        result = pos;
+        int mapId = (int)GameMap.Current;
+        bool mirror = mapId == 3;
+        int id = TohlSpawnEditor.ToStorageMapId(mapId);
+        var s = SheetOf(id);
+        var l = s == null ? null : Get(id);
+        if (l == null) return false;
+        var q = mirror ? new Vector2(-pos.x, pos.y) : pos;
+        var pp = s.ToPixel(q.x, q.y);
+        int sx = Mathf.FloorToInt(pp.x) / Step, sy = Mathf.FloorToInt(pp.y) / Step;
+        bool Cell(int x, int y) => x >= 0 && y >= 0 && x < l.Cols && y < l.Rows && l.Cells[y * l.Cols + x];
+        // 周り 2 マス (体の幅くらい) も全部行ける所か
+        bool Roomy(int x, int y)
+        {
+            for (int dy = -2; dy <= 2; dy++)
+                for (int dx = -2; dx <= 2; dx++)
+                    if (!Cell(x + dx, y + dy)) return false;
+            return true;
+        }
+        Vector2 ShipOf(int x, int y)
+        {
+            var v = s.ToShip(x * Step + Step * 0.5f, y * Step + Step * 0.5f);
+            return mirror ? new Vector2(-v.x, v.y) : v;
+        }
+        if (Roomy(sx, sy)) return true;
+        float cell = Mathf.Min(Mathf.Abs(s.Ax), Mathf.Abs(s.Ay)) * Step;
+        int maxR = Mathf.CeilToInt(maxDist / cell);
+        int tries = 0;
+        // 内側の輪から順に (近い所から) 見る
+        for (int r = 1; r <= maxR; r++)
+        {
+            for (int dy = -r; dy <= r; dy++)
+            {
+                for (int dx = -r; dx <= r; dx++)
+                {
+                    if (Math.Max(Math.Abs(dx), Math.Abs(dy)) != r) continue;
+                    int x = sx + dx, y = sy + dy;
+                    if (!Roomy(x, y)) continue;
+                    var cand = ShipOf(x, y);
+                    // 壁越しの所は数回まで断って、同じ側の所を探す
+                    if (accept != null && tries < 24 && !accept(cand)) { tries++; continue; }
+                    result = cand;
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /// <summary>今のマップをまだ覚えていなければ調べ始める (force で調べ直す)</summary>
@@ -122,11 +179,9 @@ internal static class SpawnMask
             for (int cx = 0; cx < cols; cx++)
             {
                 int px = Mathf.Min(cx * Step + Step / 2, s.W - 1), py = Mathf.Min(cy * Step + Step / 2, s.H - 1);
-                if (s.Inside(px, py, false))
-                {
-                    var pos = s.ToShip(px + 0.5f, py + 0.5f);
-                    if (TohlSpawnEditor.CanStand(pos)) { stand[cy * cols + cx] = true; standCount++; }
-                }
+                // 地図の絵で床の色でない廊下・外なども、つながりを辿るために調べる
+                var pos = s.ToShip(px + 0.5f, py + 0.5f);
+                if (TohlSpawnEditor.CanStand(pos)) { stand[cy * cols + cx] = true; standCount++; }
                 if (++done % PerFrame == 0)
                 {
                     yield return null;
@@ -139,7 +194,7 @@ internal static class SpawnMask
         var seeds = new List<Vector2>();
         if (PlayerControl.LocalPlayer) seeds.Add(PlayerControl.LocalPlayer.GetTruePosition() + new Vector2(0f, 0.3636f));
         foreach (var v in ship.AllVents) if (v) seeds.Add(v.transform.position);
-        foreach (var c in UnityEngine.Object.FindObjectsOfType<Console>()) if (c) seeds.Add(c.transform.position);
+        // タスクの機械は壁に埋まっている物が多く、近くの「壁と壁の間のすき間」を種にしてしまうので使わない
         foreach (var l in UnityEngine.Object.FindObjectsOfType<Ladder>()) if (l) seeds.Add(l.transform.position);
         // 部屋ごとのスポーンの位置 (入れる所として選んである)
         try { seeds.AddRange(RandomSpawn.ForMap((MapNames)mapId).Positions.Values); } catch { }
@@ -164,13 +219,6 @@ internal static class SpawnMask
             if (best >= 0 && !reached[best]) { reached[best] = true; queue.Enqueue(best); }
         }
         int reachedCount = queue.Count;
-        // エアシップ以外は薄い色の所 (廊下・外など) も歩ける所なので、つながりでは削らず、置物などで立てない所だけを外す
-        if (mapId != 4)
-        {
-            queue.Clear();
-            reached = stand;
-            reachedCount = standCount;
-        }
         while (queue.Count > 0)
         {
             int i = queue.Dequeue();
@@ -187,6 +235,14 @@ internal static class SpawnMask
             Try(x + 1, y); Try(x - 1, y); Try(x, y + 1); Try(x, y - 1);
         }
 
+        // 種が取れずにほとんどつながらなかった時は、つながりで削らない (何も無いよりよい)
+        if (reachedCount < standCount / 5)
+        {
+            Logger.Warn($"つながる所が少なすぎるので立てる所をそのまま使う: map={mapId} {reachedCount}/{standCount}", nameof(SpawnMask));
+            reached = stand;
+            reachedCount = standCount;
+        }
+
         scanning = false;
         if (!ship || ShipStatus.Instance != ship) yield break;
         try
@@ -201,6 +257,9 @@ internal static class SpawnMask
                 bw.Write(bytes);
             }
             cache[mapId] = new Learned { Cols = cols, Rows = rows, Cells = reached };
+            // 古い形の覚え書きは要らないので消す
+            for (int v = 1; v < Version; v++)
+                try { File.Delete($"./TOHL_DATA/SpawnMask_v{v}_{mapId}.bin"); } catch { }
             missing.Remove(mapId);
             Logger.Info($"スポーンの立てる所を覚えた: map={mapId} 立てる={standCount} つながる={reachedCount} 種={seeds.Count}", nameof(SpawnMask));
         }
