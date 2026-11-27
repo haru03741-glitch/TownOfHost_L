@@ -256,7 +256,13 @@ public sealed class UltraStar : RoleBase, IKiller, ISchrodingerCatOwner
 
     // 試合の途中でウルトラスターになった時も速さを足す。役職が替わる時は OnDestroy で外す
     public override void OnAddedMidGame() => Holdings.AddSpeed(Player.PlayerId, nameof(UltraStar), Speed);
-    public override void OnDestroy() => Holdings.RemoveSpeed(Player.PlayerId, nameof(UltraStar));
+    public override void OnDestroy()
+    {
+        Holdings.RemoveSpeed(Player.PlayerId, nameof(UltraStar));
+        // タスク中に役職が替わった時は、虹の途中の色のまま残さず元の色へ戻す (会議では通報の時に戻してある)
+        if (AmongUsClient.Instance.AmHost && AmongUsClient.Instance.AmConnected && GameStates.IsInTask && !GameEndChecker.EndingStarted && !Camouflage.IsCamouflage && Player.Data != null && !Player.Data.Disconnected)
+            Player.RpcSetColor((byte)PlayerColor);
+    }
 
 
 
