@@ -156,7 +156,8 @@ internal static class PresetStore
         try
         {
             var gm = GameOptionsManager.Instance;
-            var opts = gm?.CurrentGameOptions;
+            // 試合中の CurrentGameOptions はホスト自身の人ごとの設定 (暗転中は視界 0 など) に置き換わっているので、部屋の設定を書く
+            var opts = gm?.GameHostOptions ?? gm?.CurrentGameOptions;
             if (opts == null) return null;
             return Convert.ToBase64String(gm.gameOptionsFactory.ToBytes(opts, false));
         }
