@@ -54,8 +54,13 @@ public static class RoleDictionaryHudButton
 
     private static float ButtonWidth(PassiveButton b)
     {
+        // 見えている枠の絵の幅 (当たり判定は枠より細いので、それで並べると枠が重なる)
         try
         {
+            float w = 0f;
+            foreach (var r in b.GetComponentsInChildren<SpriteRenderer>(false))
+                if (r && r.enabled && r.sprite) w = Mathf.Max(w, r.bounds.size.x);
+            if (w > 0.2f) return w;
             if (b.Colliders != null && b.Colliders.Length > 0 && b.Colliders[0]) return Mathf.Max(0.3f, b.Colliders[0].bounds.size.x);
         }
         catch { }
@@ -71,7 +76,7 @@ public static class RoleDictionaryHudButton
             if (!reportButton) reportButton = MakeReportButton(dict, ReportName);
             if (!reportButton.activeSelf) reportButton.SetActive(true);
             var p = dict.transform.position;
-            reportButton.transform.position = new Vector3(p.x - ButtonWidth(dict) * 1.3f, p.y, p.z);
+            reportButton.transform.position = new Vector3(p.x - ButtonWidth(dict) * 1.06f, p.y, p.z);
             // 試合の始まりの演出の間など、本のボタンが押せない時に写すと押せないままになるので、毎フレーム合わせる
             var rb = reportButton.GetComponent<PassiveButton>();
             if (rb && rb.enabled != dict.enabled) rb.enabled = dict.enabled;
@@ -87,7 +92,7 @@ public static class RoleDictionaryHudButton
             if (!lobbyReportButton) lobbyReportButton = MakeReportButton(lobbyButton.GetComponent<PassiveButton>(), LobbyReportName);
             if (!lobbyReportButton.activeSelf) lobbyReportButton.SetActive(true);
             var p = lobbyButton.transform.position;
-            lobbyReportButton.transform.position = new Vector3(p.x - ButtonWidth(lobbyButton.GetComponent<PassiveButton>()) * 1.3f, p.y, p.z);
+            lobbyReportButton.transform.position = new Vector3(p.x - ButtonWidth(lobbyButton.GetComponent<PassiveButton>()) * 1.06f, p.y, p.z);
         }
         else if (lobbyReportButton && lobbyReportButton.activeSelf) lobbyReportButton.SetActive(false);
     }

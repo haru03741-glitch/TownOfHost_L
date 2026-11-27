@@ -75,9 +75,12 @@ namespace TownOfHostL.Roles
             RandomAssignOptions.Create(OptionAssignMode, CustomRoleTypes.Madmate);
             RandomAssignOptions.Create(OptionAssignMode, CustomRoleTypes.Crewmate);
             RandomAssignOptions.Create(OptionAssignMode, CustomRoleTypes.Neutral);
+            PlayerCountComposition.SetupOptionItem();
         }
         public static bool CheckRoleCount()
         {
+            // 人数ごとの構成を使う時は、その人数の数をそのまま使う (人数に収まるよう削ってある)
+            if (PlayerCountComposition.IsOn) { PlayerCountComposition.ApplyAtGameStart(); return true; }
             if (AssignMode == AssignAlgorithm.Fixed) return true;
             var result = true;
             var opt = Main.NormalOptions.Cast<IGameOptions>();
@@ -115,7 +118,19 @@ namespace TownOfHostL.Roles
             AssignRoleList.Clear();
             LaterAddOnList.Clear();
 
-            switch (AssignMode)
+            if (PlayerCountComposition.IsOn)
+            {
+                // 人数ごとに決めた構成の枠で、ランダムのアサインと同じく役職を配る
+                var (imp, mad, neu, crew) = PlayerCountComposition.Get(GameData.Instance.PlayerCount);
+                AssignCount[CustomRoleTypes.Impostor] = imp;
+                AssignCount[CustomRoleTypes.Madmate] = mad;
+                AssignCount[CustomRoleTypes.Neutral] = neu;
+                AssignCount[CustomRoleTypes.Crewmate] = crew;
+                Logger.Info($"人数ごとの構成 ({GameData.Instance.PlayerCount} 人): インポスター {imp}・マッド {mad}・ニュートラル {neu}・クルー {crew}", "AssignCount");
+                SetRandomAssignRoleList();
+                SetAddOnsList(false);
+            }
+            else switch (AssignMode)
             {
                 case AssignAlgorithm.Fixed:
                     SetFixedAssignRole();
