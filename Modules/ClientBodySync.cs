@@ -309,9 +309,10 @@ public static class ClientBodySync
             if (!body.enabled) bodyBusyAt = now;
             if (!body.gameObject.activeSelf) continue;
             var viper = body.TryCast<ViperDeadBody>();
-            if (viper != null && viper.victimDissolving)
+            if (viper != null && viper.maxDissolveTime > 0f)
             {
-                // 溶けている途中の死体は、作り直すと溶けない死体になる。溶け切った死体は客の画面にも無いので残さない
+                // 溶ける死体は、作り直すと溶けない死体になる。溶け切るまで待つ。
+                // 溶け切った死体は客の画面にも無いので残さない (本編は溶け切ると victimDissolving を下ろすが、死体の物は残す)
                 if (viper.dissolveCurrentTime > 0f) blocked = true;
                 continue;
             }
