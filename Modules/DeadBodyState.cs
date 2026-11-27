@@ -7,14 +7,6 @@ namespace TownOfHostL.Modules;
 /// </summary>
 public static class DeadBodyState
 {
-    /// <summary>溶ける死体か (溶けている途中か、溶け切った)</summary>
-    public static bool Dissolves(DeadBody body)
-    {
-        if (body == null) return false;
-        var viper = body.TryCast<ViperDeadBody>();
-        return viper != null && viper.maxDissolveTime > 0f;
-    }
-
     /// <summary>溶け切ったヴァイパーの死体か (客の画面にも無く、通報もできない)</summary>
     public static bool IsDissolved(DeadBody body)
     {
