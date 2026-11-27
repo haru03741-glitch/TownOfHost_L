@@ -321,7 +321,8 @@ public static class ClientBodySync
             // 本人の画面に canOverride の無い SetRole が届いていると、生きた役職が捨てられ、地図のボタンが戻らない。
             // 全員宛ての SetRole はホストの手元でも同じ値で CoSetRole を通るので、ホストの手元の印で見る
             if (pc.roleAssigned) return "role locked";
-            if (pc.Data.Role == null || !pc.Data.Role.IsDead) return "not ghost yet";
+            // 戻す幽霊の役職はクルーかインポスターの幽霊だけ (守護天使などは作り直すと能力の状態が失われる)
+            if (pc.Data.Role == null || pc.Data.Role.Role is not (RoleTypes.CrewmateGhost or RoleTypes.ImpostorGhost)) return "ghost role";
         }
         else
         {
