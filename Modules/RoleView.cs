@@ -59,6 +59,22 @@ public static class RoleView
         SeekerBody.OnRoleSent(target);
     }
 
+    /// <summary>
+    /// 送らずに、生きている時の見え方だけを戻す (会議の後の配り直しが表から引く)。客の画面は変えていないので画面の表は書かない
+    /// </summary>
+    internal static void RestoreLiving(PlayerControl seer, PlayerControl target, RoleTypes role)
+    {
+        if (seer == null || target == null || RoleManager.IsGhostRole(role)) return;
+        if (!AmongUsClient.Instance || !AmongUsClient.Instance.AmHost || AmongUsClient.Instance.GameState != AmongUsClient.GameStates.Started) return;
+        living[(seer.PlayerId, target.PlayerId)] = role;
+    }
+
+    internal static void RestoreLivingByClientId(int clientId, PlayerControl target, RoleTypes role)
+    {
+        foreach (var seer in Main.AllPlayerControls)
+            if (seer.GetClientId() == clientId) { RestoreLiving(seer, target, role); return; }
+    }
+
     internal static void RecordByClientId(int clientId, PlayerControl target, RoleTypes role)
         => NoteByClientId(clientId, target, role, transient: false);
 

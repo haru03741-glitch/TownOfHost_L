@@ -200,7 +200,7 @@ public static class DissolveKill
                 // 会議中は会議の配り直しが役職を送る。記録だけ戻し、設定は送り直しを頼む
                 if (GameStates.IsMeeting)
                 {
-                    if (role.HasValue) RoleView.RecordByClientId(clientId, killer, role.Value);
+                    if (role.HasValue) RoleView.RestoreLivingByClientId(clientId, killer, role.Value);
                     options?.SetDirty();
                     continue;
                 }

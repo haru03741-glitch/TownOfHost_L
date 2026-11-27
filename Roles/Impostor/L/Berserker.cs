@@ -286,7 +286,7 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammat
         foreach (var (id, role) in tranceViews)
         {
             var pc = Utils.GetPlayerById(id);
-            if (pc != null) RoleView.Record(Player, pc, role);
+            if (pc != null) RoleView.RestoreLiving(Player, pc, role);
         }
         tranceViews.Clear();
     }
