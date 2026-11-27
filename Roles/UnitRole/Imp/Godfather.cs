@@ -60,6 +60,10 @@ public sealed class Godfather : RoleBase, IImpostor
     {
         var (killer, target) = info.AttemptTuple;
 
+        // キル出来ない相手・守りで止まるキルはジャニターの的にせず、普通のキルと同じく止める
+        // (会議前の死は守りを通らないので、守りが働いても相手が死んでしまう)
+        if (!info.CanKill || info.CheckHasGuard()) return;
+
         //ジャニターが死亡している場合killをそのまま行う
         if (!janitor.IsAlive()) return;
 

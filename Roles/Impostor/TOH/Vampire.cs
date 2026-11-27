@@ -51,7 +51,8 @@ namespace TownOfHostL.Roles.Impostor
         }
         public void OnCheckMurderAsKiller(MurderInfo info)
         {
-            if (!info.CanKill) return; //キル出来ない相手には無効
+            // キル出来ない相手・守りで止まるキルは噛まない (噛んだ後の死は守りを通らないので、守りが働いても相手が死んでしまう)
+            if (!info.CanKill || info.CheckHasGuard()) return;
             var (killer, target) = info.AttemptTuple;
 
             if (target.Is(CustomRoles.Bait)) return;
