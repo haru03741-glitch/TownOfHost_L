@@ -411,7 +411,8 @@ public static partial class AntiBlackout
             {
                 if (info == null || !deferredDead.TryGetValue(info.PlayerId, out var val)) continue;
                 info.IsDead = val.isDead;
-                info.Disconnected = val.Disconnected;
+                // 控えを取った後 (待たせている間) に切断した人を、つながっているように戻さない
+                info.Disconnected = val.Disconnected || info.Disconnected;
             }
             deferredDead.Clear();
             SendGameData();
