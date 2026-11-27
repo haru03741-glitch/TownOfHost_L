@@ -173,13 +173,15 @@ public static class OptionSerializer
     /// <param name="source">オプション情報の文字列</param>
     public static void LoadVanillaOptionsString(string source)
     {
+        // 試合の間は今の設定が試合用の写しなので、部屋の設定は置き換えない (試合を出る時に入った時の値へ戻る)
+        if (RoomOptions.Entered) { Logger.Warn("試合の間は本編の設定を読み込みません", "OptionSerializer"); return; }
         var bytes = Convert.FromBase64String(source);
         var options = GameOptionsManager.Instance.gameOptionsFactory.FromBytes(bytes);
         // 人が入った時に本編のおすすめの値で上書きされないように
         SettingsUI.VanillaGame.MarkCustom(options);
         SettingsUI.VanillaGame.KeepRoomLanguage(options, GameOptionsManager.Instance.CurrentGameOptions);
-        GameOptionsManager.Instance.GameHostOptions = GameOptionsManager.Instance.CurrentGameOptions = options;
-        GameManager.Instance.LogicOptions.SetGameOptions(options);
+        GameOptionsManager.Instance.GameHostOptions = GameOptionsManager.Instance.CurrentGameOptions = options; // ロビーで部屋の設定を置き換える
+        GameManager.Instance.LogicOptions.SetGameOptions(options); // ロビーで部屋の設定を置き換える
         GameManager.Instance.LogicOptions.SyncOptions();
     }
 }

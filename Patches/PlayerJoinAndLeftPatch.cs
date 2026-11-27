@@ -102,10 +102,10 @@ namespace TownOfHostL
                 Logger.Warn($"DisconnectInternalPatch.Prefix failed: {ex.Message}", "DisconnectInternalPatch");
             }
             // 試合の途中で抜けると試合の終わりを通らない。ホスト用に組んだ設定を部屋の設定として残さない
-            try { RoomOptions.Restore("切断"); }
+            try { RoomOptions.Exit("切断"); }
             catch (Exception ex)
             {
-                Logger.Warn($"RoomOptions.Restore on disconnect failed: {ex.Message}", "DisconnectInternalPatch");
+                Logger.Warn($"RoomOptions.Exit on disconnect failed: {ex.Message}", "DisconnectInternalPatch");
             }
         }
     }

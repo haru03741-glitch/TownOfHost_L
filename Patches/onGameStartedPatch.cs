@@ -43,6 +43,8 @@ class ChangeRoleSettings
 
             Logger.Info($"GameOptions 初期化確認: OK", "ChangeRoleSettings");
             Logger.Info($"NormalOptions: {GameOptionsManager.Instance.currentNormalGameOptions != null}", "ChangeRoleSettings");
+            // 下の書き換えを部屋の設定の器へ入れない (秒読みを通らずに始まった時はここで写しへ差し替える)
+            RoomOptions.Enter();
 
             Main.NormalOptions.roleOptions.SetRoleRate(RoleTypes.Shapeshifter, 0, 0);
             Main.NormalOptions.roleOptions.SetRoleRate(RoleTypes.Phantom, 0, 0);
