@@ -69,12 +69,6 @@ public static class RoleView
         living[(seer.PlayerId, target.PlayerId)] = role;
     }
 
-    internal static void RestoreLivingByClientId(int clientId, PlayerControl target, RoleTypes role)
-    {
-        foreach (var seer in Main.AllPlayerControls)
-            if (seer.GetClientId() == clientId) { RestoreLiving(seer, target, role); return; }
-    }
-
     internal static void RecordByClientId(int clientId, PlayerControl target, RoleTypes role)
         => NoteByClientId(clientId, target, role, transient: false);
 

@@ -165,8 +165,11 @@ static partial class ExtendedPlayerControl
         }
         NameRpcBatcher.Enqueue(clientId, player.NetId, player.Data.NetId, name, DontShowOnModdedClient);
     }
-    /// <summary>clientId の客の画面で、player の本編の役職を role にする (いつも上書き可で送る)</summary>
-    public static void RpcSetRoleDesync(this PlayerControl player, RoleTypes role, int clientId)
+    /// <summary>
+    /// clientId の客の画面で、player の本編の役職を role にする (いつも上書き可で送る)。
+    /// transient: 一時の見え方 (後で戻す) で、生きている時の見え方の表には書かない
+    /// </summary>
+    public static void RpcSetRoleDesync(this PlayerControl player, RoleTypes role, int clientId, bool transient = false)
     {
 
         if (player == null) return;
@@ -176,7 +179,7 @@ static partial class ExtendedPlayerControl
             NoClientWarning.Report(player, $"RpcSetRoleDesync({role})");
             return;
         }
-        RoleView.RecordByClientId(clientId, player, role);
+        RoleView.NoteByClientId(clientId, player, role, transient);
         if (AmongUsClient.Instance.ClientId == clientId)
         {
             // ホスト自身への役職設定: 非ホスト向け RPC と同様に canOverrideRole = true を使う

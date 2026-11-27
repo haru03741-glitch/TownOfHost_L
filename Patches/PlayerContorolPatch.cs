@@ -82,7 +82,7 @@ class CheckMurderPatch
         bool killerIsViper = killer.Is(RoleTypes.Viper);
         if (killerIsViper)
         {
-            // 2 秒後に、見せる前の見え方へ戻す (続けてキルして Viper を見せている間なら Impostor)
+            // 2 秒後に、見せる前の見え方へ戻す。見せは生きている時の見え方の表に書かないので、続けてキルしても表は見せる前のまま
             var before = new Dictionary<byte, RoleTypes>();
             foreach (var seer in Main.AllPlayerControls)
             {
@@ -91,8 +91,8 @@ class CheckMurderPatch
                 var was = RoleView.Living(killer, seer);
                 // 自分の画面でキルを持つ人 (デシンクの役職) にキル役で見せると、インポスターの仲間になってキルの対象から外れる
                 if (RoleView.IsDesync(seer) && !RoleView.IsKillerRole(was)) continue;
-                before[seer.PlayerId] = was == RoleTypes.Viper ? RoleTypes.Impostor : was;
-                killer.RpcSetRoleDesync(RoleTypes.Viper, seer.GetClientId());
+                before[seer.PlayerId] = was;
+                killer.RpcSetRoleDesync(RoleTypes.Viper, seer.GetClientId(), transient: true);
             }
 
             var capKiller = killer;
