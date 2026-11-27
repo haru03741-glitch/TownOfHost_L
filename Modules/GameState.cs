@@ -297,8 +297,7 @@ public static partial class MeetingStates
     public static DeadBody[] DeadBodies = null;
     public static NetworkedPlayerInfo ReportTarget = null;
     public static bool IsEmergencyMeeting => ReportTarget == null;
-    /// <summary>会議の始まりに死体があったか (溶け切ったヴァイパーの死体は数えない)</summary>
-    public static bool IsExistDeadBody => System.Array.Exists(DeadBodies, Modules.DeadBodyState.IsPresent);
+    public static bool IsExistDeadBody => DeadBodies.Length > 0;
     public static bool MeetingCalled = false;
     public static bool FirstMeeting = true;
     /// <summary>今が何日目か。試合の始めが 1 日目で、会議が終わるたびに 1 つ進む (ホストのみ)</summary>

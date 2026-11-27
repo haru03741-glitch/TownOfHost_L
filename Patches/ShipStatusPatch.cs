@@ -97,7 +97,8 @@ namespace TownOfHostL
         public static void Prefix(ShipStatus __instance, PlayerControl reporter, NetworkedPlayerInfo target)
         {
             MeetingStates.ReportTarget = target;
-            MeetingStates.DeadBodies = UnityEngine.Object.FindObjectsOfType<DeadBody>();
+            // 溶け切ったヴァイパーの死体は数えない (読むのは会議の始まりが死体を壊した後なので、ここで選んでおく)
+            MeetingStates.DeadBodies = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Where(UnityEngine.Object.FindObjectsOfType<DeadBody>(), Modules.DeadBodyState.IsPresent));
             if (AmongUsClient.Instance.AmHost) Modules.GameLog.OnMeetingStart(reporter?.Data, target);
         }
     }
