@@ -538,13 +538,18 @@ public static partial class Utils
         // 並び: 大きな役職名 → 少し大きなイントロ → 陣営・置き換え役職・判定の表 → From → 説明 (1 文 1 行) → 設定 (別の通)
         var r = role.VanillaRoleConversion();
         string roleInfoLong = GetRoleInfoLongText(r);
+        // 説明の最後に付く From は上の行で出すので、説明からは外す
+        var fromTail = FromLine(r);
+        if (fromTail.Length > 0 && roleInfoLong.EndsWith(fromTail)) roleInfoLong = roleInfoLong[..^fromTail.Length];
         var color = GetRoleColor(role).ToReadableColor();
         string formatTag = "<size=75%><line-height=1.7pic>";
 
+        // 大きな字の行は決まった行の高さ (1.7pic) だと上の行と重なるので、見出しの 2 行は字の大きさに合わせた高さにする
         var sb0 = new StringBuilder();
-        sb0.Append("<size=160%><b>").Append(GetString(role.ToString()).Color(color)).Append("</b></size>\n");
+        sb0.Append("<line-height=100%><size=140%><b>").Append(GetString(role.ToString()).Color(color)).Append("</b></size>\n");
         if (Translator.HasString(role + "Info"))
-            sb0.Append("<size=115%>").Append(GetString(role + "Info")).Append("</size>\n");
+            sb0.Append("<size=110%>").Append(GetString(role + "Info")).Append("</size>\n");
+        sb0.Append("<line-height=1.7pic>");
         sb0.Append("<#9aa4b2>").Append(GetString("RoleDictionary.Team")).Append("<pos=34%>").Append(GetString("RoleDictionary.BaseRole"))
            .Append("<pos=68%>").Append(GetString("Basis")).Append("</color>\n");
         sb0.Append(RoleTeamText(role)).Append("<pos=34%>").Append(RoleBaseText(role)).Append("<pos=68%>").Append(RoleCountText(role)).Append('\n');

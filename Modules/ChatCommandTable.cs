@@ -286,12 +286,13 @@ public static class ChatCommandTable
             Usage = "CommandUsage.PlayerId",
             Host = c => { if (c.Args.Length > 1 && int.TryParse(c.Args[1], out int id)) Utils.GetPlayerById(id)?.RpcMurderPlayer(Utils.GetPlayerById(id)); },
         },
-        new("/vo", "/voice") { Restrictable = true, Host = HostVoice, Remote = RemoteVoice },
+        // 読み上げの声はホストだけが変える
+        new("/vo", "/voice") { Host = HostVoice },
+        // キルフラッシュはホストとモデレーターだけ
         new("/killFlash", "/kf")
         {
-            Restrictable = true,
+            ForModerator = true,
             Host = c => Utils.SetKillFlashAfterDead(c.Player, true),
-            Remote = c => Utils.SetKillFlashAfterDead(c.Player),
         },
         new("/ws", "/whisper")
         {
@@ -476,7 +477,8 @@ public static class ChatCommandTable
         }
         // 誰でも使える物は種類ごとに並べ、モデレーターも使える物・ホストだけの物は最後に別のまとまりにする
         bool ForModeratorOnly(ChatCommand cmd) => cmd.ForModerator && cmd.Host != null && cmd.Remote == null;
-        bool ForEveryone(ChatCommand cmd) => cmd.Remote != null || cmd.Local != null;
+        // 他の人が送って動く物だけを「みんな」にする (手元だけで動く配信・開発用などはホストの所に出す)
+        bool ForEveryone(ChatCommand cmd) => cmd.Remote != null;
         // 2 段に分ける: ★ 誰が使えるか (みんな / ホストとモデレーター / ホストだけ) → ■ 種類 (情報系・プレイヤー系など)
         var audiences = new[] { new SortedDictionary<int, List<string>>(), new SortedDictionary<int, List<string>>(), new SortedDictionary<int, List<string>>() };
         foreach (var cmd in All)
@@ -508,7 +510,7 @@ public static class ChatCommandTable
             foreach (var (cat, lines) in audiences[who])
             {
                 // 大見出しは、その下の最初のまとまりと同じ通に入れる (見出しだけが前の通に残らない)
-                var main = first ? $"<size=125%><b><#{mainColors[who]}>★ {GetString(mainKeys[who])}</color></b></size>\n" : "";
+                var main = first ? $"<b><#{mainColors[who]}>★ {GetString(mainKeys[who])}</color></b>\n" : "";
                 first = false;
                 blocks.Add(main + $"<#{CategoryColors[cat]}>■ {string.Format(GetString("CmdCat.Sub"), GetString("CmdCat." + CategoryKeys[cat]))}</color>\n" + string.Join("\n", lines));
             }
