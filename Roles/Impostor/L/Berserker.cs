@@ -137,7 +137,7 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammat
         if (!Player.IsAlive()) return;
         if (rampaging)
         {
-            if (canCalmDown && !float.IsPositiveInfinity(endAt) && !SeekerBody.InWindow)
+            if (canCalmDown && !float.IsPositiveInfinity(endAt) && !GameManagerWindow.InWindow)
             {
                 Logger.Info($"鎮静化: {Player.GetNameWithRole()}", nameof(Berserker));
                 EndRampage(release: true);
@@ -193,7 +193,7 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammat
     private void SendTranceViews()
     {
         tranceSendPending = false;
-        if (!trance || !Player.IsAlive() || SeekerBody.InWindow) return;
+        if (!trance || !Player.IsAlive() || GameManagerWindow.InWindow) return;
         bool sent = false;
         foreach (var pc in Main.AllAlivePlayerControls)
         {
@@ -215,7 +215,7 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammat
     private void RestoreTranceViews()
     {
         if (tranceViews.Count == 0) return;
-        if (SeekerBody.InWindow) return;
+        if (GameManagerWindow.InWindow) return;
         foreach (var (id, role) in tranceViews)
         {
             var pc = Utils.GetPlayerById(id);
@@ -235,7 +235,7 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammat
             return;
         }
         // 鬼の体の付け直しの窓が来なかった時の予備
-        if (tranceSendPending && !SeekerBody.InWindow && Time.realtimeSinceStartup - lastKillAt >= TranceSendDelay) SendTranceViews();
+        if (tranceSendPending && !GameManagerWindow.InWindow && Time.realtimeSinceStartup - lastKillAt >= TranceSendDelay) SendTranceViews();
         if (!Player.IsAlive()) { EndRampage(release: true); return; }
         if (chilling && Time.realtimeSinceStartup >= chillUntil)
         {

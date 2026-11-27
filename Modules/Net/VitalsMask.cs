@@ -96,7 +96,7 @@ public static class VitalsMask
 
     // 試合開始の直後は PlayerInfo の送信を止めている。暗転対策の退避中は IsDead が偽りの値になっている。
     // 鬼の体の差し替えの窓の間は GameManager が無いか、かくれんぼの物
-    static bool CanSend() => !GameDataSerializePatch.DontTouch && !AntiBlackout.IsCached && !SeekerBody.InWindow;
+    static bool CanSend() => !GameDataSerializePatch.DontTouch && !AntiBlackout.IsCached && !GameManagerWindow.InWindow;
 
     // 嘘を受けてよい人。台の近くかどうかは別に見る
     static bool CanSee(PlayerControl pc)

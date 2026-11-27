@@ -63,8 +63,8 @@ class CheckMurderPatch
     public static bool Prefix(PlayerControl __instance, [HarmonyArgument(0)] PlayerControl target)
     {
         if (!AmongUsClient.Instance.AmHost || AmongUsClient.Instance.IsGameOver) return false;
-        // 鬼の体の窓の間 (GameManager を差し替えている間) は、客がキルの電文を処理できないのでキルを通さない
-        if (SeekerBody.InWindow) return false;
+        // GameManager を差し替えている窓の間は、客がキルの電文を処理できないのでキルを通さない
+        if (GameManagerWindow.InWindow) return false;
         // CNO へのキルは Core の前置で捨てている (前置は全部走るので、ここでも見る)
         if (Core.CustomNetObject.Is(target) || Core.CustomNetObject.Is(__instance)) return false;
 

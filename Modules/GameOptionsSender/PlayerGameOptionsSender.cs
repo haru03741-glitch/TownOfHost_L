@@ -287,10 +287,10 @@ namespace TownOfHostL.Modules
             }
             // 鬼の体の差し替えの間は、自分の周りだけが見えるまで暗くする。
             // 元の視界の広さ (サングラス・停電など) によらず同じ半径にそろえ、自分の姿と名前の下の文字が切れないようにする
-            if (SeekerBody.IsDimmed(player.PlayerId) && !state.IsBlackOut)
+            if (GameManagerWindow.IsDimmed(player.PlayerId) && !state.IsBlackOut)
             {
-                opt.SetFloat(FloatOptionNames.CrewLightMod, SeekerBody.DimVision * SeekerBody.CrewLightCompensation());
-                opt.SetFloat(FloatOptionNames.ImpostorLightMod, SeekerBody.DimVision);
+                opt.SetFloat(FloatOptionNames.CrewLightMod, GameManagerWindow.DimVision * GameManagerWindow.CrewLightCompensation());
+                opt.SetFloat(FloatOptionNames.ImpostorLightMod, GameManagerWindow.DimVision);
             }
             MeetingTimeManager.ApplyGameOptions(opt);
             // 視界の値が決まった後 (暗転・会議の時間より後) に、懐中電灯の半径のずれを足す
