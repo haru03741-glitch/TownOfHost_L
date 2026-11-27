@@ -91,7 +91,7 @@ namespace TownOfHostL.Roles.Impostor
                 {
                     //自爆時間が来たとき
                     MyState.DeathReason = CustomDeathReason.Suicide;//死因：自殺
-                    Player.RpcMurderPlayer(Player);//自殺させる
+                    Kill.Suicide(Player);//自殺させる
                     //ExileControllerWrapUpPatch.REIKAITENSOU(Player.PlayerId, CustomDeathReason.Suicide);
                     //foreach (var target in Main.AllAlivePlayerControls)
                     //{

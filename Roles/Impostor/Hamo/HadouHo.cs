@@ -261,7 +261,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
             {
                 Holdings.RemoveSpeed(Player.PlayerId, nameof(HadouHo)); Player.MarkDirtySettings();
                 PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = CustomDeathReason.Suicide;
-                Player.RpcMurderPlayerV2(Player); IsFiring = false; return;
+                Kill.Suicide(Player); IsFiring = false; return;
             }
             Holdings.RemoveSpeed(Player.PlayerId, nameof(HadouHo)); Player.MarkDirtySettings();
             _ = new LateTask(() =>
@@ -303,7 +303,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
                 // インポスター同士のキルはキルの判定で無効になるので、仲間に当てる設定の時は判定を通さずに死なせる
                 PlayerState.GetByPlayerId(target.PlayerId).DeathReason = CustomDeathReason.Evaporation;
                 target.SetRealKiller(Player);
-                target.RpcMurderPlayerV2(target);
+                Kill.Suicide(target);
             }
             else CustomRoleManager.OnCheckMurder(Player, target, target, target, true, deathReason: CustomDeathReason.Evaporation);
             HasHit = true;

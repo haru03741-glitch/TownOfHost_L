@@ -59,7 +59,7 @@ public static class HamoSabotage
         {
             var state = PlayerState.GetByPlayerId(pc.PlayerId);
             if (state != null) state.DeathReason = CustomDeathReason.Kill;
-            pc.RpcMurderPlayer(pc);
+            Kill.Suicide(pc);
         }
     }
 

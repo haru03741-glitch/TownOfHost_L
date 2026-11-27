@@ -525,7 +525,7 @@ public sealed class VillageChief : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
             PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = CustomDeathReason.Suicide;
 
-            Player.RpcMurderPlayer(Player);
+            Kill.Suicide(Player);
 
 
             return;

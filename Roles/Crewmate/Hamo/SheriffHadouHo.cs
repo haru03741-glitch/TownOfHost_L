@@ -353,7 +353,7 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
                 Holdings.RemoveSpeed(Player.PlayerId, nameof(SheriffHadouHo));
                 Player.MarkDirtySettings();
                 PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = CustomDeathReason.Suicide;
-                Player.RpcMurderPlayerV2(Player);
+                Kill.Suicide(Player);
                 IsFiring = false;
                 Utils.AddGameLog("SheriffHadouHo",
                     string.Format(Translator.GetString("SheriffHadouHoMissLog"), Player.ColoredName()));

@@ -120,7 +120,7 @@ public sealed class Godfather : RoleBase, IImpostor
             if (target.IsAlive())
             {
                 target.SetRealKiller(Player);
-                target.RpcMurderPlayer(target, true);
+                Kill.Suicide(target);
 
                 // ターゲットの足止め解除
                 Holdings.RemoveSpeed(target.PlayerId, "Godfather");

@@ -234,7 +234,7 @@ public sealed class SchrodingerCatKiller : RoleBase, IKiller, IAdditionalWinner,
 
         PlayerState.GetByPlayerId(owner.PlayerId).DeathReason = CustomDeathReason.Kill;
         owner.SetRealKiller(owner);
-        owner.RpcMurderPlayer(owner);
+        Kill.Suicide(owner);
         logger.Info($"OwnerDead owner: {owner?.name} cat: {cat?.name}");
 
         //ゲームが終了しないようにCountTypeのみ先にセットする

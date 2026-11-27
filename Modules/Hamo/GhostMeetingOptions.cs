@@ -117,7 +117,7 @@ public static class HamoFall
         if (pc == null || !pc.IsAlive()) return;
         var state = PlayerState.GetByPlayerId(pc.PlayerId);
         if (state != null) state.DeathReason = CustomDeathReason.Fall;
-        pc.RpcMurderPlayerV2(pc);
+        Kill.Suicide(pc);
         state?.SetDead(CustomDeathReason.Fall);
     }
 

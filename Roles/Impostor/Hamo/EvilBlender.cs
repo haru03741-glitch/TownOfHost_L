@@ -442,7 +442,7 @@ public sealed class EvilBlender : RoleBase, IImpostor, IUsePhantomButton
                     if (state != null) state.DeathReason = CustomDeathReason.Suffocation;
                     pc.SetRealKiller(TownOfHostL.Core.NativeObject.IsAlive(Player) ? Player : null);
                     if (GameStates.ExiledAnimate || AntiBlackout.IsCached) pc.RpcExileV3(CustomDeathReason.Suffocation);
-                    else pc.RpcMurderPlayerV2(pc);
+                    else Kill.Suicide(pc);
                 }
 
                 i++;

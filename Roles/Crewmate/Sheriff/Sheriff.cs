@@ -150,7 +150,7 @@ public sealed class Sheriff : RoleBase, IKiller, ISchrodingerCatOwner
         if (!CanBeKilledBy(target))
         {
             PlayerState.GetByPlayerId(killer.PlayerId).DeathReason = CustomDeathReason.Misfire;
-            killer.RpcMurderPlayer(killer);
+            Kill.Suicide(killer);
             // 村長の設定で、任命されたシェリフの誤射は相手も道連れにする
             if (IsAppointed && VillageChief.SheriffMisfireKillsTarget.GetBool()) return;
             info.DoKill = false;

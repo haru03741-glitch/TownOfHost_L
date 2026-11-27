@@ -533,9 +533,10 @@ public sealed class Spelunker : RoleBase, ISystemTypeUpdateHook
 
 
 
-        state.SetDead(reason);
+        // 死因だけを先に書き、死の確定はキルの後の処理に任せる (先に死を記録すると、キルの入口が死んでいるとみなして送らない)
+        state.DeathReason = reason;
 
-        Player.RpcMurderPlayerV2(Player);
+        Kill.Suicide(Player);
 
     }
 

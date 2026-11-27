@@ -451,8 +451,9 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
         AntiBlackout.RunAfterRevert(() =>
         {
             if (Player == null || !Player.IsAlive()) return;
-            state.SetDead(CustomDeathReason.Suicide);
-            Player.RpcMurderPlayerV2(Player);
+            // 死の確定はキルの後の処理に任せる (先に死を記録すると、キルの入口が死んでいるとみなして送らない)
+            state.DeathReason = CustomDeathReason.Suicide;
+            Kill.Suicide(Player);
             SendMessage(GetString("Freeter_UnemployedDeath"), Player.PlayerId);
         });
 

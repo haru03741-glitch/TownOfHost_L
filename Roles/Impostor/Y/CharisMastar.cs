@@ -153,7 +153,7 @@ public sealed class CharismaStar : RoleBase, IImpostor
                 {
                     target.SetRealKiller(Player);
                     PlayerState.GetByPlayerId(targetId).DeathReason = CustomDeathReason.NotGather;
-                    target.RpcMurderPlayer(target);
+                    Kill.Suicide(target);
                     // キルフラッシュを自視点に鳴らす
                     Player.KillFlash();
                 }

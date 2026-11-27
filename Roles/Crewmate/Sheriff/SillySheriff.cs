@@ -179,7 +179,7 @@ public sealed class SillySheriff : RoleBase, IKiller, ISchrodingerCatOwner
             switch (nowSuicideMotion)
             {
                 case SuicideMotionOption.Default://自殺モーション起こさない＝自身が自爆
-                    killer.RpcMurderPlayer(killer);
+                    Kill.Suicide(killer);
                     break;
                 case SuicideMotionOption.MotionKilled://相手に切られる
                     target.RpcMurderPlayer(killer);
@@ -196,7 +196,7 @@ public sealed class SillySheriff : RoleBase, IKiller, ISchrodingerCatOwner
         switch (nowKillMotion)
         {
             case KillMotionOption.MotionNone://キルモーション起こさない＝相手が自爆
-                target.RpcMurderPlayer(target);
+                Kill.Suicide(target);
                 killer.SetKillCooldown();//自身は全くキルしないことになるのでキルクールセットする
 
                 info.CanKill = false;

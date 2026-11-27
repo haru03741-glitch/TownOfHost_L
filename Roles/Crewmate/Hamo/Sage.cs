@@ -342,7 +342,7 @@ public sealed class Sage : RoleBase, IUsePetButton
 
             PlayerState.GetByPlayerId(killer.PlayerId).DeathReason = CustomDeathReason.Counter;
 
-            killer.RpcMurderPlayerV2(killer);
+            Kill.Suicide(killer);
 
             Utils.AddGameLog("Sage",
 

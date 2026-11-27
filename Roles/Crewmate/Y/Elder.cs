@@ -123,7 +123,7 @@ public sealed class Elder : RoleBase
         {
             // プレイヤーを死亡させる
             MyState.DeathReason = CustomDeathReason.Senility; //死因：老衰
-            Player.RpcMurderPlayer(Player);
+            Kill.Suicide(Player);
             // タスクが終わっていない場合、クルーメイトにする
             if (!IsTaskFinished) {
                 ChangeRole();

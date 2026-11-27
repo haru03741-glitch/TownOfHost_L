@@ -1090,7 +1090,7 @@ public sealed class Stand : RoleBase, ILNKiller
 
         Player.SetRealKiller(owner ?? Player);
 
-        Player.RpcMurderPlayerV2(Player);
+        Kill.Suicide(Player);
 
     }
 

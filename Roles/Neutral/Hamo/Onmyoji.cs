@@ -1389,7 +1389,7 @@ public sealed class Shikigami : RoleBase, IUsePhantomButton, IKillFlashSeeable, 
 
         Player.SetRealKiller(Player);
 
-        Player.RpcMurderPlayerV2(Player);
+        Kill.Suicide(Player);
 
     }
 
@@ -1565,7 +1565,7 @@ public sealed class Shikigami : RoleBase, IUsePhantomButton, IKillFlashSeeable, 
 
         Player.SetRealKiller(owner ?? Player);
 
-        Player.RpcMurderPlayerV2(Player);
+        Kill.Suicide(Player);
 
     }
 

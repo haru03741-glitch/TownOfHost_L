@@ -138,7 +138,7 @@ public sealed class Janitor : RoleBase, IImpostor
         isSuiside = true;
         PlayerState.GetByPlayerId(janitor.PlayerId).DeathReason = CustomDeathReason.FollowingSuicide;
         janitor.SetRealKiller(godfather);
-        janitor.RpcMurderPlayer(janitor);
+        Kill.Suicide(janitor);
         Logger.Info($"{janitor.GetNameWithRole()}の後追い:{godfather.GetNameWithRole()}", "KillFollowingSuicide");
     }
     public static void VoteSuicide(byte deadTargetId)

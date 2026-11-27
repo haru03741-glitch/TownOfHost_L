@@ -233,7 +233,7 @@ public sealed class Guardian : RoleBase, ISelfVoter
             $"{Player.ColoredName()}が{target.ColoredName()}の身代わりになって死亡した");
 
         if (Player.IsAlive())
-            Player.RpcMurderPlayer(Player);
+            Kill.Suicide(Player);
     }
 
     /// <summary>

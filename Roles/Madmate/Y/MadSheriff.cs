@@ -78,7 +78,7 @@ public sealed class MadSheriff : RoleBase, IKiller
         switch (nowSuicideMotion)
         {
             case SuicideMotionOption.Default://自殺モーション起こさない＝自身が自爆
-                killer.RpcMurderPlayer(killer);
+                Kill.Suicide(killer);
                 break;
             case SuicideMotionOption.MotionKilled://相手に切られる
                 target.RpcMurderPlayer(killer);

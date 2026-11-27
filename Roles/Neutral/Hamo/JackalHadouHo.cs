@@ -1234,7 +1234,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             PlayerState.GetByPlayerId(Player.PlayerId).DeathReason = CustomDeathReason.Suicide;
 
-            Player.RpcMurderPlayerV2(Player);
+            Kill.Suicide(Player);
 
             IsFiring = false; return;
 

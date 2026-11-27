@@ -290,7 +290,7 @@ public sealed class PavlovOwner : RoleBase, IKiller, IAdditionalWinner, ISchrodi
         if (state == null) return;
 
         state.DeathReason = CustomDeathReason.Suicide;
-        Player.RpcMurderPlayerV2(Player);
+        Kill.Suicide(Player);
     }
 
     public bool CheckWin(ref CustomRoles winnerRole)
@@ -503,7 +503,7 @@ public abstract class PavlovDogBase : RoleBase, IKiller, IAdditionalWinner, ISch
         if (state == null) return;
 
         state.DeathReason = CustomDeathReason.Suicide;
-        Player.RpcMurderPlayerV2(Player);
+        Kill.Suicide(Player);
 
         IsRampage = false;
         RampageTimer = null;

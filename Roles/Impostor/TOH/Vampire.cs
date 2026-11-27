@@ -115,7 +115,7 @@ namespace TownOfHostL.Roles.Impostor
                 if (!target.IsAlive()) continue;
                 PlayerState.GetByPlayerId(targetId).DeathReason = CustomDeathReason.Bite;
                 if (vampire != null) target.SetRealKiller(vampire);
-                target.RpcMurderPlayer(target);
+                Kill.Suicide(target);
             }
         }
         public override void OnReportDeadBody(PlayerControl _, NetworkedPlayerInfo __)
@@ -146,7 +146,7 @@ namespace TownOfHostL.Roles.Impostor
                 {
                     PlayerState.GetByPlayerId(target.PlayerId).DeathReason = CustomDeathReason.Bite;
                     target.SetRealKiller(vampire);
-                    target.RpcMurderPlayer(target);
+                    Kill.Suicide(target);
                     Logger.Info($"Vampireに噛まれている{target.name}を梯子の上かヴァンパイアの死後にキルしました。", "Vampire.KillBitten");
                 }
                 else

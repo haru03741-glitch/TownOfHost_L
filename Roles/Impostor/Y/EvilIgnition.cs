@@ -126,7 +126,7 @@ public sealed class EvilIgnition : RoleBase, IImpostor
 
                 PlayerState.GetByPlayerId(nearTarget.pc.PlayerId).DeathReason = CustomDeathReason.IgnitionBombed;
                 nearTarget.pc.SetRealKiller(killer);
-                nearTarget.pc.RpcMurderPlayer(nearTarget.pc, true);
+                Kill.Suicide(nearTarget.pc);
                 killer.MarkDirtySettings();
             }
         }

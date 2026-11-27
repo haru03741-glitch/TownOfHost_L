@@ -81,7 +81,7 @@ public sealed class Workaholic : RoleBase
             //    if (otherPlayer == Player) continue;
 
             //    otherPlayer.SetRealKiller(Player);
-            //    otherPlayer.RpcMurderPlayer(otherPlayer);
+            //    Kill.Suicide(otherPlayer);
             //    var playerState = PlayerState.GetByPlayerId(otherPlayer.PlayerId);
             //    playerState.DeathReason = CustomDeathReason.Bombed;
             //    playerState.SetDead();

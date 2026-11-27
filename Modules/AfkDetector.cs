@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
 using static TownOfHostL.Translator;
+using TownOfHostL.Roles.Core;
 
 namespace TownOfHostL.Modules;
 
@@ -171,7 +172,7 @@ public static class AfkDetector
                 break;
             case Result.Suicide:
                 if (PlayerState.GetByPlayerId(pc.PlayerId) is { } state) state.DeathReason = CustomDeathReason.Suicide;
-                pc.RpcMurderPlayerV2(pc);
+                Kill.Suicide(pc);
                 Utils.AddGameLog("Afk", string.Format(GetString("AfkSuicideLog"), pc.ColoredName()));
                 break;
         }

@@ -405,7 +405,7 @@ public sealed class Walkure : RoleBase, ISelfVoter, IKiller
             if (order == 0) target.RpcExileV3(CustomDeathReason.FollowingSuicide);
             else _ = new LateTask(() => { if (target != null && target.IsAlive()) target.RpcExileV3(CustomDeathReason.FollowingSuicide); }, 0.3f * order, "WalkureFollowExile");
         }
-        else target.RpcMurderPlayerV2(target);
+        else Kill.Suicide(target);
         Logger.Info($"{target.GetNameWithRole().RemoveHtmlTags()} follows Walkure.", "Walkure");
     }
 
@@ -524,7 +524,7 @@ public sealed class Walkure : RoleBase, ISelfVoter, IKiller
         }
         else
         {
-            actor.RpcMurderPlayerV2(actor);
+            Kill.Suicide(actor);
         }
 
         Logger.Info($"{actor.GetNameWithRole().RemoveHtmlTags()} self-destructed by Walkure reflection ({source}).", "Walkure");

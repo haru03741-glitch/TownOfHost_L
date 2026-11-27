@@ -83,7 +83,7 @@ public sealed class SelfBomber : RoleBase, IImpostor
 
             PlayerState.GetByPlayerId(fireTarget.PlayerId).DeathReason = CustomDeathReason.Bombed;
             fireTarget.SetRealKiller(Player);
-            fireTarget.RpcMurderPlayer(fireTarget);
+            Kill.Suicide(fireTarget);
         }
 
         if (allKill && Main.AllAlivePlayerControls.Count() < 1 &&
