@@ -582,7 +582,7 @@ public sealed class VillageChief : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
         );
 
-
+        SendAppointNotice(target);
 
 
         Utils.NotifyRoles();
@@ -590,6 +590,21 @@ public sealed class VillageChief : RoleBase, IKiller, ISelfVoter, IUsePetButton
     }
 
 
+
+    // 任命を設定の送信先へチャットで知らせる (前の役職は書かない)
+    private void SendAppointNotice(PlayerControl target)
+    {
+        var to = NotifyTargetOptions[NotifyTarget.GetValue()];
+        if (to == "None") return;
+        var text = "<color=#f5a623>" + string.Format(GetString("VillageChiefAppointNotice"), Player.ColoredName(), target.ColoredName()) + "</color>";
+        if (to == "Everyone")
+        {
+            SendMessage(text);
+            return;
+        }
+        if (to is "VillageChiefOnly" or "VillageChiefAndSheriff") SendMessage(text, Player.PlayerId);
+        if (to is "SheriffOnly" or "VillageChiefAndSheriff") SendMessage(text, target.PlayerId);
+    }
 
     private void ApplyModeDesync(bool toAppointMode)
 

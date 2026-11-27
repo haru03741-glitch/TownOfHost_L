@@ -6350,6 +6350,7 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "VillageChiefCandidateSetMessage","<color=#f5a623>Candidate set!</color>\nNext turn, stay close to the candidate for 1.5s to appoint them automatically.\n(Pet to switch modes -> you can also appoint with the kill button)","<color=#f5a623>任命候補を設定しました！</color>\n次のターン、候補の近くに1.5秒いると自動任命します。\n（ペットでモード切替 → キルボタンでも任命可）","","","","",""
 "VillageChiefAppointCancelled","Proximity appointment cancelled.","近接任命をキャンセルしました。","","","","",""
 "VillageChiefAppointLog","{0} appointed {1} ({2}) as Sheriff","{0}が{1}({2})をシェリフに任命した","","","","",""
+"VillageChiefAppointNotice","{0} appointed {1} as Sheriff","{0}が{1}をシェリフに任命しました"
 "VillageChiefAppointedProgress","(Appointed)","(任命済)","","","","",""
 "VillageChiefModeAppoint","[Appoint]","[任命]","","","","",""
 "VillageChiefModeTask","[Task]","[タスク]","","","","",""
