@@ -272,10 +272,12 @@ public static class ClientBodySync
         blocked = false;
         var list = new List<Keep>();
         Vector3 offset = PlayerControl.LocalPlayer.KillAnimations[0].BodyOffset;
-        foreach (var body in Object.FindObjectsOfType<DeadBody>())
+        // ホストの手元で隠した死体もキルの演出が終わるまでは見る (キルと同じ時に消すと、客の手元ではまだ演出の途中)
+        foreach (var body in Object.FindObjectsOfType<DeadBody>(true))
         {
-            if (body == null || !body.gameObject.activeSelf) continue;
+            if (body == null) continue;
             if (!body.enabled) bodyBusyAt = now;
+            if (!body.gameObject.activeSelf) continue;
             var viper = body.TryCast<ViperDeadBody>();
             if (viper != null && viper.victimDissolving)
             {
