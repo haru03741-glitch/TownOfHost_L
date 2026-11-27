@@ -234,7 +234,7 @@ public sealed class Dollmaster : RoleBase, IImpostor
             var from = puppet.GetTruePosition();
             float range = puppet.MaxReportDistance;
             var body = Object.FindObjectsOfType<DeadBody>()
-                .Where(b => b != null && !b.Reported && Vector2.Distance(from, b.TruePosition) <= range)
+                .Where(b => b != null && !b.Reported && DeadBodyState.IsPresent(b) && Vector2.Distance(from, b.TruePosition) <= range)
                 .OrderBy(b => Vector2.Distance(from, b.TruePosition))
                 .FirstOrDefault();
             var info = body == null ? null : GameData.Instance.GetPlayerById(body.ParentId);

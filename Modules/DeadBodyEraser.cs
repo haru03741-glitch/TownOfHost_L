@@ -91,7 +91,8 @@ public static class DeadBodyEraser
     public static void Erase(byte playerId)
     {
         var body = Object.FindObjectsOfType<DeadBody>().FirstOrDefault(b => b != null && b.ParentId == playerId);
-        Vector2? bodyPos = body != null ? BodyCenter(body) : null;
+        // 溶け切ったヴァイパーの死体は客の画面に無いので、覆いも合わせ直しも要らない (手元で隠すだけ)
+        Vector2? bodyPos = DeadBodyState.IsPresent(body) ? BodyCenter(body) : null;
         erasedBodies.Add(playerId);
         HideLocal(playerId);
         EraseOnModClients(playerId);
@@ -150,7 +151,8 @@ public static class DeadBodyEraser
         foreach (var b in Object.FindObjectsOfType<DeadBody>())
         {
             if (b == null || b.ParentId != playerId) continue;
-            pos ??= BodyCenter(b);
+            // 溶け切ったヴァイパーの死体は客の画面に無いので、覆いの位置にしない
+            if (DeadBodyState.IsPresent(b)) pos ??= BodyCenter(b);
             b.gameObject.SetActive(false);
         }
         if (pos.HasValue)

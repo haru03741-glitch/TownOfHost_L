@@ -39,7 +39,7 @@ public static class DissolveKill
     // 溶けかけの死体が通報できるまま残る。溶け切る見込みの時刻の前後は、CNO を出し始めない (CNO の Data が無いのは、
     // spawn から可視化までの 0.1〜0.7 秒と、客に届くまでの遅れ)。
     // キルから死体が溶け始めるまで (キルの動きの間) の見込み
-    private const float KillSettle = 0.3f;
+    public const float KillSettle = 0.3f;
     // 溶け切る見込みの時刻の、これだけ前から CNO を出し始めない
     private const float BusyLead = 1.5f;
     // 溶け切る見込みの時刻の、これだけ後まで (客ごとの届く遅れとキルの動きの長さの違い)

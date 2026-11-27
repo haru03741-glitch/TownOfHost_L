@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 
 using System.Collections.Generic;
 
@@ -318,7 +318,8 @@ public sealed class Vulture : RoleBase, IKillFlashSeeable, IAdditionalWinner
 
         //Viperの死体なら削除検知を
 
-        if (info.AppearanceKiller.GetCustomRole() is CustomRoles.Viper) Viperkilledplayers[info.AppearanceTarget.PlayerId] = Utils.ViperDissolveTime;
+        // 見積もりは客へ送っている溶ける秒数と、キルの動きの分
+        if (info.AppearanceKiller.Is(RoleTypes.Viper)) Viperkilledplayers[info.AppearanceTarget.PlayerId] = TownOfHostL.Modules.DissolveKill.ViperSeconds + TownOfHostL.Modules.DissolveKill.KillSettle;
 
 
 

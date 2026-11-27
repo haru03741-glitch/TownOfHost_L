@@ -178,9 +178,29 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
         if (deadBodyPositions.TryGetValue(info.AppearanceTarget.PlayerId, out var oldPos)) GetArrow.Remove(Player.PlayerId, oldPos);
         deadBodyPositions[info.AppearanceTarget.PlayerId] = pos;
         GetArrow.Add(Player.PlayerId, pos);
-        if (info.AppearanceKiller.GetCustomRole() is CustomRoles.Viper) Viperkilledplayers[info.AppearanceTarget.PlayerId] = Utils.ViperDissolveTime;
+        // ヴァイパーの死体は溶け切ると客の画面から消えるので、その頃に矢印を外す (OnFixedUpdate)
+        if (info.AppearanceKiller.Is(RoleTypes.Viper)) Viperkilledplayers[info.AppearanceTarget.PlayerId] = DissolveKill.ViperSeconds + DissolveKill.KillSettle;
 
         return OptionShowArrow.GetBool();
+    }
+
+    // 溶けるヴァイパーの死体の見積もりを数え下ろし、溶け切った物の矢印を外す
+    void TickDissolvingBodies()
+    {
+        List<byte> done = null;
+        foreach (var id in Viperkilledplayers.Keys.ToArray())
+        {
+            float left = Viperkilledplayers[id] - Time.fixedDeltaTime;
+            Viperkilledplayers[id] = left;
+            if (left <= 0f) (done ??= new()).Add(id);
+        }
+        if (done == null) return;
+        foreach (var id in done)
+        {
+            Viperkilledplayers.Remove(id);
+            if (deadBodyPositions.Remove(id, out var pos)) GetArrow.Remove(Player.PlayerId, pos);
+        }
+        Utils.NotifyRoles(SpecifySeer: Player);
     }
 
     public override void OnFixedUpdate(PlayerControl player)
@@ -191,6 +211,7 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
             eatCooldownTimer = EatCooldown;
         }
         if (!AmongUsClient.Instance.AmHost) return;
+        if (Viperkilledplayers.Count > 0) TickDissolvingBodies();
         if (GameStates.IsInTask && pendingSwallow != null)
         {
             if (!Player.IsAlive())

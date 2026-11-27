@@ -457,6 +457,9 @@ public sealed class Evolver : RoleBase, IImpostor, IUsePhantomButton
 
             if (EatenBodies.Contains(id)) continue;
 
+            // 溶け切ったヴァイパーの死体は、客の画面にはもう無い
+            if (DeadBodyState.IsDissolved(db)) continue;
+
             var pos = (Vector2)db.TruePosition;
 
             var dist = Vector2.Distance(myPos, pos);
@@ -509,7 +512,7 @@ public sealed class Evolver : RoleBase, IImpostor, IUsePhantomButton
 
     bool BodyStillExists(byte bodyId)
 
-        => Object.FindObjectsOfType<DeadBody>().Any(b => b.ParentId == bodyId)
+        => Object.FindObjectsOfType<DeadBody>().Any(b => b.ParentId == bodyId && DeadBodyState.IsPresent(b))
 
         && !EatenBodies.Contains(bodyId);
 
