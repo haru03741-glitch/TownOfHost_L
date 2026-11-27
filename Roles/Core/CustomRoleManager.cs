@@ -92,7 +92,6 @@ public static partial class CustomRoleManager
         }
 
         var killerRole = attemptKiller.GetRoleClass();
-        var targetRole = attemptTarget.GetRoleClass();
 
         if (!FirstTurnMeeting.AllowKill(info, deathReason)) return false;
 
@@ -103,22 +102,10 @@ public static partial class CustomRoleManager
             {
                 // キルボタンをキル以外に使う押し方 (イビルディバイナーの占いなど) は、ガードより先に振り分ける
                 if (!killer.OnCheckMurderBeforeGuards(info)) return false;
-                // 役職に関わらないガード (ガーディング・メディック・背徳者など)
-                if (TryKillGuards(info)) { }
-                // ターゲットのキルチェック処理実行
-                else if (targetRole != null && info.DontRoleAbility is not true)
+                if (!CheckGuards(info, out guardianGuarded))
                 {
-                    if (!targetRole.OnCheckMurderAsTarget(info))
-                    {
-                        killer.OnCheckMurderDontKill(info);
-                        return false;
-                    }
-                }
-                // 守護者 のガード
-                if (info.KillPower > info.GuardPower && TownOfHostL.Roles.Crewmate.Guardian.FindGuardianFor(attemptTarget.PlayerId) != null)
-                {
-                    info.GuardPower = 1;
-                    guardianGuarded = true;
+                    killer.OnCheckMurderDontKill(info);
+                    return false;
                 }
             }
             // キラーのキルチェック処理実行 (IDoubleTrigger の役職は 1 回押しと 2 回押しを先に振り分ける)
@@ -127,18 +114,8 @@ public static partial class CustomRoleManager
                 killer.OnCheckMurderAsKiller(info);
             }
             // ガードの力によるガード
-            if (info.KillPower <= info.GuardPower && killer.IsKiller)
+            if (killer.IsKiller && ResolveGuard(info, guardianGuarded))
             {
-                info.IsGuard = true;
-                info.CanKill = false;
-                if (guardianGuarded)
-                {
-                    var guardian = TownOfHostL.Roles.Crewmate.Guardian.FindGuardianFor(attemptTarget.PlayerId);
-                    guardian?.Sacrifice(attemptTarget);
-                    Utils.AddGameLog("Guardian", attemptTarget.ColoredName() + ":  " + string.Format(Translator.GetString("GuardMaster.Guard"), attemptKiller.ColoredName()));
-                }
-                attemptKiller.RpcProtectedMurderPlayer(attemptTarget);
-                Utils.NotifyRoles();
                 killer.OnCheckMurderDontKill(info);
                 return false;
             }
@@ -537,6 +514,46 @@ public static partial class CustomRoleManager
             try { onRevived(playerId); }
             catch (Exception ex) { Logger.Exception(ex, "OnPlayerRevivedOthers"); }
         }
+    }
+    /// <summary>
+    /// 相手側の守りの段 (殺し手の役職に依らない)。役職に関わらない守り (ガーディング・メディック・背徳者など)、
+    /// なければ相手の役職のキルチェック、そのあと守護者。相手の役職がキルを止めた時は false。
+    /// 守りの力は <see cref="MurderInfo.GuardPower"/> に積まれ、決着は <see cref="ResolveGuard"/> で付ける
+    /// </summary>
+    internal static bool CheckGuards(MurderInfo info, out bool guardianGuarded)
+    {
+        guardianGuarded = false;
+        var attemptTarget = info.AttemptTarget;
+        if (TryKillGuards(info)) { }
+        else if (attemptTarget.GetRoleClass() is RoleBase targetRole && info.DontRoleAbility is not true)
+        {
+            if (!targetRole.OnCheckMurderAsTarget(info)) return false;
+        }
+        if (info.KillPower > info.GuardPower && TownOfHostL.Roles.Crewmate.Guardian.FindGuardianFor(attemptTarget.PlayerId) != null)
+        {
+            info.GuardPower = 1;
+            guardianGuarded = true;
+        }
+        return true;
+    }
+    /// <summary>
+    /// キルの力が守りの力以下なら、守られた見せ方をしてキルを止める (止めた時は true)。守護者が守ったなら守護者が身代わりになる
+    /// </summary>
+    internal static bool ResolveGuard(MurderInfo info, bool guardianGuarded)
+    {
+        if (!info.CheckHasGuard()) return false;
+        var (attemptKiller, attemptTarget) = info.AttemptTuple;
+        info.IsGuard = true;
+        info.CanKill = false;
+        if (guardianGuarded)
+        {
+            var guardian = TownOfHostL.Roles.Crewmate.Guardian.FindGuardianFor(attemptTarget.PlayerId);
+            guardian?.Sacrifice(attemptTarget);
+            Utils.AddGameLog("Guardian", attemptTarget.ColoredName() + ":  " + string.Format(Translator.GetString("GuardMaster.Guard"), attemptKiller.ColoredName()));
+        }
+        attemptKiller.RpcProtectedMurderPlayer(attemptTarget);
+        Utils.NotifyRoles();
+        return true;
     }
     private static bool TryKillGuards(MurderInfo info)
     {
