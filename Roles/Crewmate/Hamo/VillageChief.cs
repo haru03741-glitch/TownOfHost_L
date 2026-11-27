@@ -691,7 +691,11 @@ public sealed class VillageChief : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
             spawnWaitTimer = 0f;
 
-            ApplyModeDesync(appointMode);
+            // 暗転対策の身代わりを戻すまでは送らない (先に送ると、客の追放の締めの頭数が崩れて暗転しうる)
+            AntiBlackout.RunAfterRevert(() =>
+            {
+                if (Player.GetRoleClass() == this) ApplyModeDesync(appointMode);
+            });
 
         }, Main.LagTime, "Reset-VillageChief");
 

@@ -734,11 +734,14 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
 
 
-        stand.RpcSetRoleDesync(RoleTypes.Crewmate, stand.GetClientId());
-
-        foreach (var imp in Main.AllAlivePlayerControls.Where(pc => pc.GetCustomRole().IsImpostor()))
-
-            imp.RpcSetRoleDesync(RoleTypes.Impostor, stand.GetClientId());
+        // 暗転対策の身代わりを戻すまでは送らない (先に送ると、客の追放の締めの頭数が崩れて暗転しうる)
+        AntiBlackout.RunAfterRevert(() =>
+        {
+            if (Player.GetRoleClass() != this || stand == null || !stand.IsAlive() || standPlayerId != stand.PlayerId) return;
+            stand.RpcSetRoleDesync(RoleTypes.Crewmate, stand.GetClientId());
+            foreach (var imp in Main.AllAlivePlayerControls.Where(pc => pc.GetCustomRole().IsImpostor()))
+                imp.RpcSetRoleDesync(RoleTypes.Impostor, stand.GetClientId());
+        });
 
 
 

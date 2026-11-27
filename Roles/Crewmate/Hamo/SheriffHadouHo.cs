@@ -416,7 +416,11 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
         if (!AmongUsClient.Instance.AmHost || !Player.IsAlive()) return;
         nowcool = Cooldown;
         LastCooltime = (int)Cooldown;
-        ApplyModeDesync(beamMode);
+        // 暗転対策の身代わりを戻すまでは送らない (先に送ると、客の追放の締めの頭数が崩れて暗転しうる)
+        AntiBlackout.RunAfterRevert(() =>
+        {
+            if (Player.GetRoleClass() == this) ApplyModeDesync(beamMode);
+        });
     }
 
     string BeamColor => (BeamColorMode)BeamColorModeValue == BeamColorMode.Yellow ? "#f8cd46" : "#00CFFF";
