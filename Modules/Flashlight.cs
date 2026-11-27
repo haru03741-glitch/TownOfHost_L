@@ -235,8 +235,8 @@ public static class Flashlight
         int count = GameData.Instance ? GameData.Instance.PlayerCount : 4;
         hns.SetRecommendations(Mathf.Max(count, 4), true);
         hns.MapId = normal.MapId;
-        // 部屋そのものの値 (最大人数・言語) は部屋の設定と同じにする。かくれんぼ型の既定 (最大 15 人など) のまま送ると、
-        // 15 人より小さく立てた部屋では試合中に部屋の値を書き換えたことになる
+        // 部屋そのものの値 (最大人数・言語) は部屋の設定と同じにする。公式鯖は、部屋と違う言語の入った設定を客へ送ったホストを
+        // その場で切断する (かくれんぼ型の既定の言語のままだと日本語の部屋で切られる・2026-11-27 公式アジアで実測)
         hns.MaxPlayers = normal.MaxPlayers;
         hns.Keywords = normal.Keywords;
         hns.NumImpostors = normal.NumImpostors;
