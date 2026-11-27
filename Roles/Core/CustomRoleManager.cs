@@ -168,6 +168,8 @@ public static partial class CustomRoleManager
                 _ = new LateTask(() =>
                 {
                     if (capKiller == null || capTarget == null || capTarget.Data == null || capTarget.Data.Disconnected) return;
+                    // 待つ間に殺し手が死んだ・相手が別の手で死んだ時は通さない
+                    if (!capKiller.IsAlive() || !capTarget.IsAlive()) return;
                     capKiller.RpcMurderPlayer(capTarget);
                 }, 0.2f, "ViperMurderDelay");
             }
