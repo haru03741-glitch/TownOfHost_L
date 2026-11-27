@@ -477,35 +477,42 @@ public static class ChatCommandTable
         // 誰でも使える物は種類ごとに並べ、モデレーターも使える物・ホストだけの物は最後に別のまとまりにする
         bool ForModeratorOnly(ChatCommand cmd) => cmd.ForModerator && cmd.Host != null && cmd.Remote == null;
         bool ForEveryone(ChatCommand cmd) => cmd.Remote != null || cmd.Local != null;
-        var groups = new SortedDictionary<int, List<string>>();
-        var modLines = new List<string>();
-        var hostLines = new List<string>();
+        // 2 段に分ける: ★ 誰が使えるか (みんな / ホストとモデレーター / ホストだけ) → ■ 種類 (情報系・プレイヤー系など)
+        var audiences = new[] { new SortedDictionary<int, List<string>>(), new SortedDictionary<int, List<string>>(), new SortedDictionary<int, List<string>>() };
         foreach (var cmd in All)
         {
             // 開発者だけのコマンドは、開発者にだけ見せる
             if (cmd.Names[0] is "/dev" or "/log" && !DebugModeManager.AmDebugger) continue;
+            int who;
             if (asHost)
             {
                 if (cmd.Host == null && cmd.Local == null) continue;
-                if (ForModeratorOnly(cmd)) { modLines.Add(Line(cmd)); continue; }
-                if (!ForEveryone(cmd)) { hostLines.Add(Line(cmd)); continue; }
+                who = ForModeratorOnly(cmd) ? 1 : ForEveryone(cmd) ? 0 : 2;
             }
             else
             {
-                if (moderator && ForModeratorOnly(cmd)) { modLines.Add(Line(cmd)); continue; }
-                if (cmd.Remote == null || cmd.IsRestricted) continue;
+                if (moderator && ForModeratorOnly(cmd)) who = 1;
+                else if (cmd.Remote == null || cmd.IsRestricted) continue;
+                else who = 0;
             }
             int cat = CategoryOf(cmd.Names[0]);
-            if (!groups.TryGetValue(cat, out var list)) groups[cat] = list = new();
+            if (!audiences[who].TryGetValue(cat, out var list)) audiences[who][cat] = list = new();
             list.Add(Line(cmd));
         }
         var blocks = new List<string>();
-        foreach (var (cat, lines) in groups)
-            blocks.Add($"<#{CategoryColors[cat]}>■ {GetString("CmdCat." + CategoryKeys[cat])}</color>\n" + string.Join("\n", lines));
-        if (modLines.Count > 0)
-            blocks.Add($"<#7ee0a0>■ {GetString("CmdCat.ModeratorOnly")}</color>\n" + string.Join("\n", modLines));
-        if (hostLines.Count > 0)
-            blocks.Add($"<#ffd84a>■ {GetString("CmdCat.HostOnly")}</color>\n" + string.Join("\n", hostLines));
+        string[] mainKeys = { "CmdCat.Everyone", "CmdCat.ModeratorOnly", "CmdCat.HostOnly" };
+        string[] mainColors = { "8cffff", "7ee0a0", "ffd84a" };
+        for (int who = 0; who < audiences.Length; who++)
+        {
+            bool first = true;
+            foreach (var (cat, lines) in audiences[who])
+            {
+                // 大見出しは、その下の最初のまとまりと同じ通に入れる (見出しだけが前の通に残らない)
+                var main = first ? $"<size=125%><b><#{mainColors[who]}>★ {GetString(mainKeys[who])}</color></b></size>\n" : "";
+                first = false;
+                blocks.Add(main + $"<#{CategoryColors[cat]}>■ {string.Format(GetString("CmdCat.Sub"), GetString("CmdCat." + CategoryKeys[cat]))}</color>\n" + string.Join("\n", lines));
+            }
+        }
         if (asHost) blocks.Add("<#9a9a9a>" + GetString("CommandList.HostHint") + "</color>");
         Utils.SendBlocks(blocks, $"<#ffd84a>【{GetString("CommandList").TrimEnd(':', '：')}】</color>", to.PlayerId, "<size=70%><line-height=1.6pic>");
     }
