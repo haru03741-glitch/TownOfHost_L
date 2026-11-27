@@ -151,6 +151,12 @@ public static class ClientBodySync
            && GameOptionsManager.Instance != null && GameOptionsManager.Instance.currentGameMode is GameModes.Normal or GameModes.NormalFools;
 
     /// <summary>
+    /// 今消した死体を、本編の客の画面で合わせ直す見込みがあるか。あれば覆いは先に出さず、
+    /// 合わせ直せなかった客にだけ後から出す (<see cref="DeadBodyEraser.CoverUnsynced"/>)
+    /// </summary>
+    public static bool WillSync => Enabled && GameStates.IsInGame && ShipStatus.Instance != null;
+
+    /// <summary>
     /// ホストの手元の死体を消した・動かした後に呼ぶ。本編の客を、画面の死体の合わせ直し待ちに入れる。
     /// 合わせ直せた客には <see cref="DeadBodyEraser.HideCoversFrom"/> と <see cref="DeadBodyMover.HideCoversFrom"/> で覆いを外す。
     /// </summary>
@@ -208,7 +214,7 @@ public static class ClientBodySync
         }
         if (pending.Count == 0 || now < nextCheckAt) return;
         nextCheckAt = now + CheckInterval;
-        if (!Enabled) { pending.Clear(); return; }
+        if (!Enabled) { pending.Clear(); DeadBodyEraser.CoverUnsynced(null, force: true); return; }
         string why = GlobalBlock(now);
         List<Keep> keep = null;
         if (why == null)
@@ -221,21 +227,24 @@ public static class ClientBodySync
         if (why == null)
         {
             var sb = new System.Text.StringBuilder();
-            bool any = false;
+            HashSet<int> ready = null;
             foreach (var pc in Targets())
             {
                 string block = ClientBlock(pc, keep);
-                if (block == null) any = true;
+                if (block == null) (ready ??= new()).Add(pc.OwnerId);
                 else sb.Append(pc.PlayerId).Append(':').Append(block).Append(' ');
             }
-            if (any)
+            if (ready != null)
             {
                 lastWhy = null;
+                // 待たせている客には覆いを出す (待ちの上限を過ぎた死体だけ)
+                DeadBodyEraser.CoverUnsynced(ready);
                 StartRound(keep, now);
                 return;
             }
             why = sb.ToString();
         }
+        DeadBodyEraser.CoverUnsynced(null);
         // 待っている理由は、変わった時だけ記録する
         if (why == lastWhy) return;
         lastWhy = why;

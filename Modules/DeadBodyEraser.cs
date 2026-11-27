@@ -11,13 +11,32 @@ public static class DeadBodyEraser
 {
     private static readonly HashSet<byte> noBodyTargets = new();
     private static readonly HashSet<byte> erasedBodies = new();
-    private static readonly Dictionary<byte, Core.CustomNetObject> covers = new();
+    // 消した死体ごとの覆い (持ち主ごと)
+    private static readonly Dictionary<byte, CoverState> covers = new();
     // 死体そのものを消す電文を送った客 (死体の持ち主ごと)。この客には覆いを出さない
     private static readonly Dictionary<byte, HashSet<int>> erasedOnClients = new();
 
     private const int CoverColumns = 6;
     private const int CoverRows = 6;
     private const string CoverPrefix = "<size=70%><line-height=97%><cspace=0.16em>";
+    // 本編の客の画面の死体そのものを消せる見込みがある間は、覆いを出さずに待つ。その上限 (消してから)。
+    // 過ぎても消せていない客にだけ覆いを出す (キルの演出が終わるのを待つ分を含める)
+    private const float CoverGrace = 2f;
+    // 覆いを出す所 (地図の外)。CNO は全員の画面に出してから要らない客の画面で消すので、その間は地図の外に置き、
+    // 出し終えてから死体の所へ動かす (要らない客の画面に一瞬映らないように)
+    private static readonly Vector2 CoverPark = new(50f, 50f);
+    private const float CoverParkPoll = 0.1f;
+    private const float CoverParkTimeout = 40f;
+
+    private sealed class CoverState
+    {
+        public byte PlayerId;
+        public Vector2 Pos;
+        public float Since;
+        public readonly List<Core.CustomNetObject> Objects = new();
+        // 覆いを出した客と、画面の死体そのものを消した客 (どちらも、この死体の覆いはもう要らない)
+        public readonly HashSet<int> Done = new();
+    }
 
     [GameModuleInitializer]
     public static void Init()
@@ -149,7 +168,7 @@ public static class DeadBodyEraser
     {
         if (!AmongUsClient.Instance.AmHost) return;
         // 同じ人の前の覆い (復活してまた死んで、また復活した時など) は外して、今の死体の所に作り直す
-        if (covers.Remove(playerId, out var old)) old?.Despawn();
+        if (covers.Remove(playerId, out var old)) DespawnAll(old);
         Cover(playerId, pos);
     }
 
@@ -215,11 +234,63 @@ public static class DeadBodyEraser
     {
         if (!AmongUsClient.Instance.AmHost || covers.ContainsKey(playerId)) return;
         if (!(Options.ErasedBodyCover?.GetBool() ?? true)) return;
-        // 覆いが要るのは、死体が残る客だけ。死体そのものを消したホストと、消す電文を送った客には出さない
-        erasedOnClients.TryGetValue(playerId, out var erasedOn);
-        var cover = CoverAt(pos, erasedOn);
+        var state = new CoverState { PlayerId = playerId, Pos = pos, Since = Time.realtimeSinceStartup };
+        covers[playerId] = state;
+        // 画面の死体そのものを消せる客には、覆いを出すと消える前に一瞬映るだけになる。合わせ直しが回るなら、
+        // 回せなかった客にだけ後から出す (ClientBodySync が CoverUnsynced を呼ぶ)
+        if (ClientBodySync.WillSync) return;
+        CoverClients(state, null);
+    }
+
+    /// <summary>
+    /// 画面の死体そのものをまだ消せていない本編の客に、待ちの上限を過ぎた死体の覆いを出す。
+    /// <paramref name="exclude"/> の客 (これから合わせ直す客) には出さない。<paramref name="force"/> なら上限を待たない
+    /// </summary>
+    public static void CoverUnsynced(HashSet<int> exclude, bool force = false)
+    {
+        if (covers.Count == 0) return;
+        float now = Time.realtimeSinceStartup;
+        foreach (var state in covers.Values)
+            if (force || now - state.Since >= CoverGrace) CoverClients(state, exclude);
+    }
+
+    // まだ覆いも消す手当ても無い本編の客へ、その客たちにだけ見える覆いを 1 つ出す
+    private static void CoverClients(CoverState state, HashSet<int> exclude)
+    {
+        HashSet<int> targets = null;
+        foreach (var pc in Main.AllPlayerControls)
+        {
+            if (!pc || pc.AmOwner || Core.CustomNetObject.Is(pc) || pc.Data == null || pc.Data.Disconnected || pc.OwnerId < 0) continue;
+            int id = pc.OwnerId;
+            if (state.Done.Contains(id) || (exclude != null && exclude.Contains(id))) continue;
+            (targets ??= new()).Add(id);
+        }
+        if (targets == null) return;
+        // 消す電文を送った同じ版の客は、手元で死体を消している (一覧は送り終えた時に埋まるので、出し終えた時にも見る)
+        erasedOnClients.TryGetValue(state.PlayerId, out var erasedOn);
+        if (erasedOn != null) targets.ExceptWith(erasedOn);
+        if (targets.Count == 0) return;
+        var cover = Core.CustomNetObject.Create(CoverSpriteAt(state.Pos), CoverPark);
         if (cover == null) return;
-        covers[playerId] = cover;
+        cover.HideFrom(p => p.AmOwner || !targets.Contains(p.OwnerId) || (erasedOn != null && erasedOn.Contains(p.OwnerId)));
+        // 覆いは会議まで残る。絵が入らずに人の姿で残ると目に付くので、見た目を送り直す
+        cover.ResendSprite();
+        state.Objects.Add(cover);
+        state.Done.UnionWith(targets);
+        MoveWhenLive(cover, state.Pos, CoverParkTimeout);
+    }
+
+    private static void MoveWhenLive(Core.CustomNetObject cover, Vector2 pos, float left)
+        => _ = new LateTask(() =>
+        {
+            if (cover.IsGone) return;
+            if (cover.IsLive) { cover.MoveTo(pos); return; }
+            if (left > CoverParkPoll) MoveWhenLive(cover, pos, left - CoverParkPoll);
+        }, CoverParkPoll, "");
+
+    private static void DespawnAll(CoverState state)
+    {
+        foreach (var cover in state.Objects) cover?.Despawn();
     }
 
     /// <summary>
@@ -257,14 +328,18 @@ public static class DeadBodyEraser
 
     public static void OnReportDeadBody()
     {
-        foreach (var cover in covers.Values) cover?.Despawn();
+        foreach (var state in covers.Values) DespawnAll(state);
         covers.Clear();
     }
 
     /// <summary>画面の死体そのものを消せた客から、覆いを外す</summary>
     public static void HideCoversFrom(int clientId)
     {
-        foreach (var cover in covers.Values) cover?.HideFromClient(clientId);
+        foreach (var state in covers.Values)
+        {
+            state.Done.Add(clientId);
+            foreach (var cover in state.Objects) cover?.HideFromClient(clientId);
+        }
     }
 
     private static void RemovePet(PlayerControl pc)
