@@ -44,8 +44,8 @@ public sealed class MadConnecter : RoleBase, IKiller, IKillFlashSeeable, IDeadBo
         // 前の試合の値を持ち越さないよう毎回決める (どれも 0 なら 1)
         maxTask = count != 0 ? count : 1;
 
-        CustomRoleManager.MarkOthers.Add(GetMarkOthers);
-        CustomRoleManager.SuffixOthers.Add(GetSuffixOthers);
+        Holdings.Subscribe(CustomRoleManager.MarkOthers, GetMarkOthers);
+        Holdings.Subscribe(CustomRoleManager.SuffixOthers, GetSuffixOthers);
     }
 
     static OptionItem OptionCanVent;

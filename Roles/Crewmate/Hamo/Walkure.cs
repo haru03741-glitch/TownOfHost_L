@@ -139,7 +139,7 @@ public sealed class Walkure : RoleBase, ISelfVoter, IKiller
     public Walkure(PlayerControl player)
         : base(RoleInfo, player)
     {
-        if (OptionShowRoleToRevealed.GetBool()) CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(AnyRevealed);
+        if (OptionShowRoleToRevealed.GetBool()) Holdings.Subscribe(CustomRoleManager.EveryoneNeedsSeenNamesOthers, AnyRevealed);
         meetingRevealCount = 0;
         isDead = false;
         isExiled = false;

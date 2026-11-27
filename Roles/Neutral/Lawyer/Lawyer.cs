@@ -34,8 +34,8 @@ public sealed class Lawyer : RoleBase, ILateWinner
         PursuerGuardNum = OptionPursuerGuardNum.GetInt();
 
         Lawyers.Add(this);
-        CustomRoleManager.MarkOthers.Add(GetMarkOthers);
-        CustomRoleManager.OnPlayerDeadOthers.Add(OnPlayerDeadOthers);
+        Holdings.Subscribe(CustomRoleManager.MarkOthers, GetMarkOthers);
+        Holdings.SubscribeShared(CustomRoleManager.OnPlayerDeadOthers, OnPlayerDeadOthers);
 
         Target = null;
     }
@@ -43,11 +43,6 @@ public sealed class Lawyer : RoleBase, ILateWinner
     {
         Lawyers.Remove(this);
 
-        if (Lawyers.Count <= 0)
-        {
-            CustomRoleManager.MarkOthers.Remove(GetMarkOthers);
-            CustomRoleManager.OnPlayerDeadOthers.Remove(OnPlayerDeadOthers);
-        }
     }
 
     private static OptionItem OptionHasImpostorVision;

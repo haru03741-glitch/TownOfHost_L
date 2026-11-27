@@ -33,7 +33,7 @@ public sealed class MadSnitch : RoleBase
         canAlsoBeExposedToImpostor = OptionCanAlsoBeExposedToImpostor.GetBool();
         TaskTrigger = OptionTaskTrigger.GetInt();
 
-        CustomRoleManager.MarkOthers.Add(GetMarkOthers);
+        Holdings.Subscribe(CustomRoleManager.MarkOthers, GetMarkOthers);
     }
 
     private static OptionItem OptionCanVent;

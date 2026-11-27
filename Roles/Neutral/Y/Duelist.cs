@@ -25,14 +25,13 @@ public sealed class Duelist : RoleBase, IAdditionalWinner, IAdditionalWinGranter
         player
     )
     {
-        CustomRoleManager.MarkOthers.Add(GetMarkOthers);
+        Holdings.Subscribe(CustomRoleManager.MarkOthers, GetMarkOthers);
         Duelists.Add(this);
         Archenemy = null;
     }
     public override void OnDestroy()
     {
         Duelists.Remove(this);
-        CustomRoleManager.MarkOthers.Remove(GetMarkOthers);
     }
 
     private static HashSet<Duelist> Duelists = new(15);

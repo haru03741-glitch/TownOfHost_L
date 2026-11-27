@@ -44,8 +44,8 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
         isDeadCache = new();
         GuessId = byte.MaxValue;
         cancallmeetingkill = OptionCanCallMeetingKill.GetBool();
-        CustomRoleManager.GameEndCountAdjustersOthers.Add(CountWaitingAssassins);
-        CustomRoleManager.GameEndByCountHoldersOthers.Add(IsMerlinCollected);
+        Holdings.Subscribe(CustomRoleManager.GameEndCountAdjustersOthers, CountWaitingAssassins);
+        Holdings.Subscribe(CustomRoleManager.GameEndByCountHoldersOthers, IsMerlinCollected);
     }
     /// <summary>マーリンを当てている間は人数で終わらない</summary>
     private static bool IsMerlinCollected() => assassin?.NowState is AssassinMeeting.Collected;

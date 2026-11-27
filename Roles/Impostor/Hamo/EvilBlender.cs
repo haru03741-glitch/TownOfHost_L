@@ -65,9 +65,9 @@ public sealed class EvilBlender : RoleBase, IImpostor, IUsePhantomButton
 
         limittimer = 0;
 
-        CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
+        Holdings.Subscribe(CustomRoleManager.LowerOthers, GetLowerTextOthers);
 
-        CustomRoleManager.OnFixedUpdateOthers.Add(OtherFixUpdates);
+        Holdings.Subscribe(CustomRoleManager.OnFixedUpdateOthers, OtherFixUpdates);
 
 
 

@@ -31,15 +31,12 @@ public sealed class Godfather : RoleBase, IImpostor
         LockDistance = OptionGodfatherLockDistance.GetFloat();
         JanitorSeeSelectedTiming = OptionJanitorSeeSelectedTiming.GetBool();
 
-        CustomRoleManager.MarkOthers.Add(GetMarkOthers);
-        CustomRoleManager.NameColorOthers.Add(OverrideNameColorByJanitorTarget);
-        CustomRoleManager.KillBlockersOthers.Add(IsLockedByJanitor);
+        Holdings.SubscribeShared(CustomRoleManager.MarkOthers, GetMarkOthers);
+        Holdings.SubscribeShared(CustomRoleManager.NameColorOthers, OverrideNameColorByJanitorTarget);
+        Holdings.SubscribeShared(CustomRoleManager.KillBlockersOthers, IsLockedByJanitor);
     }
     public override void OnDestroy()
     {
-        CustomRoleManager.MarkOthers.Remove(GetMarkOthers);
-        CustomRoleManager.NameColorOthers.Remove(OverrideNameColorByJanitorTarget);
-        CustomRoleManager.KillBlockersOthers.Remove(IsLockedByJanitor);
         godfather = null;
     }
 

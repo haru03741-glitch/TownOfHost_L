@@ -50,7 +50,7 @@ namespace TownOfHostL.Roles.Neutral
             canCreateSidekick = OptionCanCreateSidekick.GetBool();
 
             canSidekickCount = canCreateSidekick ? 1 : 0;
-            CustomRoleManager.OnPlayerDeadOthers.Add(OnPlayerDeadOthers);
+            Holdings.Subscribe(CustomRoleManager.OnPlayerDeadOthers, OnPlayerDeadOthers);
         }
         /// <summary>ジャッカルが死んだら (死に方によらず) 少し後にサイドキックの昇格を見る</summary>
         private static void OnPlayerDeadOthers(byte playerId, CustomDeathReason reason)

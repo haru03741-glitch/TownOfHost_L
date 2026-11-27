@@ -112,7 +112,7 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
 
     public override void Add()
     {
-        CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
+        Holdings.Subscribe(CustomRoleManager.LowerOthers, GetLowerTextOthers);
         BeamColorModeValue = OptionBeamColorMode.GetValue();
         BeamUnlockTaskCount = OptionBeamUnlockTask.GetInt();
         SelfDestructOnMiss = OptionSelfDestructOnMiss.GetBool();
@@ -127,7 +127,6 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
     {
         Holdings.RemoveSpeed(Player.PlayerId, nameof(SheriffHadouHo));
         beam?.End();
-        CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
     }
 
     public override void ApplyGameOptions(IGameOptions opt)

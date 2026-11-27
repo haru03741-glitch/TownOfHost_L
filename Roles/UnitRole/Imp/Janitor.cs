@@ -35,8 +35,8 @@ public sealed class Janitor : RoleBase, IImpostor
         IsAliveAfterGodfatherDead = OptionJanitorIsAliveAfterGodfatherDead.GetBool();
         JanitorCanKill = OptionJanitorCanKill.GetBool();
         JanitorKillCooldown = OptionJanitorKillCooldown.GetFloat();
-        CustomRoleManager.OnPlayerDeadOthers.Add(OnPlayerDead);
-        CustomRoleManager.OnPlayerRevivedOthers.Add(OnPlayerRevived);
+        Holdings.Subscribe(CustomRoleManager.OnPlayerDeadOthers, OnPlayerDead);
+        Holdings.Subscribe(CustomRoleManager.OnPlayerRevivedOthers, OnPlayerRevived);
     }
     /// <summary>ジャニターが生き返ったら後追いの旗を戻し、ゴッドファーザーが生き返ったら掃除に戻す</summary>
     private static void OnPlayerRevived(byte playerId)

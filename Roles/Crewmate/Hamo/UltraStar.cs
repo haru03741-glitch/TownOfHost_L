@@ -46,7 +46,7 @@ public sealed class UltraStar : RoleBase, IKiller, ISchrodingerCatOwner
     )
 
     {
-        CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(() => CanseeAllplayer);
+        Holdings.Subscribe(CustomRoleManager.EveryoneNeedsSeenNamesOthers, () => CanseeAllplayer);
 
         Speed = OptionSpeed.GetFloat();
 

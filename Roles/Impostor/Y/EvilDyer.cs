@@ -28,7 +28,7 @@ public sealed class EvilDyer : RoleBase, IImpostor
         player
     )
     {
-        CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(() => IsColorCamouflage);
+        Holdings.Subscribe(CustomRoleManager.EveryoneNeedsSeenNamesOthers, () => IsColorCamouflage);
         killCooldown = OptionKillCooldown.GetFloat();
         dyerTime = OptionDyerTime.GetFloat();
     }

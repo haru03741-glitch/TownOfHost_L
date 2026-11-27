@@ -112,10 +112,9 @@ public sealed class Berserker : RoleBase, IImpostor, IUsePhantomButton, ITeammat
     public bool IsRampaging => rampaging;
     public bool CanKillTeammates => trance && rampaging;
 
-    public override void Add() => CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
+    public override void Add() => Holdings.Subscribe(CustomRoleManager.LowerOthers, GetLowerTextOthers);
     public override void OnDestroy()
     {
-        CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
         // 暴走の途中で役職が替わった時に、鬼の体・見え方・加速を残さない (試合の終わりの後始末では送らない)
         // クールは新しい役職を付ける側が決めるので、ここでは送らない (同じ相手へクールの電文を重ねない)
         if (rampaging && GameStates.IsInTask && !GameEndChecker.EndingStarted) EndRampage(release: true, restartCooldowns: false);

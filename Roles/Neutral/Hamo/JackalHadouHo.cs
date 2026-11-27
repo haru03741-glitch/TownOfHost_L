@@ -133,7 +133,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
 
 
-        CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
+        Holdings.Subscribe(CustomRoleManager.LowerOthers, GetLowerTextOthers);
 
     }
 
@@ -452,7 +452,6 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
         beam?.End();
 
 
-        CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
 
 
 
@@ -1679,8 +1678,8 @@ public sealed class Tama : RoleBase, IKiller
 
     {
         // 仲間 (ジャッカルの陣営) の画面にたまの役職名を出す。見る側の役職は他人の名前を組み直さないことがある
-        CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(() => true);
-        CustomRoleManager.GameEndCountAdjustersOthers.Add(AdjustGameEndCounts);
+        Holdings.Subscribe(CustomRoleManager.EveryoneNeedsSeenNamesOthers, () => true);
+        Holdings.Subscribe(CustomRoleManager.GameEndCountAdjustersOthers, AdjustGameEndCounts);
 
         OwnerId = byte.MaxValue;
 

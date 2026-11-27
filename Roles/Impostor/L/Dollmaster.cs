@@ -108,11 +108,10 @@ public sealed class Dollmaster : RoleBase, IImpostor
 
     private bool CanAct => canMakeKill || canMakeReport;
 
-    public override void Add() => CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
+    public override void Add() => Holdings.Subscribe(CustomRoleManager.LowerOthers, GetLowerTextOthers);
 
     public override void OnDestroy()
     {
-        CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
         // 試合の終わりの後始末では送らない (相手の歩きは次の試合に持ち越されず、相手が先に壊れていることもある)
         Release(send: GameStates.IsInTask && !GameEndChecker.EndingStarted);
     }

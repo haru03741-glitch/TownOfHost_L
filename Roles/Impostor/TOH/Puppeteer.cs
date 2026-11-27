@@ -28,7 +28,7 @@ public sealed class Puppeteer : RoleBase, IImpostor
     )
     {
 
-        CustomRoleManager.OnFixedUpdateOthers.Add(OnFixedUpdateOthers);
+        Holdings.Subscribe(CustomRoleManager.OnFixedUpdateOthers, OnFixedUpdateOthers);
     }
     /// <summary>
     /// Key: ターゲットのPlayerId, Value: パペッティア

@@ -85,7 +85,7 @@ public sealed class Vulture : RoleBase, IKillFlashSeeable, IAdditionalWinner
 
 
 
-        CustomRoleManager.MarkOthers.Add(GetMarkOthers);
+        Holdings.Subscribe(CustomRoleManager.MarkOthers, GetMarkOthers);
 
 
 

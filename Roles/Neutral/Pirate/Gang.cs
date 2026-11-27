@@ -30,7 +30,7 @@ public sealed class Gang : RoleBase, IAdditionalWinner
     )
     {
         //他視点用のMarkメソッド登録
-        CustomRoleManager.MarkOthers.Add(GetMarkOthers);
+        Holdings.Subscribe(CustomRoleManager.MarkOthers, GetMarkOthers);
     }
     private static HashSet<Gang> Gangs = new(15);
 

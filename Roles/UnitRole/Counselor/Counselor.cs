@@ -31,11 +31,10 @@ public sealed class Counselor : RoleBase
         ChallengeMaxCount = OptionChallengeMaxCount.GetInt();
         //ResetAddonChangeCrew = OptionResetAddonChangeCrew.GetBool();
 
-        CustomRoleManager.MarkOthers.Add(GetMarkOthers);
+        Holdings.Subscribe(CustomRoleManager.MarkOthers, GetMarkOthers);
     }
     public override void OnDestroy()
     {
-        CustomRoleManager.MarkOthers.Remove(GetMarkOthers);
     }
 
     public static int ChallengeMaxCount;

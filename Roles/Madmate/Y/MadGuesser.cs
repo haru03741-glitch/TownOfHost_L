@@ -38,7 +38,7 @@ public sealed class MadGuesser : VoteGuesser
         HideMisfire = OptionHideMisfire.GetBool();
         GuessAfterVote = OptionGuessAfterVote.GetBool();
 
-        //CustomRoleManager.MarkOthers.Add(GetMarkOthers);
+        //Holdings.Subscribe(CustomRoleManager.MarkOthers, GetMarkOthers);
     }
 
     private static OptionItem OptionCanVent;

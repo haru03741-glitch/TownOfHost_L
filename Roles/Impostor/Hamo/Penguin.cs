@@ -28,7 +28,7 @@ class Penguin : RoleBase, IImpostor
         AbductTimerLimit = OptionAbductTimerLimit.GetFloat();
         MeetingKill = OptionMeetingKill.GetBool();
 
-        CustomRoleManager.OnEnterVentOthers.Add(OnEnterVentOthers);
+        Holdings.Subscribe(CustomRoleManager.OnEnterVentOthers, OnEnterVentOthers);
     }
     public override void OnDestroy()
     {

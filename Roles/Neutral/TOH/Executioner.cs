@@ -32,7 +32,7 @@ public sealed class Executioner : RoleBase, IAdditionalWinner
         ChangeRolesAfterTargetKilled = ChangeRoles[OptionChangeRolesAfterTargetKilled.GetValue()];
 
         Executioners.Add(this);
-        CustomRoleManager.OnPlayerDeadOthers.Add(OnPlayerDeadOthers);
+        Holdings.SubscribeShared(CustomRoleManager.OnPlayerDeadOthers, OnPlayerDeadOthers);
 
         TargetExiled = false;
     }
@@ -101,10 +101,6 @@ public sealed class Executioner : RoleBase, IAdditionalWinner
     {
         Executioners.Remove(this);
 
-        if (Executioners.Count <= 0)
-        {
-            CustomRoleManager.OnPlayerDeadOthers.Remove(OnPlayerDeadOthers);
-        }
     }
     // 死んだ時に外したターゲット (生き返った時に戻す)
     private byte targetBeforeDeath = byte.MaxValue;

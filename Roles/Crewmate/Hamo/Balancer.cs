@@ -78,7 +78,7 @@ public sealed class Balancer : RoleBase, ISelfVoter
 
         nickname = null;
 
-        CustomRoleManager.MarkOthers.Add(OtherMark);
+        Holdings.Subscribe(CustomRoleManager.MarkOthers, OtherMark);
 
     }
 

@@ -31,8 +31,8 @@ public sealed class LoyalDoggy : RoleBase
         MasterSeeMasterMark = OptionMasterSeeMasterMark.GetBool();
         IgnoreTaskAfterDeadMaster = OptionIgnoreTaskAfterDeadMaster.GetBool();
 
-        CustomRoleManager.MarkOthers.Add(GetMarkOthers);
-        CustomRoleManager.TaskExemptionsOthers.Add(IgnoreTask);
+        Holdings.Subscribe(CustomRoleManager.MarkOthers, GetMarkOthers);
+        Holdings.Subscribe(CustomRoleManager.TaskExemptionsOthers, IgnoreTask);
         LoyalDoggies.Add(this);
         Master = null;
         masterDecision = false;
@@ -43,7 +43,6 @@ public sealed class LoyalDoggy : RoleBase
     public override void OnDestroy()
     {
         LoyalDoggies.Remove(this);
-        CustomRoleManager.MarkOthers.Remove(GetMarkOthers);
     }
 
     private static HashSet<LoyalDoggy> LoyalDoggies = new(15);

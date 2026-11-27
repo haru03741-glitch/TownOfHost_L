@@ -63,7 +63,7 @@ public sealed class JO : RoleBase, IKiller
             NameColorManager.Add(impostor.PlayerId, Player.PlayerId, "#ffffff");
         }
         // インポスター視点マッドに★を付ける
-        CustomRoleManager.MarkOthers.Add(GetMarkOthers);
+        Holdings.Subscribe(CustomRoleManager.MarkOthers, GetMarkOthers);
     }
     public float CalculateKillCooldown() => roleDetectCooldown;
     public bool CanUseImpostorVentButton() => canVent;

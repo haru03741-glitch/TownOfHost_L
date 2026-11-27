@@ -26,7 +26,7 @@ public sealed class Bait : RoleBase
     {
         WaitTime = OptionWaitTime.GetFloat();
 
-        CustomRoleManager.MarkOthers.Add(GetMarkOthers);
+        Holdings.Subscribe(CustomRoleManager.MarkOthers, GetMarkOthers);
     }
     private static OptionItem OptionWaitTime;
     enum OptionName

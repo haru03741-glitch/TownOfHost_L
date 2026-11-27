@@ -92,8 +92,9 @@ public sealed class AntiHero : RoleBase, IAdditionalWinner, IKiller
 
         MarkedTargetOwners.Clear();
 
-        CustomRoleManager.MarkOthers.Add(GetMarkOthers);
-        CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(() => OptionMarkVisible.GetBool() && MarkedTargetOwners.Count > 0);
+        // 試合の始めに 1 度だけ登録する共有の処理 (役職が外れても残す)
+        CustomRoleManager.MarkOthers.Add(GetMarkOthers); // 役職が外れても残す
+        CustomRoleManager.EveryoneNeedsSeenNamesOthers.Add(() => OptionMarkVisible.GetBool() && MarkedTargetOwners.Count > 0); // 役職が外れても残す
 
     }
 

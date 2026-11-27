@@ -42,7 +42,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         IsFiring = false;
         _prevCharging = false;
         _prevBeamMark = false;
-        CustomRoleManager.LowerOthers.Add(GetLowerTextOthers);
+        Holdings.Subscribe(CustomRoleManager.LowerOthers, GetLowerTextOthers);
     }
 
     public bool IsCharging;
@@ -95,7 +95,6 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
     {
         Holdings.RemoveSpeed(Player.PlayerId, nameof(HadouHo));
         beam?.End();
-        CustomRoleManager.LowerOthers.Remove(GetLowerTextOthers);
 
         if (IsCharging || ShowBeamMark || IsFiring)
         {
