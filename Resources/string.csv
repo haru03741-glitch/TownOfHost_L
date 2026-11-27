@@ -6485,6 +6485,7 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "SettingsUI.Sec.Display","Roles and add-ons","役職と属性の表示","","","","",""
 "SettingsUI.Sec.Safety","Cheat protection","不正対策","","","","",""
 "SettingsUI.Sec.TeamChat","Team chat","陣営チャット","","","","",""
+"TaskTurnChat","Allow chat during task turns","タスクターン中もチャットを使える","","","","",""
 "AssassinMerlin","【Merlin Settings】","【マーリンの設定】"
 "SpawnPin.Open","Custom Spawn Pins","カスタムスポーンのピン","","","","",""
 "SpawnPin.Title","Custom Spawn Pins","カスタムスポーンのピン","","","","",""

@@ -69,6 +69,31 @@ internal static class SettingsCover
         _covered = false;
     }
 
+    // 設定画面の頁 (順番 5) や項目へ移動の窓 (30) より手前に、届いたチャットの知らせを描く順番
+    private const int ChatNoticeOrder = 40;
+
+    /// <summary>
+    /// チャットが届いた時、左上に出る本編の知らせ (と未読の点) を設定画面の頁の手前に描く。
+    /// 本編の知らせは順番 0 のままなので、設定画面を開いていると頁の後ろに隠れて、届いたのが分からない
+    /// </summary>
+    internal static void RaiseChatNotice(ChatController chat)
+    {
+        if (!chat) return;
+        try
+        {
+            if (chat.chatNotification) Raise(chat.chatNotification.gameObject);
+            if (chat.chatNotifyDot) Raise(chat.chatNotifyDot.gameObject);
+        }
+        catch (System.Exception ex) { Logger.Warn($"チャットの知らせを手前に出せません: {ex.Message}", "SettingsCover"); }
+    }
+
+    private static void Raise(GameObject go)
+    {
+        var g = go.GetComponent<UnityEngine.Rendering.SortingGroup>();
+        if (!g) g = go.AddComponent<UnityEngine.Rendering.SortingGroup>();
+        if (g.sortingOrder != ChatNoticeOrder) g.sortingOrder = ChatNoticeOrder;
+    }
+
     private static bool Covered()
     {
         var hud = HudManager.InstanceExists ? HudManager.Instance : null;
@@ -89,4 +114,8 @@ internal static class SettingsCoverPatches
 
     [HarmonyPatch(typeof(ChatController), nameof(ChatController.Toggle)), HarmonyPostfix]
     public static void Toggle() => SettingsCover.Refresh();
+
+    // チャットが届いたら、その知らせを設定画面の手前に出す
+    [HarmonyPatch(typeof(ChatController), nameof(ChatController.AddChat)), HarmonyPostfix]
+    public static void AddChat(ChatController __instance) => SettingsCover.RaiseChatNotice(__instance);
 }

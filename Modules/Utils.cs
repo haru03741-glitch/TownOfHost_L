@@ -1666,6 +1666,7 @@ public static partial class Utils
         if (MeetingStates.TryEndDay() && AmongUsClient.Instance.AmHost)
         {
             GameLog.OnNewDay();
+            TownOfHostL.Modules.TaskTurnChat.AfterMeeting();
             try { Roles.Madmate.MadMagic.AfterMeeting(endOfDay); }
             catch (Exception ex) { Logger.Exception(ex, "MadMagic.AfterMeeting"); }
         }
