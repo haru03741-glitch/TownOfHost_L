@@ -502,9 +502,8 @@ class SelectRolesPatch
         {
             if (!pc.GetCustomRole().IsSpectator()) allPlayersbySub.Add(pc);
         }
-        // ラバーズは 2 人で 1 組。出る確率を引き (IsEnable は確率が 0 より大きいかしか見ない)、相手がいない時は配らない
-        if (!CustomRoles.PlatonicLover.IsEnable() && CustomRoles.Lovers.IsEnable() && allPlayersbySub.Count >= 2
-            && IRandom.Instance.Next(100) < CustomRoles.Lovers.GetChance())
+        // ラバーズは 2 人で 1 組。出るかどうかは配る前の抽選 (RoleAssignManager の属性の抽選・確率どおり) で決まっている。相手がいない時は配らない
+        if (!CustomRoles.PlatonicLover.IsEnable() && CustomRoles.Lovers.IsPresent() && allPlayersbySub.Count >= 2)
             AssignCustomSubRolesFromList(CustomRoles.Lovers, allPlayersbySub, 2);
         foreach (var info in TownOfHostL.Roles.AddOns.AddOnList.All)
         {
@@ -703,22 +702,17 @@ class SelectRolesPatch
     private static void AssignCustomSubRolesDuplicatable(CustomRoles role, List<PlayerControl> allPlayersbySub)
     {
         if (allPlayersbySub == null || allPlayersbySub.Count <= 0) return;
-        var count = role.GetCount();
+        // 配る数は、配る前の抽選 (RoleAssignManager の属性の抽選) で 1 つずつ確率を引いて決まった数。
+        // ここでもう一度確率を引き直すと (前は当たるまで何回も引いていた)、10% でもほとんど配られてしまう
+        var count = role.GetRealCount();
         if (count <= 0) return;
-        var chance = role.GetChance();
-        if (chance <= 0) return;
 
         var rand = IRandom.Instance;
         int assigned = 0;
-        int attempts = 0;
-        int maxAttempts = count * 10;
         var unassigned = allPlayersbySub.Where(pc => !pc.GetCustomSubRoles().Contains(role)).ToList();
 
-        while (assigned < count && attempts < maxAttempts)
+        while (assigned < count)
         {
-            attempts++;
-            if (chance < 100 && rand.Next(100) >= chance) continue;
-
 
             if (unassigned.Count == 0) unassigned = new List<PlayerControl>(allPlayersbySub);
             if (unassigned.Count == 0) break;

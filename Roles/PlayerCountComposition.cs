@@ -17,6 +17,8 @@ public static class PlayerCountComposition
     public const int MaxPlayers = 15;
 
     public static OptionItem Enabled;
+    /// <summary>設定画面で今いじる人数 (選んだ人数の 8 行だけを出す)</summary>
+    public static OptionItem EditPlayers;
     static readonly Dictionary<(int n, CustomRoleTypes type), (OptionItem min, OptionItem max)> table = new();
 
     public static bool IsOn => Enabled != null && Enabled.GetBool() && Options.CurrentGameMode == CustomGameMode.Standard && !TownOfHostL.Core.Modes.ModeCatalog.IsCatchCat;
@@ -41,9 +43,12 @@ public static class PlayerCountComposition
         table.Clear();
         Enabled = BooleanOptionItem.Create("PlayerCountComposition", false, TabGroup.ModMainSettings, false)
             .SetColor(Palette.LightBlue);
+        EditPlayers = IntegerOptionItem.Create("PlayerCountComposition.Edit", new(MinPlayers, MaxPlayers, 1), MinPlayers, TabGroup.ModMainSettings, false)
+            .SetParent(Enabled)
+            .SetValueFormat(OptionFormat.Players);
         for (int n = MinPlayers; n <= MaxPlayers; n++)
         {
-            var first = true;
+            var count = n;
             foreach (var type in Types)
             {
                 var rep = new Dictionary<string, string>
@@ -58,12 +63,13 @@ public static class PlayerCountComposition
                     var o = IntegerOptionItem.Create($"PlayerCountComposition.{kind}", new(0, max, 1), Math.Min(def, max), TabGroup.ModMainSettings, false)
                         .SetParent(Enabled)
                         .SetKeyName($"PlayerCountComposition.{n}.{type}.{kind}")
-                        .SetValueFormat(OptionFormat.Players);
+                        .SetValueFormat(OptionFormat.Players)
+                        // 「設定する人数」で選んだ人数の分だけ出す (13 人分を全部並べると長すぎる)
+                        .SetEnabled(() => EditPlayers.GetInt() == count);
                     o.ReplacementDictionary = new(rep);
                     return o;
                 }
                 var minOpt = Make("Min", dmin);
-                if (first) { minOpt.SetHeader(true); first = false; }
                 var maxOpt = Make("Max", dmax);
                 table[(n, type)] = (minOpt, maxOpt);
             }

@@ -429,6 +429,11 @@ public static class ChatCommandTable
             case "vanilla":
                 Utils.ShowVanillaSetting(sendTo);
                 break;
+            case "s":
+            case "settings":
+                // 設定だけ (役職の確率は /n r)
+                Utils.ShowActiveSettings(sendTo, settingsOnly: true);
+                break;
             default:
                 Utils.ShowActiveSettings(sendTo);
                 break;

@@ -87,19 +87,49 @@ internal static class TohlSpawnEditor
         result = spawn;
         if (!ShipStatus.Instance) return true;
         if (CanStand(spawn) && SpawnMask.AllowsShip(spawn)) return true;
-        for (float r = SnapStep; r <= SnapRadius; r += SnapStep)
+        // まず壁を越えずに行ける所を探す (壁の向こうの別の部屋や、壁の中の狭いすき間へ飛ばないように)。
+        // 見つからない時だけ壁越しも許す (置いた点が壁の中そのものの時など)
+        for (int pass = 0; pass < 2; pass++)
         {
-            int n = Mathf.Max(8, Mathf.CeilToInt(2f * Mathf.PI * r / SnapStep));
-            for (int i = 0; i < n; i++)
+            for (float r = SnapStep; r <= SnapRadius; r += SnapStep)
             {
-                float a = i * 2f * Mathf.PI / n;
-                var p = spawn + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * r;
-                if (!CanStand(p) || !SpawnMask.AllowsShip(p)) continue;
-                result = p;
-                return true;
+                int n = Mathf.Max(8, Mathf.CeilToInt(2f * Mathf.PI * r / SnapStep));
+                for (int i = 0; i < n; i++)
+                {
+                    float a = i * 2f * Mathf.PI / n;
+                    var p = spawn + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * r;
+                    if (!CanStand(p) || !SpawnMask.AllowsShip(p)) continue;
+                    if (pass == 0 && WallBetween(spawn, p)) continue;
+                    // 周りにも少し余裕がある所だけ (ふちぎりぎりだと動けず埋まったように見える)
+                    if (pass == 0 && !HasRoom(p)) continue;
+                    result = p;
+                    return true;
+                }
             }
         }
         return false;
+    }
+
+    static bool WallBetween(Vector2 a, Vector2 b)
+    {
+        try
+        {
+            var off = new Vector2(0f, FeetOffset);
+            return PhysicsHelpers.AnythingBetween(a - off, b - off, Constants.ShipAndObjectsMask, false);
+        }
+        catch { return false; }
+    }
+
+    // 上下左右の少し先にも立てるか (動き出せる広さがあるか)
+    static bool HasRoom(Vector2 p)
+    {
+        const float d = 0.3f;
+        int ok = 0;
+        if (CanStand(p + new Vector2(d, 0))) ok++;
+        if (CanStand(p + new Vector2(-d, 0))) ok++;
+        if (CanStand(p + new Vector2(0, d))) ok++;
+        if (CanStand(p + new Vector2(0, -d))) ok++;
+        return ok >= 2;
     }
 
     private static readonly Collider2D[] wallBuffer = new Collider2D[16];

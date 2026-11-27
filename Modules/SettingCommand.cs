@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
+using UnityEngine;
 using TownOfHostL.Core.Modes;
 using static TownOfHostL.Translator;
 
@@ -65,6 +66,29 @@ public static class SettingCommand
             if (own == joined || SettingsSearch.Normalize(path.Replace(" > ", "")) == joined) exact.Add(opt);
         }
         if (exact.Count == 1) hits = exact;
+
+        // 本編 (バニラ) の設定 (キルクール・タスク数など)。MOD の設定に当たりが無い時か、名前がちょうど同じ時に使う
+        var vanillaHits = Vanilla.Where(v => SettingsSearch.AllIn(tokens, SettingsSearch.Haystack(v.Ja + " " + v.En))).ToList();
+        var vanillaExact = vanillaHits.Where(v => SettingsSearch.Normalize(v.Ja) == joined || SettingsSearch.Normalize(v.En.Replace(" ", "")) == joined).ToList();
+        if (vanillaExact.Count == 1 && exact.Count == 0 || hits.Count == 0 && vanillaHits.Count == 1)
+        {
+            var v = vanillaExact.Count == 1 ? vanillaExact[0] : vanillaHits[0];
+            if (Main.NormalOptions == null || !v.Set(SettingsSearch.Normalize(value)))
+            {
+                Reply(string.Format(GetString("ChangeSetting.BadValue"), v.Ja, v.Choices));
+                return;
+            }
+            SyncVanilla();
+            var whoV = by == null || by.AmOwner ? "" : $" ({by.Data?.PlayerName})";
+            Utils.SendMessageAutoSplit(string.Format(GetString("ChangeSetting.Done"), v.Ja, v.Get()) + whoV, true);
+            Logger.Info($"Vanilla {v.En} = {v.Get()}{whoV}", "ChangeSetting");
+            return;
+        }
+        if (hits.Count == 0 && vanillaHits.Count > 1)
+        {
+            Reply(string.Format(GetString("ChangeSetting.Many"), vanillaHits.Count) + "\n" + string.Join("\n", vanillaHits.Select(v => $"・{v.Ja} = {v.Get()}")));
+            return;
+        }
         if (hits.Count == 0)
         {
             Reply(GetString("ChangeSetting.NotFound"));
@@ -89,6 +113,77 @@ public static class SettingCommand
         // 変えたことは全員に知らせる
         Utils.SendMessageAutoSplit(string.Format(GetString("ChangeSetting.Done"), Path(option), Plain(option.GetString())) + who, true);
         Logger.Info($"{option.Key} = {option.GetString()}{who}", "ChangeSetting");
+    }
+
+    // ---- 本編 (バニラ) の設定 ----
+
+    sealed class VanillaSetting
+    {
+        public string Ja, En, Choices;
+        public Func<string> Get;
+        public Func<string, bool> Set;
+    }
+
+    static float? Num(string raw)
+    {
+        var t = raw.TrimEnd('%').TrimEnd('s', '秒', '人', 'x', '倍', '回', '個');
+        return float.TryParse(t, NumberStyles.Float, CultureInfo.InvariantCulture, out var f) ? f : null;
+    }
+    static bool? OnOff(string raw) => raw switch
+    {
+        "on" or "1" or "true" or "おん" or "有効" or "あり" or "オン" => true,
+        "off" or "0" or "false" or "おふ" or "無効" or "なし" or "オフ" => false,
+        _ => null,
+    };
+
+    static VanillaSetting FloatSetting(string ja, string en, float min, float max, float step, Func<float> get, Action<float> set, string unit = "")
+        => new()
+        {
+            Ja = ja, En = en, Choices = $"{min}〜{max}{unit}",
+            Get = () => $"{get():0.##}{unit}",
+            Set = raw =>
+            {
+                if (Num(raw) is not float v || v < min || v > max) return false;
+                set(Mathf.Round(v / step) * step);
+                return true;
+            },
+        };
+    static VanillaSetting IntSetting(string ja, string en, int min, int max, Func<int> get, Action<int> set, string unit = "")
+        => FloatSetting(ja, en, min, max, 1f, () => get(), v => set(Mathf.RoundToInt(v)), unit);
+    static VanillaSetting BoolSetting(string ja, string en, Func<bool> get, Action<bool> set)
+        => new()
+        {
+            Ja = ja, En = en, Choices = "on / off",
+            Get = () => get() ? "ON" : "OFF",
+            Set = raw => { if (OnOff(raw) is not bool b) return false; set(b); return true; },
+        };
+
+    static readonly VanillaSetting[] Vanilla =
+    {
+        FloatSetting("キルのクールダウン時間", "Kill Cooldown", 2.5f, 60f, 2.5f, () => Main.NormalOptions.KillCooldown, v => Main.NormalOptions.KillCooldown = v, "秒"),
+        IntSetting("インポスター数", "Impostors", 1, 5, () => Main.NormalOptions.NumImpostors, v => Main.NormalOptions.NumImpostors = v, "人"),
+        IntSetting("通常タスク", "Common Tasks", 0, 4, () => Main.NormalOptions.NumCommonTasks, v => Main.NormalOptions.NumCommonTasks = v),
+        IntSetting("ロングタスク", "Long Tasks", 0, 15, () => Main.NormalOptions.NumLongTasks, v => Main.NormalOptions.NumLongTasks = v),
+        IntSetting("ショートタスク", "Short Tasks", 0, 23, () => Main.NormalOptions.NumShortTasks, v => Main.NormalOptions.NumShortTasks = v),
+        IntSetting("緊急会議", "Emergency Meetings", 0, 9, () => Main.NormalOptions.NumEmergencyMeetings, v => Main.NormalOptions.NumEmergencyMeetings = v, "回"),
+        IntSetting("緊急ボタンクールダウン", "Emergency Cooldown", 0, 60, () => Main.NormalOptions.EmergencyCooldown, v => Main.NormalOptions.EmergencyCooldown = v, "秒"),
+        IntSetting("議論タイム", "Discussion Time", 0, 120, () => Main.NormalOptions.DiscussionTime, v => Main.NormalOptions.DiscussionTime = v, "秒"),
+        IntSetting("投票時間", "Voting Time", 0, 300, () => Main.NormalOptions.VotingTime, v => Main.NormalOptions.VotingTime = v, "秒"),
+        FloatSetting("プレイヤー速度", "Player Speed", 0.5f, 3f, 0.25f, () => Main.NormalOptions.PlayerSpeedMod, v => Main.NormalOptions.PlayerSpeedMod = v, "x"),
+        FloatSetting("クルービジョン", "Crewmate Vision", 0.25f, 5f, 0.25f, () => Main.NormalOptions.CrewLightMod, v => Main.NormalOptions.CrewLightMod = v, "x"),
+        FloatSetting("インポスタービジョン", "Impostor Vision", 0.25f, 5f, 0.25f, () => Main.NormalOptions.ImpostorLightMod, v => Main.NormalOptions.ImpostorLightMod = v, "x"),
+        IntSetting("キル可能距離", "Kill Distance", 0, 2, () => Main.NormalOptions.KillDistance, v => Main.NormalOptions.KillDistance = v),
+        BoolSetting("追放数を確認", "Confirm Ejects", () => Main.NormalOptions.ConfirmImpostor, v => Main.NormalOptions.ConfirmImpostor = v),
+        BoolSetting("匿名投票", "Anonymous Votes", () => Main.NormalOptions.AnonymousVotes, v => Main.NormalOptions.AnonymousVotes = v),
+        BoolSetting("視認タスク", "Visual Tasks", () => Main.NormalOptions.VisualTasks, v => Main.NormalOptions.VisualTasks = v),
+    };
+
+    /// <summary>変えた本編の設定を全員へ送る</summary>
+    static void SyncVanilla()
+    {
+        if (PlayerControl.LocalPlayer == null || GameOptionsManager.Instance == null || Main.NormalOptions == null) return;
+        var opt = Main.NormalOptions.Cast<AmongUs.GameOptions.IGameOptions>();
+        PlayerControl.LocalPlayer.RpcSyncSettings(GameOptionsManager.Instance.gameOptionsFactory.ToBytes(opt, AprilFoolsMode.IsAprilFoolsModeToggledOn));
     }
 
     static bool Settable(OptionItem opt)

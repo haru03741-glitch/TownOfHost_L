@@ -70,6 +70,12 @@ namespace TownOfHostL
             public virtual void RandomTeleport(PlayerControl player)
             {
                 var location = Modules.SpawnEditor.TohlSpawnEditor.TryPick(this, out var custom) ? custom : GetLocation();
+                // 部屋の決まった位置も、壁や物に重なっていたら近くの立てる所へずらす (埋まり・壁抜けを防ぐ)
+                if (Modules.SpawnEditor.TohlSpawnEditor.TrySnap(location, out var snapped) && snapped != location)
+                {
+                    Logger.Info($"湧く位置をずらす: {location} → {snapped}", "RandomSpawn");
+                    location = snapped;
+                }
                 Logger.Info($"{player.Data.PlayerName}:{location}", "RandomSpawn");
                 TP(player.NetTransform, location);
             }

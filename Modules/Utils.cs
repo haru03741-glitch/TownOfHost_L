@@ -744,7 +744,8 @@ public static partial class Utils
         }
     }
     // Now
-    public static void ShowActiveSettings(byte PlayerId = byte.MaxValue)
+    /// <param name="settingsOnly">true (/n s) なら役職の確率は出さず、アサインと設定だけを出す</param>
+    public static void ShowActiveSettings(byte PlayerId = byte.MaxValue, bool settingsOnly = false)
     {
         bool roleAssignRandomMode = RoleAssignManager.OptionAssignMode.GetBool();
         string formatTag = $"<size={ActiveSettingsSize}>";
@@ -783,13 +784,29 @@ public static partial class Utils
                 sb.AppendFormat("<size={0}>", ActiveSettingsSize);
 
                 formatTag = "<size=65%><line-height=1.5pic>";
-                sb.AppendFormat("<size={0}>【{1}: {2}】\n<line-height=1.5pic>", "65%", RoleAssignManager.OptionAssignMode.GetName(true), RoleAssignManager.OptionAssignMode.GetString());
-                if (roleAssignRandomMode)
+                if (PlayerCountComposition.IsOn)
                 {
-                    ShowChildrenSettings(RoleAssignManager.OptionAssignMode, ref sb);
+                    // 人数ごとの構成: 今の人数の分だけ出す
+                    var players = GameData.Instance ? GameData.Instance.PlayerCount : 0;
+                    sb.AppendFormat("<size={0}>{1}\n<line-height=1.5pic>", "65%", SettingHead($"{PlayerCountComposition.Enabled.GetName(true)} ({players})"));
+                    foreach (var type in new[] { CustomRoleTypes.Impostor, CustomRoleTypes.Madmate, CustomRoleTypes.Crewmate, CustomRoleTypes.Neutral })
+                    {
+                        var (min, max) = PlayerCountComposition.Get(players, type);
+                        sb.Append(SettingLine(GetString($"CustomRoleTypes.{type}"), min == max ? $"{min}" : $"{min}〜{max}")).Append('\n');
+                    }
+                }
+                else
+                {
+                    sb.AppendFormat("<size={0}>{1}\n<line-height=1.5pic>", "65%", SettingHead($"{RoleAssignManager.OptionAssignMode.GetName(true)}: {RoleAssignManager.OptionAssignMode.GetString()}"));
+                    if (roleAssignRandomMode)
+                    {
+                        ShowChildrenSettings(RoleAssignManager.OptionAssignMode, ref sb);
+                    }
                 }
                 sb.Append("\n</line-height></size>");
                 SendMessageAutoSplitAndClearSB(PlayerId, sb, title, formatTag);
+                if (!settingsOnly)
+                {
 
                 // 区分の見出しを付けて設定画面と同じ順に並べ、1 通に入る分ずつ詰めて送る (役職の途中では割らない)
                 formatTag = "<size=65%><line-height=1.5pic>";
@@ -819,6 +836,7 @@ public static partial class Utils
                     sb.Clear();
                 }
                 SendBlocks(blocks, "", PlayerId, formatTag);
+                }
             }
 
             formatTag = "<size=65%><line-height=1.5pic>";
@@ -834,17 +852,14 @@ public static partial class Utils
                 if (opt.Name == "MapOption_Airship" && !Options.IsActiveAirship) continue;
                 if (opt.Name == "MapOption_Fungle" && !Options.IsActiveFungle) continue;
 
-                if (opt.Name is "NameChangeMode" && Options.GetNameChangeModes() != NameChange.None)
+                if (opt.Name is "NameChangeMode" && Options.GetNameChangeModes() != NameChange.None
+                    || opt.Name is "SyncColorMode" && Options.GetSyncColorMode() != SyncColorMode.None)
                 {
-                    sb.Append($"<size=72%>◆<u>{opt.GetName(true)}</u> ：{opt.GetString()}\n</size>");
-                }
-                else if (opt.Name is "SyncColorMode" && Options.GetSyncColorMode() != SyncColorMode.None)
-                {
-                    sb.Append($"<size=72%>◆<u>{opt.GetName(true)}</u> ：{opt.GetString()}\n</size>");
+                    sb.Append($"<size=72%>{SettingHead($"{opt.GetName(true)}: {opt.GetString()}")}\n</size>");
                 }
                 else
                 {
-                    sb.Append($"<size=72%>◆<u>{opt.GetName(true)}</u>\n</size>");
+                    sb.Append($"<size=72%>{SettingHead(opt.GetName(true))}\n</size>");
                 }
 
                 sb.Append(formatTag);
@@ -1014,10 +1029,14 @@ public static partial class Utils
                 sb.Append(string.Concat(Enumerable.Repeat("┃", Mathf.Max(deep - 1, 0))));
                 sb.Append(opt.Index == option.Children.Count ? "┗ " : "┣ ");
             }
-            sb.Append($"{opt.Value.GetName(true)} ：{opt.Value.GetString()}\n");
+            sb.Append(SettingLine(opt.Value.GetName(true), opt.Value.GetString())).Append('\n');
             if (opt.Value.GetBool()) ShowChildrenSettings(opt.Value, ref sb, deep + 1);
         }
     }
+    /// <summary>設定の見出し (/n): 黄色の ■ と太字</summary>
+    public static string SettingHead(string name) => $"<color=#ffe36e><b>■ {name}</b></color>";
+    /// <summary>設定の 1 行 (/n): 名前は白、値は水色にして見分けやすくする</summary>
+    public static string SettingLine(string name, string value) => $"{name}：<color=#8fd3ff>{value}</color>";
     public static void ShowVanillaSetting(byte PlayerId = byte.MaxValue)
     {
         string formatTag = $"<size=70%><line-height=1.6pic>";
