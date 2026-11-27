@@ -29,7 +29,7 @@ public static class FreePlayRole
         ReportDeadBodyPatch.CannotReportByDeadBodyList = new();
         ReportDeadBodyPatch.DontReportMarkList = new();
         MeetingHudPatch.RevengeTargetPlayer = new();
-        Main.RealOptionsData = new OptionBackupData(GameOptionsManager.Instance.CurrentGameOptions);
+        RoomOptions.Capture();
         Main.DefaultCrewmateVision = Main.RealOptionsData.GetFloat(FloatOptionNames.CrewLightMod);
         Main.DefaultImpostorVision = Main.RealOptionsData.GetFloat(FloatOptionNames.ImpostorLightMod);
         Main.LastNotifyNames = new();

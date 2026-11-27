@@ -75,7 +75,7 @@ class ChangeRoleSettings
             MeetingHudPatch.RevengeTargetPlayer = new();
             Options.UsedButtonCount = 0;
 
-            Main.RealOptionsData = new OptionBackupData(GameOptionsManager.Instance.CurrentGameOptions);
+            RoomOptions.Capture();
 
             if (Main.RealOptionsData == null)
             {

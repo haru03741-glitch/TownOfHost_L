@@ -212,7 +212,7 @@ namespace TownOfHostL.Modules
         {
             if (Main.RealOptionsData == null)
             {
-                Main.RealOptionsData = new OptionBackupData(GameOptionsManager.Instance.CurrentGameOptions);
+                RoomOptions.Capture();
             }
 
             var opt = BasedGameOptions;
