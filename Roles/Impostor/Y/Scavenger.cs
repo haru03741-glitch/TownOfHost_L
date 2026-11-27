@@ -29,21 +29,25 @@ public sealed class Scavenger : RoleBase, IImpostor
         IgnoreBait = OptionIgnoreBait.GetBool();
         IsEatUpKillLimit = OptionIsEatUpKillLimit.GetBool();
         LimitMaxCount = OptionLimitMaxCount.GetInt();
+        EraseBody = OptionEraseBody.GetBool();
     }
     private static OptionItem OptionKillCooldown;
     private static OptionItem OptionIgnoreBait;
     private static OptionItem OptionIsEatUpKillLimit;
     private static OptionItem OptionLimitMaxCount;
+    private static OptionItem OptionEraseBody;
     enum OptionName
     {
         ScavengerIgnoreBait,
         ScavengerIsEatUpKillLimit,
         ScavengerLimitMaxCount,
+        ScavengerEraseBody,
     }
     private static float KillCooldown;
     public static bool IgnoreBait;
     private static bool IsEatUpKillLimit;
     private static int LimitMaxCount;
+    private static bool EraseBody;
 
     // 1 人ごとに持つ
     int limitCount;
@@ -56,6 +60,7 @@ public sealed class Scavenger : RoleBase, IImpostor
         OptionLimitMaxCount = IntegerOptionItem.Create(RoleInfo, OptionName.ScavengerLimitMaxCount, new(1, 15, 1), 2, false).SetParent(OptionIsEatUpKillLimit)
             .SetValueFormat(OptionFormat.Pieces);
         OptionIgnoreBait = BooleanOptionItem.Create(RoleInfo, OptionName.ScavengerIgnoreBait, false, false);
+        OptionEraseBody = BooleanOptionItem.Create(RoleInfo, OptionName.ScavengerEraseBody, true, false);
     }
     public override void Add()
     {
@@ -119,6 +124,8 @@ public sealed class Scavenger : RoleBase, IImpostor
             if (target.Is(CustomRoles.Bait)) Bait.BaitKillPlayer = null; //ベイトマーク取り消し
             ReportDeadBodyPatch.CannotReportByDeadBodyList.Add(target.PlayerId);
             Logger.Info($"{target.GetNameWithRole()}：通報できない死体", "Scavenger");
+            // 死体そのものも消す (通報できない印は、消し終わるまでの間と、覆いの下の死体の通報を止めるために残す)
+            if (EraseBody) Modules.DeadBodyEraser.EraseAfterKill(target.PlayerId);
         }
     }
 

@@ -43,6 +43,7 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
     static OptionItem OptionSwallowRange;
     static OptionItem OptionShowArrow;
     static OptionItem OptionHasImpostorVision;
+    static OptionItem OptionEraseBody;
 
     float EatCooldown => OptionEatCooldown.GetFloat();
 
@@ -58,7 +59,8 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
         EaterEatIncreaseRate,
         EaterSwallowRange,
         EaterSwallowCooldownIncreaseRate,
-        EaterMeetingReduceRate
+        EaterMeetingReduceRate,
+        EaterEraseBody
     }
 
     sealed class PendingSwallowInfo
@@ -117,6 +119,7 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
         OptionSwallowRange = FloatOptionItem.Create(RoleInfo, OptionName.EaterSwallowRange, new(1.25f, 5f, 0.25f), 1.75f, false)
         .SetValueFormat(OptionFormat.Multiplier);
         OptionShowArrow = BooleanOptionItem.Create(RoleInfo, "EaterShowArrow", true, false);
+        OptionEraseBody = BooleanOptionItem.Create(RoleInfo, OptionName.EaterEraseBody, true, false);
     }
 
     public override void ApplyGameOptions(IGameOptions opt)
@@ -261,6 +264,8 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
         {
             reason = DontReportReason.Eat;
             EatenBodies.Add(target.PlayerId);
+            // 食べた死体そのものも消す (食べた印は、覆いの下の死体の通報を止めるために残す)
+            if (OptionEraseBody.GetBool()) Modules.DeadBodyEraser.Erase(target.PlayerId);
             deadBodyPositions.Where(poss => poss.Key == target.PlayerId).Do(poss => GetArrow.Remove(Player.PlayerId, poss.Value));
             eatOrSwallowCount++;
             Logger.Info($"食べた数：{eatOrSwallowCount}", "Eater");

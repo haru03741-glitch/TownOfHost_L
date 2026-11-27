@@ -983,6 +983,7 @@ DSchrodingerCatInfo,You are now on Team Darkhide,ダークハイドの味方に�
 "GreedierEvenKillCooldown","Even Kill Cooldown","キル偶数回目のキルクール","偶数击杀冷却",
 "AmbitionerKillCoolDecreaseRate","Killcool Decrease Rate","キルクール減少率","击杀冷却降低率",
 "ScavengerIgnoreBait","Ignore Forced Reports of Bait Kill","ベイトキル時の強制レポートを無視する",
+"ScavengerEraseBody","Erase the Body Itself","死体そのものを消す"
 "ScavengerIsEatUpKillLimit","Eat Up Kill Limit (Double Click Mode)","能力キルの使用制限(ダブルクリックモード)",
 "ScavengerLimitMaxCount","Number of Eat Up Kill","能力キルの最大回数",
 "TelepathistersCanSeeKillFlash","Can See ""Kill Flash"" for Telepathisters Kills","シスターがキルした時、フラッシュが見える",
@@ -3321,6 +3322,7 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "EvolverKillRange","Kill range","キルレンジ"
 "EvolverPlayAnimation","Play animation on evolve","進化時、アニメーションを行うか"
 "EvolverRemoveBody","Hide the eaten mark in meetings","会議で捕食した印 (×) を出さない"
+"EvolverEraseBody","Erase the Eaten Body Itself","食べた死体そのものを消す"
 "EvolverEatRange","Eat range","捕食を行える範囲"
 "EvolverReduceRate","Kill cooldown reduction rate after evolve","進化後のキルクール減少率"
 "EvolverReduceRateMultiplier","Reduction rate multiplier per evolve","進化毎のキルクール減少率の倍率"
@@ -3749,6 +3751,7 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "EaterWinCount","Required Eat+Swallow count to win","勝利に必要な食らう＋丸呑み回数"
 "EaterSwallowTime","Time required to swallow (seconds)","丸呑みにかかる時間"
 "EaterSwallowRange","Swallow range","丸呑みできる距離"
+"EaterEraseBody","Erase the Eaten Body Itself","食べた死体そのものを消す"
 "Short","Short","ショート"
 "Middle","Middle","ミドル"
 "Long","Long","ロング"

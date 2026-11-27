@@ -63,6 +63,8 @@ public sealed class Evolver : RoleBase, IImpostor, IUsePhantomButton
 
         RemoveBodyAfterEvolve = OptionRemoveBody.GetBool();
 
+        EraseBody = OptionEraseBody.GetBool();
+
         EatRange = OptionEatRange.GetFloat();
 
         ReduceRate = OptionReduceRate.GetFloat();
@@ -115,7 +117,7 @@ public sealed class Evolver : RoleBase, IImpostor, IUsePhantomButton
 
     static OptionItem OptionHasOtherKillCooldown, OptionKillCooldown;
 
-    static OptionItem OptionPlayAnimation, OptionRemoveBody, OptionEatRange;
+    static OptionItem OptionPlayAnimation, OptionRemoveBody, OptionEraseBody, OptionEatRange;
 
     static OptionItem OptionReduceRate, OptionReduceRateMultiplier;
 
@@ -127,7 +129,7 @@ public sealed class Evolver : RoleBase, IImpostor, IUsePhantomButton
 
     static bool HasOtherVision, ReceiveVisionEffect, HasOtherKillCooldown;
 
-    static bool PlayAnimation, RemoveBodyAfterEvolve;
+    static bool PlayAnimation, RemoveBodyAfterEvolve, EraseBody;
 
     static float Vision, DefaultKillCooldown, EatRange;
 
@@ -145,7 +147,7 @@ public sealed class Evolver : RoleBase, IImpostor, IUsePhantomButton
 
         EvolverHasOtherKillCooldown, EvolverHasOtherKillRange, EvolverKillRange,
 
-        EvolverPlayAnimation, EvolverRemoveBody, EvolverEatRange,
+        EvolverPlayAnimation, EvolverRemoveBody, EvolverEraseBody, EvolverEatRange,
 
         EvolverReduceRate, EvolverReduceRateMultiplier,
 
@@ -188,6 +190,8 @@ public sealed class Evolver : RoleBase, IImpostor, IUsePhantomButton
         OptionPlayAnimation = BooleanOptionItem.Create(RoleInfo, OptionName.EvolverPlayAnimation, true, false);
 
         OptionRemoveBody = BooleanOptionItem.Create(RoleInfo, OptionName.EvolverRemoveBody, false, false);
+
+        OptionEraseBody = BooleanOptionItem.Create(RoleInfo, OptionName.EvolverEraseBody, true, false);
 
         OptionEatRange = FloatOptionItem.Create(RoleInfo, OptionName.EvolverEatRange, new(0.5f, 5f, 0.25f), 1.5f, false)
 
@@ -606,6 +610,10 @@ public sealed class Evolver : RoleBase, IImpostor, IUsePhantomButton
 
 
         EatenBodies.Add(bodyId);
+
+        // 食べた死体そのものも消す (食べた印は、覆いの下の死体の通報を止めるために残す)
+
+        if (EraseBody) DeadBodyEraser.Erase(bodyId);
 
 
 

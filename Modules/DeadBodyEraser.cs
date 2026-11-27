@@ -90,6 +90,35 @@ public static class DeadBodyEraser
         Logger.Info($"{playerId} の死体を消しました", "DeadBodyEraser");
     }
 
+    // キルの直後に消す時、死体が出るのを待つ上限と間隔
+    private const float AfterKillWait = 2f;
+    private const float AfterKillPoll = 0.1f;
+
+    /// <summary>
+    /// キルしたばかりの人の死体を、ホストの手元に死体が出てから消す (キルと同じ時に呼んでよい)。
+    /// 待つ間に会議になった・生き返った時はやめる
+    /// </summary>
+    public static void EraseAfterKill(byte playerId)
+    {
+        if (!AmongUsClient.Instance.AmHost) return;
+        WaitBodyThenErase(playerId, AfterKillWait);
+    }
+
+    private static void WaitBodyThenErase(byte playerId, float left)
+        => _ = new LateTask(() =>
+        {
+            if (!GameStates.IsInTask || erasedBodies.Contains(playerId)) return;
+            var pc = Utils.GetPlayerById(playerId);
+            if (pc == null || pc.IsAlive()) return;
+            if (Object.FindObjectsOfType<DeadBody>().Any(b => b != null && b.ParentId == playerId))
+            {
+                Erase(playerId);
+                return;
+            }
+            if (left > AfterKillPoll) WaitBodyThenErase(playerId, left - AfterKillPoll);
+            else Logger.Warn($"{playerId} の死体が出ないので、消すのをやめました", "DeadBodyEraser");
+        }, AfterKillPoll, "");
+
     /// <summary>
     /// 生き返った人の残った死体をホストの手元で消し、死体の真ん中を返す (無ければ null)。
     /// 同じ版の TOHL の客の手元でも消す。本編の客の画面は CoverLeftover で覆う。
