@@ -43,6 +43,10 @@ namespace TownOfHostL.Modules;
 /// 合わない客は合うまで待ち、その間は覆い (<see cref="DeadBodyEraser"/>) のまま。
 /// 送った客からは覆いを外す。会議の始まりが開いている地図とタスクの窓を閉じる点は残る。
 /// </para>
+/// <para>
+/// 会議の始まりを処理した客は、自分を席へ動かす SnapTo を配る (同じ包みの位置の戻しで、その位置自体は捨てられる)。
+/// ホストの受け口でこれを見て届いた印にし、来なければ合わせ直し待ちへ戻す (2026-11-27 実機: 送ってから 0.13〜0.30 秒で届いた)。
+/// </para>
 /// </summary>
 public static class ClientBodySync
 {
@@ -121,8 +125,13 @@ public static class ClientBodySync
         public float KillersUntil;
     }
 
+    // 偽の会議を受けた客は、自分の体を会議の席へ動かす SnapTo を全員へ配る。送ってからこれだけ待っても来なければ、届かなかったとみなす
+    private const float AckTimeout = 3f;
+
     // 合わせ直しを待っている客 (clientId)
     private static readonly HashSet<int> pending = new();
+    // 包みを送って、届いた印 (本人の SnapTo) を待っている人: 本人の NetTransform の netId → (clientId, PlayerId, 送った時刻)
+    private static readonly Dictionary<uint, (int ClientId, byte PlayerId, float SentAt)> awaitingAck = new();
     // 出し終えたら消す CNO と、待ちの期限
     private static readonly List<(CustomNetObject obj, float deadline)> retiring = new();
     private static readonly Dictionary<byte, float> ziplineUntil = new();
@@ -136,6 +145,7 @@ public static class ClientBodySync
     public static void Init()
     {
         pending.Clear();
+        awaitingAck.Clear();
         retiring.Clear();
         ziplineUntil.Clear();
         round = null;
@@ -190,6 +200,7 @@ public static class ClientBodySync
     public static void OnReportDeadBody()
     {
         pending.Clear();
+        awaitingAck.Clear();
         if (round != null) EndRound(Time.realtimeSinceStartup, RoundGap);
     }
 
@@ -210,7 +221,7 @@ public static class ClientBodySync
             if (!ticking) return;
             try { Step(Time.realtimeSinceStartup); }
             catch (System.Exception ex) { Logger.Exception(ex, Tag); }
-            if (pending.Count == 0 && round == null && retiring.Count == 0)
+            if (pending.Count == 0 && round == null && retiring.Count == 0 && awaitingAck.Count == 0)
             {
                 ticking = false;
                 return;
@@ -221,6 +232,7 @@ public static class ClientBodySync
     private static void Step(float now)
     {
         StepRetiring(now);
+        StepAcks(now);
         if (round != null)
         {
             StepRound(now);
@@ -641,6 +653,7 @@ public static class ClientBodySync
 
             synced.Add(pc);
             pending.Remove(pc.OwnerId);
+            awaitingAck[pc.NetTransform.NetId] = (pc.OwnerId, pc.PlayerId, now);
             DeadBodyEraser.HideCoversFrom(pc.OwnerId);
             DeadBodyMover.HideCoversFrom(pc.OwnerId);
             sent++;
@@ -694,6 +707,45 @@ public static class ClientBodySync
             fixedClients++;
         }
         if (fixedClients > 0) Logger.Info($"合わせ直さなかった {fixedClients} 人の画面へ、会議の席の位置の戻しを送りました ({synced.Count} 人分)", Tag);
+    }
+
+    // 届いた印が来ないまま待ちすぎた人は、包みが届かなかったか途中で捨てられたとみなし、合わせ直し待ちへ戻す
+    // (外した覆いは、待つ間に CoverUnsynced が出し直す)
+    private static void StepAcks(float now)
+    {
+        if (awaitingAck.Count == 0) return;
+        List<uint> expired = null;
+        foreach (var (netId, a) in awaitingAck)
+            if (now - a.SentAt > AckTimeout) (expired ??= new()).Add(netId);
+        if (expired == null) return;
+        foreach (var netId in expired)
+        {
+            var a = awaitingAck[netId];
+            awaitingAck.Remove(netId);
+            var pc = Utils.GetPlayerById(a.PlayerId);
+            if (pc == null || pc.OwnerId != a.ClientId || !IsVanillaClient(pc))
+            {
+                Logger.Info($"{a.PlayerId} への死体の合わせ直しは届いた印が来ないまま、抜けたか握手したので捨てます", Tag);
+                continue;
+            }
+            Logger.Warn($"{a.PlayerId} への死体の合わせ直しが届いた印が {AckTimeout:0} 秒たっても来ないので、合わせ直し待ちへ戻します", Tag);
+            DeadBodyEraser.ForgetSynced(a.ClientId);
+            pending.Add(a.ClientId);
+        }
+    }
+
+    /// <summary>
+    /// ホストが客から SnapTo を受けた時 (番号で捨てる前)。合わせ直しを送った本人からなら、偽の会議まで処理された印として記録する
+    /// </summary>
+    [HarmonyLib.HarmonyPatch(typeof(CustomNetworkTransform), nameof(CustomNetworkTransform.HandleRpc))]
+    private static class AckPatch
+    {
+        public static void Prefix(CustomNetworkTransform __instance, byte callId)
+        {
+            if (callId != (byte)RpcCalls.SnapTo || awaitingAck.Count == 0 || !__instance) return;
+            if (!awaitingAck.Remove(__instance.NetId, out var a)) return;
+            Logger.Info($"{a.PlayerId} への死体の合わせ直しが届きました ({Time.realtimeSinceStartup - a.SentAt:0.00} 秒)", Tag);
+        }
     }
 
     // 死体の持ち主へ送る通し番号。同じ人の死体が 2 つあれば、2 つ目は 1 つ進める

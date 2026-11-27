@@ -422,6 +422,15 @@ public static class DeadBodyEraser
         covers.Clear();
     }
 
+    /// <summary>
+    /// 死体そのものを消したつもりの客で、消せていなかった時に呼ぶ。その客を覆いの済みから外し、
+    /// 合わせ直しを待つ間に <see cref="CoverUnsynced"/> が覆いを出し直せるようにする
+    /// </summary>
+    public static void ForgetSynced(int clientId)
+    {
+        foreach (var state in covers.Values) state.Done.Remove(clientId);
+    }
+
     /// <summary>画面の死体そのものを消せた客から、覆いを外す</summary>
     public static void HideCoversFrom(int clientId)
     {
