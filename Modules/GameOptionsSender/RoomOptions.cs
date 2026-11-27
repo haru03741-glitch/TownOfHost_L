@@ -24,6 +24,7 @@ namespace TownOfHostL.Modules
             var gm = GameOptionsManager.Instance;
             var host = gm?.GameHostOptions;
             if (host == null) return;
+            RepairVision(gm, host);
             saved = new OptionBackupData(host);
             var work = gm.gameOptionsFactory.FromBytes(gm.gameOptionsFactory.ToBytes(host, false));
             if (work == null) return;
@@ -62,6 +63,23 @@ namespace TownOfHostL.Modules
             GameOptionsSender.AllSenders.Clear();
             GameOptionsSender.AllSenders.Add(new NormalGameOptionsSender());
             Logger.Info($"部屋の設定へ戻した ({why})", "RoomOptions");
+        }
+
+        // 本編の画面で選べる視界は 0.25 から。0 以下は、試合の途中で抜けると会議中の暗転の値が部屋の設定として
+        // 保存されていた頃の名残なので、本編の初期値へ直して保存し直す (残すと、試合中に誰の姿も見えない)
+        static void RepairVision(GameOptionsManager gm, IGameOptions host)
+        {
+            bool fixedAny = false;
+            if (host.TryGetFloat(FloatOptionNames.CrewLightMod, out var crew) && crew <= 0f) { host.SetFloat(FloatOptionNames.CrewLightMod, 1f); fixedAny = true; }
+            if (host.TryGetFloat(FloatOptionNames.ImpostorLightMod, out var imp) && imp <= 0f) { host.SetFloat(FloatOptionNames.ImpostorLightMod, 1.5f); fixedAny = true; }
+            if (!fixedAny) return;
+            Logger.Warn($"部屋の設定の視界が 0 だったので初期値へ直した (クルー {crew} → {host.GetFloat(FloatOptionNames.CrewLightMod)}・インポスター {imp} → {host.GetFloat(FloatOptionNames.ImpostorLightMod)})", "RoomOptions");
+            try
+            {
+                if (host.GameMode == GameModes.HideNSeek) gm.SaveHideNSeekHostOptions();
+                else gm.SaveNormalHostOptions();
+            }
+            catch (System.Exception ex) { Logger.Exception(ex, "RoomOptions.RepairVision"); }
         }
 
         static void Point(GameOptionsManager gm, IGameOptions opt)
