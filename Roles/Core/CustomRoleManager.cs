@@ -98,18 +98,24 @@ public static partial class CustomRoleManager
         // キラーがキル能力持ちなら
         if (killerRole is IKiller killer)
         {
+            var doubleTriggerHandled = false;
             if (killer.IsKiller)
             {
                 // キルボタンをキル以外に使う押し方 (イビルディバイナーの占いなど) は、ガードより先に振り分ける
                 if (!killer.OnCheckMurderBeforeGuards(info)) return false;
+                // IDoubleTrigger の役職の 1 回押しもキルでないので、ガードより先に振り分ける
+                // (後で振り分けると、押した相手の守りの回数が減り、守護者が身代わりになる)
+                doubleTriggerHandled = DoubleTrigger.OnCheckMurderAsKiller(info);
+                if (doubleTriggerHandled && !info.DoKill) return false;
                 if (!CheckGuards(info, out guardianGuarded))
                 {
                     killer.OnCheckMurderDontKill(info);
                     return false;
                 }
             }
-            // キラーのキルチェック処理実行 (IDoubleTrigger の役職は 1 回押しと 2 回押しを先に振り分ける)
-            if (!DoubleTrigger.OnCheckMurderAsKiller(info) && !killerMyselfInvoke)
+            else doubleTriggerHandled = DoubleTrigger.OnCheckMurderAsKiller(info);
+            // キラーのキルチェック処理実行 (IDoubleTrigger の役職は上で 1 回押しと 2 回押しを振り分けた)
+            if (!doubleTriggerHandled && !killerMyselfInvoke)
             {
                 killer.OnCheckMurderAsKiller(info);
             }
