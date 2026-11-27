@@ -35,14 +35,49 @@ public static class DissolveKill
     private const int MaxTargets = 8;
     // 死体を消す時に、溶かした印を信じる上限 (キルから死体を消すまで)。過ぎた印は、キルが通らなかった時の残りとみなす
     private const float HandledLifetime = 5f;
-    // 溶かしている間 (キルから溶け切るまで) とみなす長さ。本編は溶け切る瞬間に全員の PlayerControl の Data を引き、
-    // 出したばかりで Data の無い CNO が 1 体でもいると例外で止まり、溶けかけの死体が通報できるまま残る。
-    // この間は、Data の無い CNO を出す処理 (死体の合わせ直し・覆い) を待たせる
-    private const float BusyWindow = 2.5f;
-    private static float busyUntil;
+    // 本編は溶け切る瞬間に全員の PlayerControl の Data を引き、出したばかりで Data の無い CNO が 1 体でもいると例外で止まり、
+    // 溶けかけの死体が通報できるまま残る。溶け切る見込みの時刻の前後は、CNO を出し始めない (CNO の Data が無いのは、
+    // spawn から可視化までの 0.1〜0.7 秒と、客に届くまでの遅れ)。
+    // キルから死体が溶け始めるまで (キルの動きの間) の見込み
+    private const float KillSettle = 0.3f;
+    // 溶け切る見込みの時刻の、これだけ前から CNO を出し始めない
+    private const float BusyLead = 1.5f;
+    // 溶け切る見込みの時刻の、これだけ後まで (客ごとの届く遅れとキルの動きの長さの違い)
+    private const float BusyTail = 1.2f;
+    // 溶け切る見込みの時刻 (古い物は IsBusy で捨てる)
+    private static readonly List<float> dissolveEnds = new();
 
-    /// <summary>キルの死体を溶かしている間か (この間は Data の無い CNO を出さない)</summary>
-    public static bool IsBusy => UnityEngine.Time.realtimeSinceStartup < busyUntil;
+    /// <summary>
+    /// 溶けている死体が客の画面で溶け切る頃か。この間は Data の無い CNO を出さない
+    /// (<see cref="Core.CustomNetObject"/> の spawn と、死体の合わせ直しが見る)
+    /// </summary>
+    public static bool IsBusy
+    {
+        get
+        {
+            if (dissolveEnds.Count == 0) return false;
+            float now = UnityEngine.Time.realtimeSinceStartup;
+            bool busy = false;
+            for (int i = dissolveEnds.Count - 1; i >= 0; i--)
+            {
+                float end = dissolveEnds[i];
+                if (now > end + BusyTail) { dissolveEnds.RemoveAt(i); continue; }
+                if (now >= end - BusyLead) busy = true;
+            }
+            return busy;
+        }
+    }
+
+    /// <summary>今のキルの死体が、客の画面で <paramref name="seconds"/> 秒かけて溶けることを覚える (ホストのみ)</summary>
+    public static void NoteDissolve(float seconds)
+    {
+        if (seconds <= 0f || AmongUsClient.Instance == null || !AmongUsClient.Instance.AmHost) return;
+        dissolveEnds.Add(UnityEngine.Time.realtimeSinceStartup + KillSettle + seconds);
+    }
+
+    /// <summary>本物のヴァイパーのキルの死体が、客の画面で溶ける秒数 (客へ送っている設定の値)</summary>
+    public static float ViperSeconds
+        => Roles.Impostor.NormalViper.RoleInfo.IsEnable ? Roles.Impostor.NormalViper.DissolveTime : Utils.ViperDissolveTime;
 
     // 死体の持ち主 → 溶ける死体にした客 (clientId) と、送った時刻
     private static readonly Dictionary<byte, (HashSet<int> Clients, float At)> handled = new();
@@ -59,7 +94,7 @@ public static class DissolveKill
         handled.Clear();
         optionHolds.Clear();
         roleHolds.Clear();
-        busyUntil = 0f;
+        dissolveEnds.Clear();
     }
 
     /// <summary>この人へ送る設定の、ヴァイパーの溶ける秒数を短くする間か (<see cref="PlayerGameOptionsSender"/> が見る)</summary>
@@ -135,7 +170,7 @@ public static class DissolveKill
         if (held.Count == 0) return;
         float now = UnityEngine.Time.realtimeSinceStartup;
         handled[target.PlayerId] = (sentTo, now);
-        busyUntil = Math.Max(busyUntil, now + BusyWindow);
+        NoteDissolve(DissolveSeconds);
         Logger.Info($"{target.GetNameWithRole().RemoveHtmlTags()} の死体を、{sentTo.Count} 人の画面で溶ける死体にします", "DissolveKill");
 
         var capKiller = killer;

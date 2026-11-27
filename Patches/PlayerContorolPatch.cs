@@ -256,6 +256,9 @@ class MurderPlayerPatch
         if (target.AmOwner) RemoveDisableDevicesPatch.UpdateDisableDevices();
         if (!target.Data.IsDead || !AmongUsClient.Instance.AmHost) return;
         // 以降ホストしか処理しない
+        // ヴァイパーの死体が溶け切る頃に Data の無い CNO を出さない (出すと客の画面で溶け残る)。
+        // 役職の処理が例外で止まっても覚えるよう、先に行う
+        if (__instance.Is(RoleTypes.Viper)) DissolveKill.NoteDissolve(DissolveKill.ViperSeconds);
         // 処理は全てCustomRoleManager側で行う
         CustomRoleManager.OnMurderPlayer(__instance, target);
         _ = new LateTask(() =>

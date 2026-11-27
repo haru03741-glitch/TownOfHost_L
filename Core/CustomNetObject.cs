@@ -422,6 +422,9 @@ public sealed class CustomNetObject
     {
         if (introEndedAt is not { } intro || now - intro < AfterIntro) return false;
         if (now - lastMeetingAt < AfterMeeting) return false;
+        // ヴァイパーの死体が客の画面で溶け切る頃は出し始めない。溶け切る瞬間に Data の無い体 (可視化の前の CNO) がいると、
+        // 客の手元の処理が例外で止まり、溶けかけの死体が通報できるまま残る
+        if (Modules.DissolveKill.IsBusy) return false;
         return now >= nextSpawnAt;
     }
 
