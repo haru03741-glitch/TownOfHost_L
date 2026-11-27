@@ -50,7 +50,9 @@ namespace TownOfHostL.Modules
         public override IGameOptions BuildGameOptions()
         {
             var opt = BasedGameOptions;
-            if (opt != null && Main.RealOptionsData != null)
+            // 試合の基へ戻すのは試合の間 (今の設定が試合用の写し) だけ。
+            // 試合を出た後の今の設定は部屋の設定の器なので、書き戻すとロビーで変えた値が前の試合の値に戻り、保存もされる
+            if (opt != null && Main.RealOptionsData != null && RoomOptions.Entered)
                 Main.RealOptionsData.Restore(opt);
             return opt;
         }

@@ -24,6 +24,9 @@ namespace TownOfHostL.Modules
             var gm = GameOptionsManager.Instance;
             var host = gm?.GameHostOptions;
             if (host == null) return;
+            var current = gm.CurrentGameOptions;
+            if (current != null && current.Pointer != host.Pointer)
+                Logger.Warn("試合に入る時の今の設定が部屋の設定の器と別の物でした。器の写しで始めます", "RoomOptions");
             RepairVision(gm, host);
             saved = new OptionBackupData(host);
             var work = gm.gameOptionsFactory.FromBytes(gm.gameOptionsFactory.ToBytes(host, false));
