@@ -256,6 +256,9 @@ public partial class Main : BasePlugin
         AddComponent<TownOfHostL.Modules.HostPanel>();
         AddComponent<TownOfHostL.Modules.HostPanelButton>();
         AddComponent<TownOfHostL.Modules.RoleDictionary>();
+        // TOHL のキー操作の割り当て (本編のキーボード割り当ての画面の横に出す)
+        TownOfHostL.Modules.ModHotkeys.Init(Config);
+        AddComponent<TownOfHostL.Modules.ModHotkeys.Panel>();
         TownOfHostL.Modules.SpawnEditor.TohlSpawnEditor.Init();
         AddComponent<TownOfHostL.Modules.SpawnEditor.SpawnPinEditor>();
         // 配信の重ね表示 (観客席・コメントの板・マップ投票)

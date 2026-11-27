@@ -535,28 +535,62 @@ public static partial class Utils
 
     public static void ShowRoleInfoLong(CustomRoles role, byte PlayerId = byte.MaxValue)
     {
-        var sb = new StringBuilder();
+        // 誰が読んでも分かり、流れても見つけやすいよう、見出しの付いたまとまりに分ける:
+        // 大きな役職名 → 陣営と出どころ → ひとことで → くわしく (1 文 1 行) → 設定
         var r = role.VanillaRoleConversion();
         string roleInfoLong = GetRoleInfoLongText(r);
+        var color = GetRoleColor(role).ToReadableColor();
+        string formatTag = "<size=75%><line-height=1.7pic>";
 
-        string formatTag = "<size=70%><line-height=1.6pic>";
+        var head = new StringBuilder();
+        head.Append("<size=110%><b>").Append($"【{GetString(role.ToString())}】".Color(color)).Append("</b></size>\n");
+        var team = RoleTeamText(role);
+        var from = Roles.Core.RoleFrom.GetText(role);
+        head.Append(team);
+        if (!string.IsNullOrEmpty(from)) head.Append("  ").Append(from);
 
-        var roleString = $"<size=85%>{GetString(role.ToString())}</size>".Color(GetRoleColor(role).ToReadableColor());
-        sb.Append(roleString).Append(formatTag).Append(roleInfoLong).Append("</line-height></size>");
+        var body = new StringBuilder();
+        if (Translator.HasString(role + "Info"))
+            body.Append("<#ffd84a>■ ").Append(GetString("RoleDictionary.Summary")).Append("</color>\n<b>").Append(GetString(role + "Info")).Append("</b>\n");
+        var detail = SplitSentences(StripTeamPrefix(roleInfoLong));
+        if (detail.Length > 0)
+            body.Append("<#7fdcff>■ ").Append(GetString("RoleDictionary.Detail")).Append("</color>\n").Append(detail);
+        SendMessageAutoSplit(formatTag + head + "\n" + body, false, "", PlayerId, formatTag);
 
-        SendMessageAutoSplitAndClearSB(PlayerId, sb, "", formatTag);
-
-        if (!role.IsDontShowOptionRole())
+        if (!role.IsDontShowOptionRole() && Options.CustomRoleSpawnChances.TryGetValue(role, out var opt))
         {
-            formatTag = "<size=65%><line-height=1.5pic>";
-            ShowChildrenSettings(Options.CustomRoleSpawnChances[role], ref sb);
+            var sb = new StringBuilder();
+            ShowChildrenSettings(opt, ref sb);
             if (sb.Length > 0)
             {
-                sb.Insert(0, formatTag);
+                formatTag = "<size=70%><line-height=1.6pic>";
+                sb.Insert(0, $"{formatTag}<#b7ff8c>■ {GetString("RoleDictionary.Settings")}</color>（{GetString(role.ToString())}）\n");
                 SendMessageAutoSplitAndClearSB(PlayerId, sb, "", formatTag);
             }
         }
     }
+
+    // 陣営の名前を陣営の色で (属性は「属性」)
+    static string RoleTeamText(CustomRoles role)
+    {
+        if (role.IsAddOn() || role.IsOtherAddOn()) return "<#ffd98c>■ " + GetString("RoleDictionary.AddOn") + "</color>";
+        return role.GetCustomRoleTypes() switch
+        {
+            CustomRoleTypes.Impostor => "<#ff5a5a>■ " + GetString("TeamImpostor") + "</color>",
+            CustomRoleTypes.Madmate => "<#ff7340>■ " + GetString("Madmate") + "</color>",
+            CustomRoleTypes.Neutral => "<#d9a6ff>■ " + GetString("Neutral") + "</color>",
+            CustomRoleTypes.Unit => "<#99ff99>■ " + GetString("RoleDictionary.Unit") + "</color>",
+            _ => "<#8cd9ff>■ " + GetString("TeamCrewmate") + "</color>",
+        };
+    }
+
+    // 説明の頭の「(クルー陣営):」「[クルー陣営]」は陣営の行で出すので外す
+    static readonly System.Text.RegularExpressions.Regex TeamPrefix = new(@"^\s*(\([^\n()]{1,20}\)\s*[:：]?|\[[^\n\[\]]{1,20}\]|【[^\n【】]{1,20}】)\s*\n?");
+    static string StripTeamPrefix(string s) => string.IsNullOrEmpty(s) ? "" : TeamPrefix.Replace(s.Replace("\\n", "\n"), "", 1).Trim();
+
+    // 長い説明を 1 文ごとに改行する (「。」の後。括弧を閉じる前では切らない)
+    static readonly System.Text.RegularExpressions.Regex SentenceEnd = new(@"。(?![\n」』）)】]|$)");
+    static string SplitSentences(string s) => string.IsNullOrEmpty(s) ? "" : SentenceEnd.Replace(s, "。\n");
 
     // Help Now
     public static void ShowActiveSettingsHelp(byte PlayerId = byte.MaxValue)

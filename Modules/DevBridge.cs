@@ -130,6 +130,14 @@ static class DevBridge
                     sb.AppendLine("TP");
                     break;
                 }
+            case "hotkeys":
+                ModHotkeys.ForceOpen = a.Length < 2 || a[1] != "off";
+                foreach (var h in ModHotkeys.All) sb.AppendLine($"{h.Id} = {ModHotkeys.Format(h.Combos)}");
+                sb.AppendLine("MAPPER " + ModHotkeys.PanelOpen);
+                break;
+            case "scanmask":
+                sb.AppendLine("SCANMASK " + TownOfHostL.Modules.SpawnEditor.SpawnMask.ScanIfNeeded(true));
+                break;
             case "snap":
                 {
                     var p = a[1].Split(' ');

@@ -26,10 +26,12 @@ public class SpawnPinEditor : MonoBehaviour
         public Vector2 ToShip(float px, float py) => new(Ax * px + Bx, Ay * py + By);
         public Vector2 ToPixel(float x, float y) => new((x - Bx) / Ax, (y - By) / Ay);
 
-        public bool Inside(int px, int py)
+        // 地図の絵で床の色の所か。learned なら、マップに入った時に覚えた立てる所 (置物・入れない所を除く) にも入っているかを見る
+        public bool Inside(int px, int py, bool learned = true)
         {
             if (Mask == null || px < 0 || py < 0 || px >= W || py >= H) return false;
-            return Mask[(H - 1 - py) * W + px];
+            if (!Mask[(H - 1 - py) * W + px]) return false;
+            return !learned || SpawnMask.Allows(Id, px, py);
         }
     }
 
@@ -119,7 +121,7 @@ public class SpawnPinEditor : MonoBehaviour
             s.W = tex.width;
             s.H = tex.height;
             s.Mask = new bool[px.Length];
-            for (int i = 0; i < px.Length; i++) s.Mask[i] = Walkable(px[i]);
+            for (int i = 0; i < px.Length; i++) s.Mask[i] = Walkable(px[i], s.Id);
             tex.Apply(false, true);
             s.Tex = tex;
             return true;
@@ -132,9 +134,11 @@ public class SpawnPinEditor : MonoBehaviour
         }
     }
 
-    static bool Walkable(Color32 c)
+    static bool Walkable(Color32 c, int mapId)
     {
         if (c.a < 128) return false;
+        // エアシップの薄い色の所は床の外 (下の階・吹き抜け・はしご) なので、濃い赤だけを床にする
+        if (mapId == 4) return c.r >= 200 && c.g <= 100 && c.b <= 100;
         if (c.r >= 230 && c.g <= 235 && c.b <= 235) return true;
         if (c.r >= 200 && c.g >= 190 && c.b >= 130 && c.b <= 190 && c.r - c.b >= 40) return true;
         return c.b > c.r + 8 && c.g > c.r + 8 && c.r >= 110;
@@ -254,7 +258,15 @@ public class SpawnPinEditor : MonoBehaviour
             }
             else if (e.button == 0)
             {
-                if (hovered >= 0) { dragging = hovered; dragMoved = false; }
+                // Shift を押しながらピンを押すと外す (ふつうに押すと動かすだけで、うっかり外さない)
+                if (hovered >= 0 && e.shift)
+                {
+                    points.RemoveAt(hovered);
+                    SpawnStore.Save();
+                    hovered = -1;
+                    Say("SpawnPin.Removed");
+                }
+                else if (hovered >= 0) { dragging = hovered; dragMoved = false; }
                 else if (!inside) Say("SpawnPin.Outside");
                 else if (n >= MaxPins) Say("SpawnPin.Full", MaxPins);
                 else
@@ -287,12 +299,7 @@ public class SpawnPinEditor : MonoBehaviour
         else if (type == EventType.MouseUp && dragging >= 0)
         {
             if (dragMoved) SpawnStore.Save();
-            else if (points != null && dragging < points.Count)
-            {
-                points.RemoveAt(dragging);
-                SpawnStore.Save();
-                Say("SpawnPin.Removed");
-            }
+            else Say("SpawnPin.ShiftToRemove");
             dragging = -1;
             e.Use();
         }

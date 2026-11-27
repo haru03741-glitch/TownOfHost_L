@@ -193,7 +193,9 @@ internal sealed class SpawnMapView : Widget
             }
         }
         string msg;
-        if (hit >= 0)
+        bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        if (hit >= 0 && !shift) msg = Translator.GetString("SpawnPin.ShiftToRemove");
+        else if (hit >= 0)
         {
             points.RemoveAt(hit);
             SpawnStore.Save();

@@ -16,7 +16,7 @@ namespace TownOfHostL
         public static void Postfix()
         {
             if (!Input.anyKeyDown) return;
-            if (SettingsSearchBox.IsTyping || SettingsUI.TextField.Typing || RoleDictionary.Typing) return;
+            if (SettingsSearchBox.IsTyping || SettingsUI.TextField.Typing || RoleDictionary.Typing || ModHotkeys.Recording != null) return;
             RoleDictionary.CheckHotkey();
             // 客の間はホストの設定が届いている (同じ版の TOHL のホストと握手できた) 時だけ。届いていなければ一覧も出ず、コピーは自分の設定になる
             if (TownOfHostL.Core.VanillaHideAndSeek.IsClientMode && OptionItem.HasRemoteValues) ControllerManagerUpdatePatch.OptionViewKeys();
@@ -41,13 +41,13 @@ namespace TownOfHostL
                 Logger.SendInGame("Exported Custom Translation File");
             }
             //ログファイルのダンプ
-            if (ControllerManagerUpdatePatch.GetKeysDown(KeyCode.F1, KeyCode.LeftControl))
+            if (ModHotkeys.DumpLog.Down())
             {
                 Logger.Info("Dump Logs", "KeyCommand");
                 Utils.DumpLog();
             }
             //実行ファイルのフォルダを開く
-            if (ControllerManagerUpdatePatch.GetKeysDown(KeyCode.F10))
+            if (ModHotkeys.OpenFolder.Down())
             {
                 Utils.OpenDirectory(System.Environment.CurrentDirectory);
             }
@@ -83,7 +83,7 @@ namespace TownOfHostL
                 }
             }
             //現在の設定をテキストとしてコピー
-            if (GetKeysDown(KeyCode.LeftAlt, KeyCode.C) && !Input.GetKey(KeyCode.LeftShift) && !GameStates.IsNotJoined)
+            if (ModHotkeys.CopySettings.Down() && !GameStates.IsNotJoined)
             {
                 Utils.CopyCurrentSettings();
             }
@@ -94,22 +94,22 @@ namespace TownOfHostL
             // どの操作もそのフレームに押されたキーで始まる。何も押されていないフレームは、キーの組ごとの配列も作らずに抜ける
             if (!Input.anyKeyDown) return;
             // 設定画面の検索欄に字を打っている間は、キー操作として受け取らない
-            if (SettingsSearchBox.IsTyping || SettingsUI.TextField.Typing || RoleDictionary.Typing) return;
+            if (SettingsSearchBox.IsTyping || SettingsUI.TextField.Typing || RoleDictionary.Typing || ModHotkeys.Recording != null) return;
             OptionViewKeys();
             if (GameStates.IsLobby)
             {
                 // 現在の設定を文字列形式のデータに変換してコピー
-                if (GetKeysDown(KeyCode.O, KeyCode.LeftAlt))
+                if (ModHotkeys.SaveOptionsClipboard.Down())
                 {
                     OptionSerializer.SaveToClipboard();
                 }
                 // 現在の設定を文字列形式のデータに変換してファイルに出力
-                if (GetKeysDown(KeyCode.L, KeyCode.LeftAlt))
+                if (ModHotkeys.SaveOptionsFile.Down())
                 {
                     OptionSerializer.SaveToFile();
                 }
                 // クリップボードから文字列形式の設定データを読み込む
-                if (GetKeysDown(KeyCode.P, KeyCode.LeftAlt))
+                if (ModHotkeys.LoadOptionsClipboard.Down())
                 {
                     OptionSerializer.LoadFromClipboard();
                 }
@@ -118,25 +118,25 @@ namespace TownOfHostL
             //--以下ホスト専用コマンド--//
             if (!AmongUsClient.Instance.AmHost) return;
             //全員にキルフラッシュ表示する（暗転時修復用）
-            if (GetKeysDown(KeyCode.K, KeyCode.L, KeyCode.LeftControl))
+            if (ModHotkeys.KillFlash.Down())
             {
                 if (GameStates.InGame)
                     Main.AllPlayerControls.Do(pc => pc.KillFlash());
 
             }
             //廃村
-            if (GetKeysDown(KeyCode.Return, KeyCode.L, KeyCode.LeftShift) && GameStates.IsInGame && Main.IsSetRoleFinished) 
+            if (ModHotkeys.Abandon.Down() && GameStates.IsInGame && Main.IsSetRoleFinished) 
             {
                 CustomWinnerHolder.ResetAndSetWinner(CustomWinner.Draw);
                 GameManager.Instance.LogicFlow.CheckEndCriteria();
             }
             // 試合中 (タスクの間) でも自分のチャット欄を出す。客の画面は変えない
-            if (GetKeysDown(KeyCode.Return, KeyCode.C, KeyCode.LeftShift) && HudManager.InstanceExists && HudManager.Instance.Chat && !HudManager.Instance.Chat.IsOpenOrOpening)
+            if (ModHotkeys.ShowChat.Down() && HudManager.InstanceExists && HudManager.Instance.Chat && !HudManager.Instance.Chat.IsOpenOrOpening)
             {
                 HudManager.Instance.Chat.SetVisible(true);
             }
             //ミーティングを強制終了
-            if (GetKeysDown(KeyCode.Return, KeyCode.M, KeyCode.LeftShift) && GameStates.IsMeeting)
+            if (ModHotkeys.EndMeeting.Down() && GameStates.IsMeeting)
             {
                 MeetingHud.Instance.RpcClose();
             }
@@ -153,24 +153,24 @@ namespace TownOfHostL
                 GameStartManager.Instance.ResetStartState();
             }
             //現在の有効な設定の説明を表示
-            if (GetKeysDown(KeyCode.N, KeyCode.LeftShift, KeyCode.LeftControl))
+            if (ModHotkeys.ShowSettingsHelp.Down())
             {
                 Main.isChatCommand = true;
                 Utils.ShowActiveSettingsHelp();
             }
             //現在の有効な設定を表示
-            if (GetKeysDown(KeyCode.N, KeyCode.LeftControl) && !Input.GetKey(KeyCode.LeftShift))
+            if (ModHotkeys.ShowSettings.Down())
             {
                 Main.isChatCommand = true;
                 Utils.ShowActiveSettings();
             }
             //TOHオプションをデフォルトに設定
-            if (GetKeysDown(KeyCode.Delete, KeyCode.LeftControl) && !(HudManager.InstanceExists && HudManager.Instance.Chat && HudManager.Instance.Chat.IsOpenOrOpening))
+            if (ModHotkeys.ResetOptions.Down() && !(HudManager.InstanceExists && HudManager.Instance.Chat && HudManager.Instance.Chat.IsOpenOrOpening))
             {
                 OptionItem.AllOptions.ToArray().Where(x => x is not PresetOptionItem).Do(x => x.SetValue(x.DefaultValue));
             }
             //自分自身の死体をレポート
-            if (GetKeysDown(KeyCode.Return, KeyCode.M, KeyCode.RightShift) && GameStates.IsInTask)
+            if (ModHotkeys.ReportSelf.Down() && GameStates.IsInTask)
             {
                 var pc = PlayerControl.LocalPlayer;
                 if (pc.IsAlive()) pc.ReportDeadBody(pc.Data);
@@ -178,7 +178,7 @@ namespace TownOfHostL
 
             }
             //自分自身を追放
-            if (GetKeysDown(KeyCode.Return, KeyCode.E, KeyCode.LeftShift) && GameStates.IsInGame)
+            if (ModHotkeys.ExileSelf.Down() && GameStates.IsInGame)
             {
                 PlayerControl.LocalPlayer.RpcExile();
             }

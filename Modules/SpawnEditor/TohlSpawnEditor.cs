@@ -86,7 +86,7 @@ internal static class TohlSpawnEditor
     {
         result = spawn;
         if (!ShipStatus.Instance) return true;
-        if (CanStand(spawn)) return true;
+        if (CanStand(spawn) && SpawnMask.AllowsShip(spawn)) return true;
         for (float r = SnapStep; r <= SnapRadius; r += SnapStep)
         {
             int n = Mathf.Max(8, Mathf.CeilToInt(2f * Mathf.PI * r / SnapStep));
@@ -94,7 +94,7 @@ internal static class TohlSpawnEditor
             {
                 float a = i * 2f * Mathf.PI / n;
                 var p = spawn + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * r;
-                if (!CanStand(p)) continue;
+                if (!CanStand(p) || !SpawnMask.AllowsShip(p)) continue;
                 result = p;
                 return true;
             }
@@ -104,7 +104,7 @@ internal static class TohlSpawnEditor
 
     private static readonly Collider2D[] wallBuffer = new Collider2D[16];
 
-    private static bool CanStand(Vector2 spawn)
+    internal static bool CanStand(Vector2 spawn)
     {
         var feet = new Vector2(spawn.x, spawn.y - FeetOffset);
         try

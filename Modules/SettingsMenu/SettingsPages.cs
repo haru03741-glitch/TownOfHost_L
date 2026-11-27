@@ -130,6 +130,12 @@ internal static class SettingsPages
                 cur = new SectionPage.Group { Title = Translator.GetString(startKey), Color = cur.Color };
                 list.Add((cur, curHead));
             }
+            else if (option.Parent == null && cur != null && option.Name.StartsWith("MapOption_"))
+            {
+                // マップごとの設定は、マップごとに別の小見出しにする (スケルド・ミラ・ポーラス・エアシップ・ファングル)
+                cur = new SectionPage.Group { Title = option.GetName(disableColor: true).RemoveHtmlTags(), Color = cur.Color };
+                list.Add((cur, curHead));
+            }
             if (cur == null)
             {
                 cur = new SectionPage.Group { Title = Translator.GetString("MenuCat.ModMainSettings") };

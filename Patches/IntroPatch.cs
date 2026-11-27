@@ -48,12 +48,7 @@ class SetUpRoleTextPatch
                 __instance.RoleBlurbText.color = Utils.GetRoleColor(role);
             }
 
-            foreach (var subRole in PlayerState.GetByPlayerId(PlayerControl.LocalPlayer.PlayerId).SubRoles)
-            {
-                // 役職を預かる印の属性は、属性として並べない
-                if ((AddOnList.Get(subRole)?.StandsFor ?? CustomRoles.NotAssigned) != CustomRoles.NotAssigned) continue;
-                __instance.RoleBlurbText.text += "\n" + Utils.ColorString(Utils.GetRoleColor(subRole), GetString($"{subRole}Info"));
-            }
+            // イントロは自分の役職だけを出す (属性の説明は並べない。属性は役職辞典・/m で見られる)
             __instance.RoleText.text = RoleText.GetRoleNameText(PlayerControl.LocalPlayer.PlayerId, showSubRole: false);
 
         }, 0.01f, "Override Role Text");

@@ -104,6 +104,15 @@ public static class DiscordWebhook
 
     static string Plain(string s) => Tags.Replace(s ?? "", "").Replace("\r", "");
 
+    /// <summary>短い文だけを送る (バグ・要望の報告など)。送り先が無ければ何もしない</summary>
+    public static void PostText(string text)
+    {
+        if (!HasUrl) return;
+        var content = Plain(text);
+        if (content.Length > MaxContent) content = content[..MaxContent];
+        Post(content, null);
+    }
+
     /// <summary>本文と、あればゲームログのファイルを送る (別のスレッドで)</summary>
     static void Post(string content, string logText)
     {

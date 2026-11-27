@@ -176,6 +176,8 @@ public static class ChatCommandTable
             Host = _ => Utils.ShowLastResult(),
             Remote = c => Utils.ShowLastResult(c.Player.PlayerId),
         },
+        // バグ・要望の報告 (誰でも)。ホストの PC に書き足し、Webhook があれば送る
+        new("/report", "/bug", "/req") { Usage = "CommandUsage.Report", Host = Modules.BugReport.Host, Remote = Modules.BugReport.Remote },
         new("/co") { Restrictable = true, Usage = "CommandUsage.Co", Host = CoLog.Co, Remote = CoLog.Co },
         new("/colist", "/cl") { Restrictable = true, Host = CoLog.List, Remote = CoLog.List },
         new("/aco") { Restrictable = true, Usage = "CommandUsage.Aco", Host = CoLog.Aco, Remote = CoLog.Aco },
@@ -459,34 +461,57 @@ public static class ChatCommandTable
     {
         if (to == null) return;
         var moderator = !asHost && Modules.Moderators.Is(to);
-        // 流れて途中から読んでも分かるよう、1 行 1 コマンドで、コマンドの名前だけを水色にする
-        // (色の指定を増やすと 1 通に入るコマンドが減り、通数が増えて流れやすくなる)
-        var sb = new System.Text.StringBuilder();
-        sb.Append("<#ffd84a>【").Append(GetString("CommandList").TrimEnd(':', '：')).Append("】</color>");
-        void Add(ChatCommand cmd)
+        // 流れて途中から読んでも分かるよう、コマンドを種類ごとのまとまり (見出し + 1 行 1 コマンド) に分け、
+        // まとまりの途中では通を割らない。色はまとまりの見出しとコマンドの名前だけ (色を増やすと 1 通に入る数が減る)
+        string Line(ChatCommand cmd)
         {
-            sb.Append("\n<#7fdcff>").Append(cmd.Names[0]).Append("</color>");
+            var sb = new System.Text.StringBuilder();
+            sb.Append("<#7fdcff>").Append(cmd.Names[0]).Append("</color>");
             if (cmd.Names.Length > 1) sb.Append(" (").Append(string.Join(" ", cmd.Names.Skip(1))).Append(')');
             var usage = cmd.UsageText;
             if (usage != "") sb.Append(' ').Append(usage);
             var help = cmd.HelpText;
             if (help != "") sb.Append(" ⇒ ").Append(help);
+            return sb.ToString();
         }
+        var groups = new SortedDictionary<int, List<string>>();
         foreach (var cmd in All)
         {
             // 開発者だけのコマンドは、開発者にだけ見せる
             if (cmd.Names[0] is "/dev" or "/log" && !DebugModeManager.AmDebugger) continue;
-            if (asHost ? cmd.Host != null || cmd.Local != null : cmd.Remote != null && !cmd.IsRestricted) Add(cmd);
+            if (!(asHost ? cmd.Host != null || cmd.Local != null : cmd.Remote != null && !cmd.IsRestricted)) continue;
+            int cat = CategoryOf(cmd.Names[0]);
+            if (!groups.TryGetValue(cat, out var list)) groups[cat] = list = new();
+            list.Add(Line(cmd));
         }
+        var blocks = new List<string>();
+        foreach (var (cat, lines) in groups)
+            blocks.Add($"<#{CategoryColors[cat]}>■ {GetString("CmdCat." + CategoryKeys[cat])}</color>\n" + string.Join("\n", lines));
         if (moderator)
         {
-            sb.Append("\n\n<#ffd84a>【").Append(GetString("CommandList.Moderator").TrimEnd(':', '：')).Append("】</color>");
-            foreach (var cmd in All)
-                if (cmd.ForModerator && cmd.Host != null && cmd.Remote == null) Add(cmd);
+            var lines = All.Where(cmd => cmd.ForModerator && cmd.Host != null && cmd.Remote == null).Select(Line).ToList();
+            if (lines.Count > 0)
+                blocks.Add($"<#ffd84a>■ {GetString("CommandList.Moderator").TrimEnd(':', '：')}</color>\n" + string.Join("\n", lines));
         }
-        if (asHost) sb.Append("\n\n").Append(GetString("CommandList.HostHint"));
-        Utils.SendMessageAutoSplit(sb.ToString(), true, sendTo: to.PlayerId);
+        if (asHost) blocks.Add("<#9a9a9a>" + GetString("CommandList.HostHint") + "</color>");
+        Utils.SendBlocks(blocks, $"<#ffd84a>【{GetString("CommandList").TrimEnd(':', '：')}】</color>", to.PlayerId, "<size=70%><line-height=1.6pic>");
     }
+
+    // /h の一覧のまとまり (並びもこの順)。どこにも当てはまらないコマンドは「その他」
+    private static readonly string[] CategoryKeys = { "Info", "Chat", "Game", "Player", "Vote", "Stream", "Fun", "Other", "Dev" };
+    private static readonly string[] CategoryColors = { "8cffff", "b7ff8c", "ff8c8c", "ffb86c", "d9a3ff", "ff9ae8", "ffe08c", "cccccc", "9a9a9a" };
+    private static int CategoryOf(string name) => name.ToLowerInvariant() switch
+    {
+        "/h" or "/n" or "/r" or "/m" or "/me" or "/rw" or "/l" or "/kl" or "/co" or "/colist" or "/aco" or "/acl" or "/v" or "/id" or "/win" or "/rule" or "/report" => 0,
+        "/tc" or "/lc" or "/jc" or "/pc" or "/sc" or "/ws" or "/t" or "/say" or "/mw" or "/vo" or "/nc" or "/ns" or "/hn" or "/mm" => 1,
+        "/start" or "/end" or "/mt" or "/w" or "/dis" or "/exile" or "/kill" or "/rev" or "/fm" or "/apt" or "/kc" or "/timer" or "/sw" or "/time" or "/brackout" or "/killflash" or "/mode" or "/sr" or "/s" or "/d" or "/cs" => 2,
+        "/kick" or "/mute" or "/unmute" or "/ban" or "/kp" or "/aj" or "/mod" or "/rn" or "/offhat" or "/offskin" or "/offvisor" or "/offpet" or "/offskinall" => 3,
+        "/poll" or "/pv" or "/pe" => 4,
+        "/webhook" or "/yt" or "/audience" => 5,
+        "/8ball" or "/dice" => 6,
+        "/dump" or "/log" or "/dev" => 8,
+        _ => 7,
+    };
 
     private static void ForceWin(ChatCommandContext c)
     {
