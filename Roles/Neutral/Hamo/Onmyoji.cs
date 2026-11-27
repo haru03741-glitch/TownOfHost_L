@@ -1364,7 +1364,20 @@ public sealed class Shikigami : RoleBase, IUsePhantomButton, IKillFlashSeeable, 
 
         if (dead == null) return false;
 
-        AddDeadBodyArrow(dead.PlayerId, dead.GetTruePosition());
+        var pos = dead.GetTruePosition();
+        AddDeadBodyArrow(dead.PlayerId, pos);
+
+        // ヴァイパーの死体は溶け切ると客の画面から消えるので、その頃に矢印を外す (同じ人の新しい死体の矢印は外さない)
+        if (info.AppearanceKiller != null && info.AppearanceKiller.Is(RoleTypes.Viper))
+        {
+            byte id = dead.PlayerId;
+            _ = new LateTask(() =>
+            {
+                if (!deadBodyPositions.TryGetValue(id, out var now) || now != pos) return;
+                RemoveDeadBodyArrow(id);
+                Utils.NotifyRoles(SpecifySeer: Player);
+            }, TownOfHostL.Modules.DissolveKill.ViperSeconds + TownOfHostL.Modules.DissolveKill.KillSettle, "OnmyojiViperBodyArrow", true);
+        }
 
         return false;
 
