@@ -554,7 +554,14 @@ namespace TownOfHostL
 
             bool isNimrodMeeting = Nimrod.IsExecutionMeeting() || MadNimrod.IsExecutionMeeting();
             // モデレーターはホストの一部のコマンドを使える (ホストが選んだ人なので、返事の間隔の制限はかけない)
-            if (command != null && command.ForModerator && command.Host != null && Modules.Moderators.Is(player))
+            if (command != null && command.ForModerator && command.Host != null && Modules.Moderators.Is(player)
+                && command.IsModeratorRestricted && command.Remote == null)
+            {
+                // ホストがモデレーターに使わせないようにしたコマンド
+                Utils.SendMessageAutoSplit(GetString("Message.CommandRestricted"), true, sendTo: player.PlayerId);
+                return;
+            }
+            if (command != null && command.ForModerator && command.Host != null && Modules.Moderators.Is(player) && !command.IsModeratorRestricted)
             {
                 Logger.Info($"モデレーター {player.Data?.PlayerName}: {text}", "Moderator");
                 try { command.Host(new ChatCommandContext(args, player, null)); }

@@ -53,8 +53,12 @@ public sealed class ChatCommand
     /// <summary>Restrictable の時の「使わせない」設定</summary>
     public OptionItem RestrictOption;
     public ChatCommand(params string[] names) => Names = names;
+    /// <summary>モデレーターに使わせない設定 (ForModerator のコマンドだけ)</summary>
+    public OptionItem ModeratorRestrictOption;
     /// <summary>他の人がこのコマンドを使えないよう、ホストが止めているか</summary>
     public bool IsRestricted => RestrictOption != null && RestrictOption.GetBool();
+    /// <summary>モデレーターがこのコマンドを使えないよう、ホストが止めているか</summary>
+    public bool IsModeratorRestricted => ModeratorRestrictOption != null && ModeratorRestrictOption.GetBool();
     public string UsageText => Usage == null ? "" : GetString(Usage);
     /// <summary>/help の一覧に出す説明 (翻訳のキー CmdHelp.名前)</summary>
     public string HelpText
@@ -75,7 +79,12 @@ public static class ChatCommandTable
 
     public static ChatCommand Find(string name) => name != null && byName.TryGetValue(name, out var cmd) ? cmd : (HamoCommands.IsDice(name) ? byName.GetValueOrDefault("/dice") : null);
 
-    /// <summary>他の人のコマンドを個別に止める設定 (見出し 1 つと、Restrictable なコマンド 1 つずつ)</summary>
+    /// <summary>
+    /// コマンドを個別に止める設定。
+    /// ・プレイヤーのコマンド: 他の人が送って動くコマンド (Remote を持つ物) を全部
+    /// ・モデレーターのコマンド: モデレーターが使えるコマンド (ForModerator) を全部
+    /// ホストだけのコマンドと、打った人の手元だけで動くコマンドは止めようがないので並べない
+    /// </summary>
     public static void SetupCustomOption()
     {
         var head = StringOptionItem.Create("RestrictGuestCommands", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
@@ -83,10 +92,22 @@ public static class ChatCommandTable
             .SetGameMode(CustomGameMode.All);
         foreach (var cmd in All)
         {
-            if (!cmd.Restrictable) continue;
+            if (cmd.Remote == null) continue;
             var label = string.Join(" ", cmd.Names);
             cmd.RestrictOption = StringOptionItem.Create("RestrictCommand." + cmd.Names[0].TrimStart('/'), new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
                 .SetParent(head)
+                .SetOptionName(() => string.Format(GetString("RestrictCommand"), label))
+                .SetGameMode(CustomGameMode.All);
+        }
+        var modHead = StringOptionItem.Create("RestrictModeratorCommands", new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
+            .SetColor(Palette.CrewmateBlue)
+            .SetGameMode(CustomGameMode.All);
+        foreach (var cmd in All)
+        {
+            if (!cmd.ForModerator || cmd.Host == null) continue;
+            var label = string.Join(" ", cmd.Names);
+            cmd.ModeratorRestrictOption = StringOptionItem.Create("RestrictModCommand." + cmd.Names[0].TrimStart('/'), new string[] { "ColoredOff", "ColoredOn" }, 0, TabGroup.ModMainSettings, false)
+                .SetParent(modHead)
                 .SetOptionName(() => string.Format(GetString("RestrictCommand"), label))
                 .SetGameMode(CustomGameMode.All);
         }
@@ -498,7 +519,7 @@ public static class ChatCommandTable
             }
             else
             {
-                if (moderator && ForModeratorOnly(cmd)) who = 1;
+                if (moderator && ForModeratorOnly(cmd)) { if (cmd.IsModeratorRestricted) continue; who = 1; }
                 else if (cmd.Remote == null || cmd.IsRestricted) continue;
                 else who = 0;
             }
