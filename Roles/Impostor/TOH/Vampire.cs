@@ -85,6 +85,38 @@ namespace TownOfHostL.Roles.Impostor
                 }
             }
         }
+        public override void OnDestroy()
+        {
+            // 噛んだ人が死ぬ前に役職が替わった時は、ヴァンパイアの死後と同じく噛まれた本人の死として起こす
+            // (残すと、噛まれた人が死なないまま動く床にも乗れなくなる)。試合の終わりの後始末では起こさない
+            if (BittenPlayers.Count == 0 || !GameStates.IsInTask || GameEndChecker.EndingStarted) return;
+            var vampireId = Player.PlayerId;
+            var bitten = new List<byte>(BittenPlayers.Keys);
+            BittenPlayers.Clear();
+            // 役職の替わりの途中でキルを送らないよう、次のフレームで起こす
+            _ = new LateTask(() => KillBittenAfterRoleChange(vampireId, bitten), 0f, "Vampire.BittenAfterRoleChange");
+        }
+        private static void KillBittenAfterRoleChange(byte vampireId, List<byte> bitten)
+        {
+            if (!GameStates.IsInGame || GameEndChecker.EndingStarted) return;
+            // 会議の窓の間は客へ死を送らないので、明けるまで待つ (試合が閉じれば遅らせた処理ごと捨てられる)
+            if (GameStates.InMeetingWindow)
+            {
+                _ = new LateTask(() => KillBittenAfterRoleChange(vampireId, bitten), 1f, "Vampire.BittenAfterRoleChange");
+                return;
+            }
+            var vampire = Utils.GetPlayerById(vampireId);
+            foreach (var targetId in bitten)
+            {
+                var target = Utils.GetPlayerById(targetId);
+                if (target == null) continue;
+                PlayerState.GetByPlayerId(targetId).CanUseMovingPlatform = true;
+                if (!target.IsAlive()) continue;
+                PlayerState.GetByPlayerId(targetId).DeathReason = CustomDeathReason.Bite;
+                if (vampire != null) target.SetRealKiller(vampire);
+                target.RpcMurderPlayer(target);
+            }
+        }
         public override void OnReportDeadBody(PlayerControl _, NetworkedPlayerInfo __)
         {
             foreach (var targetId in BittenPlayers.Keys)
