@@ -157,6 +157,20 @@ public static class ClientBodySync
     public static bool WillSync => Enabled && GameStates.IsInGame && ShipStatus.Instance != null;
 
     /// <summary>
+    /// 待っても画面の死体を合わせ直せない客か。役職や生き返りなど、試合の途中ですぐには変わらない理由だけを見る
+    /// (ベントの中・変身の途中などの、しばらく待てば送れる理由は入れない)
+    /// </summary>
+    public static bool CannotSync(PlayerControl pc)
+    {
+        if (pc == null || pc.Data == null) return true;
+        if (Revive.WasRevived(pc.PlayerId) || TempGhost.IsGhost(pc) || SeekerBody.IsMasked(pc.PlayerId)) return true;
+        if (!pc.IsAlive())
+            // 死んだばかりで幽霊の役職がまだ付いていない人は、付けば送れるので待つ
+            return pc.roleAssigned || pc.Data.Role?.Role is RoleTypes.GuardianAngel;
+        return RoleBlock(pc, RoleView.Living(pc, pc)) == "role";
+    }
+
+    /// <summary>
     /// ホストの手元の死体を消した・動かした後に呼ぶ。本編の客を、画面の死体の合わせ直し待ちに入れる。
     /// 合わせ直せた客には <see cref="DeadBodyEraser.HideCoversFrom"/> と <see cref="DeadBodyMover.HideCoversFrom"/> で覆いを外す。
     /// </summary>

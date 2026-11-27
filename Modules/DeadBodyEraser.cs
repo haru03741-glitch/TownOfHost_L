@@ -237,8 +237,12 @@ public static class DeadBodyEraser
         var state = new CoverState { PlayerId = playerId, Pos = pos, Since = Time.realtimeSinceStartup };
         covers[playerId] = state;
         // 画面の死体そのものを消せる客には、覆いを出すと消える前に一瞬映るだけになる。合わせ直しが回るなら、
-        // 回せなかった客にだけ後から出す (ClientBodySync が CoverUnsynced を呼ぶ)
-        if (ClientBodySync.WillSync) return;
+        // 役職などで待っても消せない客にだけすぐ出し、ほかの客は合わせ直せなかった時に後から出す (ClientBodySync が CoverUnsynced を呼ぶ)
+        if (ClientBodySync.WillSync)
+        {
+            CoverClients(state, null, ClientBodySync.CannotSync);
+            return;
+        }
         CoverClients(state, null);
     }
 
@@ -255,7 +259,7 @@ public static class DeadBodyEraser
     }
 
     // まだ覆いも消す手当ても無い本編の客へ、その客たちにだけ見える覆いを 1 つ出す
-    private static void CoverClients(CoverState state, HashSet<int> exclude)
+    private static void CoverClients(CoverState state, HashSet<int> exclude, System.Func<PlayerControl, bool> only = null)
     {
         HashSet<int> targets = null;
         foreach (var pc in Main.AllPlayerControls)
@@ -263,6 +267,7 @@ public static class DeadBodyEraser
             if (!pc || pc.AmOwner || Core.CustomNetObject.Is(pc) || pc.Data == null || pc.Data.Disconnected || pc.OwnerId < 0) continue;
             int id = pc.OwnerId;
             if (state.Done.Contains(id) || (exclude != null && exclude.Contains(id))) continue;
+            if (only != null && !only(pc)) continue;
             (targets ??= new()).Add(id);
         }
         if (targets == null) return;
