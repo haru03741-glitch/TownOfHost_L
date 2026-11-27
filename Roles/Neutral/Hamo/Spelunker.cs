@@ -448,7 +448,7 @@ public sealed class Spelunker : RoleBase, ISystemTypeUpdateHook
 
 
 
-        _ = new LateTask(() =>
+        _ = After(() =>
 
         {
 
@@ -473,7 +473,7 @@ public sealed class Spelunker : RoleBase, ISystemTypeUpdateHook
 
 
 
-        _ = new LateTask(() =>
+        _ = After(() =>
 
         {
 
@@ -487,7 +487,7 @@ public sealed class Spelunker : RoleBase, ISystemTypeUpdateHook
 
 
 
-        _ = new LateTask(() =>
+        _ = After(() =>
 
         {
 

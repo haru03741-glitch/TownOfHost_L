@@ -139,7 +139,7 @@ public sealed class Lawyer : RoleBase, ILateWinner
         if (Player == null) return;
         if (Target != null && Target.PlayerId == exiled.PlayerId && Player.IsAlive())
         {
-            _ = new LateTask(() => ChangeRole(), 0.5f, "LawyerChangeRoleByExile");
+            _ = After(() => ChangeRole(), 0.5f, "LawyerChangeRoleByExile");
         }
     }
 

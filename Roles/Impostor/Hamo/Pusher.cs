@@ -178,12 +178,12 @@ public sealed class Pusher : RoleBase, IImpostor, IUsePhantomButton
         Logger.Info($"{Player.GetNameWithRole().RemoveHtmlTags()} が {target.GetNameWithRole().RemoveHtmlTags()} を突き落としました", "Pusher");
         TownOfHostL.Modules.ClientEffects.Sound(TownOfHostL.Modules.ClientEffects.SoundKind.Swing, target.GetTruePosition()); TownOfHostL.Modules.ClientEffects.MuteTeleport();
         target.RpcSnapTo(pushPos);
-        _ = new LateTask(() =>
+        _ = After(() =>
         {
-            if (!target.IsAlive() || !Player.IsAlive() || !GameStates.IsInTask) return;
+            if (!target.IsAlive() || !GameStates.IsInTask) return;
             DeadBodyEraser.KillWithoutBody(Player, target, CustomDeathReason.Fall);
             Player.SetKillCooldown(ForceProtect: true);
-        }, 0.15f, "Pusher.Cliff");
+        }, 0.15f, "Pusher.Cliff", LateTaskUntil.Death);
     }
 
     void PushOffLadder(PlayerControl target, Ladder ladder)
@@ -192,12 +192,12 @@ public sealed class Pusher : RoleBase, IImpostor, IUsePhantomButton
         var bottom = (Vector2)ladder.Destination.transform.position + new Vector2(0f, -0.2f);
         TownOfHostL.Modules.ClientEffects.Sound(TownOfHostL.Modules.ClientEffects.SoundKind.Swing, target.GetTruePosition()); TownOfHostL.Modules.ClientEffects.MuteTeleport();
         target.RpcSnapTo(bottom);
-        _ = new LateTask(() =>
+        _ = After(() =>
         {
-            if (!target.IsAlive() || !Player.IsAlive() || !GameStates.IsInTask) return;
+            if (!target.IsAlive() || !GameStates.IsInTask) return;
             DeadBodyEraser.KillWithoutBody(Player, target, CustomDeathReason.Fall);
             Player.SetKillCooldown(ForceProtect: true);
-        }, 0.15f, "Pusher.Ladder");
+        }, 0.15f, "Pusher.Ladder", LateTaskUntil.Death);
     }
 
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)

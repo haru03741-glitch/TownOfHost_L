@@ -193,7 +193,7 @@ public abstract class VoteGuesser : RoleBase
         voted = true;
         if (MeetingHud.Instance != null)
         {
-            _ = new LateTask(() =>
+            _ = After(() =>
             {
                 if (MeetingHud.Instance != null)
                 {

@@ -713,11 +713,10 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
     {
 
-        _ = new LateTask(() =>
+        _ = After(() =>
 
         {
 
-            if (!Player.IsAlive()) return;
 
             if (PlayerControl.LocalPlayer != null && Is(PlayerControl.LocalPlayer))
 
@@ -725,7 +724,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             Player.RpcResetAbilityCooldown(sync: true);
 
-        }, 0.2f, "JHHPhantomResetOnKill");
+        }, 0.2f, "JHHPhantomResetOnKill", LateTaskUntil.Death);
 
     }
 
@@ -833,7 +832,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         Player.SetKillCooldown(60f, ForceProtect: true);
 
-        _ = new LateTask(() => { if (Player != null) Player.SyncSettings(); }, 0.1f, "JackalHadouHoKillTimer");
+        _ = After(() => Player.SyncSettings(), 0.1f, "JackalHadouHoKillTimer");
 
         _prevCharging = IsCharging;
 
@@ -860,15 +859,15 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             float t = i * 0.1f;
 
-            _ = new LateTask(() =>
+            _ = After(() =>
 
             {
 
-                if (IsDead || !Player.IsAlive() || !IsSuperCharging) return;
+                if (IsDead || !IsSuperCharging) return;
 
                 Utils.AllPlayerKillFlash();
 
-            }, t, null);
+            }, t, null, LateTaskUntil.Death);
 
         }
 

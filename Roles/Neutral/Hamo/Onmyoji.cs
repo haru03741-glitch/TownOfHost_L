@@ -756,15 +756,15 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
             Player.MarkDirtySettings();
 
-            _ = new LateTask(() =>
+            _ = After(() =>
 
             {
 
-                if (!Player.IsAlive() || nominateMode) return;
+                if (nominateMode) return;
 
                 Player.RpcResetAbilityCooldown(sync: true);
 
-            }, 0.1f, "Onmyoji.VentReset");
+            }, 0.1f, "Onmyoji.VentReset", LateTaskUntil.Death);
 
         }
 
@@ -813,7 +813,7 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
         target.RpcChangeRole(CustomRoles.Shikigami);
 
-        _ = new LateTask(() =>
+        _ = After(() =>
 
         {
 

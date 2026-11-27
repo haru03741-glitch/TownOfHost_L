@@ -151,7 +151,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         Main.AllPlayerKillCooldown[Player.PlayerId] = 60f;
         Player.SetKillCooldown(60f, ForceProtect: true);
         // 設定は 1 回送れば足りる(続けて 3 回送っていて、何人も同時に押すと通信が多すぎてキックされていた)
-        _ = new LateTask(() => { if (Player != null) Player.SyncSettings(); }, 0.1f, "HadouHoKillTimer");
+        _ = After(() => Player.SyncSettings(), 0.1f, "HadouHoKillTimer");
         Utils.NotifyRoles(ForceLoop: true);
         _prevCharging = true;
         _prevBeamMark = false;

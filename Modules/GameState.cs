@@ -299,6 +299,10 @@ public static partial class MeetingStates
     public static bool IsEmergencyMeeting => ReportTarget == null;
     public static bool IsExistDeadBody => DeadBodies.Length > 0;
     public static bool MeetingCalled = false;
+    /// <summary>会議を開くと決めるたびに 1 つ進む通し番号 (ホストのみ・試合をまたいでも戻さない)。「この後に会議が始まったか」を比べる</summary>
+    public static int Serial { get; private set; }
+    /// <summary>会議を開くと決めた所 (PrepareMeeting) から 1 回だけ呼ぶ</summary>
+    public static void AdvanceSerial() => Serial++;
     public static bool FirstMeeting = true;
     /// <summary>今が何日目か。試合の始めが 1 日目で、会議が終わるたびに 1 つ進む (ホストのみ)</summary>
     public static int Day { get; private set; } = 1;

@@ -764,6 +764,7 @@ partial class ReportDeadBodyPatch
         // MeetingCalled を立てた後だと、VentCage は会議中と見て送らずに記録だけ消す
         if (AmongUsClient.Instance.AmHost) VentCage.ReleaseAllForMeeting();
         MeetingStates.MeetingCalled = true;
+        MeetingStates.AdvanceSerial();
         // バイタルの嘘は、暗転対策の退避や会議の札より前に本物へ戻す
         if (AmongUsClient.Instance.AmHost)
         {

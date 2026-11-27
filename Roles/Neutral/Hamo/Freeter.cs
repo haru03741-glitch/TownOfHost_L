@@ -292,7 +292,7 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
 
 
 
-        _ = new LateTask(() => Utils.NotifyRoles(SpecifySeer: Player), 0.2f, "Freeter Bet");
+        _ = After(() => Utils.NotifyRoles(SpecifySeer: Player), 0.2f, "Freeter Bet");
 
 
 
@@ -338,7 +338,7 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
 
             Player.SetKillCooldown(ForceProtect: true);
 
-            _ = new LateTask(() => Utils.NotifyRoles(SpecifySeer: Player), 0.2f, "Freeter Reset");
+            _ = After(() => Utils.NotifyRoles(SpecifySeer: Player), 0.2f, "Freeter Reset");
 
             return;
 
@@ -356,7 +356,7 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
 
             NameColorManager.Add(BetTargetId, Player.PlayerId, "#32cd32");
 
-            _ = new LateTask(() => Utils.NotifyRoles(SpecifySeer: Player), 0.2f, "Freeter ColorFix");
+            _ = After(() => Utils.NotifyRoles(SpecifySeer: Player), 0.2f, "Freeter ColorFix");
 
         }
 
@@ -402,7 +402,7 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
 
 
 
-        _ = new LateTask(() =>
+        _ = After(() =>
 
         {
 

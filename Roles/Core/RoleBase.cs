@@ -64,9 +64,10 @@ public abstract class RoleBase : IDisposable
     {
         // 後始末の例外で登録が残ると、同じ人の次の役職が作れなくなる (AllActiveRoles.Add が重複で落ちる)
         var playerId = Player.PlayerId;
+        IsGone = true;
         try { OnDestroy(); }
         catch (Exception ex) { Logger.Exception(ex, $"{GetType().Name}.OnDestroy {playerId}"); }
-        holdings?.Release($"{GetType().Name} {playerId}");
+        Holdings.Release($"{GetType().Name} {playerId}");
         CustomRoleManager.AllActiveRoles.Remove(playerId);
         Player = null;
     }
@@ -76,14 +77,28 @@ public abstract class RoleBase : IDisposable
     /// この役職が自分や他の人・全体に掛けた物 (速さ・他の人向けの登録)。役職が外れる時に、OnDestroy の後でまとめて外れる
     /// </summary>
     protected RoleHoldings Holdings => holdings ??= new(this);
+    /// <summary>
+    /// この役職が外れた (Dispose・中の役職なら <see cref="DestroyInnerRole"/>)。OnDestroy の中から見ても true。
+    /// 外れた後の Holdings は外し終えた物になり、新しく掛けた物はすぐ外れる
+    /// </summary>
+    public bool IsGone { get; private set; }
     /// <summary>中の役職 (<see cref="CreateInnerRole"/> で作った物) を壊す。OnDestroy を呼び、中の役職の持ち物を外す</summary>
     protected static void DestroyInnerRole(RoleBase inner)
     {
-        if (inner == null) return;
+        if (inner == null || inner.IsGone) return;
+        inner.IsGone = true;
         try { inner.OnDestroy(); }
         catch (Exception ex) { Logger.Exception(ex, $"{inner.GetType().Name}.OnDestroy (inner)"); }
-        inner.holdings?.Release($"{inner.GetType().Name} (inner)");
+        inner.Holdings.Release($"{inner.GetType().Name} (inner)");
     }
+    /// <summary>
+    /// 指定した秒数の後に 1 回だけ走らせる。この役職が外れていたら (役職替え・試合の終わり) 走らせずに捨てる。
+    /// <paramref name="until"/> で、作った後に会議が始まった時・走る時に本人が死んでいる時も捨てる。
+    /// 役職が外れても必ず走らせたい後始末 (変身の戻しなど) は、ここではなく LateTask を直に使う
+    /// </summary>
+    protected LateTask After(Action action, float seconds, string name = "", LateTaskUntil until = LateTaskUntil.RoleGone,
+        [System.Runtime.CompilerServices.CallerFilePath] string callerFile = "", [System.Runtime.CompilerServices.CallerLineNumber] int callerLine = 0)
+        => new(action, seconds, name, this, until, callerFile, callerLine);
     /// <summary>
     /// この役職の中に持たせる別の役職を作る (アサシンが持つ役職など)。中の役職は AllActiveRoles に載せない
     /// (同じ人の役職は 1 つだけ)。全員の役職へ配るフックは、外の役職の override から中へ回す。

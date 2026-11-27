@@ -190,10 +190,10 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
                     toBeamMode ? RoleTypes.Phantom : RoleTypes.Engineer,
                     Player.GetClientId());
         }
-        _ = new LateTask(() =>
+        _ = After(() =>
         {
-            if (Player.IsAlive()) Player.RpcResetAbilityCooldown(sync: true);
-        }, 0.1f, "SHH.ModeDesync");
+            Player.RpcResetAbilityCooldown(sync: true);
+        }, 0.1f, "SHH.ModeDesync", LateTaskUntil.Death);
     }
 
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
@@ -284,10 +284,10 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
             {
                 LastCooltime = now;
                 Player.MarkDirtySettings();
-                _ = new LateTask(() =>
+                _ = After(() =>
                 {
-                    if (Player.IsAlive()) Player.RpcResetAbilityCooldown(sync: true);
-                }, 0.1f, "SHH.CDSync");
+                    Player.RpcResetAbilityCooldown(sync: true);
+                }, 0.1f, "SHH.CDSync", LateTaskUntil.Death);
                 if (player != PlayerControl.LocalPlayer)
                     Utils.NotifyRoles(SpecifySeer: player);
             }

@@ -84,7 +84,7 @@ public sealed class MadAvenger : RoleBase, IKillFlashSeeable, IDeathReasonSeeabl
         {
             fin = true;
             Player.MarkDirtySettings();
-            _ = new LateTask(() =>
+            _ = After(() =>
             {
                 can = true;
                 Player.RpcProtectedMurderPlayer();
