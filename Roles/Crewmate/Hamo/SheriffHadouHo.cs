@@ -332,6 +332,7 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
         ApplyBeamHit();
 
         var generation = ++fireGeneration;
+        // 撃ち終わりの片付けなので役職が外れても走らせる
         _ = new LateTask(() =>
         {
             if (generation != fireGeneration) return;
@@ -364,6 +365,7 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
             Player.MarkDirtySettings();
             nowcool = Cooldown;
             LastCooltime = (int)Cooldown;
+            // 撃ち終わりの片付けなので役職が外れても走らせる
             _ = new LateTask(() =>
             {
                 if (!Player.IsAlive()) { IsFiring = false; return; }

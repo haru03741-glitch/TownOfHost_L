@@ -106,6 +106,7 @@ public sealed class Chaser : RoleBase, IImpostor, ISidekickable
         MyState.CanUseMovingPlatform = false;
 
         // 戻る時間後の処理
+        // 戻りの後始末 (ぬーんを使えるように戻す) なので役職が外れても走らせる
         _ = new LateTask(() =>
         {
             // 戻れなかった時も、ぬーんは使えるように戻す

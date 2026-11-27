@@ -227,6 +227,7 @@ class Penguin : RoleBase, IImpostor
                 if (!AbductVictim.MyPhysics.Animations.IsPlayingAnyLadderAnimation())
                 {
                     var abductVictim = AbductVictim;
+                    // 会議の始まりに連れ去りを決着させるので役職が外れても走らせる
                     _ = new LateTask(() =>
                     {
                         if (abductVictim == null || abductVictim.Data == null || abductVictim.Data.Disconnected) return;

@@ -241,6 +241,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         ApplyBeamHit();
 
         var generation = ++fireGeneration;
+        // 撃ち終わりの片付けなので役職が外れても走らせる
         _ = new LateTask(() =>
         {
             if (generation != fireGeneration) return;
@@ -264,6 +265,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
                 Kill.Suicide(Player); IsFiring = false; return;
             }
             Holdings.RemoveSpeed(Player.PlayerId, nameof(HadouHo)); Player.MarkDirtySettings();
+            // 撃ち終わりの片付けなので役職が外れても走らせる
             _ = new LateTask(() =>
             {
                 if (!Player.IsAlive()) { IsFiring = false; return; }

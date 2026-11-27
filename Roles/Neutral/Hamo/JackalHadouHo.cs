@@ -1256,6 +1256,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
 
 
+        // 撃ち終わりの片付けなので役職が外れても走らせる
         _ = new LateTask(() =>
 
         {

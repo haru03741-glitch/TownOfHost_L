@@ -1376,6 +1376,7 @@ public sealed class Shikigami : RoleBase, IUsePhantomButton, IKillFlashSeeable, 
         if (info.AppearanceKiller != null && info.AppearanceKiller.Is(RoleTypes.Viper))
         {
             byte id = dead.PlayerId;
+            // 死体の矢印を外す後始末なので役職が外れても走らせる
             _ = new LateTask(() =>
             {
                 if (!deadBodyPositions.TryGetValue(id, out var now) || now != pos) return;

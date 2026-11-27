@@ -334,6 +334,7 @@ public sealed class Sage : RoleBase, IUsePetButton
 
 
 
+        // 反射のキルは起きたことの結果なので、役職が外れても走らせる
         _ = new LateTask(() =>
 
         {
