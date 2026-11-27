@@ -235,6 +235,10 @@ public static class Flashlight
         int count = GameData.Instance ? GameData.Instance.PlayerCount : 4;
         hns.SetRecommendations(Mathf.Max(count, 4), true);
         hns.MapId = normal.MapId;
+        // 部屋そのものの値 (最大人数・言語) は部屋の設定と同じにする。かくれんぼ型の既定 (最大 15 人など) のまま送ると、
+        // 15 人より小さく立てた部屋では試合中に部屋の値を書き換えたことになる
+        hns.MaxPlayers = normal.MaxPlayers;
+        hns.Keywords = normal.Keywords;
         hns.NumImpostors = normal.NumImpostors;
         hns.PlayerSpeedMod = normal.GetFloat(FloatOptionNames.PlayerSpeedMod);
         hns.KillCooldown = normal.GetFloat(FloatOptionNames.KillCooldown);
@@ -248,7 +252,7 @@ public static class Flashlight
         holdUntil[id] = Time.realtimeSinceStartup + HoldSeconds;
         sender.SendRaw(hns.Cast<IGameOptions>());
         Logger.Info($"{pc.Data?.PlayerName}: 懐中電灯を点ける (視界 {crew:0.00}/{imp:0.00} + {next}・"
-            + $"map {hns.MapId}・imp {hns.NumImpostors}・max {hns.MaxPlayers}・speed {hns.PlayerSpeedMod:0.###}・kcd {hns.KillCooldown:0.###}・kdist {hns.KillDistance}・"
+            + $"map {hns.MapId}・imp {hns.NumImpostors}・max {hns.MaxPlayers}・kw {(uint)hns.Keywords}・speed {hns.PlayerSpeedMod:0.###}・kcd {hns.KillCooldown:0.###}・kdist {hns.KillDistance}・"
             + $"size {crewSize:0.##}/{impSize:0.##}・人数 {count})", nameof(Flashlight));
     }
 
