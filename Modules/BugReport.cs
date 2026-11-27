@@ -75,7 +75,7 @@ public static class BugReport
         lastAt[to] = now;
 
         var name = Submit(c.Player, text, Array.Empty<string>());
-        Reply(GetString("Report.Thanks"));
+        Reply(GetString("Report.Thanks") + (SendsToDeveloper ? "\n" + GetString("Report.DevNote") : ""));
         // ホストへは、誰から何が届いたかを知らせる
         if (!host) HostNote.Post(string.Format(GetString("Report.ToHost"), name, text));
     }
@@ -132,7 +132,7 @@ public static class BugReport
             if (skipped.Count > 0) body += "\n" + string.Format(GetString("Report.TooBig"), string.Join(", ", skipped));
             DiscordWebhook.PostWithFiles(body, upload);
         }
-        SendToDeveloper(line, saved);
+        SendToDeveloper(pc, name, fc, text, saved);
         return name;
     }
 
@@ -163,31 +163,55 @@ public static class BugReport
     // ---- 開発者の Discord へも送る ----
 
     /// <summary>
-    /// 開発者のサーバーの報告用チャンネルの Webhook。空なら送らない。
-    /// どのホストの PC からも送られる (ホストの Webhook の設定とは別)
+    /// 開発者の Discord へ報告を届ける中継 (tools/ReportRelay・Cloudflare Workers) の受け口。空なら送らない。
+    /// Discord の Webhook の URL は中継の側に隠してあり、ここには書かない (ソースを公開しても Webhook を荒らされない)。
+    /// 送る間隔・回数・大きさの制限と、止めたフレンドコードの確かめも中継の側で行う
     /// </summary>
-    const string DevWebhookUrl = "";
-    // 同じ PC から開発者へ送る間隔 (秒)。たくさん送られて荒らされないように
-    const float DevInterval = 30f;
-    static float devLastAt = -999f;
+    const string DevRelayUrl = "";
+    static readonly System.Net.Http.HttpClient relayHttp = new() { Timeout = TimeSpan.FromSeconds(60) };
+    static readonly HashSet<string> relayExt = new(StringComparer.OrdinalIgnoreCase) { ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".mp4", ".mov", ".webm", ".mkv", ".avi" };
 
-    static void SendToDeveloper(string line, IReadOnlyList<string> saved)
+    static void SendToDeveloper(PlayerControl pc, string name, string fc, string text, IReadOnlyList<string> saved)
     {
-        if (!DiscordWebhook.IsValidUrl(DevWebhookUrl)) return;
-        var now = UnityEngine.Time.realtimeSinceStartup;
-        if (now - devLastAt < DevInterval) { Logger.Info("開発者への報告は間隔が短いので送らない (手元には残した)", nameof(BugReport)); return; }
-        devLastAt = now;
+        if (string.IsNullOrEmpty(DevRelayUrl) || fc.Length == 0) return;
+        bool fromHost = pc != null && pc == PlayerControl.LocalPlayer;
+        var payload = JsonSerializer.Serialize(new Dictionary<string, string>
+        {
+            ["kind"] = fromHost ? "host" : "player",
+            ["name"] = name,
+            ["friendCode"] = fc,
+            ["host"] = PlayerControl.LocalPlayer?.Data?.PlayerName ?? "?",
+            ["situation"] = Situation(pc),
+            ["version"] = Main.PluginVersion,
+            ["commit"] = ThisAssembly.Git.Commit,
+            ["text"] = text,
+        });
+        // 画像と動画だけを、中継の上限 (合計 9.5MB・5 個) までにする
         var upload = new List<string>();
         long total = 0;
         foreach (var f in saved)
         {
+            if (upload.Count >= 5 || !relayExt.Contains(Path.GetExtension(f))) continue;
             long len = new FileInfo(f).Length;
             if (total + len <= MaxUpload) { upload.Add(f); total += len; }
         }
-        var host = PlayerControl.LocalPlayer?.Data?.PlayerName ?? "?";
-        var body = $"📝 TOHL {Main.PluginVersion} ({ThisAssembly.Git.Commit})  host: {host}\n{line}";
-        DiscordWebhook.PostTo(DevWebhookUrl, body, upload);
+        Task.Run(async () =>
+        {
+            try
+            {
+                using var form = new System.Net.Http.MultipartFormDataContent { { new System.Net.Http.StringContent(payload, Encoding.UTF8), "payload" } };
+                foreach (var f in upload) form.Add(new System.Net.Http.ByteArrayContent(File.ReadAllBytes(f)), "files", Path.GetFileName(f));
+                using var res = await relayHttp.PostAsync(DevRelayUrl.TrimEnd('/') + "/report", form);
+                var body = await res.Content.ReadAsStringAsync();
+                if (res.IsSuccessStatusCode) Logger.Info("開発者へ報告を送った", nameof(BugReport));
+                else Logger.Warn($"開発者への報告を送れなかった: {(int)res.StatusCode} {body}", nameof(BugReport));
+            }
+            catch (Exception ex) { Logger.Warn($"開発者への報告を送れなかった: {ex.Message}", nameof(BugReport)); }
+        });
     }
+
+    /// <summary>開発者へも届く設定になっているか (入力画面の案内に使う)</summary>
+    public static bool SendsToDeveloper => !string.IsNullOrEmpty(DevRelayUrl);
 
     public static void OpenFolder()
     {
@@ -279,6 +303,10 @@ public static class BugReport
 
     static string Q(string key) => GetString(key).Replace("'", "''");
 
+    // 入力画面の上の案内 (PowerShell の式)。開発者へも届く時は 2 行目にそのことを書く
+    static string FormLead()
+        => SendsToDeveloper ? $"'{Q("Report.FormText")}' + [Environment]::NewLine + '{Q("Report.DevNote")}'" : $"'{Q("Report.FormText")}'";
+
     static string FormScript() => $@"param([string]$Out)
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
@@ -294,13 +322,13 @@ $f.FormBorderStyle = 'FixedDialog'
 $f.MaximizeBox = $false
 
 $l1 = New-Object System.Windows.Forms.Label
-$l1.Text = '{Q("Report.FormText")}'
-$l1.Location = '12,10'; $l1.Size = '536,22'
+$l1.Text = {FormLead()}
+$l1.Location = '12,8'; $l1.Size = '536,44'
 $f.Controls.Add($l1)
 
 $t = New-Object System.Windows.Forms.TextBox
 $t.Multiline = $true; $t.ScrollBars = 'Vertical'; $t.AcceptsReturn = $true
-$t.Location = '12,36'; $t.Size = '536,200'; $t.MaxLength = {MaxLengthForm}
+$t.Location = '12,54'; $t.Size = '536,182'; $t.MaxLength = {MaxLengthForm}
 $f.Controls.Add($t)
 
 $l2 = New-Object System.Windows.Forms.Label

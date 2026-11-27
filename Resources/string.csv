@@ -6693,3 +6693,4 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "HostPanel.ReportOpened","Report window is open","報告の画面を開いています","","","","",""
 "HostPanel.ReportFolder","Open folder","フォルダを開く","","","","",""
 "Report.NoFriendCode","You need a friend code to send reports (guest accounts can't)","フレンドコードが無いので報告を送れません (ゲストのアカウントでは送れません)","","","","",""
+"Report.DevNote","(Your name, friend code and report are also sent to the TOHL developers)","(名前・フレンドコード・報告の中身は TOHL の開発者へも届きます)","","","","",""

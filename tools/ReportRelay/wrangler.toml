@@ -1,0 +1,15 @@
+# TOHL の報告の中継 (Cloudflare Workers)。手順は README.md
+name = "tohl-report-relay"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# 送る間隔と 1 日の回数を数える KV。README の手順で作った KV の id に書き換える
+# [[kv_namespaces]]
+# binding = "REPORT_KV"
+# id = "ここに KV の id"
+
+# 秘密の値 (ここには書かない。npx wrangler secret put で入れる)
+#   DISCORD_WEBHOOK : 報告を送る Discord のチャンネルの Webhook の URL
+# 止めるフレンドコード (カンマ区切り)。変えたら npx wrangler deploy し直す
+[vars]
+BLOCKED = ""
