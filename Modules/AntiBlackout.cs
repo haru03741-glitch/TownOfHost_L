@@ -512,6 +512,7 @@ public static partial class AntiBlackout
         isDeadCache.Clear();
         IsCached = false;
         recognizeType = RecognizeType.Impostor;
+        ExiledPlayerId = -1;
         filledCrew.Clear();
         deferredDead.Clear();
         desyncDummies.Clear();
