@@ -259,9 +259,9 @@ public sealed class Dollmaster : RoleBase, IImpostor
         var killer = puppet;
         Logger.Info($"{Player.GetNameWithRole()} → {killer.GetNameWithRole()} に {chosen.GetNameWithRole()} をキルさせる", nameof(Dollmaster));
         Release(send: true);
-        RPC.PlaySound(Player.PlayerId, Sounds.KillSound);
-        chosen.SetRealKiller(Player);
-        Kill.Force(killer, chosen);
+        // 操った人のキルも、相手の守りを通す
+        if (Kill.Attempt(killer, chosen, realKiller: Player))
+            RPC.PlaySound(Player.PlayerId, Sounds.KillSound);
         Utils.MarkEveryoneDirtySettings();
         Utils.NotifyRoles();
     }
