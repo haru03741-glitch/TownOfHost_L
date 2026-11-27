@@ -73,7 +73,10 @@ namespace TownOfHostL
                     bool has = TownOfHostL.Modules.RoleDictionaryHudButton.TryGetAddedButtonsArea(out var left, out var bottom);
                     if (!has && !shiftedForButtons) return;
                     var t = ping.transform;
-                    var rb = ping.text.renderer.bounds;
+                    // TMP_Text.renderer は IL2CPP では古い Component.renderer に当たって例外になるので、部品から直接取る
+                    var mr = ping.text.GetComponent<MeshRenderer>();
+                    if (!mr) return;
+                    var rb = mr.bounds;
                     // 字の右上の角の、字の位置からのずれ (字の中身が変わっても位置と一緒に動くので、毎フレーム測り直す)
                     float topOff = rb.max.y - t.position.y, rightOff = rb.max.x - t.position.x;
                     // 本来の位置へ戻してから決める (ずらしを積み重ねない)
@@ -85,8 +88,12 @@ namespace TownOfHostL
                     t.position = new Vector3(p.x, bottom - 0.05f - topOff, p.z);
                     shiftedForButtons = true;
                 }
-                catch { }
+                catch (System.Exception ex)
+                {
+                    if (!avoidWarned) { avoidWarned = true; Logger.Warn($"右上の字をボタンからよけられない: {ex.Message}", "Credentials"); }
+                }
             }
+            static bool avoidWarned;
             static string suffix = "";
             static float nextBuildAt;
             static string BuildSuffix()

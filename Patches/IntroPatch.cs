@@ -150,7 +150,10 @@ class BeginCrewmatePatch
         var pc = PlayerControl.LocalPlayer;
         if (teamToDisplay.Contains(pc) is false) teamToDisplay.Add(pc);
 
-        int numImpostors = TownOfHostL.Roles.RoleAssignManager.ImpostorCountOverride ?? Main.NormalOptions.NumImpostors;
+        // 「この中に N 人インポスターがいる」の数。本編は「インポスター数」の設定から出すが、ランダムで数を決める時はその数と違う。
+        // 数が設定で決まっている時だけ出し、くじ引きで決まる時は行ごと出さない (ホストだけ本当の数が分かるので、全員で揃える)
+        int? knownImpostors = TownOfHostL.Roles.RoleAssignManager.KnownImpostorCount(GameData.Instance ? GameData.Instance.PlayerCount : 0);
+        int numImpostors = knownImpostors ?? 0;
 
         if (!Options.ChangeIntro.GetBool())
         {
@@ -194,10 +197,7 @@ class BeginCrewmatePatch
             if (roleInfo?.IntroShowsImpostorCount == true)
             {
                 __instance.ImpostorText.gameObject.SetActive(true);
-                __instance.ImpostorText.text = numImpostors == 1
-                    ? DestroyableSingleton<TranslationController>.Instance.GetString(StringNames.NumImpostorsS)
-                    : string.Format(DestroyableSingleton<TranslationController>.Instance.GetString(StringNames.NumImpostorsP), numImpostors);
-                __instance.ImpostorText.text = __instance.ImpostorText.text.Replace("[FF1919FF]", "<color=#FF1919FF>").Replace("[]", "</color>");
+                SetImpostorCountText(__instance, knownImpostors);
             }
         }
         else
@@ -234,11 +234,12 @@ class BeginCrewmatePatch
 
             case var r when r.IsCrewmate() && r.GetRoleInfo()?.IntroAsCrewmate == true:
                 __instance.BackgroundBar.material.color = Palette.CrewmateBlue;
-                __instance.ImpostorText.gameObject.SetActive(true);
-                __instance.ImpostorText.text = numImpostors == 1
-                    ? GetString(StringNames.NumImpostorsS)
-                    : string.Format(GetString(StringNames.NumImpostorsP), numImpostors);
-                __instance.ImpostorText.text = __instance.ImpostorText.text.Replace("[FF1919FF]", "<color=#FF1919FF>").Replace("[]", "</color>");
+                SetImpostorCountText(__instance, knownImpostors);
+                break;
+
+            // 本編のクルーの画面 (陣営の帯を持たないクルーの役職)
+            case var r when r.GetCustomRoleTypes() == CustomRoleTypes.Crewmate && r.GetRoleInfo()?.IntroTeam == null:
+                SetImpostorCountText(__instance, knownImpostors);
                 break;
 
             case var r when r.IsSpectator():
@@ -312,6 +313,20 @@ class BeginCrewmatePatch
             __instance.TeamTitle.color = Color.magenta;
             StartFadeIntro(__instance, Color.magenta, Color.magenta);
         }
+    }
+
+    /// <summary>「この中に N 人インポスターがいる」を出す。数が決まっていなければ (null) 行ごと隠す</summary>
+    private static void SetImpostorCountText(IntroCutscene __instance, int? count)
+    {
+        if (count is not int n || n <= 0)
+        {
+            __instance.ImpostorText.gameObject.SetActive(false);
+            return;
+        }
+        var tc = DestroyableSingleton<TranslationController>.Instance;
+        __instance.ImpostorText.gameObject.SetActive(true);
+        __instance.ImpostorText.text = (n == 1 ? tc.GetString(StringNames.NumImpostorsS) : string.Format(tc.GetString(StringNames.NumImpostorsP), n))
+            .Replace("[FF1919FF]", "<color=#FF1919FF>").Replace("[]", "</color>");
     }
 
     // Task.Delay の続きはメインスレッド外で動き、そこからゲームの物を触ると落ちうるので LateTask で刻む

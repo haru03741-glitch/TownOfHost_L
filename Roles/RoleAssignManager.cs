@@ -122,6 +122,19 @@ namespace TownOfHostL.Roles
 
             return result;
         }
+        /// <summary>
+        /// 設定から決まっているインポスターの数。ランダムのアサイン・人数ごとの構成で最少と最多が違う (くじ引きで決まる) 時は null。
+        /// 客の画面でも設定の値から出せる (くじの結果は送られてこないので、決まっている時だけ数を出す)
+        /// </summary>
+        public static int? KnownImpostorCount(int players)
+        {
+            (int min, int max) r;
+            if (PlayerCountComposition.IsOn) r = PlayerCountComposition.Get(players, CustomRoleTypes.Impostor);
+            else if (AssignMode == AssignAlgorithm.Random && RandomAssignOptionsCollection.TryGetValue(CustomRoleTypes.Impostor, out var o)) r = (o.Min, o.Max);
+            else return Main.NormalOptions?.NumImpostors;
+            if (Math.Max(r.min, r.max) != r.min) return null;
+            return Math.Clamp(r.min, 0, Math.Max(0, players - 1));
+        }
         static void WarnOverPlayers(int setCount, int playerCount)
         {
             var msg = string.Format(GetString("Warning.RoleCountOverPlayers"), setCount, playerCount);
