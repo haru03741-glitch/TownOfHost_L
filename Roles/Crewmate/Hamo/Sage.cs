@@ -334,6 +334,8 @@ public sealed class Sage : RoleBase, IUsePetButton
 
 
 
+        // 役職が外れた後は Player が null になるので、記録に出す名前を先に取っておく
+        var selfName = Player.ColoredName();
         // 反射のキルは起きたことの結果なので、役職が外れても走らせる
         _ = new LateTask(() =>
 
@@ -347,7 +349,7 @@ public sealed class Sage : RoleBase, IUsePetButton
 
             Utils.AddGameLog("Sage",
 
-                string.Format(Translator.GetString("SageBarrierReflectLog"), Player.ColoredName(), killer.ColoredName()));
+                string.Format(Translator.GetString("SageBarrierReflectLog"), selfName, killer.ColoredName()));
 
         }, 0.1f, "Sage.ReflectKill");
 
