@@ -267,18 +267,8 @@ class MurderPlayerPatch
         }, 0.5f, "PostMurderSetRoleChange");
         // 上の送り直しで外れた鬼の体を付け直す
         SeekerBody.OnAnyMurder();
-        var killer = __instance;
-        bool killerIsViper = killer.Is(RoleTypes.Viper);
-        if (killerIsViper)
-        {
-            foreach (var seer in Main.AllPlayerControls)
-            {
-                if (seer.GetClientId() == -1) continue;
-                // 本人の手元が既にヴァイパーなら送らない。送ると本編が役職を作り直し、キルの直後に始まったキルクールを 10 秒にする
-                if (seer.PlayerId == killer.PlayerId && RoleView.Living(killer, killer) == RoleTypes.Viper) continue;
-                killer.RpcSetRoleDesync(RoleTypes.Viper, seer.GetClientId());
-            }
-        }
+        // ヴァイパーの見せはキルの前に送り、2 秒後に戻す (RevealVisualRoleBeforeMurder)。
+        // キルの後に全員へ送り直すと、見せを飛ばした画面 (デシンクの役職) に戻らないヴァイパーが残る
     }
 }
 [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.CheckShapeshift))]
