@@ -60,7 +60,7 @@ public sealed class JO : RoleBase, IKiller
         // インポスターからマッドを白に塗り替える
         foreach (var impostor in Main.AllPlayerControls.Where(pc=> pc.Is(CustomRoleTypes.Impostor)))
         {
-            NameColorManager.Add(impostor.PlayerId, Player.PlayerId, "#ffffff");
+            Holdings.NameColor(impostor.PlayerId, Player.PlayerId, "#ffffff");
         }
         // インポスター視点マッドに★を付ける
         Holdings.Subscribe(CustomRoleManager.MarkOthers, GetMarkOthers);

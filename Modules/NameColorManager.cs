@@ -61,6 +61,9 @@ namespace TownOfHostL
             }
             state.TargetColorData[targetId] = colorCode;
         }
+        /// <summary>付けた色をそのまま返す (空なら「見られる人の今の役職の色」)。色が付いていなければ false</summary>
+        public static bool TryGetCode(byte seerId, byte targetId, out string colorCode)
+            => PlayerState.GetByPlayerId(seerId).TargetColorData.TryGetValue(targetId, out colorCode);
         public static void Remove(byte seerId, byte targetId)
         {
             var state = PlayerState.GetByPlayerId(seerId);

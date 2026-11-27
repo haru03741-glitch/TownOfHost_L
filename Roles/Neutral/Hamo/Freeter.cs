@@ -281,7 +281,7 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
 
 
 
-        NameColorManager.Add(closest.PlayerId, Player.PlayerId, "#32cd32");
+        Holdings.NameColor(closest.PlayerId, Player.PlayerId, "#32cd32");
 
 
 
@@ -323,7 +323,7 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
 
         {
 
-            NameColorManager.Remove(BetTargetId, Player.PlayerId);
+            Holdings.RemoveNameColor(BetTargetId, Player.PlayerId);
 
             BetTargetId = byte.MaxValue;
 
@@ -354,7 +354,7 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
 
             lastBetTargetRole = currentRole;
 
-            NameColorManager.Add(BetTargetId, Player.PlayerId, "#32cd32");
+            Holdings.NameColor(BetTargetId, Player.PlayerId, "#32cd32");
 
             _ = After(() => Utils.NotifyRoles(SpecifySeer: Player), 0.2f, "Freeter ColorFix");
 
@@ -374,7 +374,7 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
 
 
 
-        NameColorManager.Add(BetTargetId, Player.PlayerId, "#32cd32");
+        Holdings.NameColor(BetTargetId, Player.PlayerId, "#32cd32");
 
         Utils.NotifyRoles(isForMeeting: true, SpecifySeer: Player, NoCache: true);
 
@@ -408,7 +408,7 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
 
             if (BetTargetId == byte.MaxValue) return;
 
-            NameColorManager.Add(BetTargetId, Player.PlayerId, "#32cd32");
+            Holdings.NameColor(BetTargetId, Player.PlayerId, "#32cd32");
 
             Utils.NotifyRoles(SpecifySeer: Player);
 

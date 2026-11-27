@@ -64,7 +64,7 @@ public sealed class Egoist : RoleBase, ISidekickable, IKiller, ISchrodingerCatOw
     {
         foreach (var impostor in Main.AllPlayerControls.Where(pc => pc.Is(CustomRoleTypes.Impostor)))
         {
-            NameColorManager.Add(impostor.PlayerId, Player.PlayerId);
+            Holdings.NameColor(impostor.PlayerId, Player.PlayerId);
         }
         egoist = Player;
     }
