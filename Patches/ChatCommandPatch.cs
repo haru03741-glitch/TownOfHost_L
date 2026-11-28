@@ -84,7 +84,8 @@ namespace TownOfHostL
             if (AmongUsClient.Instance.AmHost)
             {
                 var host = command?.Host;
-                try { host?.Invoke(ctx); }
+                // コマンド 1 回の返事 (何通に分かれても) を、送信待ちの上限で途中から削らない
+                try { using (Utils.OneReply()) host?.Invoke(ctx); }
                 catch (Exception ex) { Logger.Exception(ex, "ChatCommand.Host"); }
                 canceled |= host != null;
                 Main.isChatCommand = host != null;
@@ -564,7 +565,7 @@ namespace TownOfHostL
             if (command != null && command.ForModerator && command.Host != null && Modules.Moderators.Is(player) && !command.IsModeratorRestricted)
             {
                 Logger.Info($"モデレーター {player.Data?.PlayerName}: {text}", "Moderator");
-                try { command.Host(new ChatCommandContext(args, player, null)); }
+                try { using (Utils.OneReply()) command.Host(new ChatCommandContext(args, player, null)); }
                 catch (Exception ex) { Logger.Exception(ex, "Moderator"); }
                 return;
             }
@@ -596,7 +597,7 @@ namespace TownOfHostL
                 return;
             }
             if (pushedOut) Utils.SendMessageAutoSplit(GetString("Message.UseCmdToHide"), true, sendTo: player.PlayerId);
-            command.Remote(new ChatCommandContext(args, player, null));
+            using (Utils.OneReply()) command.Remote(new ChatCommandContext(args, player, null));
         }
     }
     [HarmonyPatch(typeof(ChatController), nameof(ChatController.Update))]

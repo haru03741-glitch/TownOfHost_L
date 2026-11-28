@@ -111,7 +111,7 @@ internal sealed class SpawnMapView : Widget
             list.Add(new SpawnPoint { Name = defs[i].name, Color = i + 1, X = defs[i].x, Y = defs[i].y });
         SpawnStore.Save();
         DrawPins(true);
-        _info?.SetText(InfoText(Translator.GetString("SpawnPin.ResetDone")));
+        _info?.SetText(InfoText());
     }
 
     private List<SpawnPoint> Points(bool create) => SpawnStore.Library.Current.GetPoints(_sheet.Id, create);

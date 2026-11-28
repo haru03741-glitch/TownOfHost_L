@@ -82,7 +82,7 @@ namespace TownOfHostL.Roles
         {
             var playerCount = GameData.Instance.PlayerCount;
             Func<CustomRoleTypes, (int min, int max)> range;
-            if (PlayerCountComposition.IsOn) range = t => PlayerCountComposition.Get(playerCount, t);
+            if (PlayerCountComposition.IsOn) { var counted = PlayerCountComposition.CountedPlayers; range = t => PlayerCountComposition.Get(counted, t); }
             else if (AssignMode == AssignAlgorithm.Fixed)
             {
                 // 固定のアサイン: 有効にした役職の数の合計が人数より多いと、配られない役職が出る
@@ -159,7 +159,7 @@ namespace TownOfHostL.Roles
             if (PlayerCountComposition.IsOn)
             {
                 // 人数ごとに決めた最少と最多で、ランダムのアサインと同じく配る
-                var players = GameData.Instance.PlayerCount;
+                var players = PlayerCountComposition.CountedPlayers;
                 Logger.Info($"人数ごとの構成を使う ({players} 人)", "AssignCount");
                 SetRandomAssignCount(t => PlayerCountComposition.Get(players, t));
                 SetRandomAssignRoleList();

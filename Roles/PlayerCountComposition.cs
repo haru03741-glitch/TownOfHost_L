@@ -76,6 +76,20 @@ public static class PlayerCountComposition
         }
     }
 
+    /// <summary>
+    /// 人数ごとの構成で数える人数。ホストが GM の時は、ホストは役職を持たないので数えない
+    /// </summary>
+    public static int CountedPlayers
+    {
+        get
+        {
+            if (!GameData.Instance) return 0;
+            int n = GameData.Instance.PlayerCount;
+            if (Options.EnableGM.GetBool() && n > 0) n--;
+            return n;
+        }
+    }
+
     /// <summary>この人数の時の、その陣営の最少と最多 (最多が最少より小さい時は最少にそろえる)</summary>
     public static (int min, int max) Get(int players, CustomRoleTypes type)
     {
@@ -92,7 +106,7 @@ public static class PlayerCountComposition
     public static void FollowPlayerCount()
     {
         if (EditPlayers == null || !AmongUsClient.Instance || !AmongUsClient.Instance.AmHost || !GameData.Instance) return;
-        var n = Mathf.Clamp(GameData.Instance.PlayerCount, MinPlayers, MaxPlayers);
+        var n = Mathf.Clamp(CountedPlayers, MinPlayers, MaxPlayers);
         if (EditPlayers.GetInt() == n) return;
         EditPlayers.SetValue(n - MinPlayers);
     }
@@ -110,7 +124,7 @@ public static class PlayerCountComposition
             if (now < nextFollowAt) return;
             nextFollowAt = now + 0.5f;
             if (!GameData.Instance) return;
-            int count = GameData.Instance.PlayerCount;
+            int count = CountedPlayers;
             if (count == lastCount) return;
             lastCount = count;
             FollowPlayerCount();

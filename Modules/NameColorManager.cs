@@ -11,8 +11,10 @@ namespace TownOfHostL
         public static string ApplyNameColorData(this string name, PlayerControl seer, PlayerControl target, bool isMeeting)
         {
             if (!AmongUsClient.Instance.IsGameStarted) return name;
-            if (isMeeting && (seer.GetRoleClass()?.HidesNameColorInMeeting(target) ?? false)) return name;
-            if (Options.IsSyncColorMode && isMeeting) return name;
+            // 会議で色を付けない名前は白と書いて送る。何も書かないと、本編の客の画面では
+            // 自分と相手の本編の役職 (ずらした役職や、試合の始めの途中の役職) でインポスター同士と見て赤くなる
+            if (isMeeting && (seer.GetRoleClass()?.HidesNameColorInMeeting(target) ?? false)) return PlainMeetingName(name);
+            if (Options.IsSyncColorMode && isMeeting) return PlainMeetingName(name);
 
             if (!TryGetData(seer, target, out var colorCode))
             {
@@ -30,8 +32,11 @@ namespace TownOfHostL
                 openTag = $"<color={colorCode}>";
                 closeTag = "</color>";
             }
+            else if (isMeeting) return PlainMeetingName(name);
             return openTag + name + closeTag;
         }
+        /// <summary>会議の名前を白で囲う (本編の客の画面が勝手に赤くしないように)</summary>
+        public static string PlainMeetingName(string name) => $"<color=#ffffff>{name}</color>";
         private static bool KnowTargetRoleColor(PlayerControl seer, PlayerControl target, bool isMeeting)
         {
             return TownOfHostL.Core.NativeObject.Same(seer, target)

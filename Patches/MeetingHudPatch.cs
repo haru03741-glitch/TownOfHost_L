@@ -286,8 +286,10 @@ public static partial class MeetingHudPatch
                         var coloredName = Utils.ColorString(seen.GetRoleColor(true), seenName);
                         foreach (var seer in Main.AllPlayerControls)
                         {
+                            // 他の人の名前も色を書いて送る (インポスターの仲間は役職の色、それ以外は白)。
+                            // 何も書かないと、本編の客の画面で会議の名前が赤く見えることがある (初手強制会議など)
                             seen.RpcSetNamePrivate(
-                                seer == seen ? coloredName : seenName,
+                                seer == seen ? coloredName : seenName.ApplyNameColorData(seer, seen, true),
                                 true,
                                 seer);
                         }
@@ -302,12 +304,6 @@ public static partial class MeetingHudPatch
                     }
                     ChatUpdatePatch.DoBlockChat = false;
                 }, 3f, "SetName To Chat");
-                if (ReportDeadBodyPatch.SpecialMeeting)
-                {
-                    string formatTag = "<size=70%><line-height=1.6pic>";
-
-                    Utils.SendMessageAutoSplit($"{formatTag}強制会議の場合は一部役職名が表示されず名前が赤く見えることがありますが、会議終了後回復します。", true, formatTag: formatTag);
-                }
             }
 
             // MeetingDisplayText

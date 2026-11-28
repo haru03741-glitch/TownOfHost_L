@@ -767,7 +767,7 @@ public static partial class Utils
                 if (PlayerCountComposition.IsOn)
                 {
                     // 人数ごとの構成: 今の人数の分だけ出す
-                    var players = GameData.Instance ? GameData.Instance.PlayerCount : 0;
+                    var players = PlayerCountComposition.CountedPlayers;
                     sb.AppendFormat("<size={0}>{1}\n<line-height=1.5pic>", "65%", SettingHead($"{PlayerCountComposition.Enabled.GetName(true)} ({players})"));
                     foreach (var type in new[] { CustomRoleTypes.Impostor, CustomRoleTypes.Madmate, CustomRoleTypes.Crewmate, CustomRoleTypes.Neutral })
                     {
@@ -1120,12 +1120,122 @@ public static partial class Utils
             if (x.Item1 == message.text) return;
             queued++;
         }
+        // 1 つの返事 (/n r の役職一覧など何通にもなる物) は、頭の 1 通で上限を見て、通ったら最後まで送る。
+        // 1 通ずつ見ると、長い一覧が途中で切れる
+        if (replyDepth > 0)
+        {
+            if (replyRejected.Contains(message.sendTo)) return;
+            if (!replyAdmitted.Contains(message.sendTo))
+            {
+                if (queued >= MaxQueuedMessagesPerTarget)
+                {
+                    replyRejected.Add(message.sendTo);
+                    Logger.Warn($"宛先 {message.sendTo} への送信待ちが {queued} 件あるので、この返事は送りません", "SendMessage");
+                    return;
+                }
+                replyAdmitted.Add(message.sendTo);
+            }
+            Main.MessagesToSend.Add(message);
+            return;
+        }
         if (queued >= MaxQueuedMessagesPerTarget)
         {
             Logger.Warn($"宛先 {message.sendTo} への送信待ちが {MaxQueuedMessagesPerTarget} 件あるので送りません", "SendMessage");
             return;
         }
         Main.MessagesToSend.Add(message);
+    }
+
+    private static int replyDepth;
+    private static readonly HashSet<byte> replyAdmitted = new();
+    private static readonly HashSet<byte> replyRejected = new();
+    private sealed class ReplyScope : IDisposable
+    {
+        bool done;
+        public void Dispose()
+        {
+            if (done) return;
+            done = true;
+            if (--replyDepth > 0) return;
+            replyDepth = 0;
+            replyAdmitted.Clear();
+            replyRejected.Clear();
+        }
+    }
+    /// <summary>
+    /// この中で送るチャットを 1 つの返事として扱う (送信待ちの上限は頭の 1 通でだけ見る)。
+    /// コマンド 1 回の返事を囲う。入れ子にしてよい
+    /// </summary>
+    public static IDisposable OneReply()
+    {
+        replyDepth++;
+        return new ReplyScope();
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex HeightTagRe =
+        new(@"<(/?)(size|line-height|u)(?:=([^>]*))?>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    /// <summary>
+    /// 行の高さ (line-height) を決めた中に、大きな字や下線の行があると、上下の行と重なる。
+    /// その行の上と下の改行だけ行の高さを外し (字の大きさに合った間になる)、次の行から元に戻す
+    /// </summary>
+    public static string KeepTallLinesApart(string text)
+    {
+        if (string.IsNullOrEmpty(text) || text.IndexOf("<line-height", StringComparison.OrdinalIgnoreCase) < 0) return text;
+        var lines = text.Split('\n');
+        if (lines.Length < 2) return text;
+        string lineHeight = null;      // 今効いている <line-height=..> の値
+        float lhSize = 100f;           // 行の高さを決めた時の字の大きさ
+        var sizes = new Stack<float>();
+        float curSize = 100f;
+        var tall = new bool[lines.Length];
+        var lhAtStart = new string[lines.Length];
+        bool any = false;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            lhAtStart[i] = lineHeight;
+            float maxSize = curSize;
+            bool underline = false;
+            foreach (System.Text.RegularExpressions.Match m in HeightTagRe.Matches(lines[i]))
+            {
+                bool close = m.Groups[1].Value == "/";
+                var val = m.Groups[3].Value.Trim();
+                switch (m.Groups[2].Value.ToLowerInvariant())
+                {
+                    case "size":
+                        if (close) curSize = sizes.Count > 0 ? sizes.Pop() : 100f;
+                        else
+                        {
+                            sizes.Push(curSize);
+                            if (val.EndsWith("%") && float.TryParse(val.TrimEnd('%'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var p)) curSize = p;
+                        }
+                        maxSize = Math.Max(maxSize, curSize);
+                        break;
+                    case "line-height":
+                        if (close) lineHeight = null;
+                        else { lineHeight = val; lhSize = curSize; }
+                        break;
+                    case "u":
+                        if (!close) underline = true;
+                        break;
+                }
+            }
+            // 行の高さを決めた行そのもの (各通の頭) は除く
+            tall[i] = lineHeight != null && lhAtStart[i] != null && (underline || maxSize > lhSize + 5f);
+            any |= tall[i];
+        }
+        if (!any) return text;
+        var sb = new StringBuilder(text.Length + 64);
+        for (int i = 0; i < lines.Length; i++)
+        {
+            // 大きい行の次の行の頭で、行の高さを戻す
+            if (i > 0 && tall[i - 1] && !tall[i] && lhAtStart[i] != null) sb.Append("<line-height=").Append(lhAtStart[i]).Append('>');
+            sb.Append(lines[i]);
+            if (i == lines.Length - 1) break;
+            // 大きい行の上の改行と、大きい行の終わりの改行は、行の高さを外して打つ
+            if ((tall[i] || tall[i + 1]) && lhAtStart[i + 1] != null) sb.Append("</line-height>");
+            sb.Append('\n');
+        }
+        return sb.ToString();
     }
     /// <summary>
     /// 本文をそのまま 1 通送る (送り主の名前はお知らせの見出し)。装飾や分割を足さないので、短い決まった文だけに使う
@@ -1151,6 +1261,7 @@ public static partial class Utils
     {
         if (!AmongUsClient.Instance.AmHost) return;
         int maxBytes = TownOfHostL.Core.ChatSenderName.BodyBudget(TownOfHostL.Core.ChatSenderName.Sender());
+        using var reply = OneReply();
         bool showTitle = title != "";
         string titleText = showTitle ? title + "\n" : "";
         var cur = new StringBuilder();
@@ -1180,6 +1291,9 @@ public static partial class Utils
 
         // 1 行が長すぎると下の分割では切れないので、バイト数でも割る。予算は戻す名前やホストの生死で変わる
         if (HamoExperimental.Monochrome) { text = text.RemoveColorTags(); title = title.RemoveColorTags(); }
+        // 大きな字・下線の行が上下と重ならないようにする (分ける前に入れる。分けた後も各通の頭の formatTag で戻る)
+        text = KeepTallLinesApart(text);
+        using var reply = OneReply();
 
         int MAX_LINE_BYTES = TownOfHostL.Core.ChatSenderName.BodyBudget(TownOfHostL.Core.ChatSenderName.Sender());
 
