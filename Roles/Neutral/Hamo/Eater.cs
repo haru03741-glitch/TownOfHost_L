@@ -361,12 +361,12 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
     {
         if (isForMeeting) return "";
         seen ??= seer;
-        var text = "食らう";
+        var text = GetString("EaterModeEat");
         if (!eatMode || pendingSwallow != null)
         {
-            text = "死体通報";
+            text = GetString("EaterModeReport");
         }
-        return $"<color=#662B2C>現在のモード：{text}モード</color>";
+        return $"<color=#662B2C>{string.Format(GetString("EaterCurrentMode"), text)}</color>";
     }
 
     public override string GetProgressText(bool comms = false)

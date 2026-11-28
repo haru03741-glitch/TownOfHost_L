@@ -387,7 +387,7 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
         if (NowState is AssassinMeeting.Guessing)
         {
             var name = Camouflage.PlayerSkins.TryGetValue(Player.PlayerId, out var cos) ? cos.PlayerName : "^a^";
-            var tage = Camouflage.PlayerSkins.TryGetValue(GuessId, out var tcos) ? tcos.PlayerName : "彼";
+            var tage = Camouflage.PlayerSkins.TryGetValue(GuessId, out var tcos) ? tcos.PlayerName : GetString("AssassinGuessFallbackName");
 
             if (GuessId is not byte.MaxValue)
             {

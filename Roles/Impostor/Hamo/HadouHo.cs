@@ -344,21 +344,21 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
     {
         seen ??= seer;
         if (seen.PlayerId != seer.PlayerId || isForMeeting || !Player.IsAlive()) return "";
-        if (beam?.Pending == true) return $"{(isForHud ? "" : "<size=60%>")}<color=#ff0000>向きを決めています。撃ちたい向きへ動いてください</color>";
-        if (!IsCharging) return $"{(isForHud ? "" : "<size=60%>")}<color=#ff0000>ファントムボタン → チャージ発射</color>";
-        return $"{(isForHud ? "" : "<size=100%>")}<color=#ff0000>チャージ中... {Mathf.Max(0f, ChargeTime - chargeTimer):F1}s</color>";
+        if (beam?.Pending == true) return $"{(isForHud ? "" : "<size=60%>")}<color=#ff0000>{TownOfHostL.Translator.GetString("HadouHoAiming")}</color>";
+        if (!IsCharging) return $"{(isForHud ? "" : "<size=60%>")}<color=#ff0000>{TownOfHostL.Translator.GetString("HadouHoPhantomHint")}</color>";
+        return $"{(isForHud ? "" : "<size=100%>")}<color=#ff0000>{string.Format(TownOfHostL.Translator.GetString("HadouHoCharging"), Mathf.Max(0f, ChargeTime - chargeTimer).ToString("F1"))}</color>";
     }
 
     public string GetLowerTextOthers(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
     {
         seen ??= seer;
         if (seen != seer || isForMeeting || !Player.IsAlive()) return "";
-        if (IsCharging && seer.PlayerId != Player.PlayerId) return $"\n<size=100%><color=#ff0000>チャージ中... {(int)Mathf.Max(0f, ChargeTime - chargeTimer)}s</color></size>";
-        if (ShowBeamMark && seer.PlayerId != Player.PlayerId) return "\n<size=100%><color=#ff0000>ビーム中</color></size>";
+        if (IsCharging && seer.PlayerId != Player.PlayerId) return $"\n<size=100%><color=#ff0000>{string.Format(TownOfHostL.Translator.GetString("HadouHoCharging"), (int)Mathf.Max(0f, ChargeTime - chargeTimer))}</color></size>";
+        if (ShowBeamMark && seer.PlayerId != Player.PlayerId) return $"\n<size=100%><color=#ff0000>{TownOfHostL.Translator.GetString("HadouHoBeaming")}</color></size>";
         return "";
     }
 
-    public override string GetAbilityButtonText() => "発射";
+    public override string GetAbilityButtonText() => TownOfHostL.Translator.GetString("HadouHoFire");
 
     public void cancelbeam()
     {

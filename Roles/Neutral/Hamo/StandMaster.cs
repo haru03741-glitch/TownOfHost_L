@@ -378,9 +378,9 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
             {
 
-                string title = "<size=90%><color=#8B4513>【====== スタンド情報 ======】</color></size>";
+                string title = $"<size=90%><color=#8B4513>{TownOfHostL.Translator.GetString("StandInfoTitle")}</color></size>";
 
-                string msg = $"<color=#8B4513>{stand.ColoredName()} はスタンドです。\nスタンドマスターが生きている限り死亡しません。</color>";
+                string msg = $"<color=#8B4513>{string.Format(TownOfHostL.Translator.GetString("StandInfoMessage"), stand.ColoredName())}</color>";
 
                 return title + "\n<size=70%>" + msg + "</size>\n";
 
@@ -452,7 +452,7 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
         bool canCreate = !standCreated && !standHadDied;
 
-        text = canCreate ? "スタンド化" : "キル";
+        text = TownOfHostL.Translator.GetString(canCreate ? "StandMasterMakeStand" : "KillButtonText");
 
         return true;
 
