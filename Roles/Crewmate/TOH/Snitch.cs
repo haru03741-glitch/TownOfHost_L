@@ -155,8 +155,8 @@ public class Snitch : RoleBase
         //seenが省略の場合seer
         seen ??= seer;
 
-        //ともにスニッチでなければ無し
-        if (!Is(seer) && !Is(seen)) return "";
+        //ともにスニッチでなければ無し (自分の名前の下だけに出す)
+        if (!Is(seer) || !Is(seen)) return "";
         //タスク終わってなければ無し
         if (!IsComplete) return "";
 
