@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using AmongUs.GameOptions;
 using HarmonyLib;
@@ -40,6 +40,9 @@ class SetUpRoleTextPatch
                 __instance.RoleText.color = Utils.GetRoleColor(role);
                 __instance.RoleBlurbText.color = Utils.GetRoleColor(role);
                 __instance.RoleBlurbText.text = PlayerControl.LocalPlayer.GetRoleInfo();
+                // クルーに属性のゲッサーが付いた時の乱撃ちの注意 (hamo と同じ)
+                if (TownOfHostL.Roles.AddOns.Common.Guesser.ShouldWarn(PlayerControl.LocalPlayer))
+                    __instance.RoleBlurbText.text += "\n<size=75%><color=#ff5555>" + GetString("SaruWarningText") + "</color></size>";
             }
             else if (role.IsVanilla())
             {
@@ -411,6 +414,14 @@ class IntroCutsceneDestroyPatch
             {
                 PlayerControl.LocalPlayer.RpcExile();
                 PlayerState.GetByPlayerId(PlayerControl.LocalPlayer.PlayerId).SetDead(CustomDeathReason.etc);
+                // 本編の役がクルーのままだと憑依のボタンが効かない (GM の自動憑依も動かない)。hamo と同じく普通のクルーの幽霊にする
+                _ = new LateTask(() =>
+                {
+                    var gm = PlayerControl.LocalPlayer;
+                    if (gm == null || !GameStates.IsInGame || !gm.GetCustomRole().IsSpectator()) return;
+                    if (gm.Data?.Role != null && gm.Data.Role.Role is RoleTypes.CrewmateGhost) return;
+                    gm.RpcSetRoleNormal(RoleTypes.CrewmateGhost, canOverrideRole: true);
+                }, 1f, "SpectatorGhostRole");
             }
 
             switch (GameMap.Base)

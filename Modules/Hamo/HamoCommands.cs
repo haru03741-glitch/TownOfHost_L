@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -21,6 +21,8 @@ public static class HamoCommands
 
     public static ChatCommand[] Build() => new ChatCommand[]
     {
+        // ゲッサー (属性・撃ち方をコマンドにした役職) の撃ち方。打った文は他の人に見せない
+        new("/bt", "/guess") { Hidden = true, Usage = "CommandUsage.Guess", Host = GuessCommand.Run, Remote = GuessCommand.Run },
         new("/rule", "/rl") { Host = c => ShowRule(byte.MaxValue), Remote = c => ShowRule(c.Player.PlayerId), Restrictable = true },
         new("/s", "/set") { ForModerator = true, Usage = "CommandUsage.SetRule", Host = SetRule },
         new("/d", "/delete") { ForModerator = true, Host = DeleteRule },

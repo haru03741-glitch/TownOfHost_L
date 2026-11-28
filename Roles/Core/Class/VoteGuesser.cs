@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Text;
 using System.Collections.Generic;
@@ -42,6 +42,13 @@ public abstract class VoteGuesser : RoleBase
     protected bool GuessAfterVote = false;
     // マッドに使用
     protected bool AlwaysSuicide = false;
+    /// <summary>撃ち方 (0: 自分に投票・1: チャットの /bt・2: どちらでも)</summary>
+    protected int GuessMethod = 0;
+    public static readonly string[] GuessMethodSelections = { "GuessMethodVote", "GuessMethodCommand", "GuessMethodBoth" };
+    public bool UsesVote => GuessMethod != 1;
+    public bool UsesCommand => GuessMethod != 0;
+    /// <summary>今 /bt で撃てるか</summary>
+    public bool CanCommandGuess => UsesCommand && Player != null && Player.IsAlive() && NumOfGuess > 0 && (!guessed || MultipleInMeeting);
 
     private GuesserInfo guesserInfo;
 
@@ -78,6 +85,8 @@ public abstract class VoteGuesser : RoleBase
 
         if (NumOfGuess <= 0) return true;
         if (guessed && !MultipleInMeeting) return true;
+        // 撃ち方がコマンドだけの時は、自分への投票も普通の投票
+        if (!UsesVote) return true;
 
         // Ensure helper object exists when needed
         if (guesserInfo == null) guesserInfo = new();
@@ -210,7 +219,7 @@ public abstract class VoteGuesser : RoleBase
         NumOfGuess--;
 
         PlayerControl target;
-        if (TargetIs(targetGuess, role) && !AlwaysSuicide)
+        if (GuessCommand.Hits(targetGuess, role) && !AlwaysSuicide)
         {
             target = targetGuess;
             RpcGuesserMurderPlayer(target, CustomDeathReason.Shot);
@@ -224,11 +233,36 @@ public abstract class VoteGuesser : RoleBase
         }
         SendGuessedMessage(target);
     }
-    private bool TargetIs(PlayerControl target, CustomRoles role)
+    /// <summary>
+    /// チャットの /bt で撃つ。撃てない時は理由を返す
+    /// </summary>
+    public bool TryCommandGuess(PlayerControl target, CustomRoles role, out string error)
     {
-        if (target.Is(role)) return true;
-        // 一覧には元の役職だけを出すので、別の役職の姿 (殺した後の猫・本編のエンジニアなど) も元の役職で当たりにする
-        return target.GetCustomRole().AliasOf() == role;
+        error = "";
+        if (!CanCommandGuess)
+        {
+            error = GetString(UsesCommand ? "GuessercountError" : "GuessErrorVoteOnly");
+            return false;
+        }
+        if (target == null || !target.IsAlive() || target.Data == null || target.Data.Disconnected)
+        {
+            error = GetString("GuessError2");
+            return false;
+        }
+        if (role == CustomRoles.GM || target.Is(CustomRoles.GM) || role.IsAddOn())
+        {
+            error = GetString("GuessErrorCannotGuess");
+            return false;
+        }
+        // 自分への投票で選んでいる途中なら止める
+        selecting = false;
+        targetForRole = null;
+        targetGuess = target;
+        Logger.Info($"GuesserCommand guesser: {Player?.name}, target: {target?.name}, role: {role}", "Guesser.TryCommandGuess");
+        UseGuesserAbility(role);
+        targetGuess = null;
+        if (Player.IsAlive()) SendMessageGuide();
+        return true;
     }
     private void SendMessageGuide()
     {
@@ -236,7 +270,8 @@ public abstract class VoteGuesser : RoleBase
 
         if (NumOfGuess > 0 && (!guessed || MultipleInMeeting))
         {
-            Utils.SendMessageAutoSplit($"{formatTag}{GetString("Message.SelfVoteForActivate")}", true, "", Player.PlayerId, formatTag);
+            var key = GuessMethod switch { 1 => "Message.GuesserCommandGuide", 2 => "Message.GuesserBothGuide", _ => "Message.SelfVoteForActivate" };
+            Utils.SendMessageAutoSplit($"{formatTag}{GetString(key)}", true, "", Player.PlayerId, formatTag);
         }
         else
         {
@@ -282,29 +317,10 @@ public abstract class VoteGuesser : RoleBase
         if (NumOfGuess <= 0) return "";
 
         if (guesserInfo == null) guesserInfo = new();
-        return $"<color=#ff8000>{GetString("Message.SelfVoteSuffix")}</color>";
+        return $"<color=#ff8000>{GetString(UsesVote ? "Message.SelfVoteSuffix" : "Message.GuesserCommandSuffix")}</color>";
     }
     public void RpcGuesserMurderPlayer(PlayerControl target, CustomDeathReason reason)
-    {
-        target.SetRealKiller(Player, true);
-        target.Data.IsDead = true;
-        target.RpcExileV3(reason);
-        var targetState = PlayerState.GetByPlayerId(target.PlayerId);
-        CustomRoleManager.CheckMurderInfos[target.PlayerId] = new MurderInfo(Player, target, target, target);
-        CustomRoleManager.OnMurderPlayer(target, target);
-
-        //キルフラッシュ表示
-        Main.AllPlayerControls.Do(pc => pc.KillFlash());
-
-        foreach (var va in MeetingHud.Instance.playerStates)
-        {
-            if (va.VotedForId != target.PlayerId) continue;
-            var voter = Utils.GetPlayerById(va.PlayerId);
-            if (voter == null) continue;
-            MeetingHud.Instance.RpcClearVote(voter.PlayerId);
-        }
-        TownOfHostL.Modules.MeetingVoteManager.OnMeetingKill(target.PlayerId);
-    }
+        => GuessCommand.Kill(Player, target, reason);
     private class GuesserInfo
     {
         public Dictionary<byte, int> PlayerNumbers;
@@ -332,14 +348,8 @@ public abstract class VoteGuesser : RoleBase
         }
         private void SetPlayerNumbers()
         {
-            PlayerNumbers = new();
-            var number = 1; //Numberは1始まり
-            var allAlive = Main.AllAlivePlayerControls;
-            if (allAlive == null) return;
-            foreach (var pc in allAlive.OrderBy(x => x.PlayerId))
-            {
-                PlayerNumbers[pc.PlayerId] = number++;
-            }
+            // /bt の番号と同じ物 (会議ごとに 1 から)
+            PlayerNumbers = new(GuessCommand.Numbers);
         }
         private void SetRoleList()
         {

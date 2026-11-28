@@ -1,4 +1,4 @@
-using AmongUs.GameOptions;
+﻿using AmongUs.GameOptions;
 
 using TownOfHostL.Roles.Core;
 using TownOfHostL.Roles.Core.Class;
@@ -27,11 +27,13 @@ public sealed class EvilGuesser : VoteGuesser, IImpostor
         MultipleInMeeting = OptionMultipleInMeeting.GetBool();
         HideMisfire = OptionHideMisfire.GetBool();
         GuessAfterVote = OptionGuessAfterVote.GetBool();
+        GuessMethod = OptionGuessMethod.GetValue();
     }
     private static OptionItem OptionNumOfGuess;
     private static OptionItem OptionMultipleInMeeting;
     private static OptionItem OptionHideMisfire;
     private static OptionItem OptionGuessAfterVote;
+    private static OptionItem OptionGuessMethod;
     enum OptionName
     {
         GuesserNumOfGuess,
@@ -46,5 +48,6 @@ public sealed class EvilGuesser : VoteGuesser, IImpostor
         OptionMultipleInMeeting = BooleanOptionItem.Create(RoleInfo, OptionName.GuesserMultipleInMeeting, false, false);
         OptionHideMisfire = BooleanOptionItem.Create(RoleInfo, OptionName.GuesserHideMisfire, false, false);
         OptionGuessAfterVote = BooleanOptionItem.Create(RoleInfo, OptionName.GuesserGuessAfterVote, false, false);
+        OptionGuessMethod = StringOptionItem.Create(RoleInfo, "GuesserGuessMethod", GuessMethodSelections, 0, false);
     }
 }

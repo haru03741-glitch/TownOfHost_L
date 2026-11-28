@@ -307,7 +307,14 @@ public static partial class MeetingHudPatch
             }
 
             // MeetingDisplayText
-            int Showi = 0;
+            // 左上・真ん中・右上は見た目の並び (本編は生きている人を PlayerId の順に上から並べる)。
+            // playerStates の並びで選ぶと真ん中の人の上に出て、会議の題 (インポスターは誰だ) と重なる
+            var topPlates = __instance.playerStates
+                .Where(p => p != null && !p.AmDead)
+                .Select(p => p.PlayerId)
+                .OrderBy(id => id)
+                .Take(3)
+                .ToList();
 
             foreach (var pva in __instance.playerStates)
             {
@@ -354,7 +361,7 @@ public static partial class MeetingHudPatch
                     //else if (Options.IsONMode && (Main.DefaultRole[target.PlayerId] == CustomRoles.ONPhantomThief))
                     //{ }
                     //else
-                    pva.NameText.text = pva.NameText.text.ApplyNameColorData(seer, target, true);
+                    pva.NameText.text = GuessCommand.NumberPrefix(seer, target, true) + pva.NameText.text.ApplyNameColorData(seer, target, true);
                 }
 
                 sb.Append(TownOfHostL.Core.NameParts.DeathReason(seer, target));
@@ -371,11 +378,9 @@ public static partial class MeetingHudPatch
                     if (plate != "") pva.NameText.text += "\n" + plate;
                 }
 
-                if (!pva.AmDead && Showi < 3)
-                {
-                    pva.NameText.text = MeetingDisplayText.AddTextForClient(pva.NameText.text, Showi);
-                    Showi++;
-                }
+                var area = pva.AmDead ? -1 : topPlates.IndexOf(pva.PlayerId);
+                if (area >= 0)
+                    pva.NameText.text = MeetingDisplayText.AddTextForClient(pva.NameText.text, area);
             }
             // 道連れ記載情報破棄
             RevengeTargetPlayer.Clear();

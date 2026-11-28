@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using UnityEngine;
 
 using TownOfHostL;
@@ -119,7 +119,8 @@ public static class NameParts
             || PlayerTraits.SeesDeathReason(seer)
             || HamoMadmate.SeesImpostors(seer)
             || VentEnterTask.HaveTask(seer)
-            || Duelist.CheckNotify(seer);
+            || Duelist.CheckNotify(seer)
+            || GuessCommand.NeedsNumbers(seer);
 
     /// <summary>役職の代わりに見せる陣営の名前 (占い・霊媒の「陣営だけ分かる」設定)。マッドはインポスター陣営に数える</summary>
     public static string TeamText(PlayerControl seen)

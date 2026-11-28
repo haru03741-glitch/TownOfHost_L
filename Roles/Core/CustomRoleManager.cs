@@ -915,6 +915,7 @@ public enum CustomRoles
 
     Archenemy,
     ChainShifterAddon,
+    Guesser,
 
     MaxAddon,
 
@@ -924,7 +925,7 @@ public enum CustomRoles
     // 役職から名前だけ参照される、配られない役職
     HamoOnlyStart = 20000,
     Alien, AlienHijack, Amanojaku, Amnesia, Amnesiac, Autocrat, ConnectSaver, CountKiller, DoppelGanger, Elector,
-    EvilSatellite, GrimReaper, Guesser, JackalAlien, JackalMafia, Jackaldoll, Jumbo, King, LastNeutral, Limiter,
+    EvilSatellite, GrimReaper, JackalAlien, JackalMafia, Jackaldoll, Jumbo, King, LastNeutral, Limiter,
     MagicHand, Moon, Opener, Powerful, Remotekiller, Serial, Speeding, Stack, Stamina,
     Strawdoll, SwitchSheriff, Water, WolfBoy,
 }

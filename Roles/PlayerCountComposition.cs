@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using TownOfHostL.Roles.Core;
@@ -105,6 +105,7 @@ public static class PlayerCountComposition
     /// </summary>
     public static void FollowPlayerCount()
     {
+        PlayerCountTasks.FollowPlayerCount();
         if (EditPlayers == null || !AmongUsClient.Instance || !AmongUsClient.Instance.AmHost || !GameData.Instance) return;
         var n = Mathf.Clamp(CountedPlayers, MinPlayers, MaxPlayers);
         if (EditPlayers.GetInt() == n) return;

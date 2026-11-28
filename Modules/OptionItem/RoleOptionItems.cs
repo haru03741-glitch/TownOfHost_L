@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
@@ -288,6 +288,8 @@ public class RoleAddAddons
     {
         foreach (var pc in Main.AllPlayerControls)
         {
+            // GM には属性を付けない
+            if (pc.Is(CustomRoles.GM)) continue;
             if (!AllData.TryGetValue(pc.GetCustomRole(), out var data)) continue;
             var state = PlayerState.GetByPlayerId(pc.PlayerId);
             foreach (var addon in data.GetGrantAddons())

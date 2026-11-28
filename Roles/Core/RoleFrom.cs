@@ -250,6 +250,7 @@ public static class RoleFrom
         [CustomRoles.Workaholic] = From.TownOfHost_Y,
         [CustomRoles.Zombie] = From.TownOfHost_Pko,
         // 属性
+        [CustomRoles.Guesser] = From.TheOtherRoles,
         [CustomRoles.Lovers] = From.Love_Couple_Mod,
     };
 

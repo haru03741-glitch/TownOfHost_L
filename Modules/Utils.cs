@@ -1734,6 +1734,8 @@ public static partial class Utils
 
                         //ターゲットのプレイヤー名の色を書き換えます。
                         TargetPlayerName = TargetPlayerName.ApplyNameColorData(seer, target, isForMeeting);
+                        // 属性のゲッサーには /bt の番号を名前の前に出す
+                        TargetPlayerName = GuessCommand.NumberPrefix(seer, target, isForMeeting) + TargetPlayerName;
 
                         string TargetDeathReason = TownOfHostL.Core.NameParts.DeathReason(seer, target);
 
@@ -1774,6 +1776,7 @@ public static partial class Utils
         // 天秤が 2 人を選んで会議を閉じた時は、日を進めず役職の会議明けの処理もせずに天秤会議を開く
         // 会議明けの処理は 1 回の会議で 2 回来るので、天秤会議を開くまでの間に来た 2 回目も素通りさせる (天秤の状態を消さない)
         if (Balancer.Scheduled) return;
+        GuessCommand.AfterMeeting();
         HamoMapTask.SetPlatform();
         PersonalDoors.RequestResend();
         if (AmongUsClient.Instance.AmHost && Balancer.Id == byte.MaxValue && Balancer.target1 != byte.MaxValue && Balancer.target2 != byte.MaxValue)

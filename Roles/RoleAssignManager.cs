@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using AmongUs.GameOptions;
@@ -76,6 +76,7 @@ namespace TownOfHostL.Roles
             RandomAssignOptions.Create(OptionAssignMode, CustomRoleTypes.Crewmate);
             RandomAssignOptions.Create(OptionAssignMode, CustomRoleTypes.Neutral);
             PlayerCountComposition.SetupOptionItem();
+            PlayerCountTasks.SetupOptionItem();
             SetupComboOptions();
         }
         public static bool CheckRoleCount()

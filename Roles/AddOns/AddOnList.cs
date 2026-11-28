@@ -62,6 +62,7 @@ public static class AddOnList
                 Refusing.Info,
                 Revealer.Info,
                 Loyalty.Info,
+                Guesser.Info,
 
                 Sunglasses.Info,
                 Clumsy.Info,

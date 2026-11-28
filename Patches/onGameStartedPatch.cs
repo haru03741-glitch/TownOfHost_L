@@ -58,6 +58,8 @@ class ChangeRoleSettings
             Main.NormalOptions.roleOptions.SetRoleRate(RoleTypes.Judge, 0, 0);
 
             if (ModeCatalog.IsCatchCat) Main.NormalOptions.NumImpostors = 1;
+            // 人数ごとのタスク数 (この試合の間だけ。部屋の設定は書き換えない)
+            TownOfHostL.Roles.PlayerCountTasks.Apply();
 
             Main.AllPlayerKillCooldown = new Dictionary<byte, float>();
 
@@ -289,6 +291,8 @@ class SelectRolesPatch
         var assignRoleList = RoleAssignManager.GetAssignRoleList();
         SelectRoles.AddToAssignRoleList(assignRoleList);
         List<PlayerControl> UnassignedPlayers = new(Main.AllPlayerControls);
+        // ホストが GM の時は、前もって配る役職 (共鳴者などの組の役職) もホストに当てない
+        if (Options.EnableGM.GetBool()) UnassignedPlayers.RemoveAll(x => x == PlayerControl.LocalPlayer);
         var rand = IRandom.Instance;
 
 
@@ -503,11 +507,13 @@ class SelectRolesPatch
         List<PlayerControl> allPlayersbySub = new();
         foreach (var pc in Main.AllPlayerControls)
         {
-            if (!pc.GetCustomRole().IsSpectator()) allPlayersbySub.Add(pc);
+            if (!pc.GetCustomRole().IsSpectator() && !pc.Is(CustomRoles.GM)) allPlayersbySub.Add(pc);
         }
         // ラバーズは 2 人で 1 組。出るかどうかは配る前の抽選 (RoleAssignManager の属性の抽選・確率どおり) で決まっている。相手がいない時は配らない
         if (!CustomRoles.PlatonicLover.IsEnable() && CustomRoles.Lovers.IsPresent() && allPlayersbySub.Count >= 2)
             AssignCustomSubRolesFromList(CustomRoles.Lovers, allPlayersbySub, 2);
+        // 属性のゲッサーは陣営ごとの人数で配る (hamo と同じ)
+        TownOfHostL.Roles.AddOns.Common.Guesser.Assign(allPlayersbySub);
         foreach (var info in TownOfHostL.Roles.AddOns.AddOnList.All)
         {
             if (info.AssignAtRandom) AssignCustomSubRolesDuplicatable(info.Role, allPlayersbySub);
@@ -525,7 +531,7 @@ class SelectRolesPatch
 
             // DirectAssign-Addon (属性の設定を持たない役職 (一部のマッドメイトなど) は付けない)
             var mainRole = pc.GetCustomRole();
-            if (mainRole.IsAddAddOn()
+            if (mainRole != CustomRoles.GM && mainRole.IsAddAddOn()
                 && ((Options.AddOnBuffAssign.TryGetValue(mainRole, out var buffAssign) && buffAssign.GetBool())
                     || (Options.AddOnDebuffAssign.TryGetValue(mainRole, out var debuffAssign) && debuffAssign.GetBool())))
             {

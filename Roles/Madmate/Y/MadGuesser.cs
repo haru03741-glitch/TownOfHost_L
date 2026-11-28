@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using AmongUs.GameOptions;
 
 using TownOfHostL.Roles.Core;
@@ -37,6 +37,7 @@ public sealed class MadGuesser : VoteGuesser
         MultipleInMeeting = OptionMultipleInMeeting.GetBool();
         HideMisfire = OptionHideMisfire.GetBool();
         GuessAfterVote = OptionGuessAfterVote.GetBool();
+        GuessMethod = OptionGuessMethod.GetValue();
 
         //Holdings.Subscribe(CustomRoleManager.MarkOthers, GetMarkOthers);
     }
@@ -48,6 +49,7 @@ public sealed class MadGuesser : VoteGuesser
     private static OptionItem OptionMultipleInMeeting;
     private static OptionItem OptionHideMisfire;
     private static OptionItem OptionGuessAfterVote;
+    private static OptionItem OptionGuessMethod;
     /// <summary>能力発動タスク数</summary>
     //private static OptionItem OptionTaskTrigger;
     //private static Options.OverrideTasksData Tasks;
@@ -75,6 +77,7 @@ public sealed class MadGuesser : VoteGuesser
         OptionMultipleInMeeting = BooleanOptionItem.Create(RoleInfo, OptionName.GuesserMultipleInMeeting, false, false);
         OptionHideMisfire = BooleanOptionItem.Create(RoleInfo, OptionName.GuesserHideMisfire, false, false);
         OptionGuessAfterVote = BooleanOptionItem.Create(RoleInfo, OptionName.GuesserGuessAfterVote, false, false);
+        OptionGuessMethod = StringOptionItem.Create(RoleInfo, "GuesserGuessMethod", GuessMethodSelections, 0, false);
         //OptionTaskTrigger = IntegerOptionItem.Create(RoleInfo, OptionName.MadSnitchTaskTrigger, new(0, 99, 1), 1, false).SetValueFormat(OptionFormat.Pieces);
         //Tasks = Options.OverrideTasksData.Create(RoleInfo);
         Options.SetUpAddOnOptions(RoleInfo.RoleName, RoleInfo.Tab);
