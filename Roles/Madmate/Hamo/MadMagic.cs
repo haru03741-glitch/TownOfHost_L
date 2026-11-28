@@ -78,6 +78,8 @@ public sealed class MadMagic : RoleBase, IKillFlashSeeable, IDeathReasonSeeable,
         }
     }
 
+    // モードの切り替えの自投票を、本当の自分への票として数えない (ほかの自投票の役職と同じ)
+    bool ISelfVoter.CanUseVoted() => Canuseability() && Player.IsAlive();
     public override bool CheckAnyVote(byte votedForId, PlayerControl voter)
     {
         if (!Canuseability() || voter.PlayerId != Player.PlayerId || !Player.IsAlive()) return true;
