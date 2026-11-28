@@ -803,7 +803,6 @@ public sealed class Balancer : RoleBase, ISelfVoter
         }
         Logger.Info("天秤会議が開かなかったので取りやめる", "Balancer");
         Scheduled = false;
-        MeetingTargets = System.Array.Empty<byte>();
         foreach (var role in CustomRoleManager.AllActiveRoles.Values)
             if (role is Balancer balancer) { balancer.Target1 = 255; balancer.Target2 = 255; }
         AfterMeetingReset();
