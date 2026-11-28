@@ -97,7 +97,8 @@ public sealed class EvilBusker : RoleBase, IImpostor, IUsePhantomButton, IUsePet
         if (++killsTowardUse < killsPerUse) return;
         killsTowardUse = 0;
         uses++;
-        if (uses == 1) Player.MarkDirtySettings();
+        // 使い切りで 200 秒にしたクールを客の手元でも数え直させる (設定を送るだけだと 200 秒を数え続ける)
+        if (uses == 1) Player.RpcResetAbilityCooldown(sync: true);
         Utils.NotifyRoles(SpecifySeer: Player);
     }
 
