@@ -64,12 +64,30 @@ public class FilterOptionItem : StringOptionItem
     public string LinkJoiner;
     public string PickHintKey;
     /// <summary>枠の役職を枠の順に並べた字 (未設定の枠は「未設定」)</summary>
-    public string LinkedDisplay()
+    public string LinkedDisplay(int max = int.MaxValue)
     {
         if (Linked == null) return GetSingle();
         var parts = new List<string>();
-        foreach (var o in Linked) parts.Add(o.GetSingle());
-        return string.Join(LinkJoiner ?? " / ", parts);
+        if (Linked.Count <= 2)
+        {
+            foreach (var o in Linked) parts.Add(o.GetSingle());
+            return string.Join(LinkJoiner ?? " / ", parts);
+        }
+        // 枠が多い時は選んだ役職だけ並べる。順番に意味がある組 (→) は 1 つ目の枠を必ず先頭に (空なら「未設定」)
+        bool ordered = LinkJoiner == " → ";
+        if (ordered) parts.Add(Linked[0].GetSingle());
+        for (int i = ordered ? 1 : 0; i < Linked.Count; i++)
+            if (Linked[i].GetRole() != CustomRoles.NotAssigned) parts.Add(Linked[i].GetSingle());
+        if (parts.Count == 0) return GetSingle();
+        if (ordered && parts.Count == 1) parts.Add(Translator.GetString("Unsettled"));
+        string more = "";
+        if (parts.Count > max)
+        {
+            more = " " + string.Format(Translator.GetString("RolePick.More"), parts.Count - max);
+            parts.RemoveRange(max, parts.Count - max);
+        }
+        if (ordered) return parts[0] + " → " + string.Join(", ", parts.GetRange(1, parts.Count - 1)) + more;
+        return string.Join(LinkJoiner ?? " / ", parts) + more;
     }
     string GetSingle()
     {
@@ -123,7 +141,7 @@ public class FilterOptionItem : StringOptionItem
         if (LinkJoiner != null && Linked != null && Linked.Count > 0 && Linked[0] == this)
         {
             if (Linked.TrueForAll(o => o.GetRole() is CustomRoles.NotAssigned)) return Translator.GetString("Unsettled");
-            return LinkedDisplay();
+            return LinkedDisplay(3);
         }
         var role = GetRole();
         return role is CustomRoles.NotAssigned ? Translator.GetString("Unsettled") : Utils.GetRoleColorAndName(role);

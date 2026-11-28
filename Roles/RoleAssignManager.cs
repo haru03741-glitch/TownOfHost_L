@@ -416,9 +416,24 @@ namespace TownOfHostL.Roles
             };
         // ===== 役職の組み合わせ: 同時に出ない役職・一緒に必ず出る役職 =====
         private const int ComboSlots = 6;
+        // 1 組で選べる役職の数 (1 つ目・2 つ目の枠は前の 2 つだけの組の設定をそのまま引き継ぐ)
+        private const int ComboPicks = 20;
         public static OptionItem OptionNotTogether, OptionTogether;
-        private static readonly List<(FilterOptionItem a, FilterOptionItem b)> NotTogetherRules = new();
-        private static readonly List<(FilterOptionItem a, FilterOptionItem b)> TogetherRules = new();
+        private static readonly List<List<FilterOptionItem>> NotTogetherRules = new();
+        private static readonly List<List<FilterOptionItem>> TogetherRules = new();
+
+        private static List<FilterOptionItem> ComboGroup(OptionItem parent, string prefix, int i, string labelA, string labelB, string joiner, string hint)
+        {
+            var items = new List<FilterOptionItem>
+            {
+                ComboRole(parent, $"{prefix}{i}A", labelA, i),
+                ComboRole(parent, $"{prefix}{i}B", labelB, i),
+            };
+            for (int k = 3; k <= ComboPicks; k++) items.Add(ComboRole(parent, $"{prefix}{i}_{k}", labelB, i));
+            // 1 つの行・1 つの一覧で、何個でも (ComboPicks まで) 選ぶ
+            FilterOptionItem.LinkCollapsed(joiner, hint, items.ToArray());
+            return items;
+        }
 
         private static FilterOptionItem ComboRole(OptionItem parent, string key, string labelKey, int n)
         {
@@ -437,35 +452,39 @@ namespace TownOfHostL.Roles
             OptionNotTogether = BooleanOptionItem.Create("RoleComboNotTogether", false, TabGroup.ModMainSettings, false)
                 .SetColor(Palette.LightBlue).SetGameMode(CustomGameMode.Standard);
             for (int i = 1; i <= ComboSlots; i++)
-            {
-                var a = ComboRole(OptionNotTogether, $"NotTogether{i}A", "RoleCombo.NotA", i);
-                var b = ComboRole(OptionNotTogether, $"NotTogether{i}B", "RoleCombo.NotB", i);
-                // 2 つは順番の無い組なので、1 つの行・1 つの一覧で 2 つまで選ぶ
-                FilterOptionItem.LinkCollapsed(" × ", "RoleCombo.HintNot", a, b);
-                NotTogetherRules.Add((a, b));
-            }
+                NotTogetherRules.Add(ComboGroup(OptionNotTogether, "NotTogether", i, "RoleCombo.NotA", "RoleCombo.NotB", " × ", "RoleCombo.HintNot"));
             OptionTogether = BooleanOptionItem.Create("RoleComboTogether", false, TabGroup.ModMainSettings, false)
                 .SetColor(Palette.LightBlue).SetGameMode(CustomGameMode.Standard);
+            // 1 つ目に選んだのが「出たら」、2 つ目からが「一緒に必ず出る」
             for (int i = 1; i <= ComboSlots; i++)
-            {
-                var a = ComboRole(OptionTogether, $"Together{i}A", "RoleCombo.IfA", i);
-                var b = ComboRole(OptionTogether, $"Together{i}B", "RoleCombo.ThenB", i);
-                // 1 つの行で選ぶ。1 つ目に選んだのが「出たら」、2 つ目が「一緒に必ず出る」
-                FilterOptionItem.LinkCollapsed(" → ", "RoleCombo.HintTogether", a, b);
-                TogetherRules.Add((a, b));
-            }
+                TogetherRules.Add(ComboGroup(OptionTogether, "Together", i, "RoleCombo.IfA", "RoleCombo.ThenB", " → ", "RoleCombo.HintTogether"));
         }
 
-        private static List<(CustomRoles a, CustomRoles b)> ActiveRules(OptionItem parent, List<(FilterOptionItem a, FilterOptionItem b)> rules)
+        // 組を 2 つずつの決まりに開く。同時に出ない組は選んだ役職のどの 2 つも、一緒に出る組は 1 つ目 → 残りのそれぞれ
+        private static List<(CustomRoles a, CustomRoles b)> ActiveRules(OptionItem parent, List<List<FilterOptionItem>> rules, bool fromFirst)
         {
             var list = new List<(CustomRoles a, CustomRoles b)>();
             if (parent == null || !parent.GetBool() || Options.CurrentGameMode != CustomGameMode.Standard) return list;
-            foreach (var (a, b) in rules)
+            foreach (var group in rules)
             {
-                var ra = a.GetRole();
-                var rb = b.GetRole();
-                if (ra == CustomRoles.NotAssigned || rb == CustomRoles.NotAssigned || ra == rb) continue;
-                list.Add((ra, rb));
+                var roles = new List<CustomRoles>();
+                foreach (var o in group)
+                {
+                    var r = o.GetRole();
+                    if (r != CustomRoles.NotAssigned && !roles.Contains(r)) roles.Add(r);
+                }
+                if (fromFirst)
+                {
+                    // 「出たら」の枠 (1 つ目) が空なら決まりにならない
+                    var first = group[0].GetRole();
+                    if (first == CustomRoles.NotAssigned) continue;
+                    foreach (var r in roles) if (r != first) list.Add((first, r));
+                }
+                else
+                {
+                    for (int x = 0; x < roles.Count; x++)
+                        for (int y = x + 1; y < roles.Count; y++) list.Add((roles[x], roles[y]));
+                }
             }
             return list;
         }
@@ -489,8 +508,8 @@ namespace TownOfHostL.Roles
 
         private static void ApplyComboRules()
         {
-            var notTogether = ActiveRules(OptionNotTogether, NotTogetherRules);
-            var together = ActiveRules(OptionTogether, TogetherRules);
+            var notTogether = ActiveRules(OptionNotTogether, NotTogetherRules, false);
+            var together = ActiveRules(OptionTogether, TogetherRules, true);
             if (notTogether.Count == 0 && together.Count == 0) return;
             var rand = IRandom.Instance;
             var removed = new HashSet<CustomRoles>();

@@ -224,7 +224,9 @@ internal static class RolePickMenu
         foot.Add(new Label($"{_page + 1} / {pages}", 1.2f) { Width = 0.8f, TextAlign = TextAlignmentOptions.Center, Color = Ink });
         foot.Add(Small("▶", () => { if (_page < pages - 1) { _page++; Build(false); } }, 0.6f, _page < pages - 1 ? Line : Fill, Fill));
         foot.Add(new Spacer(innerW - 0.6f * 2f - 0.8f - 1.7f * 2f - 0.1f * 5f, 0.1f));
-        foot.Add(Small(Translator.GetString("RolePick.Clear"), ClearAll, 1.7f, OptEditor.OffColor, Fill));
+        // 1 つでも ON なら「全部 OFF」、全部 OFF なら「全部 ON」(今のタブの頁の頭から、枠の数まで ON にする)
+        if (chosen.Count > 0) foot.Add(Small(Translator.GetString("RolePick.Clear"), ClearAll, 1.7f, OptEditor.OffColor, Fill));
+        else foot.Add(Small(Translator.GetString("RolePick.All"), FillAll, 1.7f, OptEditor.OnColor, Fill));
         foot.Add(Small(Translator.GetString("RolePick.Close"), Close, 1.7f, Line, Fill));
         col.Add(foot);
 
@@ -246,6 +248,21 @@ internal static class RolePickMenu
     {
         if (_from == null || _apply == null) return;
         foreach (var s in Slots()) if (s.GetRole() != CustomRoles.NotAssigned) Write(s, CustomRoles.NotAssigned);
+        if (_from != null) Build(false);
+    }
+
+    private static void FillAll()
+    {
+        if (_from == null || _apply == null) return;
+        var roles = Groups()[_team];
+        int n = _page * PerPage;
+        foreach (var s in Slots())
+        {
+            if (n >= roles.Count) break;
+            if (s.GetRole() != CustomRoles.NotAssigned) continue;
+            Write(s, roles[n++]);
+            if (_from == null) return;
+        }
         if (_from != null) Build(false);
     }
 

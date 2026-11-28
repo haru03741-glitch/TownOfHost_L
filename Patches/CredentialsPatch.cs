@@ -92,21 +92,22 @@ namespace TownOfHostL
                     shiftedForButtons = false;
                     if (!has) return;
                     var p = t.position;
-                    // 字は右寄せで右上のボタンの真下まで伸びるので、横の重なりは見ずに縦だけ見る (横の測り方がずれて重なったままになっていた)
-                    if (p.y + topOff <= bottom - 0.05f) return;
-                    float need = p.y + topOff - (bottom - 0.05f);
-                    // 位置を直接動かしても、端に合わせる部品 (AspectPosition) が後で元へ戻すので、端からの距離を変えて下げる。
-                    // 距離を足すと下がるか上がるかは寄せる端で変わるので、動かして確かめ、逆なら向きを替える
-                    aspect.DistanceFromEdge = dist + new Vector3(0f, need * shiftSign, 0f);
+                    // ボタンより下にある時と、ボタンより左で終わる時は重ならない
+                    if (p.y + topOff <= bottom - 0.05f || p.x + rightOff <= left - 0.05f) return;
+                    // 字はボタンの左へずらす (右寄せなので、字の右の端をボタンの左の端に合わせる)
+                    float need = p.x + rightOff - (left - 0.05f);
+                    // 位置を直接動かしても、端に合わせる部品 (AspectPosition) が後で元へ戻すので、端からの距離を変えて動かす。
+                    // 距離を足すと左へ行くか右へ行くかは寄せる端で変わるので、動かして確かめ、逆なら向きを替える
+                    aspect.DistanceFromEdge = dist + new Vector3(need * shiftSign, 0f, 0f);
                     aspect.AdjustPosition();
-                    if (t.position.y > p.y - need * 0.5f)
+                    if (t.position.x > p.x - need * 0.5f)
                     {
                         shiftSign = -shiftSign;
-                        aspect.DistanceFromEdge = dist + new Vector3(0f, need * shiftSign, 0f);
+                        aspect.DistanceFromEdge = dist + new Vector3(need * shiftSign, 0f, 0f);
                         aspect.AdjustPosition();
                     }
                     shiftedForButtons = true;
-                    if (!avoidLogged) { avoidLogged = true; Logger.Info($"右上の字をボタンの下へ: 字の上 {p.y + topOff:0.00} → {bottom - 0.05f:0.00} (ボタンの左 {left:0.00}・字の右 {p.x + rightOff:0.00})", "Credentials"); }
+                    if (!avoidLogged) { avoidLogged = true; Logger.Info($"右上の字をボタンの左へ: 字の右 {p.x + rightOff:0.00} → {left - 0.05f:0.00} (字の上 {p.y + topOff:0.00}・ボタンの下 {bottom:0.00})", "Credentials"); }
                 }
                 catch (System.Exception ex)
                 {
