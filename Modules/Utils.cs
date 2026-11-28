@@ -1676,11 +1676,6 @@ public static partial class Utils
 
             if (!isForMeeting) SelfName.Append("\r\n");
 
-            //lobby中のバニラ視点にMOD名/Versionを記載
-            //if (GameStates.IsLobby)
-            //    SelfName = $"{$"<color={Main.ModColor}>TownOfHost_Y</color> v{Main.PluginVersion}\n\n".Color(Color.white)}</align>"
-            //     + $"<line-height=6em>\n</line-height>" + SelfName + "<line-height=6em>\n</line-height>ㅤ";
-
             // 会議では、生きている人のうち最後の人の名前の下に装置の残り時間を出す (hamo と同じ)
             string plateText = isForMeeting ? TownOfHostL.Modules.DeviceTimer.MeetingPlateText(seer) : "";
             var plateTarget = plateText != "" ? TownOfHostL.Modules.DeviceTimer.MeetingPlateTarget() : null;
@@ -1925,22 +1920,6 @@ public static partial class Utils
         LogFile.Flush();
         FileInfo file = new(LogFile.CurrentPath);
         var logFile = file.CopyTo(fileName);
-
-        /*try
-        {
-            var workspaceDest = @"D:\\Among Us\\Project Files\\TownOfHost_Y";
-            if (!Directory.Exists(workspaceDest)) Directory.CreateDirectory(workspaceDest);
-
-            var destTimestamp = Path.Combine(workspaceDest, $"LogOutput-{t}.log");
-            file.CopyTo(destTimestamp, true);
-
-            var destLatest = Path.Combine(workspaceDest, "LogOutput.log");
-            file.CopyTo(destLatest, true);
-        }
-        catch (System.Exception ex)
-        {
-            Logger.Warn($"LogOutput の追加コピーに失敗しました: {ex.Message}", "CopyLog");
-        }*/
 
         return logFile.FullName;
     }
