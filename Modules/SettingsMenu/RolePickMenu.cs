@@ -20,7 +20,8 @@ internal static class RolePickMenu
     private static readonly Color OnFill = new(0.12f, 0.36f, 0.18f, 1f);
     private static readonly Color TabFill = new(0.2f, 0.3f, 0.45f, 1f);
     private static readonly Color PanelFill = new(0.07f, 0.075f, 0.09f, 0.98f);
-    private static readonly Color Shade = new(0f, 0f, 0f, 0.55f);
+    // 後ろは暗くしない (開くたびに暗くなるのが煩わしい)。押すと閉じるための透明な幕だけ置く
+    private static readonly Color Shade = new(0f, 0f, 0f, 0f);
     private static readonly Color Ink = new(0.88f, 0.9f, 0.94f, 1f);
     private static readonly Color Sub = new(0.7f, 0.72f, 0.76f, 1f);
 
@@ -58,7 +59,7 @@ internal static class RolePickMenu
         _apply = null;
     }
 
-    /// <summary>設定画面が無くなったら閉じる。Esc でも閉じる (開いている間は後ろを暗い幕で覆うので、頁は替えられない)</summary>
+    /// <summary>設定画面が無くなったら閉じる。Esc でも閉じる (開いている間は後ろを透明な幕で覆うので、頁は替えられない)</summary>
     public static void Tick()
     {
         if (_from == null) return;
@@ -173,10 +174,13 @@ internal static class RolePickMenu
         string hint = self.PickHintKey ?? (slots.Count > 1 ? "RolePick.HintMulti" : "RolePick.Hint");
         col.Add(new Label(Translator.GetString(hint), 1.0f) { Width = innerW, Color = Sub });
 
-        // 陣営のタブ
+        // 陣営のタブ (候補が 1 つも無い陣営は出さない。役職の組み合わせなら属性のタブは無い)
+        var shown = new List<int>();
+        for (int i = 0; i < TeamKeys.Length; i++) if (groups[i].Count > 0) shown.Add(i);
+        if (shown.Count == 0) shown.Add(_team);
         var tabs = new Stack(true) { Gap = Gap, Width = innerW, Align = Align.Start };
-        float tabW = (innerW - Gap * (TeamKeys.Length - 1)) / TeamKeys.Length;
-        for (int i = 0; i < TeamKeys.Length; i++)
+        float tabW = Math.Min(innerW / 4f, (innerW - Gap * (shown.Count - 1)) / shown.Count);
+        foreach (int i in shown)
         {
             int t = i;
             int on = groups[i].FindAll(chosen.Contains).Count;

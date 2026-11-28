@@ -54,6 +54,8 @@ public static class RoleDictionaryHudButton
             {
                 if (!r || !r.enabled || !r.sprite) continue;
                 var b = r.bounds;
+                // 当たり判定などの大きな絵はボタンの見た目ではないので数えない
+                if (b.size.y > 3f || b.size.x > 3f) continue;
                 left = Mathf.Min(left, b.min.x);
                 bottom = Mathf.Min(bottom, b.min.y);
                 any = true;

@@ -90,16 +90,18 @@ namespace TownOfHostL
                     shiftedForButtons = false;
                     if (!has) return;
                     var p = t.position;
-                    if (p.x + rightOff <= left || p.y + topOff <= bottom) return;
+                    // 字は右寄せで右上のボタンの真下まで伸びるので、横の重なりは見ずに縦だけ見る (横の測り方がずれて重なったままになっていた)
+                    if (p.y + topOff <= bottom - 0.05f) return;
                     t.position = new Vector3(p.x, bottom - 0.05f - topOff, p.z);
                     shiftedForButtons = true;
+                    if (!avoidLogged) { avoidLogged = true; Logger.Info($"右上の字をボタンの下へ: 字の上 {p.y + topOff:0.00} → {bottom - 0.05f:0.00} (ボタンの左 {left:0.00}・字の右 {p.x + rightOff:0.00})", "Credentials"); }
                 }
                 catch (System.Exception ex)
                 {
                     if (!avoidWarned) { avoidWarned = true; Logger.Warn($"右上の字をボタンからよけられない: {ex.Message}", "Credentials"); }
                 }
             }
-            static bool avoidWarned;
+            static bool avoidWarned, avoidLogged;
             static string suffix = "";
             static float nextBuildAt;
             static string BuildSuffix()
