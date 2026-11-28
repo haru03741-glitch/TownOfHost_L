@@ -65,7 +65,8 @@ public sealed class Stealth : RoleBase, IImpostor
         }
         if (excludeImpostors)
         {
-            playersToDarken = playersToDarken.Where(player => !player.Is(CustomRoles.Impostor));
+            // 説明どおりインポスター陣営の仲間を全員外す (素のインポスターの役職だけでなく)
+            playersToDarken = playersToDarken.Where(player => !player.Is(CustomRoleTypes.Impostor));
         }
         DarkenPlayers(playersToDarken);
     }
@@ -85,8 +86,20 @@ public sealed class Stealth : RoleBase, IImpostor
     /// <summary>渡されたプレイヤーを<see cref="darkenDuration"/>秒分視界ゼロにする</summary>
     private void DarkenPlayers(IEnumerable<PlayerControl> playersToDarken)
     {
-        darkenedPlayers = playersToDarken.ToArray();
-        foreach (var player in playersToDarken)
+        var next = playersToDarken.ToArray();
+        // 前の暗転が残っている間に次のキルをした時は、前に暗くした人のうち今回の外の人を先に戻し、時間を数え直す
+        if (darkenedPlayers != null)
+        {
+            foreach (var player in darkenedPlayers)
+            {
+                if (next.Contains(player)) continue;
+                PlayerState.GetByPlayerId(player.PlayerId).IsBlackOut = false;
+                player.MarkDirtySettings();
+            }
+        }
+        darkenTimer = darkenDuration;
+        darkenedPlayers = next;
+        foreach (var player in next)
         {
             PlayerState.GetByPlayerId(player.PlayerId).IsBlackOut = true;
             player.MarkDirtySettings();
