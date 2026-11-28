@@ -244,7 +244,8 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
         if (!Player.IsAlive())
         {
             if (charging || waiting || beaming) Stop();
-            if (tilesSpawned) RemoveTiles();
+            // 消したら作り直しの印も戻す (生き返った時に、会議を待たずダミーを作り直す)
+            if (tilesSpawned) { RemoveTiles(); tilesSpawned = false; }
             return;
         }
         if (GameStates.IsMeeting || GameStates.CalledMeeting)
