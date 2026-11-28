@@ -105,6 +105,7 @@ public sealed class Lantern : RoleBase
             case RoleTypes.Engineer:
             case RoleTypes.Tracker:
             case RoleTypes.Noisemaker:
+            case RoleTypes.Detective:
                 // 全員の画面で本人の役職だけを替える (本人の画面の他の人は変えない)
                 RoleView.ApplyToEveryone(player);
                 break;
