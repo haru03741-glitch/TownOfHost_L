@@ -310,8 +310,10 @@ public sealed class Walkure : RoleBase, ISelfVoter, IKiller
 
     public override void OnPlayerDead(PlayerControl player)
     {
-        if (player.PlayerId == Player.PlayerId)
-            TriggerDeathPenalty();
+        if (player.PlayerId != Player.PlayerId) return;
+        // 試合中に抜けただけの死では罰を起こさない (追放の後に抜けた時は OnPlayerLeft が遅らせて起こす)
+        if (!isExiled && MyState.DeathReason is CustomDeathReason.Disconnected) return;
+        TriggerDeathPenalty();
     }
 
     public override void OnPlayerLeft(byte playerId)
