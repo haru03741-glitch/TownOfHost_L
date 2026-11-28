@@ -49,7 +49,8 @@ public sealed class AntiReporter : RoleBase, IImpostor, IUsePhantomButton
         AntiReporterResetse
     }
     static float Cooldown;
-    static int Use;
+    // 残り回数は人ごと (2 人以上いる時に互いの回数を減らさない)
+    int Use;
     static bool AntiReporterResetMeeting;
     static float AntiReporterResetse;
     private static void SetupOptionItem()
