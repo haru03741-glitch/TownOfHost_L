@@ -228,7 +228,13 @@ namespace TownOfHostL
                             AntiBlackout.OnDisconnect(info);
                         PlayerGameOptionsSender.RemoveSender(playerId);
                         if (wasAlive) Modules.AutoAbort.OnAliveDisconnected();
-                        if (AmongUsClient.Instance.AmHost && GameStates.IsInGame) CustomRoleManager.NotifyPlayerLeft(playerId);
+                        if (AmongUsClient.Instance.AmHost && GameStates.IsInGame)
+                        {
+                            CustomRoleManager.NotifyPlayerLeft(playerId);
+                            // 抜けた人を覚えていた役職 (狙い・相方・配下など) が状態を戻すので、名前の表示を送り直す。
+                            // 会議中は会議用の名前を上書きしないよう送らない (会議明けに組み直される)
+                            if (GameStates.IsInTask) Utils.NotifyRoles();
+                        }
                         // 会議中に最後の未投票の人が抜けた時、残りの全員が票済みなら締める (票が来ないので締めの判定が走らない)
                         if (AmongUsClient.Instance.AmHost && wasAlive && MeetingHud.Instance) MeetingVoteManager.Instance?.CheckAndEndMeeting();
                     }
