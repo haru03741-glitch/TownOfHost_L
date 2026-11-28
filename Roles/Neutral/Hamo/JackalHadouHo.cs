@@ -1207,6 +1207,13 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
     {
 
+        // 撃ち終わりまでに役職が外れた時 (Player が空) は、ビームの見た目だけ片付ける (持ち物は役職の破棄で外れる)
+        if (Player == null)
+        {
+            ShowBeamMark = false; _prevBeamMark = false; IsSuperBeam = false;
+            beam?.End(); IsFiring = false;
+            return;
+        }
         if (IsDead || !Player.IsAlive())
 
         {

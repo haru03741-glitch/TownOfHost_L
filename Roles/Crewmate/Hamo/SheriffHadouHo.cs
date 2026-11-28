@@ -335,6 +335,8 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
         ApplyBeamHit();
 
         var generation = ++fireGeneration;
+        // 片付けの間に役職が外れると Player は空になるので、番号を控えておく
+        var firerId = Player.PlayerId;
         // 撃ち終わりの片付けなので役職が外れても走らせる
         _ = new LateTask(() =>
         {
@@ -343,8 +345,8 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
             {
                 ShowBeamMark = false; _prevBeamMark = false;
                 beam?.End(); IsFiring = false;
-                Holdings.RemoveSpeed(Player.PlayerId, nameof(SheriffHadouHo));
-                Player.MarkDirtySettings();
+                Holdings.RemoveSpeed(firerId, nameof(SheriffHadouHo));
+                Player?.MarkDirtySettings();
                 Utils.NotifyRoles(); return;
             }
 
