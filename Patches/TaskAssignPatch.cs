@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using AmongUs.GameOptions;
 using HarmonyLib;
@@ -62,6 +62,13 @@ namespace TownOfHostL
             CustomRoles? RoleNullable = pc?.GetCustomRole();
             if (RoleNullable == null) return;
             CustomRoles role = RoleNullable.Value;
+
+            // GM はタスクを持たない (一覧・矢印・全体のタスクの数に入れない)
+            if (role == CustomRoles.GM)
+            {
+                taskTypeIds = new Il2CppStructArray<byte>(0);
+                return;
+            }
 
             // デフォルトのタスク数
             bool hasCommonTasks = true;

@@ -6533,7 +6533,6 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "GMAutoPossess","Auto-possess a player during tasks (GM)","GM中、タスクターン中に誰かに憑依する","","","","",""
 "GMAutoPossessAliveOnly","Possess living players only","生存者のみに憑依する","","","","",""
 "GMAutoPossessPreferImpostor","Prefer impostors","インポスターを優先的に憑依する","","","","",""
-"GMHideTaskButton","Hide the GM's task list","GMのタスク一覧を非表示にする","","","","",""
 "GMCanSeeRoles","GM can see others' roles","GMが他人の役職を見ることができる","","","","",""
 "GMCanSeeTaskProgress","GM can see others' task progress","GMが他人のタスク進捗を見ることができる","","","","",""
 "GMCanSeeVotes","GM can see votes","GMが他人の投票先を見ることができる","","","","",""

@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using BepInEx.Unity.IL2CPP.Utils.Collections;
 using HarmonyLib;
 using TownOfHostL.Roles.Core;
@@ -12,7 +12,6 @@ public static class GmOptions
     public static OptionItem AutoPossess;
     public static OptionItem AutoPossessAliveOnly;
     public static OptionItem AutoPossessPreferImpostor;
-    public static OptionItem HideTaskButton;
     public static OptionItem CanSeeRoles;
     public static OptionItem CanSeeTaskProgress;
     public static OptionItem CanSeeVotes;
@@ -33,7 +32,6 @@ public static class GmOptions
         AutoPossess = Make("GMAutoPossess", false, gm);
         AutoPossessAliveOnly = Make("GMAutoPossessAliveOnly", true, AutoPossess, "#ff3300");
         AutoPossessPreferImpostor = Make("GMAutoPossessPreferImpostor", false, AutoPossessAliveOnly, "#ff3300");
-        HideTaskButton = Make("GMHideTaskButton", false, gm);
         CanSeeRoles = Make("GMCanSeeRoles", true, gm);
         CanSeeTaskProgress = Make("GMCanSeeTaskProgress", true, gm);
         CanSeeVotes = Make("GMCanSeeVotes", true, gm);
@@ -236,7 +234,7 @@ public static class GmHideTaskPanelPatch
     public static void Postfix(HudManager __instance)
     {
         if (!GameStates.IsInGame || GameStates.IsLobby) return;
-        if (!GmOptions.Get(GmOptions.HideTaskButton, false)) return;
+        // GM にはタスクを配らないので、タスクの一覧もいつも隠す
         if (!GmOptions.IsGM(PlayerControl.LocalPlayer)) return;
         var panel = __instance.TaskPanel;
         if (panel != null && panel.gameObject.activeSelf) panel.gameObject.SetActive(false);
