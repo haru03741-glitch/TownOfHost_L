@@ -307,13 +307,12 @@ public static class ChatCommandTable
             Usage = "CommandUsage.PlayerId",
             Host = c => { if (c.Args.Length > 1 && int.TryParse(c.Args[1], out int id)) TownOfHostL.Roles.Core.Kill.Suicide(Utils.GetPlayerById(id)); },
         },
-        // 読み上げの声はホストだけが変える
-        new("/vo", "/voice") { Host = HostVoice },
-        // キルフラッシュはホストとモデレーターだけ
+        new("/vo", "/voice") { Restrictable = true, Host = HostVoice, Remote = RemoteVoice },
         new("/killFlash", "/kf")
         {
-            ForModerator = true,
+            Restrictable = true,
             Host = c => Utils.SetKillFlashAfterDead(c.Player, true),
+            Remote = c => Utils.SetKillFlashAfterDead(c.Player),
         },
         new("/ws", "/whisper")
         {
