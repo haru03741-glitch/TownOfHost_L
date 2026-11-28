@@ -237,7 +237,9 @@ namespace TownOfHostL
                         return false;
                     }
 
-                    RoleAssignManager.CheckRoleCount();
+                    // 人数の検査は警告を出すだけ。役職の判定が例外を出しても、ここから先の開始の準備 (設定の写しなど) を飛ばさない
+                    try { RoleAssignManager.CheckRoleCount(); }
+                    catch (Exception ex) { Logger.Exception(ex, "CheckRoleCount"); }
 
                     // 配信の視聴者のマップ投票はランダムマップより優先する。止める検査を通った後で決める (止まった時に票だけ消えないように)。設定は下でまとめて送る
                     TownOfHostL.Modules.Streaming.MapVote.ApplyAtGameStart();
