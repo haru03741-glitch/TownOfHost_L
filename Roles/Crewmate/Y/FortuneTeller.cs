@@ -79,7 +79,8 @@ public sealed class FortuneTeller : RoleBase
     {
         // 既定値
         var baseVote = base.ModifyVote(voterId, sourceVotedForId, isIntentional);
-        if (voterId == Player.PlayerId && sourceVotedForId != Player.PlayerId && sourceVotedForId < 253 && Player.IsAlive())
+        // 本人が選んでいない票 (天秤会議の強制の票など) では占わない
+        if (isIntentional && voterId == Player.PlayerId && sourceVotedForId != Player.PlayerId && sourceVotedForId < 253 && Player.IsAlive())
         {
             VoteForecastTarget(sourceVotedForId);
         }

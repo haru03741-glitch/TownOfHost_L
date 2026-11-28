@@ -78,7 +78,8 @@ public sealed class Chairman : RoleBase
         // 既定値
         var (votedForId, numVotes, doVote) = base.ModifyVote(voterId, sourceVotedForId, isIntentional);
         var baseVote = (votedForId, numVotes, doVote);
-        if (IgnoreSkip || voterId != Player.PlayerId || sourceVotedForId == Player.PlayerId || sourceVotedForId >= 253 || !Player.IsAlive())
+        // 本人が選んでいない票 (天秤会議の強制の票など) では能力を使わない
+        if (IgnoreSkip || !isIntentional || voterId != Player.PlayerId || sourceVotedForId == Player.PlayerId || sourceVotedForId >= 253 || !Player.IsAlive())
         {
             return baseVote;
         }
