@@ -3214,6 +3214,7 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "AssasinCanCallMeetingKill","Can Call Meeting Kill","追放以外でもアサシン会議を起こす"
 "AssasinHasOtherRole","Has Other Role","他の役職の能力も持つ"
 "AssassinHaveRole","Role","併せ持つ役職"
+"JackalWolfSecondRole","Role to Grant (2nd, one of the two at random)","付与する役職(2つ目・ランダムでどちらか)"
 "AssassinMeetingTime","AssassinMeetingTime","アサシン会議の会議時間"
 "ArcherLostArrowtimer","Arrow Active time","矢が消失するまでの時間"
 "HadouHoChargeTime","Charge Time","チャージ時間"
