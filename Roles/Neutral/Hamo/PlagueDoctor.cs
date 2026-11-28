@@ -183,7 +183,8 @@ public sealed class PlagueDoctor : RoleBase, IKiller
     {
         if (!AmongUsClient.Instance.AmHost) return;
 
-        if (!GameStates.IsInTask) return;
+        // 全員が出発地点に集まって動けないイントロの間は、感染を進めない
+        if (!GameStates.IsInTask || GameStates.Intro) return;
         if (NonPlague) return;//ペスト不在だと感染しない...理由付けがむずいけど自然消滅ってこと..
         if (DestroyPlague && !PlagueDoctors.Any(pla => pla?.Player?.GetCustomRole() is CustomRoles.PlagueDoctor))
         {

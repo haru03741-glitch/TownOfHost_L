@@ -8,7 +8,7 @@ public sealed class CandleLighter : RoleBase
 {
     public static readonly SimpleRoleInfo RoleInfo =
          SimpleRoleInfo.Create(
-            typeof(Lighter),
+            typeof(CandleLighter),
             player => new CandleLighter(player),
             CustomRoles.CandleLighter,
             () => RoleTypes.Crewmate,
@@ -90,6 +90,8 @@ public sealed class CandleLighter : RoleBase
             opt.SetFloat(FloatOptionNames.CrewLightMod, Vision * 5);
     }
 
+    // 試合の途中で就いた時も、もう条件を満たしていれば次のタスクを待たずに効かせる
+    public override void OnAddedMidGame() => OnCompleteTask();
     public override bool OnCompleteTask()
     {
         if (Player.IsAlive() && IsTaskFinished)

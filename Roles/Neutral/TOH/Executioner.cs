@@ -112,9 +112,17 @@ public sealed class Executioner : RoleBase, IAdditionalWinner
     /// <summary>生き返ったら、死ぬ前のターゲットがまだ生きていれば狙い直す</summary>
     public override void OnRevived()
     {
+        var hadTarget = targetBeforeDeath != byte.MaxValue;
         var target = Utils.GetPlayerById(targetBeforeDeath);
         targetBeforeDeath = byte.MaxValue;
-        if (TargetId != byte.MaxValue || target == null || !target.IsAlive()) return;
+        if (TargetId != byte.MaxValue) return;
+        // 死んでいる間にターゲットが死んだ・抜けた時は、生きている時にターゲットが死んだ時と同じく役職が変わる
+        if (target == null || !target.IsAlive())
+        {
+            // 生き返りの役職の付け直しが落ち着いてから変える
+            if (hadTarget) _ = After(() => ChangeRole(), 0.5f, "ExecutionerChangeRoleAfterRevive");
+            return;
+        }
         TargetId = target.PlayerId;
     }
     /// <summary>ターゲットが追放以外で死んだら役職が変わる (追放された時は OnExileWrapUp で勝ちになる)</summary>

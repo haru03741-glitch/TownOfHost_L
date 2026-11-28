@@ -32,9 +32,6 @@ public sealed class Mare : RoleBase, IImpostor
         Holdings.Subscribe(CustomRoleManager.EveryoneNeedsSeenNamesOthers, () => Utils.IsActive(SystemTypes.Electrical));
         KillCooldownInLightsOut = OptionKillCooldownInLightsOut.GetFloat();
         SpeedInLightsOut = OptionSpeedInLightsOut.GetFloat();
-
-        IsActivateKill = false;
-
     }
 
     private static OptionItem OptionKillCooldownInLightsOut;
@@ -46,7 +43,8 @@ public sealed class Mare : RoleBase, IImpostor
     }
     private float KillCooldownInLightsOut;
     private float SpeedInLightsOut;
-    private static bool IsActivateKill;
+    // 人ごとに持つ (共有すると、2 人いる時に先に解除した 1 人しか停電明けの設定を送り直さない)
+    private bool IsActivateKill;
 
     public static void SetupCustomOption()
     {

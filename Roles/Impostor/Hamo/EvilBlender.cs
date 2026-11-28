@@ -159,6 +159,14 @@ public sealed class EvilBlender : RoleBase, IImpostor, IUsePhantomButton
 
     {
 
+        // 毒ガスの途中で会議になった時は、毒ガスで立てたサボ中の印も戻す (残すと次の本物のサボの記録が出ず、サボの時間も数え続ける)
+        if (UseingId != byte.MaxValue)
+        {
+            Main.IsActiveSabotage = false;
+            Main.SabotageType = SystemTypes.Hallway;
+            Main.LastSab = byte.MaxValue;
+            Main.SabotageActivetimer = 0;
+        }
         UseingId = byte.MaxValue;
 
         PlayerRooms.Clear();

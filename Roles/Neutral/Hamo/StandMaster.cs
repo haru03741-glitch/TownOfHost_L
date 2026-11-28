@@ -378,9 +378,9 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
             {
 
-                string title = "<size=90%><color=#8B4513>【====== スタンド情報 ======】</color></size>";
+                string title = $"<size=90%><color=#8B4513>{TownOfHostL.Translator.GetString("StandInfoTitle")}</color></size>";
 
-                string msg = $"<color=#8B4513>{stand.ColoredName()} はスタンドです。\nスタンドマスターが生きている限り死亡しません。</color>";
+                string msg = $"<color=#8B4513>{string.Format(TownOfHostL.Translator.GetString("StandInfoMessage"), stand.ColoredName())}</color>";
 
                 return title + "\n<size=70%>" + msg + "</size>\n";
 
@@ -452,7 +452,7 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
         bool canCreate = !standCreated && !standHadDied;
 
-        text = canCreate ? "スタンド化" : "キル";
+        text = TownOfHostL.Translator.GetString(canCreate ? "StandMasterMakeStand" : "KillButtonText");
 
         return true;
 
@@ -522,7 +522,12 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
         {
 
-            if (target.GetRoleClass() is Stand stand) stand.SetOwner(Player.PlayerId);
+            if (target.GetRoleClass() is Stand stand)
+            {
+                stand.SetOwner(Player.PlayerId);
+                // 主が決まって初めて、主とスタンドが互いの役職名を見られる。役職替えの時の名前は主が決まる前に組まれている
+                Utils.NotifyRoles();
+            }
 
         }, 0.2f, "StandMaster.SetOwner");
 
@@ -561,11 +566,16 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
     {
 
+        // スタンドを呼ばなかった時 (スタンドがいない・死んだ・呼び出し中) は、クールも使わせない
+        AdjustKillCooldown = false;
+        ResetCooldown = false;
         if (!Player.IsAlive() || !standCreated) return;
 
         var stand = GetStand();
 
         if (stand == null || !stand.IsAlive() || standSummoned) return;
+        AdjustKillCooldown = true;
+        ResetCooldown = true;
 
 
 
@@ -775,7 +785,8 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
             var stand = GetStand();
 
-            if (stand != null && !stand.IsAlive())
+            // スタンドが抜けた (引けない) 時も死んだのと同じに扱う (会議明けの処理と揃える)
+            if (stand == null || !stand.IsAlive())
 
             {
 

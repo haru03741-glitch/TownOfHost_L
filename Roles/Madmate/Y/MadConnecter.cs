@@ -257,13 +257,12 @@ public sealed class MadConnecter : RoleBase, IKiller, IKillFlashSeeable, IDeadBo
     private static string GetImpostorArrows(byte seerId)
     {
         var arrow = "";
-        MadList.RemoveWhere(mad => !mad.Player.IsAlive());
-
         HashSet<byte> targets = new(15);
 
+        // 死んだマッドは飛ばすだけで一覧からは外さない (外すと生き返った後に矢印が戻らない。一覧から外すのは役職が外れた時)
         foreach (var mad in MadList)
         {
-            if (mad.ConnectImpostorId.Count <= 0) continue;
+            if (!mad.Player.IsAlive() || mad.ConnectImpostorId.Count <= 0) continue;
 
             targets.Add(mad.Player.PlayerId);
         }

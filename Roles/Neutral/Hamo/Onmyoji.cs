@@ -359,13 +359,7 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
                 SendMessage(
 
-                    "<color=#9b59b6>【式神候補選択モード】</color>\n" +
-
-                    "誰かに投票 → 近接指名の候補に設定\n" +
-
-                    "スキップ → キャンセル\n" +
-
-                    "（ペットでモード切替→キルボタンでも指名可）",
+                    $"<color=#9b59b6>{TownOfHostL.Translator.GetString("OnmyojiSelectTitle")}</color>\n{TownOfHostL.Translator.GetString("OnmyojiSelectBody")}",
 
                     Player.PlayerId);
 
@@ -401,7 +395,7 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
                 {
 
-                    SendMessage("<color=#9b59b6>その相手は式神にできません。</color>", Player.PlayerId);
+                    SendMessage($"<color=#9b59b6>{TownOfHostL.Translator.GetString("OnmyojiTargetInvalid")}</color>", Player.PlayerId);
 
                     SetMode(Player, false);
 
@@ -413,7 +407,7 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
                 {
 
-                    SendMessage("<color=#9b59b6>キル能力を持たない相手のみ式神にできます。</color>", Player.PlayerId);
+                    SendMessage($"<color=#9b59b6>{TownOfHostL.Translator.GetString("OnmyojiTargetKiller")}</color>", Player.PlayerId);
 
                     SetMode(Player, false);
 
@@ -427,11 +421,7 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
                 SendMessage(
 
-                    $"<color=#9b59b6>【式神候補設定】</color>\n" +
-
-                    $"{target.ColoredName()} を候補に設定しました。\n" +
-
-                    $"次ターン、1.5秒近づいて式神作成！",
+                    $"<color=#9b59b6>{TownOfHostL.Translator.GetString("OnmyojiSetTitle")}</color>\n{string.Format(TownOfHostL.Translator.GetString("OnmyojiSetBody"), target.ColoredName())}",
 
                     Player.PlayerId);
 
@@ -618,7 +608,11 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
         if (spawnWaitTimer >= 0f && spawnWaitTimer < 3f)
 
+        {
             spawnWaitTimer = Mathf.Min(spawnWaitTimer + Time.fixedDeltaTime, 3f);
+            // 待機が明けた時に、名前の下の案内を「待機中」から切り替える (作成の待ち時間が短い設定では、ほかに出し直す所が無い)
+            if (spawnWaitTimer >= 3f) Utils.NotifyRoles(SpecifySeer: Player);
+        }
 
 
 
@@ -1063,7 +1057,7 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
         if (nominateMode)
 
-            return $"{size}<color=#9b59b6>【指名モード】キルボタンで式神指定！</color>";
+            return $"{size}<color=#9b59b6>{TownOfHostL.Translator.GetString("OnmyojiNominateHint")}</color>";
 
 
 
@@ -1077,15 +1071,15 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
             if (!SkCanApproach)
 
-                return $"{size}<color=#9b59b6>候補: {name} (待機中...)</color>";
+                return $"{size}<color=#9b59b6>{string.Format(TownOfHostL.Translator.GetString("OnmyojiCandidateWaiting"), name)}</color>";
 
             if (createCooldownTimer > 0f)
 
-                return $"{size}<color=#9b59b6>候補: {name} (CD:{Mathf.CeilToInt(createCooldownTimer)}s)</color>";
+                return $"{size}<color=#9b59b6>{string.Format(TownOfHostL.Translator.GetString("OnmyojiCandidateCooldown"), name, Mathf.CeilToInt(createCooldownTimer))}</color>";
 
             float prog = Mathf.Min(nearTimer, 1.5f);
 
-            return $"{size}<color=#9b59b6>{name}に近づき中 {prog:F1}/1.5s</color>";
+            return $"{size}<color=#9b59b6>{string.Format(TownOfHostL.Translator.GetString("JackalHadouHoSkApproaching"), name, prog.ToString("F1"))}</color>";
 
         }
 
@@ -1093,11 +1087,11 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
         if (isForMeeting)
 
-            return $"{size}<color=#9b59b6>自投票→式神候補を選択</color>";
+            return $"{size}<color=#9b59b6>{TownOfHostL.Translator.GetString("OnmyojiSelfVoteHint")}</color>";
 
 
 
-        return $"{size}<color=#9b59b6>ペット→指名モード / 会議自投票→近接指名</color>";
+        return $"{size}<color=#9b59b6>{TownOfHostL.Translator.GetString("OnmyojiHint")}</color>";
 
     }
 
@@ -1115,7 +1109,7 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
             ShikigamiIds.Count < 1 ? ColorUtility.TryParseHtmlString(ready, out var c) ? c : Color.white : Color.gray,
 
-            $"式:{ShikigamiIds.Count}/1");
+            string.Format(TownOfHostL.Translator.GetString("OnmyojiShikigamiCount"), ShikigamiIds.Count));
 
 
 
@@ -1127,9 +1121,9 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
                 nominateMode
 
-                    ? $" [指名]<color=#ffffff>({lastCDDisplay})</color>"
+                    ? $" [{TownOfHostL.Translator.GetString("OnmyojiNominateTag")}]<color=#ffffff>({lastCDDisplay})</color>"
 
-                    : $" [タスク]<color=#ffffff>({lastCDDisplay})</color>");
+                    : $" [{TownOfHostL.Translator.GetString("OnmyojiTaskTag")}]<color=#ffffff>({lastCDDisplay})</color>");
 
         }
 
@@ -1399,7 +1393,7 @@ public sealed class Shikigami : RoleBase, IUsePhantomButton, IKillFlashSeeable, 
 
         if (!AmongUsClient.Instance.AmHost || !Player.IsAlive()) return;
 
-        if (suicideCooldownTimer > 0f) { SendMessage($"<color=#9b59b6>自決クール中: {Mathf.CeilToInt(suicideCooldownTimer)}秒</color>", Player.PlayerId); return; }
+        if (suicideCooldownTimer > 0f) { SendMessage($"<color=#9b59b6>{string.Format(TownOfHostL.Translator.GetString("ShikigamiSuicideCooldown"), Mathf.CeilToInt(suicideCooldownTimer))}</color>", Player.PlayerId); return; }
 
         suicideCooldownTimer = Onmyoji.GetShikigamiSuicideCooldown();
 
@@ -1429,11 +1423,11 @@ public sealed class Shikigami : RoleBase, IUsePhantomButton, IKillFlashSeeable, 
 
         if (OwnerId == byte.MaxValue) TryResolveOwnerFromOnmyoji();
 
-        if (OwnerId == byte.MaxValue) { SendMessage("<color=#9b59b6>陰陽師が見つかりません。</color>", Player.PlayerId); return; }
+        if (OwnerId == byte.MaxValue) { SendMessage($"<color=#9b59b6>{TownOfHostL.Translator.GetString("ShikigamiOwnerMissing")}</color>", Player.PlayerId); return; }
 
         var owner = GetPlayerById(OwnerId);
 
-        if (owner == null) { SendMessage("<color=#9b59b6>陰陽師が見つかりません。</color>", Player.PlayerId); return; }
+        if (owner == null) { SendMessage($"<color=#9b59b6>{TownOfHostL.Translator.GetString("ShikigamiOwnerMissing")}</color>", Player.PlayerId); return; }
 
         isShifted = !isShifted;
 
@@ -1506,7 +1500,7 @@ public sealed class Shikigami : RoleBase, IUsePhantomButton, IKillFlashSeeable, 
 
         var cd = Mathf.CeilToInt(Mathf.Max(0f, suicideCooldownTimer));
 
-        return isForHud ? "" : $"<size=60%>Pet:自決 ({cd}s)</size>";
+        return isForHud ? "" : $"<size=60%>{string.Format(TownOfHostL.Translator.GetString("ShikigamiPetSuicide"), cd)}</size>";
 
     }
 

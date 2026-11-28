@@ -176,6 +176,8 @@ public sealed class BestieWolf : RoleBase, IImpostor
                     {
                         nearTarget.pc.SetRealKiller(killer);
                     }
+                    // 守りで巻き添えが通らなかった時は、全員へのキルフラッシュの印を外す (残すと、その人が後で別の人に殺された時も全員に出る)
+                    else EnableKillFlash = null;
                 }
                 finally
                 {

@@ -105,7 +105,8 @@ public sealed class Counselor : RoleBase
             var target = counselor.Reserved.Item2;
             // 予約は 1 回の会議だけ。消さないと次の会議の後にも同じ人をクルーへ戻し、印も残る
             counselor.Reserved = (false, null);
-            if (target == null || !target.Is(CustomRoles.MadDilemma)) continue;
+            // 相手がその会議で追放された・死んだ時は役職を書き換えない
+            if (target == null || !target.IsAlive() || !target.Is(CustomRoles.MadDilemma)) continue;
             target.RpcSetCustomRole(CustomRoles.Crewmate);
             //if (ResetAddonChangeCrew)
             //    PlayerState.GetByPlayerId(counselor.Reserved.Item2.PlayerId).SubRoles.Clear();

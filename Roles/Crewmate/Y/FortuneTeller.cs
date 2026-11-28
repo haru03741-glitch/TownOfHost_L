@@ -1,4 +1,4 @@
-using TownOfHostL.Modules;
+﻿using TownOfHostL.Modules;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -92,13 +92,15 @@ public sealed class FortuneTeller : RoleBase
     {
         // 既定値
         var baseVote = base.ModifyVote(voterId, sourceVotedForId, isIntentional);
-        if (voterId == Player.PlayerId)
+        // 本人が選んだ票だけ、構えた能力を使う (天秤会議の強制の票などでは構えを消さない)
+        if (isIntentional && voterId == Player.PlayerId)
         {
             var armed = abilityArmed;
             abilityArmed = false;
             if (!armed) return baseVote;
         }
-        if (voterId == Player.PlayerId && sourceVotedForId != Player.PlayerId && sourceVotedForId < 253 && Player.IsAlive())
+        // 本人が選んでいない票 (天秤会議の強制の票など) では占わない
+        if (isIntentional && voterId == Player.PlayerId && sourceVotedForId != Player.PlayerId && sourceVotedForId < 253 && Player.IsAlive())
         {
             VoteForecastTarget(sourceVotedForId);
         }

@@ -407,12 +407,13 @@ public abstract class PavlovDogBase : RoleBase, IKiller, IAdditionalWinner, ISch
             return;
         }
 
-        if (!info.CanKill) return;
-
-        if (!IsRampage) return;
-
+    }
+    // 暴走の時限を延ばすのはキルが成立した時だけ (守りで止められたキルで延ばさない)
+    public void OnMurderPlayerAsKiller(MurderInfo info)
+    {
+        if (info.IsSuicide || !IsRampage) return;
         RampageTimer = null;
-        info.AttemptKiller.MarkDirtySettings();
+        Player.MarkDirtySettings();
     }
 
     public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)

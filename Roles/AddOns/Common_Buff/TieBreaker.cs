@@ -71,7 +71,8 @@ public static class TieBreaker
                 Logger.Info("TieBreakerの衝突", "TieBreaker");
                 Exiled = null;
             }
-            else
+            // タイブレーカーの票が同票の候補に当たった時だけ決着させる (当たらなければ同数のまま、同数の処理へ進む)
+            else if (tiebreakerUse)
                 IsTie = false;
         }
         TieBreakerVote.Clear();

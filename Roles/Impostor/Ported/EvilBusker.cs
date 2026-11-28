@@ -61,7 +61,8 @@ public sealed class EvilBusker : RoleBase, IImpostor, IUsePhantomButton, IUsePet
     public float CalculateKillCooldown() => killCooldown;
     public override void ApplyGameOptions(IGameOptions opt)
     {
-        AURoleOptions.PhantomCooldown = cooldown;
+        // 使い切った後は押せるボタンを残さない (キルで回数が戻ったら元のクールへ)
+        AURoleOptions.PhantomCooldown = uses > 0 ? cooldown : 200f;
         AURoleOptions.GuardianAngelCooldown = TempGhost.LockedGuardianAngelCooldown;
     }
 
@@ -79,7 +80,12 @@ public sealed class EvilBusker : RoleBase, IImpostor, IUsePhantomButton, IUsePet
 
     public void OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
-        if (pet != null || !TryBecomeGhost(null)) return;
+        // 回数切れやペットで使う設定の時は何も起きないので、クールも使わせない
+        if (pet != null || !TryBecomeGhost(null))
+        {
+            ResetCooldown = false;
+            return;
+        }
         // 戻った時にキルと能力のクールを立て直すので、ここでは役職の送り直しもクールの調整もしない
         AdjustKillCooldown = false;
         ResetCooldown = null;
@@ -91,6 +97,8 @@ public sealed class EvilBusker : RoleBase, IImpostor, IUsePhantomButton, IUsePet
         if (++killsTowardUse < killsPerUse) return;
         killsTowardUse = 0;
         uses++;
+        // 使い切りで 200 秒にしたクールを客の手元でも数え直させる (設定を送るだけだと 200 秒を数え続ける)
+        if (uses == 1) Player.RpcResetAbilityCooldown(sync: true);
         Utils.NotifyRoles(SpecifySeer: Player);
     }
 

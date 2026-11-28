@@ -159,7 +159,14 @@ public sealed class Tuna : RoleBase
 
             if (CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Tuna, pc.PlayerId))
             {
-                CustomWinnerHolder.NeutralWinnerIds.Add(pc.PlayerId);
+                // 生き残ったマグロは全員勝つ (1 人目だけにしない)
+                foreach (var other in Main.AllAlivePlayerControls)
+                {
+                    if (other.GetRoleClass() is not Tuna) continue;
+                    CustomWinnerHolder.WinnerIds.Add(other.PlayerId);
+                    CustomWinnerHolder.NeutralWinnerIds.Add(other.PlayerId);
+                    CustomWinnerHolder.CantWinPlayerIds.Remove(other.PlayerId);
+                }
                 reason = GameOverReason.ImpostorsByKill;
                 return true;
             }

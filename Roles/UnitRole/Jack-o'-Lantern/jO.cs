@@ -146,8 +146,8 @@ public sealed class JO : RoleBase, IKiller
             return false;
         }
 
-        // ジャックに送信する
-        SentPlayer.Add(target.PlayerId);
+        // ジャックに送信する (送った相手にもう一度送っても回数は使わない)
+        if (!SentPlayer.Add(target.PlayerId)) return false;
         
         sendRoleLimit--;
         Logger.Info($"{Player.GetNameWithRole()} : 役職送信→{target.GetNameWithRole()}/残り{sendRoleLimit}回", "jO");

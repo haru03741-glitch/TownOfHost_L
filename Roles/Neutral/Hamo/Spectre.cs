@@ -47,7 +47,8 @@ public sealed class Spectre : RoleBase, IKiller, IUsePhantomButton
         () => HasTask.False
     )
     {
-        LeftAliveTime = InitialSatiety * SatietyRate;
+        // 初めの満腹度も最大を超えさせない (設定の組み合わせで最大より大きくできる)
+        LeftAliveTime = Mathf.Min(InitialSatiety, MaxSatiety) * SatietyRate;
         lastShown = "";
         killerIds.Clear();
     }
@@ -235,6 +236,12 @@ public sealed class Spectre : RoleBase, IKiller, IUsePhantomButton
         if (!PairMap.TryGetValue(followerId, out var id)) return null;
         return Utils.GetPlayerById(id)?.GetRoleClass() as Spectre;
     }
+    /// <summary>この子狐・背徳者の親が部屋を抜けた (組はあるのに親の PlayerControl が無い)</summary>
+    internal static bool IsMySpectreGone(byte followerId)
+    {
+        EnsurePaired();
+        return PairMap.TryGetValue(followerId, out var id) && Utils.GetPlayerById(id) == null;
+    }
     IEnumerable<byte> TeamMemberIds() => PairMap.Where(kv => kv.Value == Player.PlayerId).Select(kv => kv.Key);
     internal void NotifyTeam()
     {
@@ -281,7 +288,8 @@ public sealed class Spectre : RoleBase, IKiller, IUsePhantomButton
     public override void OnFixedUpdate(PlayerControl _)
     {
         if (!AmongUsClient.Instance.AmHost) return;
-        if (!GameStates.IsInTask || GameStates.InMeetingWindow) return;
+        // 動けないイントロの間は満腹度を減らさない
+        if (!GameStates.IsInTask || GameStates.InMeetingWindow || GameStates.Intro) return;
         EnsurePaired();
         SpectreDishes.Update();
 

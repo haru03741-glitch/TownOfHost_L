@@ -92,7 +92,8 @@ public sealed class Guardian : RoleBase, ISelfVoter
     // これまでに守った(生涯)対象の数(重複カウントしない、対象ごとに1回)
     private readonly HashSet<byte> lifetimeGuardedTargets = new();
 
-    bool ISelfVoter.CanUseVoted() => false;
+    // 守護モードの切り替えの自投票を、本当の自分への票として数えない (ほかの自投票の役職と同じ)
+    bool ISelfVoter.CanUseVoted() => Canuseability() && Player.IsAlive();
 
     private bool HasEnoughTasks()
         => OptionRequiredTaskCount.GetInt() <= 0
@@ -150,6 +151,9 @@ public sealed class Guardian : RoleBase, ISelfVoter
             return;
         }
 
+        // 死んだ・抜けた相手は守りの枠を占めない
+        foreach (var id in guardedTargets.Keys.ToList())
+            if (Utils.GetPlayerById(id) is not PlayerControl guarded || !guarded.IsAlive()) guardedTargets.Remove(id);
         if (guardedTargets.Count >= OptionMaxSimultaneousGuards.GetInt())
         {
             Utils.SendMessage(GetString("Guardian.SimultaneousLimitReached"), Player.PlayerId);
@@ -169,7 +173,8 @@ public sealed class Guardian : RoleBase, ISelfVoter
             return;
         }
 
-        guardedTargets[targetId] = OptionGuardDurationMeetings.GetInt();
+        // 守りを決めた会議の明けでも 1 つ減るので、その分を足す (設定の会議数だけ守りが続く)
+        guardedTargets[targetId] = OptionGuardDurationMeetings.GetInt() + 1;
         lifetimeGuardedTargets.Add(targetId);
 
         Utils.SendMessage(

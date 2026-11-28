@@ -114,6 +114,10 @@ public sealed class Evilgambler : RoleBase, IImpostor
 
             (var killer, var target) = info.AttemptTuple;
 
+            // 守りに止められた時に戻すための控え
+            gambleBefore = (spcount, l1flug);
+            gambled = true;
+
             int chance = IRandom.Instance.Next(1, 101);
 
             // chance は 1〜100。設定の gamblecollect% で成功させる
@@ -152,6 +156,20 @@ public sealed class Evilgambler : RoleBase, IImpostor
         }
 
     }
+
+    // 賭けはキルが通った時だけ効かせる。守りに止められたら、クールと数えを賭けの前へ戻す
+    (int spcount, bool l1flug) gambleBefore;
+    bool gambled;
+    public void OnCheckMurderDontKill(MurderInfo info)
+    {
+        if (!gambled) return;
+        gambled = false;
+        spcount = gambleBefore.spcount;
+        l1flug = gambleBefore.l1flug;
+        // 守りの演出で客のキルの待ちは賭けの値で数え始めているので、ふつうのクールで数え直させる
+        Player.SetKillCooldown();
+    }
+    public void OnMurderPlayerAsKiller(MurderInfo info) => gambled = false;
 
     public override void AfterMeetingTasks()
 

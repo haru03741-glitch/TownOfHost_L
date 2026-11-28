@@ -320,6 +320,8 @@ public sealed class Vulture : RoleBase, IKillFlashSeeable, IAdditionalWinner
 
         // 見積もりは客へ送っている溶ける秒数と、キルの動きの分
         if (info.AppearanceKiller.Is(RoleTypes.Viper)) Viperkilledplayers[info.AppearanceTarget.PlayerId] = TownOfHostL.Modules.DissolveKill.ViperSeconds + TownOfHostL.Modules.DissolveKill.KillSettle;
+        // 生き返った人が別の死に方でもう一度死んだ時は、前の溶ける時間を残さない (残すと新しい死体を早く消す)
+        else Viperkilledplayers.Remove(info.AppearanceTarget.PlayerId);
 
 
 
@@ -465,6 +467,8 @@ public sealed class Vulture : RoleBase, IKillFlashSeeable, IAdditionalWinner
 
                     DiePlayerPos.Where(poss => poss.Key == i).Do(poss => GetArrow.Remove(Player.PlayerId, poss.Value));
 
+                    // 溶け切るまでの間に生き返った人は、消さない (生きている人のペットが外れ、次の死体が消し済みと扱われる)
+                    if (PlayerState.GetByPlayerId(i)?.IsDead != true) continue;
                     EraseEatenBody(i);
 
                 }

@@ -94,10 +94,19 @@ public sealed class Rabbit : RoleBase
         }
 
         var Impostors = Main.AllAlivePlayerControls.Where(pc=>pc.Is(CustomRoleTypes.Impostor)).ToArray();
-        // 生きたインポスターがいない時は矢印を出さない
-        if (Impostors.Length == 0) return true;
-        var target = Impostors[IRandom.Instance.Next(Impostors.Length)];
+        // 生きたインポスターがいない時は矢印を出さない (タスクの配り直しは下で必ずする)
+        if (Impostors.Length > 0) ShowArrowTo(Impostors[IRandom.Instance.Next(Impostors.Length)]);
 
+        if (IsTaskFinished) //タスク全完了時にリセット
+        {
+            MyTaskState.AllTasksCount += NumLongTasks + NumShortTasks;
+            Player.Data.RpcSetTasks(Array.Empty<byte>()); //タスクを再配布
+            Player.SyncSettings();
+        }
+        return true;
+    }
+    void ShowArrowTo(PlayerControl target)
+    {
         //対象の方角ベクトルを取る
         var dir = target.transform.position - Player.transform.position;
         int index;
@@ -123,14 +132,6 @@ public sealed class Rabbit : RoleBase
             showArrow = string.Empty;
             Utils.NotifyRoles(SpecifySeer: Player);
         }, 5f, "Rabbit showArrow Empty");
-
-        if (IsTaskFinished) //タスク全完了時にリセット
-        {
-            MyTaskState.AllTasksCount += NumLongTasks + NumShortTasks;
-            Player.Data.RpcSetTasks(Array.Empty<byte>()); //タスクを再配布
-            Player.SyncSettings();
-        }
-        return true;
     }
 
     public override string GetSuffix(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false)

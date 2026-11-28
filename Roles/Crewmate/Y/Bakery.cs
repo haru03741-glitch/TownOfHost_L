@@ -223,22 +223,22 @@ public sealed class Bakery : RoleBase, ISoloWinner
     public override void AfterMeetingTasks()
     {
         var PlayerId = Player.PlayerId;
-        //第三パン屋でない||死亡
-        if (!nBakeries.Contains(this) || !Player.IsAlive()) return;
-
-        if (Player.IsAlive() || MyState.DeathReason != CustomDeathReason.Vote)
-        {   //吊られなかった時毒発動
-            if (PoisonPlayer != null
-                && !Main.AfterMeetingDeathPlayers.ContainsKey(PoisonPlayer.PlayerId))
-            {
-                PoisonPlayer.SetRealKiller(Player);
-                MeetingHudPatch.TryAddAfterMeetingDeathPlayers(CustomDeathReason.Poisoning, PoisonPlayer.PlayerId);
-            }
-        }
-        else //吊られた時のKey取り消し 以降のパンセットいらないので返す
+        //第三パン屋でない
+        if (!nBakeries.Contains(this)) return;
+        // 死んだ (吊られた・ほかの死) 覚醒パン屋の毒は取り消す (残すと毒の印が試合の終わりまで出続ける)
+        if (!Player.IsAlive())
         {
             PoisonPlayer = null;
             return;
+        }
+
+        // 毒の相手がこの会議で追放されていた・もう死んでいた時は、毒の死を重ねない
+        if (PoisonPlayer != null
+            && PoisonPlayer.IsAlive() && PlayerState.GetByPlayerId(PoisonPlayer.PlayerId)?.IsDead != true
+            && !Main.AfterMeetingDeathPlayers.ContainsKey(PoisonPlayer.PlayerId))
+        {
+            PoisonPlayer.SetRealKiller(Player);
+            MeetingHudPatch.TryAddAfterMeetingDeathPlayers(CustomDeathReason.Poisoning, PoisonPlayer.PlayerId);
         }
 
         //次のターゲットを決めておく

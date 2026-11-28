@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using AmongUs.GameOptions;
 using TownOfHostL.Modules;
 using TownOfHostL.Patches;
@@ -324,6 +326,7 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
         IsCharging = false;
         chargeTimer = 0f;
         HasHit = false;
+        beamJudged.Clear();
         ShowBeamMark = true;
         _prevCharging = false;
         _prevBeamMark = true;
@@ -332,6 +335,8 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
         ApplyBeamHit();
 
         var generation = ++fireGeneration;
+        // 片付けの間に役職が外れると Player は空になるので、番号を控えておく
+        var firerId = Player.PlayerId;
         // 撃ち終わりの片付けなので役職が外れても走らせる
         _ = new LateTask(() =>
         {
@@ -340,8 +345,8 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
             {
                 ShowBeamMark = false; _prevBeamMark = false;
                 beam?.End(); IsFiring = false;
-                Holdings.RemoveSpeed(Player.PlayerId, nameof(SheriffHadouHo));
-                Player.MarkDirtySettings();
+                Holdings.RemoveSpeed(firerId, nameof(SheriffHadouHo));
+                if (Player) Player.MarkDirtySettings();
                 Utils.NotifyRoles(); return;
             }
 
@@ -377,6 +382,8 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
         }, 3f, "SHHBeamEnd");
     }
 
+    // 1 発のビームでキルの判定を通した相手。ビームの間は毎フレーム当たりを見るので、守りに止められた相手へ判定 (守りの回数・演出) を重ねない
+    readonly HashSet<byte> beamJudged = new();
     void ApplyBeamHit()
     {
         if (!AmongUsClient.Instance.AmHost || !Player.IsAlive()) return;
@@ -385,19 +392,24 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
         var myPos = Player.GetTruePosition();
         Vector2 dir = facingLeft ? Vector2.left : Vector2.right;
 
-        foreach (var target in Main.AllAlivePlayerControls)
+        // キルの判定で相手が死ぬと生存者の一覧が変わるので、写しを回す
+        foreach (var target in Main.AllAlivePlayerControls.ToArray())
         {
-            if (target.PlayerId == Player.PlayerId) continue;
+            if (!Player.IsAlive()) break;
+            if (target.PlayerId == Player.PlayerId || !target.IsAlive()) continue;
             var toTarget = target.GetTruePosition() - myPos;
             float dot = Vector2.Dot(toTarget, dir);
             if (dot <= 0) continue;
             var proj = dir * dot;
             var perp = toTarget - proj;
             if (perp.magnitude > 1.3f) continue;
+            HasHit = true;
+            // キルできない状態 (ベントの中・はしご・動く床) の相手は判定済みにせず、次のフレームで見直す
+            if (target.inVent || target.MyPhysics.Animations.IsPlayingEnterVentAnimation() || target.MyPhysics.Animations.IsPlayingAnyLadderAnimation() || target.inMovingPlat) continue;
+            if (!beamJudged.Add(target.PlayerId)) continue;
 
             CustomRoleManager.OnCheckMurder(Player, target, target, target,
                 true, deathReason: CustomDeathReason.Hit);
-            HasHit = true;
         }
     }
 

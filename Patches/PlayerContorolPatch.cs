@@ -726,7 +726,12 @@ partial class ReportDeadBodyPatch
         if (target == null)
         {
             var buttonState = PlayerState.GetByPlayerId(__instance.PlayerId);
-            if (buttonState != null && buttonState.NumberOfRemainingButtons > 0) buttonState.NumberOfRemainingButtons--;
+            if (buttonState != null && buttonState.NumberOfRemainingButtons > 0)
+            {
+                buttonState.NumberOfRemainingButtons--;
+                // 次に届く SetRole で客の手元の残り回数がこの値になるよう、設定を送り直す
+                PlayerGameOptionsSender.SetDirty(__instance.PlayerId);
+            }
         }
 
     confirmed:

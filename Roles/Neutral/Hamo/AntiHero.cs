@@ -150,8 +150,7 @@ public sealed class AntiHero : RoleBase, IAdditionalWinner, IKiller
         OptionMarkVisible = BooleanOptionItem.Create(RoleInfo, OptionName.AntiHeroMarkVisible, true, false);
 
         OptionMarkClearOnDeath = BooleanOptionItem.Create(RoleInfo, OptionName.AntiHeroMarkClearOnDeath, true, false);
-        OptionNoKillCrewWin = BooleanOptionItem.Create(RoleInfo, OptionName.AntiHeroNoKillCrewWin, true, false)
-            .SetOptionName(() => "一度もキルしなかった時、クルーメイトの勝利に追加勝利する");
+        OptionNoKillCrewWin = BooleanOptionItem.Create(RoleInfo, OptionName.AntiHeroNoKillCrewWin, true, false);
 
     }
 
@@ -198,14 +197,16 @@ public sealed class AntiHero : RoleBase, IAdditionalWinner, IKiller
 
 
 
-        remainingKillCount--;
+        // 残り回数はキルが成立した時に引く (守りで止められたキルで減らさない)
     }
 
     // 守りなどでキルが止められた時は「キルした」ことにしない。キル無しの追加勝利・乗っ取る陣営・印は、キルが成立した時だけ変える
     public void OnMurderPlayerAsKiller(MurderInfo info)
     {
-        if (info.AttemptTarget == null || info.IsSuicide) return;
+        if (info.AttemptTarget == null) return;
         if (!AmongUsClient.Instance.AmHost) return;
+        remainingKillCount--;
+        if (info.IsSuicide) return;
         var targetRole = info.AttemptTarget.GetCustomRole();
 
 

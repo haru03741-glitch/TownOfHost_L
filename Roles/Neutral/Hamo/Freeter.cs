@@ -196,7 +196,7 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
 
     {
 
-        text = BetTargetId == byte.MaxValue ? "就職" : "就職済み";
+        text = GetString(BetTargetId == byte.MaxValue ? "FreeterHireButtonText" : "FreeterHiredButtonText");
 
         return true;
 
@@ -486,7 +486,7 @@ public sealed class Freeter : RoleBase, IKiller, IAdditionalWinner
 
         int remain = Mathf.Max(0, deathTurns - unemployedTurns);
 
-        return $"{sz}<color=#ff8800>無職状態: あと{remain}ターンで死亡</color>";
+        return $"{sz}<color=#ff8800>{string.Format(GetString("FreeterUnemployedRemain"), remain)}</color>";
 
     }
 

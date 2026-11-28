@@ -21,7 +21,7 @@ namespace TownOfHostL.Roles.Neutral;
 
 
 
-public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDoubleTrigger, IKillFlashSeeable, ISidekickable, ISchrodingerCatOwner
+public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDoubleTrigger, IKillFlashSeeable, ISidekickable, ISchrodingerCatOwner, IUsePetButton, IDissolvingKiller, ITeammateKiller
 
 {
 
@@ -178,7 +178,7 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
         OptionHaveRole = FilterOptionItem.Create(RoleInfo, OptionName.AssassinHaveRole, 0, false, null, true, false, false, false, false, () => InvalidRoles());
         OptionHaveRole2 = FilterOptionItem.Create(RoleInfo, OptionName.AssassinHaveRole, 0, false, null, true, false, false, false, false, () => InvalidRoles());
         OptionHaveRole2.SetKeyName("AssassinHaveRole2");
-        OptionHaveRole2.SetOptionName(() => "付与する役職(2つ目・ランダムでどちらか)");
+        OptionHaveRole2.SetOptionName(() => GetString("JackalWolfSecondRole"));
         FilterOptionItem.Link(OptionHaveRole, OptionHaveRole2);
 
 
@@ -318,6 +318,8 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
     public override void OnShapeshift(PlayerControl target) => AddRole?.OnShapeshift(target);
 
     public override bool OnCheckShapeshift(PlayerControl target, ref bool shouldAnimate) => AddRole?.OnCheckShapeshift(target, ref shouldAnimate) ?? true;
+    // 付けた役職がファントムの能力を消える時に使う物なら、その処理へ渡す (渡さないと能力が働かずに消えるだけになる)
+    public override bool OnCheckVanish(ref float killCooldown, ref bool canResetAbilityCooldown) => AddRole?.OnCheckVanish(ref killCooldown, ref canResetAbilityCooldown) ?? true;
 
     public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target) => AddRole?.OnReportDeadBody(reporter, target);
 
@@ -436,6 +438,18 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
 
     public SchrodingerCat.TeamType SchrodingerCatChangeTo => SchrodingerCat.TeamType.Jackal;
 
+    // 中の役職の能力・表示の窓口 (渡さないと、中の役職の能力が働かない・残り回数が出ない)
+    public override bool RevengesOnExile => AddRole?.RevengesOnExile ?? false;
+    public override bool CanRevengeOn(PlayerControl candidate) => AddRole?.CanRevengeOn(candidate) ?? true;
+    public override bool ShowsRoleColorToAll(bool isMeeting) => AddRole?.ShowsRoleColorToAll(isMeeting) ?? false;
+    public override int? UsesRemaining => AddRole?.UsesRemaining;
+    public override bool UsesOnKillButton => AddRole?.UsesOnKillButton ?? base.UsesOnKillButton;
+    bool IUsePetButton.UsesPet => AddRole is IUsePetButton pet && pet.UsesPet;
+    void IUsePetButton.OnPet() { if (AddRole is IUsePetButton pet) pet.OnPet(); }
+    bool IDissolvingKiller.DissolvesBody(PlayerControl target) => AddRole is IDissolvingKiller dissolver && dissolver.DissolvesBody(target);
+    bool ITeammateKiller.CanKillTeammates => AddRole is ITeammateKiller teammateKiller && teammateKiller.CanKillTeammates;
+    bool IUsePhantomButton.SyncAbilityCooldownWithKillCooldown => AddRole is IUsePhantomButton synced && synced.SyncAbilityCooldownWithKillCooldown;
+    void IUsePhantomButton.SetSyncedAbilityCooldown(float cooldown) { if (AddRole is IUsePhantomButton synced) synced.SetSyncedAbilityCooldown(cooldown); }
     bool IUsePhantomButton.IsPhantomRole => AddRole is IUsePhantomButton iusephantom && iusephantom?.IsPhantomRole is true;
 
     bool IUsePhantomButton.UseOneclickButton => AddRole is IUsePhantomButton iusephantom && iusephantom?.UseOneclickButton is true;

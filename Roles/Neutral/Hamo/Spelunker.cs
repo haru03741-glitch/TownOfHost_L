@@ -199,15 +199,17 @@ public sealed class Spelunker : RoleBase, ISystemTypeUpdateHook
 
 
             if (CustomWinnerHolder.ResetAndSetAndChWinner(CustomWinner.Spelunker, pc.PlayerId, AddWin: false))
-
             {
-
-                CustomWinnerHolder.NeutralWinnerIds.Add(pc.PlayerId);
-
+                // 生き残ったスペランカーは全員勝つ (1 人目だけにしない)
+                foreach (var other in Main.AllAlivePlayerControls)
+                {
+                    if (other.GetRoleClass() is not Spelunker) continue;
+                    CustomWinnerHolder.WinnerIds.Add(other.PlayerId);
+                    CustomWinnerHolder.NeutralWinnerIds.Add(other.PlayerId);
+                    CustomWinnerHolder.CantWinPlayerIds.Remove(other.PlayerId);
+                }
                 reason = GameOverReason.ImpostorsByKill;
-
                 return true;
-
             }
 
         }

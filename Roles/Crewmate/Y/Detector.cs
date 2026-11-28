@@ -46,6 +46,8 @@ public sealed class Detector : RoleBase, IKillFlashSeeable, IDeadBodyArrowSeer
 
     public bool CheckKillFlash(MurderInfo info) => IsTaskFinished || MyTaskState.CompletedTasksCount >= TaskTrigger;
 
+    // 試合の途中で就いた時も、もう条件を満たしていれば死体への矢印を出す
+    public override void OnAddedMidGame() => OnCompleteTask();
     public override bool OnCompleteTask()
     {
         if (IsSet || (!IsTaskFinished && MyTaskState.CompletedTasksCount < TaskTrigger))

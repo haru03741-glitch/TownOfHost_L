@@ -51,6 +51,8 @@ public sealed class SpeedBooster : RoleBase
         OptionTaskTrigger = IntegerOptionItem.Create(RoleInfo, OptionName.SpeedBoosterTaskTrigger, new(1, 99, 1), 5, false)
             .SetValueFormat(OptionFormat.Pieces);
     }
+    // 試合の途中で就いた時も、もう条件を満たしていれば次のタスクを待たずに効かせる
+    public override void OnAddedMidGame() => OnCompleteTask();
     public override bool OnCompleteTask()
     {
         var playerId = Player.PlayerId;

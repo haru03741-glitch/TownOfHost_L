@@ -74,7 +74,8 @@ namespace TownOfHostL.Roles.Neutral
 
         public void OnCheckMurderAsKiller(MurderInfo info)
         {
-            if (!Is(info.AttemptKiller) || info.IsSuicide || !info.CanKill) return;
+            // 守りで止まるキルでは確率の判定も演出もしない (止めるのは守りの側)
+            if (!Is(info.AttemptKiller) || info.IsSuicide || !info.CanKill || info.CheckHasGuard()) return;
             (var killer, var target) = info.AttemptTuple;
 
             int chance = IRandom.Instance.Next(1, 101);
@@ -86,12 +87,15 @@ namespace TownOfHostL.Roles.Neutral
                 killer.ResetKillCooldown();
                 return;
             }
-
-            // 次回の確率計算
+        }
+        // 次の確率はキルが成立した時に下げる (守りで止められたキルで下げない)
+        public void OnMurderPlayerAsKiller(MurderInfo info)
+        {
+            if (info.IsSuicide) return;
             nowKillRate = nowKillRate * KillSuccessRate / 100;
             if (nowKillRate < 1) nowKillRate = 1;
 
-            Logger.Info($"{killer.GetNameWithRole()} : 次回キル確率{nowKillRate}%", "Ogre");
+            Logger.Info($"{Player.GetNameWithRole()} : 次回キル確率{nowKillRate}%", "Ogre");
         }
         public override bool OnCheckMurderAsTarget(MurderInfo info)
         {

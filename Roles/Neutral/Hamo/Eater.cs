@@ -182,6 +182,8 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
         GetArrow.Add(Player.PlayerId, pos);
         // ヴァイパーの死体は溶け切ると客の画面から消えるので、その頃に矢印を外す (OnFixedUpdate)
         if (info.AppearanceKiller.Is(RoleTypes.Viper)) Viperkilledplayers[info.AppearanceTarget.PlayerId] = DissolveKill.ViperSeconds + DissolveKill.KillSettle;
+        // 生き返った人が別の死に方でもう一度死んだ時は、前の溶ける時間を残さない (残すと新しい死体の矢印を早く外す)
+        else Viperkilledplayers.Remove(info.AppearanceTarget.PlayerId);
 
         return OptionShowArrow.GetBool();
     }
@@ -275,6 +277,13 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
 
     public override bool CancelReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target, ref DontReportReason reason)
     {
+        // 食べた死体は誰にも通報させない (イーター自身の構えやクールによらない)
+        if (reporter?.PlayerId != target?.PlayerId && target != null && EatenBodies.Contains(target?.PlayerId ?? (byte)250))
+        {
+            reason = DontReportReason.Eat;
+            Logger.Info($"{target?.PlayerName ?? "???"}は食事済みだからキャンセル", "Vulture");
+            return true;
+        }
         if (!eatMode || pendingSwallow != null)
         {
             return false;
@@ -298,12 +307,6 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
                 Win();
             }
             eatCooldownTimer = 0f;
-            return true;
-        }
-        if (reporter?.PlayerId != target?.PlayerId && target != null && EatenBodies.Contains(target?.PlayerId ?? (byte)250))
-        {
-            reason = DontReportReason.Eat;
-            Logger.Info($"{target?.PlayerName ?? "???"}は食事済みだからキャンセル", "Vulture");
             return true;
         }
         return false;
@@ -358,12 +361,12 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
     {
         if (isForMeeting) return "";
         seen ??= seer;
-        var text = "食らう";
+        var text = GetString("EaterModeEat");
         if (!eatMode || pendingSwallow != null)
         {
-            text = "死体通報";
+            text = GetString("EaterModeReport");
         }
-        return $"<color=#662B2C>現在のモード：{text}モード</color>";
+        return $"<color=#662B2C>{string.Format(GetString("EaterCurrentMode"), text)}</color>";
     }
 
     public override string GetProgressText(bool comms = false)

@@ -80,12 +80,26 @@ public sealed class Lighter : RoleBase
             opt.SetFloat(crewLightMod, CurrentVision * 5);
         }
     }
+    // 試合の途中で就いた時も、もう条件を満たしていれば次のタスクを待たずに効かせる
+    public override void OnAddedMidGame()
+    {
+        if (!Player.IsAlive() || MyTaskState.CompletedTasksCount == 0) return;
+        if (LighterTriggerType == TriggerType.TaskCount && (MyTaskState.HasCompletedEnoughCountOfTasks(TaskTrigger) || MyTaskState.IsTaskFinished))
+        {
+            CurrentVision = MaxVision;
+            Player.MarkDirtySettings();
+        }
+        else if (LighterTriggerType == TriggerType.TaskProgressRate) OnCompleteTask();
+    }
     public override bool OnCompleteTask()
     {
         if (!Player.IsAlive() || MyTaskState.CompletedTasksCount == 0) return true;//死んでる or タスク数0
-        if (LighterTriggerType == TriggerType.TaskCount && MyTaskState.CompletedTasksCount != TaskTrigger) return true;
+        // 決めたタスク数が持っているタスクより多い時は、全部終えた時に発動する
+        bool reachedTaskTrigger = MyTaskState.CompletedTasksCount == TaskTrigger
+            || (MyTaskState.IsTaskFinished && MyTaskState.CompletedTasksCount < TaskTrigger);
+        if (LighterTriggerType == TriggerType.TaskCount && !reachedTaskTrigger) return true;
         Logger.Info("Ability activation condition", "Lighter");
-        if (LighterTriggerType == TriggerType.TaskCount && MyTaskState.CompletedTasksCount == TaskTrigger)
+        if (LighterTriggerType == TriggerType.TaskCount && reachedTaskTrigger)
         {
             CurrentVision = MaxVision;
         }

@@ -235,12 +235,15 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         beam?.Fire("#FF6600", HadouHoBeam.NormalSize);
         Utils.AllPlayerKillFlash();
         IsCharging = false; chargeTimer = 0f; HasHit = false; ShowBeamMark = true;
+        beamJudged.Clear();
         _prevCharging = false;
         _prevBeamMark = true;
         Utils.NotifyRoles(ForceLoop: true);
         ApplyBeamHit();
 
         var generation = ++fireGeneration;
+        // 片付けの間に役職が外れると Player は空になるので、番号を控えておく
+        var firerId = Player.PlayerId;
         // 撃ち終わりの片付けなので役職が外れても走らせる
         _ = new LateTask(() =>
         {
@@ -249,8 +252,8 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
             {
                 ShowBeamMark = false; _prevBeamMark = false;
                 beam?.End(); IsFiring = false;
-                Holdings.RemoveSpeed(Player.PlayerId, nameof(HadouHo));
-                Player.MarkDirtySettings();
+                Holdings.RemoveSpeed(firerId, nameof(HadouHo));
+                if (Player) Player.MarkDirtySettings();
                 Utils.NotifyRoles(); return;
             }
 
@@ -278,6 +281,8 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         }, BeamTime);
     }
 
+    // 1 発のビームでキルの判定を通した相手。ビームの間は毎フレーム当たりを見るので、守りに止められた相手へ判定 (守りの回数・演出) を重ねない
+    readonly HashSet<byte> beamJudged = new();
     void ApplyBeamHit()
     {
         if (!AmongUsClient.Instance.AmHost || !Player.IsAlive()) return;
@@ -300,6 +305,10 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
             var proj = dir * dot;
             var perp = toTarget - proj;
             if (perp.magnitude > 1.3f) continue;
+            HasHit = true;
+            // キルできない状態 (ベントの中・はしご・動く床) の相手は判定済みにせず、次のフレームで見直す
+            if (target.inVent || target.MyPhysics.Animations.IsPlayingEnterVentAnimation() || target.MyPhysics.Animations.IsPlayingAnyLadderAnimation() || target.inMovingPlat) continue;
+            if (!beamJudged.Add(target.PlayerId)) continue;
             if (target.GetCustomRole().IsImpostor() && !target.GetCustomRole().IsLoneImpostor())
             {
                 // インポスター同士のキルはキルの判定で無効になるので、仲間に当てる設定の時は判定を通さずに死なせる
@@ -308,7 +317,6 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
                 Kill.Suicide(target);
             }
             else CustomRoleManager.OnCheckMurder(Player, target, target, target, true, deathReason: CustomDeathReason.Evaporation);
-            HasHit = true;
         }
     }
     public void OnCheckMurderAsKiller(MurderInfo info)
@@ -338,21 +346,21 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
     {
         seen ??= seer;
         if (seen.PlayerId != seer.PlayerId || isForMeeting || !Player.IsAlive()) return "";
-        if (beam?.Pending == true) return $"{(isForHud ? "" : "<size=60%>")}<color=#ff0000>向きを決めています。撃ちたい向きへ動いてください</color>";
-        if (!IsCharging) return $"{(isForHud ? "" : "<size=60%>")}<color=#ff0000>ファントムボタン → チャージ発射</color>";
-        return $"{(isForHud ? "" : "<size=100%>")}<color=#ff0000>チャージ中... {Mathf.Max(0f, ChargeTime - chargeTimer):F1}s</color>";
+        if (beam?.Pending == true) return $"{(isForHud ? "" : "<size=60%>")}<color=#ff0000>{TownOfHostL.Translator.GetString("HadouHoAiming")}</color>";
+        if (!IsCharging) return $"{(isForHud ? "" : "<size=60%>")}<color=#ff0000>{TownOfHostL.Translator.GetString("HadouHoPhantomHint")}</color>";
+        return $"{(isForHud ? "" : "<size=100%>")}<color=#ff0000>{string.Format(TownOfHostL.Translator.GetString("HadouHoCharging"), Mathf.Max(0f, ChargeTime - chargeTimer).ToString("F1"))}</color>";
     }
 
     public string GetLowerTextOthers(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
     {
         seen ??= seer;
         if (seen != seer || isForMeeting || !Player.IsAlive()) return "";
-        if (IsCharging && seer.PlayerId != Player.PlayerId) return $"\n<size=100%><color=#ff0000>チャージ中... {(int)Mathf.Max(0f, ChargeTime - chargeTimer)}s</color></size>";
-        if (ShowBeamMark && seer.PlayerId != Player.PlayerId) return "\n<size=100%><color=#ff0000>ビーム中</color></size>";
+        if (IsCharging && seer.PlayerId != Player.PlayerId) return $"\n<size=100%><color=#ff0000>{string.Format(TownOfHostL.Translator.GetString("HadouHoCharging"), (int)Mathf.Max(0f, ChargeTime - chargeTimer))}</color></size>";
+        if (ShowBeamMark && seer.PlayerId != Player.PlayerId) return $"\n<size=100%><color=#ff0000>{TownOfHostL.Translator.GetString("HadouHoBeaming")}</color></size>";
         return "";
     }
 
-    public override string GetAbilityButtonText() => "発射";
+    public override string GetAbilityButtonText() => TownOfHostL.Translator.GetString("HadouHoFire");
 
     public void cancelbeam()
     {

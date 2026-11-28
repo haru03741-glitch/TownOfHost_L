@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using HarmonyLib;
@@ -134,13 +135,14 @@ public sealed class Telepathisters : RoleBase, IImpostor, IKillFlashSeeable
 
         var trackerId = Player.PlayerId;
 
-        TelepathistersId.RemoveWhere(id => PlayerState.GetByPlayerId(id).IsDead);
+        // 死んだ仲間は飛ばすだけで一覧からは外さない (外すと生き返った後に矢印が戻らない)
+        var aliveIds = TelepathistersId.Where(id => !PlayerState.GetByPlayerId(id).IsDead).ToArray();
 
         var sb = new StringBuilder(80);
-        if (TelepathistersId.Count > 0)
+        if (aliveIds.Length > 0)
         {
             sb.Append($"<color={GetRoleColorCode(CustomRoles.Impostor)}>");
-            foreach (var impostorId in TelepathistersId)
+            foreach (var impostorId in aliveIds)
             {
                 sb.Append(TargetArrow.GetArrows(Player, impostorId));
             }

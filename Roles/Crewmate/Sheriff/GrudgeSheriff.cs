@@ -169,7 +169,8 @@ public sealed class GrudgeSheriff : RoleBase
     public override void OnFixedUpdate(PlayerControl player)
     {
         if (!GameStates.IsInTask) return;
-        if (KillWaitPlayer == null) return;
+        // 抜けた人の PlayerControl は壊されて Unity の null になる。それも下の「死んだり抜けたりしたら外す」へ通す
+        if (KillWaitPlayer is null) return;
 
         if (Player == null || !Player.IsAlive())
         {
@@ -217,8 +218,8 @@ public sealed class GrudgeSheriff : RoleBase
             // 近づいた時の直撃も、キルボタンのキルと同じく相手の守りを通す
             Kill.Attempt(Player, target, realKiller: Player);
 
-            Player.RpcResetAbilityCooldown();
-            Player.MarkDirtySettings();
+            // 撃った後の待ち時間 (弾を使い切った時は 255 秒) を送ってから数え直す
+            Player.RpcResetAbilityCooldown(sync: true);
             KillWaitPlayerSelect = null;
             KillWaitPlayer = null;
             Utils.NotifyRoles();
@@ -255,6 +256,8 @@ public sealed class GrudgeSheriff : RoleBase
     {
         KillWaitPlayerSelect = null;
         KillWaitPlayer = null;
+        // 選んでいる途中で会議になった時も、ベントのクールを設定の秒数へ戻す (会議明けの設定の配り直しで届く)
+        IsCoolTimeOn = true;
     }
 
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)

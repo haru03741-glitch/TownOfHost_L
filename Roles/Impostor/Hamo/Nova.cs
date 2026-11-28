@@ -244,7 +244,8 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
         if (!Player.IsAlive())
         {
             if (charging || waiting || beaming) Stop();
-            if (tilesSpawned) RemoveTiles();
+            // 消したら作り直しの印も戻す (生き返った時に、会議を待たずダミーを作り直す)
+            if (tilesSpawned) { RemoveTiles(); tilesSpawned = false; }
             return;
         }
         if (GameStates.IsMeeting || GameStates.CalledMeeting)
@@ -491,15 +492,15 @@ public sealed class Nova : RoleBase, IImpostor, IUsePhantomButton
         {
             var left = Mathf.Max(0f, chargeUntil - Time.time);
             return Utils.ColorString(Palette.ImpostorRed, left > 0f
-                ? $"チャージ中... {left:F1}s  向き {ShownAngle()}°(歩こうとすると回ります)"
-                : $"チャージ完了! 向き {ShownAngle()}°  もう一度ファントムボタンで発射");
+                ? string.Format(TownOfHostL.Translator.GetString("NovaChargingAim"), left.ToString("F1"), ShownAngle())
+                : string.Format(TownOfHostL.Translator.GetString("NovaChargeDone"), ShownAngle()));
         }
-        if (waiting) return Utils.ColorString(Palette.ImpostorRed, $"発射まで {Mathf.Max(0f, fireAt - Time.time):F1}s");
-        if (beaming) return Utils.ColorString(Palette.ImpostorRed, "ビーム中");
-        return Utils.ColorString(RoleInfo.RoleColor, "ファントムボタン → チャージ → 歩こうとして向きを決める → もう一度押して発射");
+        if (waiting) return Utils.ColorString(Palette.ImpostorRed, string.Format(TownOfHostL.Translator.GetString("NovaFireIn"), Mathf.Max(0f, fireAt - Time.time).ToString("F1")));
+        if (beaming) return Utils.ColorString(Palette.ImpostorRed, TownOfHostL.Translator.GetString("HadouHoBeaming"));
+        return Utils.ColorString(RoleInfo.RoleColor, TownOfHostL.Translator.GetString("NovaPhantomHint"));
     }
 
-    public override string GetAbilityButtonText() => "発射";
+    public override string GetAbilityButtonText() => TownOfHostL.Translator.GetString("HadouHoFire");
 }
 
 // ノヴァのビームの絵を貼るダミー(0 番は照準の★)。使わない時は、マップの外へ置いておく。

@@ -228,7 +228,17 @@ namespace TownOfHostL
                             AntiBlackout.OnDisconnect(info);
                         PlayerGameOptionsSender.RemoveSender(playerId);
                         if (wasAlive) Modules.AutoAbort.OnAliveDisconnected();
-                        if (AmongUsClient.Instance.AmHost && GameStates.IsInGame) CustomRoleManager.NotifyPlayerLeft(playerId);
+                        // 役職の OnPlayerLeft と OnPlayerDead はイントロの後だけ届く。開始の時に決めた相手 (処刑人・弁護士など) の
+                        // 抜けは、上の SetDead が送る OnPlayerDeadOthers で拾う
+                        if (AmongUsClient.Instance.AmHost && GameStates.IsInGame)
+                        {
+                            CustomRoleManager.NotifyPlayerLeft(playerId);
+                            // 抜けた人を覚えていた役職 (狙い・相方・配下など) が状態を戻すので、名前の表示を送り直す。
+                            // 会議と追放の演出の間・勝者が決まった後は送らない (会議用の名前を上書きしない・明けに組み直される)。
+                            // 暗転対策の戻しを待っている間は、戻しの後に送る
+                            if (GameStates.IsInTask && !ExileController.Instance && CustomWinnerHolder.WinnerTeam is CustomWinner.Default)
+                                AntiBlackout.RunAfterRevert(() => { if (GameStates.IsInTask && CustomWinnerHolder.WinnerTeam is CustomWinner.Default) Utils.NotifyRoles(); });
+                        }
                         // 会議中に最後の未投票の人が抜けた時、残りの全員が票済みなら締める (票が来ないので締めの判定が走らない)
                         if (AmongUsClient.Instance.AmHost && wasAlive && MeetingHud.Instance) MeetingVoteManager.Instance?.CheckAndEndMeeting();
                     }

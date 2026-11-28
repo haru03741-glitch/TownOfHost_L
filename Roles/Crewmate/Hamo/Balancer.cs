@@ -667,7 +667,8 @@ public sealed class Balancer : RoleBase, ISelfVoter
                 RestoreName(Target2);
                 MeetingTargets = new[] { Target1, Target2 };
                 ReportDeadBodyPatch.ExReportDeadBody(reporter, oniku.Data, false, "Balancer.meeting", Utils.GetRoleColorCode(CustomRoles.Balancer));
-
+                // 会議が捨てられた (通報者が抜けた・勝ちが決まった・追放の画面が終わらない) 時に、予約を残さない
+                _ = new LateTask(() => CancelIfNotOpened(0), 1f, "Balancer.CheckOpened");
             }, 2f, "BalanerMeeting");
 
 
@@ -784,6 +785,50 @@ public sealed class Balancer : RoleBase, ISelfVoter
         if (Utils.GetPlayerById(target1).IsAlive() && Utils.GetPlayerById(target2).IsAlive()) return;
         closedByTargetLoss = true;
         TownOfHostL.Modules.MeetingVoteManager.Instance.EndMeeting(false);
+    }
+    /// <summary>
+    /// 天秤会議を開きに行った後、開いたかを見る。開いていなければ予約を取り下げ、止めていた会議明けの処理を流す
+    /// (残すと会議明けの処理が止まったまま日が進まず、次の普通の会議が天秤会議として扱われる)
+    /// </summary>
+    static void CancelIfNotOpened(int tries, bool lastLooked = false)
+    {
+        if (!Scheduled || !GameStates.IsInGame) return;
+        // 会議が始まった後は開いた会議の側が予約を外す
+        if (GameStates.IsMeeting || MeetingStates.MeetingCalled) return;
+        // 追放の画面を待っている・通報を預かっている間は、もう少し待つ (追放の画面は最大 20 秒待つ)
+        if ((ExileController.Instance != null || TownOfHostL.Modules.Revive.HasHeldReport) && tries < 25)
+        {
+            _ = new LateTask(() => CancelIfNotOpened(tries + 1), 1f, "Balancer.CheckOpened");
+            return;
+        }
+        // 追放の画面が消えた直後は、会議を開く側の待ち (0.5 秒ごと) がまだ開いていないことがあるので、もう 1 回だけ見る
+        if (!lastLooked)
+        {
+            _ = new LateTask(() => CancelIfNotOpened(tries + 1, true), 1f, "Balancer.CheckOpened");
+            return;
+        }
+        Logger.Info("天秤会議が開かなかったので取りやめる", "Balancer");
+        Scheduled = false;
+        foreach (var role in CustomRoleManager.AllActiveRoles.Values)
+        {
+            if (role is not Balancer balancer) continue;
+            // 天秤会議は開かなかったので、2 人を選んだ天秤の能力は使っていない扱いに戻す
+            if (balancer.Target1 != 255 && balancer.Target2 != 255) balancer.used = false;
+            balancer.Target1 = 255;
+            balancer.Target2 = 255;
+        }
+        AfterMeetingReset();
+        Utils.AfterMeetingTasks();
+        Utils.NotifyRoles(ForceLoop: true);
+    }
+    // 天秤会議でない会議の始まりに、前の会議で 1 人だけ選んだ途中の状態と天秤モードを下ろす
+    // (残すと次の会議の普通の票が 2 人目として数えられ、天秤会議が始まる)
+    public override void OnStartMeeting()
+    {
+        if (Id != 255 || Scheduled) return;
+        Target1 = 255;
+        Target2 = 255;
+        SetMode(Player, false);
     }
     /// <summary>天秤会議を開く予約をしてから、実際に開くまでの間</summary>
     public static bool Scheduled;

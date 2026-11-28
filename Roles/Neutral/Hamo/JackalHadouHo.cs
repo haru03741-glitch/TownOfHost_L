@@ -565,11 +565,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
                 Utils.SendMessage(
 
-                    "<color=#00b4eb>【SK候補選択モード】</color>\n" +
-
-                    "誰かに投票 → 次ターン1.5秒近づいてSK\n" +
-
-                    "スキップ → キャンセル",
+                    $"<color=#00b4eb>{TownOfHostL.Translator.GetString("JackalHadouHoSkSelectTitle")}</color>\n{TownOfHostL.Translator.GetString("JackalHadouHoSkSelectBody")}",
 
                     Player.PlayerId);
 
@@ -603,7 +599,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
                 {
 
-                    Utils.SendMessage("<color=#00b4eb>その相手はSKにできません。</color>", Player.PlayerId);
+                    Utils.SendMessage($"<color=#00b4eb>{TownOfHostL.Translator.GetString("JackalHadouHoSkTargetInvalid")}</color>", Player.PlayerId);
 
                     SetMode(Player, false);
 
@@ -621,7 +617,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
                 {
 
-                    Utils.SendMessage("<color=#00b4eb>その役職はSKにできません。</color>", Player.PlayerId);
+                    Utils.SendMessage($"<color=#00b4eb>{TownOfHostL.Translator.GetString("JackalHadouHoSkRoleInvalid")}</color>", Player.PlayerId);
 
                     SetMode(Player, false);
 
@@ -633,11 +629,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
                 Utils.SendMessage(
 
-                    $"<color=#00b4eb>【SK候補設定】</color>\n" +
-
-                    $"{target.ColoredName()} を候補に設定しました。\n" +
-
-                    $"次ターン、1.5秒近づいてSK実行！",
+                    $"<color=#00b4eb>{TownOfHostL.Translator.GetString("JackalHadouHoSkSetTitle")}</color>\n{string.Format(TownOfHostL.Translator.GetString("JackalHadouHoSkSetBody"), target.ColoredName())}",
 
                     Player.PlayerId);
 
@@ -670,11 +662,8 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
 
             (_, var target) = info.AttemptTuple;
-
-            DoSideKick(target);
-
-
-
+            // できない役職の相手だった時は、サイドキックの構えもクールもそのままにする
+            if (!DoSideKick(target)) return false;
             skMode = false;
 
             nowcool = SidekickCooldown;
@@ -737,7 +726,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
     {
 
-        if (skMode && CanSideKick) { text = "弾SK"; return true; }
+        if (skMode && CanSideKick) { text = TownOfHostL.Translator.GetString("JackalHadouHoSkButton"); return true; }
 
         text = ""; return false;
 
@@ -936,11 +925,20 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             if (skSpawnWaitTimer >= 0f && skSpawnWaitTimer < 3f)
 
+            {
                 skSpawnWaitTimer += Time.fixedDeltaTime;
+                // 待機が明けた時に、名前の下の案内を「待機中」から切り替える
+                if (skSpawnWaitTimer >= 3f) Utils.NotifyRoles(SpecifySeer: Player);
+            }
 
             if (skCooldownTimer > 0f)
 
+            {
+                // 案内に出す残り秒が変わった時 (0 になった時も) に出し直す
+                int before = (int)System.Math.Ceiling(skCooldownTimer);
                 skCooldownTimer -= Time.fixedDeltaTime;
+                if ((int)System.Math.Ceiling(System.Math.Max(0f, skCooldownTimer)) != before) Utils.NotifyRoles(SpecifySeer: Player);
+            }
 
         }
 
@@ -1131,7 +1129,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         IsCharging = false; chargeTimer = 0f;
 
-        HasHit = false; ShowBeamMark = true; IsSuperBeam = false;
+        HasHit = false; ShowBeamMark = true; IsSuperBeam = false; beamJudged.Clear();
 
 
         _prevCharging = false; _prevBeamMark = true;
@@ -1158,7 +1156,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         IsSuperCharging = false; superChargeTimer = 0f;
 
-        HasHit = false; ShowBeamMark = true; IsLoaded = false; IsSuperBeam = true;
+        HasHit = false; ShowBeamMark = true; IsLoaded = false; IsSuperBeam = true; beamJudged.Clear();
 
 
 
@@ -1201,6 +1199,13 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
     {
 
+        // 撃ち終わりまでに役職が外れた時 (Player が空) は、ビームの見た目だけ片付ける (持ち物は役職の破棄で外れる)
+        if (Player == null)
+        {
+            ShowBeamMark = false; _prevBeamMark = false; IsSuperBeam = false;
+            beam?.End(); IsFiring = false;
+            return;
+        }
         if (IsDead || !Player.IsAlive())
 
         {
@@ -1291,6 +1296,9 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
 
 
+    // 1 発のビームでキルの判定を通した相手
+    readonly System.Collections.Generic.HashSet<byte> beamJudged = new();
+
     void ApplyBeamHit()
 
     {
@@ -1301,11 +1309,11 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         Vector2 dir = BeamFacingLeft ? Vector2.left : Vector2.right;
 
-        foreach (var target in Main.AllAlivePlayerControls)
+        foreach (var target in Main.AllAlivePlayerControls.ToArray())
 
         {
 
-            if (target.PlayerId == Player.PlayerId) continue;
+            if (target.PlayerId == Player.PlayerId || !target.IsAlive()) continue;
 
             if (!KillJackal && target.GetCustomRole() is CustomRoles.Jackal or CustomRoles.JackalMafia
 
@@ -1321,9 +1329,15 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             if ((toTarget - dir * dot).magnitude > 1.3f) continue;
 
-            CustomRoleManager.OnCheckMurder(Player, target, target, target, true, deathReason: CustomDeathReason.Evaporation);
-
             HasHit = true;
+
+            // 1 発で判定を通すのは 1 人 1 回 (ビームの間は毎フレーム当たりを見るので、守りに止められた相手へ判定とログを重ねない)
+
+            // キルできない状態 (ベントの中・はしご・動く床) の相手は判定済みにせず、次のフレームで見直す
+            if (target.inVent || target.MyPhysics.Animations.IsPlayingEnterVentAnimation() || target.MyPhysics.Animations.IsPlayingAnyLadderAnimation() || target.inMovingPlat) continue;
+            if (!beamJudged.Add(target.PlayerId)) continue;
+
+            CustomRoleManager.OnCheckMurder(Player, target, target, target, true, deathReason: CustomDeathReason.Evaporation);
 
             Utils.AddGameLog("JackalHadouHo", $"<color=#00b4eb>【波動砲】</color> {Player.ColoredName()} ═> {target.ColoredName()}");
 
@@ -1343,11 +1357,11 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         Vector2 dir = BeamFacingLeft ? Vector2.left : Vector2.right;
 
-        foreach (var target in Main.AllAlivePlayerControls)
+        foreach (var target in Main.AllAlivePlayerControls.ToArray())
 
         {
 
-            if (target.PlayerId == Player.PlayerId) continue;
+            if (target.PlayerId == Player.PlayerId || !target.IsAlive()) continue;
 
             if (!KillJackal && target.GetCustomRole() is CustomRoles.Jackal or CustomRoles.JackalMafia
 
@@ -1363,9 +1377,15 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             if ((toTarget - dir * dot).magnitude > 4.0f) continue;
 
-            CustomRoleManager.OnCheckMurder(Player, target, target, target, true, deathReason: CustomDeathReason.Evaporation);
-
             HasHit = true;
+
+            // 1 発で判定を通すのは 1 人 1 回 (ビームの間は毎フレーム当たりを見るので、守りに止められた相手へ判定とログを重ねない)
+
+            // キルできない状態 (ベントの中・はしご・動く床) の相手は判定済みにせず、次のフレームで見直す
+            if (target.inVent || target.MyPhysics.Animations.IsPlayingEnterVentAnimation() || target.MyPhysics.Animations.IsPlayingAnyLadderAnimation() || target.inMovingPlat) continue;
+            if (!beamJudged.Add(target.PlayerId)) continue;
+
+            CustomRoleManager.OnCheckMurder(Player, target, target, target, true, deathReason: CustomDeathReason.Evaporation);
 
             Utils.AddGameLog("JackalHadouHo", $"<color=#ff0000>【超波動砲】</color> {Player.ColoredName()} ═> {target.ColoredName()}");
 
@@ -1445,30 +1465,21 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
 
 
-    private void DoSideKick(PlayerControl target)
-
+    /// <summary>サイドキックにする。できない役職の相手だった時は何も使わずに false を返す</summary>
+    private bool DoSideKick(PlayerControl target)
     {
-
-        CanSideKick = false;
-
         var targetRole = target.GetCustomRole();
-
         if (targetRole is CustomRoles.King or CustomRoles.Autocrat or CustomRoles.Jackal or CustomRoles.JackalAlien
-
             or CustomRoles.Jackaldoll or CustomRoles.JackalMafia or CustomRoles.JackalHadouHo
-
             or CustomRoles.Merlin)
-
         {
-
-            Utils.SendMessage("<color=#00b4eb>この役職はSKにできません。</color>", Player.PlayerId);
-
-            return;
-
+            Utils.SendMessage($"<color=#00b4eb>{TownOfHostL.Translator.GetString("JackalHadouHoSkRoleInvalid")}</color>", Player.PlayerId);
+            return false;
         }
-
-
-
+        // ワルキューレはサイドキックにされるのを跳ね返す (ジャッカルと同じ。跳ね返された時は機会を使わない)
+        if (Crewmate.Walkure.TryRejectRoleChange(Player, target, Crewmate.Walkure.RoleChangeSource.Jackal)) return false;
+        // 1 試合 1 回の機会は、サイドキックにできると決まってから使う
+        CanSideKick = false;
         Player.RpcProtectedMurderPlayer(target);
 
         target.RpcProtectedMurderPlayer(Player);
@@ -1501,15 +1512,10 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
         {
 
             AURoleOptions.PhantomCooldown = Cooldown;
-
             Player.RpcResetAbilityCooldown();
-
         }
-
-
-
         Utils.NotifyRoles();
-
+        return true;
     }
 
 
@@ -1529,7 +1535,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         if (skMode && CanSideKick)
 
-            return $"{size}<color=#00b4eb>【SKモード】SKしたいプレイヤーにキル！ペット→キルモードへ</color>";
+            return $"{size}<color=#00b4eb>{TownOfHostL.Translator.GetString("JackalHadouHoSkModeHint")}</color>";
 
 
 
@@ -1543,15 +1549,15 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             if (!SkCanApproach)
 
-                return $"{size}<color=#00b4eb>待機中... | 候補: {tName}</color>";
+                return $"{size}<color=#00b4eb>{string.Format(TownOfHostL.Translator.GetString("JackalHadouHoSkWaiting"), tName)}</color>";
 
             if (skCooldownTimer > 0f)
 
-                return $"{size}<color=#00b4eb>SK CD: {Mathf.CeilToInt(skCooldownTimer)}s | 候補: {tName}</color>";
+                return $"{size}<color=#00b4eb>{string.Format(TownOfHostL.Translator.GetString("JackalHadouHoSkCooldown"), Mathf.CeilToInt(skCooldownTimer), tName)}</color>";
 
             float progress = Mathf.Min(skNearTimer, 1.5f);
 
-            return $"{size}<color=#00b4eb>{tName}に近づき中 {progress:F1}/1.5s</color>";
+            return $"{size}<color=#00b4eb>{string.Format(TownOfHostL.Translator.GetString("JackalHadouHoSkApproaching"), tName, progress.ToString("F1"))}</color>";
 
         }
 
@@ -1559,14 +1565,14 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         if (CanSideKick && !IsCharging && !IsSuperCharging && !ShowBeamMark)
 
-            return $"{size}<color=#ff0000>ファントム→ビーム / ペット→SKモード / 会議自投票→SK候補指定</color>";
+            return $"{size}<color=#ff0000>{TownOfHostL.Translator.GetString("JackalHadouHoHint")}</color>";
 
 
 
-        if (IsLoaded) return $"{size}<color=#00b4eb>【装填済】ファントムボタン → 超波動砲チャージ！</color>";
+        if (IsLoaded) return $"{size}<color=#00b4eb>{TownOfHostL.Translator.GetString("JackalHadouHoLoadedHint")}</color>";
 
-        if (beam?.Pending == true) return $"{size}<color=#ff0000>向きを決めています。撃ちたい向きへ動いてください</color>";
-        if (!IsCharging && !IsSuperCharging) return $"{size}<color=#ff0000>ファントムボタン → チャージ発射</color>";
+        if (beam?.Pending == true) return $"{size}<color=#ff0000>{TownOfHostL.Translator.GetString("HadouHoAiming")}</color>";
+        if (!IsCharging && !IsSuperCharging) return $"{size}<color=#ff0000>{TownOfHostL.Translator.GetString("HadouHoPhantomHint")}</color>";
 
         if (IsSuperCharging)
 
@@ -1574,13 +1580,13 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             var r = Mathf.Max(0f, SuperChargeTime - superChargeTimer);
 
-            return $"{(isForHud ? "" : "<size=60%>")}<color=#ff0000>超チャージ中... {r:F1}s</color>";
+            return $"{(isForHud ? "" : "<size=60%>")}<color=#ff0000>{string.Format(TownOfHostL.Translator.GetString("JackalHadouHoSuperCharging"), r.ToString("F1"))}</color>";
 
         }
 
         var rem = Mathf.Max(0f, ChargeTime - chargeTimer);
 
-        return $"{(isForHud ? "" : "<size=60%>")}<color=#ff0000>チャージ中... {rem:F1}s</color>";
+        return $"{(isForHud ? "" : "<size=60%>")}<color=#ff0000>{string.Format(TownOfHostL.Translator.GetString("HadouHoCharging"), rem.ToString("F1"))}</color>";
 
     }
 
@@ -1596,15 +1602,15 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         if (IsSuperCharging && seer.PlayerId != Player.PlayerId)
 
-            return $"<color=#ff0000>超チャージ中... {(int)Mathf.Max(0f, SuperChargeTime - superChargeTimer)}s</color>";
+            return $"<color=#ff0000>{string.Format(TownOfHostL.Translator.GetString("JackalHadouHoSuperCharging"), (int)Mathf.Max(0f, SuperChargeTime - superChargeTimer))}</color>";
 
         if (IsCharging && seer.PlayerId != Player.PlayerId)
 
-            return $"<color=#ff0000>チャージ中... {(int)Mathf.Max(0f, ChargeTime - chargeTimer)}s</color>";
+            return $"<color=#ff0000>{string.Format(TownOfHostL.Translator.GetString("HadouHoCharging"), (int)Mathf.Max(0f, ChargeTime - chargeTimer))}</color>";
 
         if (ShowBeamMark && seer.PlayerId != Player.PlayerId)
 
-            return "\n<color=#ff0000>ビーム中</color>";
+            return $"\n<color=#ff0000>{TownOfHostL.Translator.GetString("HadouHoBeaming")}</color>";
 
         return "";
 
@@ -1622,13 +1628,13 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             ? " <color=#ff6600>[SK]</color>"
 
-            : " <color=#00b4eb>[キル]</color>";
+            : $" <color=#00b4eb>[{TownOfHostL.Translator.GetString("KillButtonText")}]</color>";
 
     }
 
 
 
-    public override string GetAbilityButtonText() => IsLoaded ? "超発射" : "発射";
+    public override string GetAbilityButtonText() => TownOfHostL.Translator.GetString(IsLoaded ? "JackalHadouHoSuperFire" : "HadouHoFire");
 
 
 }
@@ -1827,11 +1833,11 @@ public sealed class Tama : RoleBase, IKiller
 
     {
 
-        if (!JackalHadouHo.GetTamaCanLoad()) return "<color=#5e5e5e>【装填不可】</color>";
+        if (!JackalHadouHo.GetTamaCanLoad()) return $"<color=#5e5e5e>{TownOfHostL.Translator.GetString("TamaCannotLoad")}</color>";
 
-        if (hasLoaded) return $"<color=#00b4eb>【装填済】</color>";
+        if (hasLoaded) return $"<color=#00b4eb>{TownOfHostL.Translator.GetString("TamaLoadedTag")}</color>";
 
-        return $"<color=#5e5e5e>【未装填】</color>";
+        return $"<color=#5e5e5e>{TownOfHostL.Translator.GetString("TamaNotLoaded")}</color>";
 
     }
 
@@ -1849,17 +1855,17 @@ public sealed class Tama : RoleBase, IKiller
 
         if (!JackalHadouHo.GetTamaCanLoad())
 
-            return $"{(isForHud ? "" : "<size=60%>")}<color=#5e5e5e>装填機能は無効化されています</color>";
+            return $"{(isForHud ? "" : "<size=60%>")}<color=#5e5e5e>{TownOfHostL.Translator.GetString("TamaLoadDisabled")}</color>";
 
         if (hasLoaded)
 
-            return $"{(isForHud ? "" : "<size=60%>")}<color=#00b4eb>装填済み！波動砲ジャッカルが超波動砲を撃てる</color>";
+            return $"{(isForHud ? "" : "<size=60%>")}<color=#00b4eb>{TownOfHostL.Translator.GetString("TamaLoadedHint")}</color>";
 
         if (!IsOwnerAlive())
 
-            return $"{(isForHud ? "" : "<size=60%>")}<color=#5e5e5e>波動砲ジャッカルが死亡しています</color>";
+            return $"{(isForHud ? "" : "<size=60%>")}<color=#5e5e5e>{TownOfHostL.Translator.GetString("TamaOwnerDead")}</color>";
 
-        return $"{(isForHud ? "" : "<size=60%>")}<color=#00b4eb>波動砲ジャッカルにキルボタンで装填</color>";
+        return $"{(isForHud ? "" : "<size=60%>")}<color=#00b4eb>{TownOfHostL.Translator.GetString("TamaLoadHint")}</color>";
 
     }
 

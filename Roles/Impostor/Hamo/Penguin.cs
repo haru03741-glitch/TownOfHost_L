@@ -189,11 +189,10 @@ class Penguin : RoleBase, IImpostor
     }
     public void RestartAbduct()
     {
+        // 会議の始まりで止めた数えは、連れ去っていなくても会議明けに戻す (戻さないと次の連れ去りの制限時間が進まない)
+        stopCount = false;
         if (AbductVictim != null)
-        {
-            stopCount = false;
             nextTpAt = 0f;
-        }
     }
     // 連れ回しの TP は 0.2 秒以上あけ、前に送った位置から 0.3 以上動いた時だけ送る (止まっている間も送り続けると SnapTo の予算が尽きる)
     const float TpInterval = 0.2f, TpMinMove = 0.3f;
@@ -227,23 +226,25 @@ class Penguin : RoleBase, IImpostor
                 if (!AbductVictim.MyPhysics.Animations.IsPlayingAnyLadderAnimation())
                 {
                     var abductVictim = AbductVictim;
+                    // 役職が外れると Player は空になるので、ペンギン本人を控える
+                    var penguin = Player;
                     // 会議の始まりに連れ去りを決着させるので役職が外れても走らせる
                     _ = new LateTask(() =>
                     {
-                        if (abductVictim == null || abductVictim.Data == null || abductVictim.Data.Disconnected) return;
+                        if (penguin == null || abductVictim == null || abductVictim.Data == null || abductVictim.Data.Disconnected) return;
                         var sId = abductVictim.NetTransform.lastSequenceId + 5;
-                        abductVictim.NetTransform.SnapTo(Player.transform.position, (ushort)sId);
-                        Player.MurderPlayer(abductVictim);
+                        abductVictim.NetTransform.SnapTo(penguin.transform.position, (ushort)sId);
+                        penguin.MurderPlayer(abductVictim);
 
                         var sender = CustomRpcSender.Create("PenguinMurder");
                         {
                             sender.AutoStartRpc(abductVictim.NetTransform.NetId, (byte)RpcCalls.SnapTo);
                             {
-                                NetHelpers.WriteVector2(Player.transform.position, sender.stream);
+                                NetHelpers.WriteVector2(penguin.transform.position, sender.stream);
                                 sender.Write(abductVictim.NetTransform.lastSequenceId);
                             }
                             sender.EndRpc();
-                            sender.AutoStartRpc(Player.NetId, (byte)RpcCalls.MurderPlayer);
+                            sender.AutoStartRpc(penguin.NetId, (byte)RpcCalls.MurderPlayer);
                             {
                                 sender.WriteNetObject(abductVictim);
                                 sender.Write((int)ExtendedPlayerControl.SucceededFlags);

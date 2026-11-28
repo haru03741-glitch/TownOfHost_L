@@ -14,7 +14,7 @@ using static TownOfHostL.Translator;
 
 namespace TownOfHostL.Roles.Impostor;
 
-public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTrigger, IKillFlashSeeable
+public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTrigger, IKillFlashSeeable, IUsePetButton, IDissolvingKiller, ITeammateKiller
 {
     // 役職の元: ExtremeRoles (TownOfHost-hamo 経由)
     public static readonly SimpleRoleInfo RoleInfo =
@@ -211,6 +211,12 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
                     if (NowState is AssassinMeeting.CallMetting) NowState = AssassinMeeting.WaitMeeting;
                     return;
                 }
+                // 待つ間にアサシンが抜けた時は開かない (全員を生きているとして送った後、開く人がいない)
+                if (HasLeft())
+                {
+                    NowState = AssassinMeeting.EndMeeting;
+                    return;
+                }
                 MyState.IsDead = false;
                 foreach (var info in GameData.Instance.AllPlayers)
                 {
@@ -241,6 +247,7 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
                 // アサシン会議の段取りなので役職が外れても走らせる
                 _ = new LateTask(() =>
                 {
+                    if (AbortIfLeft()) return;
                     MyState.IsDead = false;
                     ReportDeadBodyPatch.ExReportDeadBody(Player, null, false, "AssassinMeeting", "#ff1919");
                     Utils.AllPlayerKillFlash();
@@ -300,15 +307,17 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
 
                     AntiBlackout.SendGameData();
                     GameDataSerializePatch.SerializeMessageCount--;
-                    // アサシン会議の段取りなので役職が外れても走らせる
+                    // アサシン会議の段取りなので役職が外れても走らせる (外れると Player は空になるので番号を控える)
+                    var selfId = Player.PlayerId;
                     _ = new LateTask(() =>
                     {
-                        Main.AllPlayerControls.DoIf(pc => !pc.AmOwner && pc.PlayerId != Player.PlayerId && pc.GetClientId() >= 0,
+                        Main.AllPlayerControls.DoIf(pc => !pc.AmOwner && pc.PlayerId != selfId && pc.GetClientId() >= 0,
                         pc => Utils.GetPlayerById(0).RpcSetRoleDesync(RoleTypes.Crewmate, pc.GetClientId()));
                     }, 2.5f, "");
                     // アサシン会議の段取りなので役職が外れても走らせる
                     _ = new LateTask(() =>
                     {//ホストだけSetRoleして復活させる。
+                        if (AbortIfLeft()) return;
                         Main.AllPlayerControls.DoIf(pc => !pc.AmOwner && pc.PlayerId != Player.PlayerId && pc.GetClientId() >= 0,
                         pc => Utils.GetPlayerById(0).RpcSetRoleDesync(RoleTypes.Crewmate, pc.GetClientId()));
                         ReportDeadBodyPatch.ExReportDeadBody(Player, null, false, "AssassinMeeting", "#ff1919");
@@ -317,12 +326,39 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
             }//, 0.5f, "AssassinShori");
         }
     }
+    bool HasLeft() => Player == null || Player.Data == null || Player.Data.Disconnected;
+    /// <summary>
+    /// 全員を生きているとして送った後、会議を開く前にアサシンが抜けた時は、控えた生死を戻してアサシン会議を取りやめる
+    /// (抜けた人を通報者にした会議は捨てられ、全員が生き返って見えたまま残る)。待つ間に役職が外れた (Player が空の) 時も同じく取りやめる
+    /// </summary>
+    bool AbortIfLeft()
+    {
+        if (!HasLeft()) return false;
+        Logger.Info("アサシンが抜けたのでアサシン会議を取りやめる", "Assassin");
+        foreach (var info in GameData.Instance.AllPlayers)
+        {
+            if (info == null || !isDeadCache.TryGetValue(info.PlayerId, out var val)) continue;
+            info.IsDead = val.isDead || PlayerState.GetByPlayerId(info.PlayerId)?.IsDead == true;
+            info.Disconnected = val.Disconnected || PlayerState.GetByPlayerId(info.PlayerId)?.DeathReason == CustomDeathReason.Disconnected;
+        }
+        isDeadCache.Clear();
+        NowUse = false;
+        NowState = AssassinMeeting.EndMeeting;
+        GameDataSerializePatch.DontTouch = false;
+        GameDataSerializePatch.SerializeMessageCount++;
+        AntiBlackout.SendGameData();
+        GameDataSerializePatch.SerializeMessageCount--;
+        // 役職名の見え方は NowState で変わるので出し直す
+        Utils.NotifyRoles();
+        return true;
+    }
     public override void OnStartMeeting()
     {
         if (NowState is AssassinMeeting.Guessing)
         {
             if (!AmongUsClient.Instance.AmHost) return;
-            // アサシン会議の段取り (生死の控えを戻す) なので役職が外れても走らせる
+            // アサシン会議の段取り (生死の控えを戻す) なので役職が外れても走らせる (外れると Player は空になるので番号を控える)
+            var selfId = Player.PlayerId;
             _ = new LateTask(() =>
             {
                 foreach (var info in GameData.Instance.AllPlayers)
@@ -332,7 +368,7 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
                     {
                         // 控えを取った後に死んだ人 (待ちの間の遅延のキルなど) は、控えの「生きている」へ戻さない
                         info.IsDead = val.isDead
-                            || (info.PlayerId != Player.PlayerId && PlayerState.GetByPlayerId(info.PlayerId)?.IsDead == true);
+                            || (info.PlayerId != selfId && PlayerState.GetByPlayerId(info.PlayerId)?.IsDead == true);
                         info.Disconnected = val.Disconnected;
                     }
                 }
@@ -353,7 +389,7 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
         if (NowState is AssassinMeeting.Guessing)
         {
             var name = Camouflage.PlayerSkins.TryGetValue(Player.PlayerId, out var cos) ? cos.PlayerName : "^a^";
-            var tage = Camouflage.PlayerSkins.TryGetValue(GuessId, out var tcos) ? tcos.PlayerName : "彼";
+            var tage = Camouflage.PlayerSkins.TryGetValue(GuessId, out var tcos) ? tcos.PlayerName : GetString("AssassinGuessFallbackName");
 
             if (GuessId is not byte.MaxValue)
             {
@@ -377,7 +413,8 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
             }
             Exiled = Player.Data;
             // アサシン会議の段取り (名前を戻す) なので役職が外れても走らせる
-            _ = new LateTask(() => Player.RpcSetName(name), 6f, "AssassinSetName");
+            var assassinPc = Player;
+            _ = new LateTask(() => { if (assassinPc) assassinPc.RpcSetName(name); }, 6f, "AssassinSetName");
             return true;
         }
         else
@@ -501,6 +538,21 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
         return false;
     }
 
+    // 中の役職の能力・表示の窓口 (渡さないと、中の役職の能力が働かない・残り回数が出ない)
+    public override bool RevengesOnExile => AddRole?.RevengesOnExile ?? false;
+    public override bool CanRevengeOn(PlayerControl candidate) => AddRole?.CanRevengeOn(candidate) ?? true;
+    public override bool ShowsRoleColorToAll(bool isMeeting) => AddRole?.ShowsRoleColorToAll(isMeeting) ?? false;
+    public override int? UsesRemaining => AddRole?.UsesRemaining;
+    public override bool UsesOnKillButton => AddRole?.UsesOnKillButton ?? base.UsesOnKillButton;
+    bool IUsePetButton.UsesPet => AddRole is IUsePetButton pet && pet.UsesPet;
+    void IUsePetButton.OnPet() { if (AddRole is IUsePetButton pet) pet.OnPet(); }
+    bool IDissolvingKiller.DissolvesBody(PlayerControl target) => AddRole is IDissolvingKiller dissolver && dissolver.DissolvesBody(target);
+    bool ITeammateKiller.CanKillTeammates => AddRole is ITeammateKiller teammateKiller && teammateKiller.CanKillTeammates;
+    bool IUsePhantomButton.SyncAbilityCooldownWithKillCooldown => AddRole is IUsePhantomButton synced && synced.SyncAbilityCooldownWithKillCooldown;
+    void IUsePhantomButton.SetSyncedAbilityCooldown(float cooldown) { if (AddRole is IUsePhantomButton synced) synced.SetSyncedAbilityCooldown(cooldown); }
+    public override bool OnCheckVanish(ref float killCooldown, ref bool canResetAbilityCooldown) => AddRole?.OnCheckVanish(ref killCooldown, ref canResetAbilityCooldown) ?? true;
+    public override bool KnowsRoleOf(PlayerControl seen, bool isMeeting) => AddRole?.KnowsRoleOf(seen, isMeeting) ?? false;
+    public override bool OnCheckPressAsTarget(MurderInfo info) => AddRole?.OnCheckPressAsTarget(info) ?? true;
     bool IUsePhantomButton.IsPhantomRole => AddRole is IUsePhantomButton iusephantom && iusephantom?.IsPhantomRole is true;
     bool IUsePhantomButton.UseOneclickButton => AddRole is IUsePhantomButton iusephantom && iusephantom?.UseOneclickButton is true;
     bool IUsePhantomButton.IsresetAfterKill => AddRole is IUsePhantomButton iusephantom && iusephantom.IsresetAfterKill;

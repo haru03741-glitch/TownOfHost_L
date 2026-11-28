@@ -338,11 +338,14 @@ public sealed class Dollmaster : RoleBase, IImpostor
     }
 
     // 操っている途中に人形使いが抜けると、OnFixedUpdate の見張りが止まり相手の速さが止まったまま残る。抜けた時に放す
-    // (相手が抜けた時は OnFixedUpdate が切断を見てやめる)
+    // 相手が抜けた時もここで放す。OnFixedUpdate の見張りは、相手の PlayerControl が先に壊されると相手を見失い、
+    // 人形使いが幽霊のまま元の場所へ戻らない
     public override void OnPlayerLeft(byte playerId)
     {
-        if (!AmongUsClient.Instance.AmHost || puppet == null || playerId != Player.PlayerId) return;
-        try { Release(send: false); }
+        if (!AmongUsClient.Instance.AmHost || puppet == null) return;
+        if (playerId != Player.PlayerId && playerId != puppetId) return;
+        // 相手が抜けた時は、人形使いを元の場所へ戻す (抜けた相手への電文は PlayerWalker が送らない)
+        try { Release(send: playerId == puppetId); }
         catch (System.Exception ex) { Logger.Exception(ex, nameof(Dollmaster)); }
     }
 

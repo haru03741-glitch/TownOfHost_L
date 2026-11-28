@@ -225,6 +225,10 @@ namespace TownOfHostL.Modules
             var state = PlayerState.GetByPlayerId(player.PlayerId);
             opt.SetFloat(FloatOptionNames.CrewLightMod, Main.DefaultCrewmateVision);
             opt.SetFloat(FloatOptionNames.ImpostorLightMod, Main.DefaultImpostorVision);
+            // 本編の客は、自分への SetRole を受けるたびに緊急会議の残り回数をこの設定の値へ戻す。
+            // ホストが数えている残りを入れておき、役職の送り直しで使い切ったボタンが戻らないようにする (役職の設定の方が優先)
+            if (state != null)
+                opt.SetInt(Int32OptionNames.NumEmergencyMeetings, Mathf.Clamp((int)state.NumberOfRemainingButtons, 0, 100));
 
             CustomRoles role = player.GetCustomRole();
             switch (role.GetCustomRoleTypes())

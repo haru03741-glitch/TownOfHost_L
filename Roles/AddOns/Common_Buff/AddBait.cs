@@ -46,7 +46,8 @@ public static class AddBait
         if (playerIdList.Contains(target.PlayerId) && !info.IsSuicide)
             _ = new LateTask(() =>
             {
-                killer.CmdReportDeadBody(target.Data);
+                // 待つ間にキラーが抜けた時は通報させない
+                if (killer && killer.Data != null && !killer.Data.Disconnected && target && target.Data != null) killer.CmdReportDeadBody(target.Data);
             }, 0.15f, "AddBait Self Report");
     }
 

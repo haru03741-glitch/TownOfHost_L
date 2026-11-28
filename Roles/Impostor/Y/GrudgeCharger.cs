@@ -56,6 +56,7 @@ public sealed class GrudgeCharger : RoleBase, IImpostor
     /// <summary> チャージ回数 </summary>
     int chargeCount;
     PlayerControl KillWaitPlayer;
+    byte killWaitId = byte.MaxValue;
 
     private static void SetUpOptionItem()
     {
@@ -107,13 +108,15 @@ public sealed class GrudgeCharger : RoleBase, IImpostor
     // 狙いを外す時は矢印も消す (残すと会議の後やキルの後も矢印の計算が回り続ける)
     private void ClearTarget()
     {
-        if (KillWaitPlayer != null) TargetArrow.Remove(Player.PlayerId, KillWaitPlayer.PlayerId);
+        // 壊された後の PlayerControl からは番号を読まず、選んだ時に控えた番号で矢印を外す
+        if (KillWaitPlayer is not null) TargetArrow.Remove(Player.PlayerId, killWaitId);
         KillWaitPlayer = null;
     }
     public override void OnFixedUpdate(PlayerControl player)
     {
         if (!GameStates.IsInTask) return;
-        if (KillWaitPlayer == null) return;
+        // 抜けた人の PlayerControl は壊されて Unity の null になる。それも下の「死んだり抜けたりしたら外す」へ通す
+        if (KillWaitPlayer is null) return;
         if (!Player.IsAlive()) return;
 
         // 狙いが他の理由で死んだり抜けたりしたら外す (残すと会議まで次の狙いを選べない)
@@ -173,6 +176,7 @@ public sealed class GrudgeCharger : RoleBase, IImpostor
         if (KillWaitPlayer != null) return false;
 
         KillWaitPlayer = target;
+        killWaitId = target.PlayerId;
         TargetArrow.Add(Player.PlayerId, target.PlayerId);
 
         Logger.Info($"{Player.GetNameWithRole()}のターゲットを{target.GetNameWithRole()}に設定", "GrudgeCharger");

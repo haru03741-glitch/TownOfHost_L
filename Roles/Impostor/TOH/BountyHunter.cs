@@ -79,6 +79,7 @@ public sealed class BountyHunter : RoleBase, IImpostor
         if (!info.IsSuicide)
         {
             (var killer, var target) = info.AttemptTuple;
+            cooldownDecided = true;
 
             if (GetTarget() == target)
             {//ターゲットをキルした場合
@@ -95,9 +96,19 @@ public sealed class BountyHunter : RoleBase, IImpostor
         }
         return;
     }
+    // 守りでキルが止められた時は、当たり外れのクールを効かせず、ふつうのクールで数え直させる
+    // (守りの演出で客のキルの待ちは当たり外れの値で数え始めている)
+    bool cooldownDecided;
+    public void OnCheckMurderDontKill(MurderInfo info)
+    {
+        if (!cooldownDecided) return;
+        cooldownDecided = false;
+        Player.SetKillCooldown();
+    }
     // 守りでキルが止められた時は狙いを引き直さない (倒した時だけ次の狙いへ)
     public void OnMurderPlayerAsKiller(MurderInfo info)
     {
+        cooldownDecided = false;
         if (!AmongUsClient.Instance.AmHost || info.IsSuicide) return;
         if (GetTarget() == info.AttemptTarget) ResetTarget();
     }

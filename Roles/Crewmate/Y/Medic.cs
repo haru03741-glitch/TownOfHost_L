@@ -116,12 +116,20 @@ public sealed class Medic : RoleBase
         GuardPlayer = Player.VentPlayerSelect(() =>
         {
             UseVent = false;
+            // 使い切った後の待ち時間 (255 秒) を送ってから数え直す。送らないと、本人の手元ではベントのボタンが使えるように見え続ける
+            Player.RpcResetAbilityCooldown(sync: true);
         });
 
         Utils.NotifyRoles(SpecifySeer: Player);
         return true;
     }
 
+    // 試合の途中で就いた時も、もう条件を満たしていれば次のタスクを待たずに効かせる
+    public override void OnAddedMidGame()
+    {
+        if (Player.IsAlive() && (MyTaskState.HasCompletedEnoughCountOfTasks(TaskTrigger) || IsTaskFinished))
+            Player.RpcResetAbilityCooldown(sync: true);
+    }
     public override bool OnCompleteTask()
     {
         if (!Player.IsAlive()) return true;

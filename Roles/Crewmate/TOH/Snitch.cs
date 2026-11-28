@@ -155,8 +155,8 @@ public class Snitch : RoleBase
         //seenが省略の場合seer
         seen ??= seer;
 
-        //ともにスニッチでなければ無し
-        if (!Is(seer) && !Is(seen)) return "";
+        //ともにスニッチでなければ無し (自分の名前の下だけに出す)
+        if (!Is(seer) || !Is(seen)) return "";
         //タスク終わってなければ無し
         if (!IsComplete) return "";
 
@@ -171,6 +171,8 @@ public class Snitch : RoleBase
     /// <summary>
     /// タスクの進行状況の管理
     /// </summary>
+    // 試合の途中で就いた時も、もう条件を満たしていれば次のタスクを待たずに効かせる
+    public override void OnAddedMidGame() => OnCompleteTask();
     public override bool OnCompleteTask()
     {
         var update = false;
