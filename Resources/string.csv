@@ -6801,4 +6801,4 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "RoleDictionary.CmdAliases","Also:","別の書き方:","","","","",""
 "RoleDictionary.CmdUsage","How to type","書き方","","","","",""
 "RoleDictionary.CmdHelp","What it does","説明","","","","",""
-"CommandList.HostInDictionary","Host commands are in the Commands tab of the role dictionary (F4 or /dic).","ホスト用のコマンドは、役職辞典 (F4・/dic) の「コマンド」タブで見られます","","","","",""
+"CommandList.HostInDictionary","Host commands are in the Commands tab of the role dictionary (F4 or the book button at the top right).","ホスト用のコマンドは、役職辞典 (F4・右上の本のボタン) の「コマンド」タブで見られます","","","","",""
