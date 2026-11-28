@@ -833,7 +833,7 @@ public enum CustomRoles
     Evilgambler, Samurai, HadouHo, Pusher, HateKiller, Framer, Surrogate, Maestro, TimeSleeper, Bomber,
     EvilLinker, Tairou, EvilBlender, Ballooner, AntiReporter, EvilAddoer, SlaveDriver, Assassin, EvilCommander,
     Magician, Evolver, Destroyer, Nova, Reloader,
-    MadMagic, MadKaiser, MadAvenger,
+    MadMagic, MadKaiser, MadAvenger, MadWorker,
     Sage, MeetingSheriff, Balancer, VillageChief, NiceHacker, Guardian, Walkure, Repeater, NiceWorkaholic,
     SheriffHadouHo, Analyzer, UltraStar, NiceAddoer, Merlin,
     Spelunker, Tuna, Vulture, PavlovDog, PavlovOwner, PavlovDogImprint, JackalHadouHo, Tama, Onmyoji, Shikigami,
@@ -925,7 +925,7 @@ public enum CustomRoles
     HamoOnlyStart = 20000,
     Alien, AlienHijack, Amanojaku, Amnesia, Amnesiac, Autocrat, ConnectSaver, CountKiller, DoppelGanger, Elector,
     EvilSatellite, GrimReaper, Guesser, JackalAlien, JackalMafia, Jackaldoll, Jumbo, King, LastNeutral, Limiter,
-    MadWorker, MagicHand, Moon, Opener, Powerful, Remotekiller, Serial, Speeding, Stack, Stamina,
+    MagicHand, Moon, Opener, Powerful, Remotekiller, Serial, Speeding, Stack, Stamina,
     Strawdoll, SwitchSheriff, Water, WolfBoy,
 }
 public enum CustomRoleTypes

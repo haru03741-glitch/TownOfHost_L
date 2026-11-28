@@ -136,6 +136,7 @@ public static class RoleFrom
         [CustomRoles.LoveCutter] = From.TownOfHost_Y,
         [CustomRoles.LoyalDoggy] = From.TownOfHost_Y,
         [CustomRoles.MadAvenger] = From.TownOfHost_K,
+        [CustomRoles.MadWorker] = From.TownOfHost_K,
         [CustomRoles.MadBrackOuter] = From.TownOfHost_Y,
         [CustomRoles.MadConnecter] = From.TownOfHost_Y,
         [CustomRoles.MadDictator] = From.TownOfHost_Y,
