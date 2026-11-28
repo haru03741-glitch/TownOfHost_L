@@ -1473,6 +1473,8 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
             Utils.SendMessage("<color=#00b4eb>この役職はSKにできません。</color>", Player.PlayerId);
             return false;
         }
+        // ワルキューレはサイドキックにされるのを跳ね返す (ジャッカルと同じ。跳ね返された時は機会を使わない)
+        if (Crewmate.Walkure.TryRejectRoleChange(Player, target, Crewmate.Walkure.RoleChangeSource.Jackal)) return false;
         // 1 試合 1 回の機会は、サイドキックにできると決まってから使う
         CanSideKick = false;
         Player.RpcProtectedMurderPlayer(target);
