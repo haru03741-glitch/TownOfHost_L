@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using TownOfHostL.Attributes;
@@ -69,14 +69,17 @@ public static class Guesser
 
     static OptionItem TeamMaximum(string team, Color color, int max, OptionItem parent)
     {
+        // 名前は 4 つとも同じなので、保存のキーは陣営で分ける
         var o = IntegerOptionItem.Create("%roleTypes%Maximum", new(0, max, 1), max, TabGroup.Addons, false)
             .SetParent(parent)
+            .SetKeyName($"{team}Maximum")
             .SetValueFormat(OptionFormat.Players);
         o.ReplacementDictionary = new() { { "%roleTypes%", Utils.ColorString(color, GetString(team)) } };
         return o;
     }
-    static OptionItem Bool(string name, bool def, OptionItem parent, Color color)
-        => BooleanOptionItem.Create(name, def, TabGroup.Addons, false).SetParent(parent).SetColor(color);
+    // 陣営ごとに同じ名前の設定が並ぶので、保存のキーは陣営の頭文字 (C/I/M/N) を付けて分ける
+    static OptionItem Bool(string team, string name, bool def, OptionItem parent, Color color)
+        => BooleanOptionItem.Create(name, def, TabGroup.Addons, false).SetParent(parent).SetKeyName(team + name).SetColor(color);
 
     public static void SetupCustomOption()
     {
@@ -96,24 +99,24 @@ public static class Guesser
         var mad = new Color32(255, 128, 0, 255);
         var neu = Palette.DisabledGrey;
         //クルーメイト
-        CCanGuessVanilla = Bool("CanGuessVanilla", true, spawn, crew);
-        CCanGuessNakama = Bool("CanGuessNakama", true, spawn, crew);
-        CCanWhiteCrew = Bool("CanWhiteCrew", false, spawn, crew);
-        WarnIfCrewmate = Bool("GuesserWarnIfCrewmate", false, spawn, crew);
+        CCanGuessVanilla = Bool("C", "CanGuessVanilla", true, spawn, crew);
+        CCanGuessNakama = Bool("C", "CanGuessNakama", true, spawn, crew);
+        CCanWhiteCrew = Bool("C", "CanWhiteCrew", false, spawn, crew);
+        WarnIfCrewmate = Bool("W", "GuesserWarnIfCrewmate", false, spawn, crew);
         //imp
-        ICanGuessVanilla = Bool("CanGuessVanilla", true, spawn, imp);
-        ICanGuessNakama = Bool("CanGuessNakama", true, spawn, imp);
-        ICanGuessTaskDoneSnitch = Bool("CanGuessTaskDoneSnitch", false, spawn, imp);
-        ICanWhiteCrew = Bool("CanWhiteCrew", false, spawn, imp);
+        ICanGuessVanilla = Bool("I", "CanGuessVanilla", true, spawn, imp);
+        ICanGuessNakama = Bool("I", "CanGuessNakama", true, spawn, imp);
+        ICanGuessTaskDoneSnitch = Bool("I", "CanGuessTaskDoneSnitch", false, spawn, imp);
+        ICanWhiteCrew = Bool("I", "CanWhiteCrew", false, spawn, imp);
         //mad
-        MCanGuessVanilla = Bool("CanGuessVanilla", true, spawn, mad);
-        MCanGuessNakama = Bool("CanGuessNakama", true, spawn, mad);
-        MCanGuessTaskDoneSnitch = Bool("CanGuessTaskDoneSnitch", true, spawn, mad);
-        MCanWhiteCrew = Bool("CanWhiteCrew", false, spawn, mad);
+        MCanGuessVanilla = Bool("M", "CanGuessVanilla", true, spawn, mad);
+        MCanGuessNakama = Bool("M", "CanGuessNakama", true, spawn, mad);
+        MCanGuessTaskDoneSnitch = Bool("M", "CanGuessTaskDoneSnitch", true, spawn, mad);
+        MCanWhiteCrew = Bool("M", "CanWhiteCrew", false, spawn, mad);
         //Neu
-        NCanGuessVanilla = Bool("CanGuessVanilla", true, spawn, neu);
-        NCanGuessTaskDoneSnitch = Bool("CanGuessTaskDoneSnitch", false, spawn, neu);
-        NCanWhiteCrew = Bool("CanWhiteCrew", false, spawn, neu);
+        NCanGuessVanilla = Bool("N", "CanGuessVanilla", true, spawn, neu);
+        NCanGuessTaskDoneSnitch = Bool("N", "CanGuessTaskDoneSnitch", false, spawn, neu);
+        NCanWhiteCrew = Bool("N", "CanWhiteCrew", false, spawn, neu);
         TellerCannotGuess = BooleanOptionItem.Create("GuesserTellerCannotGuess", false, TabGroup.Addons, false).SetParent(spawn);
     }
 
