@@ -34,7 +34,8 @@ namespace TownOfHostL.Roles.AddOns.Impostor
         public static void Add(byte id) => currentId = id;
         public static void SetKillCooldown(PlayerControl pc)
         {
-            if (currentId == byte.MaxValue || !CanChangeKillColldown(pc)) return;
+            // 「キルクールを変更する」を切った時は、役職のキルクールのままにする
+            if (currentId == byte.MaxValue || !IsChangeKillCooldown.GetBool() || !CanChangeKillColldown(pc)) return;
             Main.AllPlayerKillCooldown[currentId] = KillCooldown.GetFloat();
         }
         public static bool CanBeLastImpostor(PlayerControl pc)
