@@ -946,9 +946,9 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             {
                 // 案内に出す残り秒が変わった時 (0 になった時も) に出し直す
-                int before = Mathf.CeilToInt(skCooldownTimer);
+                int before = (int)System.Math.Ceiling(skCooldownTimer);
                 skCooldownTimer -= Time.fixedDeltaTime;
-                if (Mathf.CeilToInt(Mathf.Max(0f, skCooldownTimer)) != before) Utils.NotifyRoles(SpecifySeer: Player);
+                if ((int)System.Math.Ceiling(System.Math.Max(0f, skCooldownTimer)) != before) Utils.NotifyRoles(SpecifySeer: Player);
             }
 
         }
