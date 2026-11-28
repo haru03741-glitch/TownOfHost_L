@@ -211,6 +211,12 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
                     if (NowState is AssassinMeeting.CallMetting) NowState = AssassinMeeting.WaitMeeting;
                     return;
                 }
+                // 待つ間にアサシンが抜けた時は開かない (全員を生きているとして送った後、開く人がいない)
+                if (HasLeft())
+                {
+                    NowState = AssassinMeeting.EndMeeting;
+                    return;
+                }
                 MyState.IsDead = false;
                 foreach (var info in GameData.Instance.AllPlayers)
                 {
@@ -241,6 +247,7 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
                 // アサシン会議の段取りなので役職が外れても走らせる
                 _ = new LateTask(() =>
                 {
+                    if (AbortIfLeft()) return;
                     MyState.IsDead = false;
                     ReportDeadBodyPatch.ExReportDeadBody(Player, null, false, "AssassinMeeting", "#ff1919");
                     Utils.AllPlayerKillFlash();
@@ -309,6 +316,7 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
                     // アサシン会議の段取りなので役職が外れても走らせる
                     _ = new LateTask(() =>
                     {//ホストだけSetRoleして復活させる。
+                        if (AbortIfLeft()) return;
                         Main.AllPlayerControls.DoIf(pc => !pc.AmOwner && pc.PlayerId != Player.PlayerId && pc.GetClientId() >= 0,
                         pc => Utils.GetPlayerById(0).RpcSetRoleDesync(RoleTypes.Crewmate, pc.GetClientId()));
                         ReportDeadBodyPatch.ExReportDeadBody(Player, null, false, "AssassinMeeting", "#ff1919");
@@ -316,6 +324,32 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
                 }
             }//, 0.5f, "AssassinShori");
         }
+    }
+    bool HasLeft() => Player == null || Player.Data == null || Player.Data.Disconnected;
+    /// <summary>
+    /// 全員を生きているとして送った後、会議を開く前にアサシンが抜けた時は、控えた生死を戻してアサシン会議を取りやめる
+    /// (抜けた人を通報者にした会議は捨てられ、全員が生き返って見えたまま残る)
+    /// </summary>
+    bool AbortIfLeft()
+    {
+        if (!HasLeft()) return false;
+        Logger.Info("アサシンが抜けたのでアサシン会議を取りやめる", "Assassin");
+        foreach (var info in GameData.Instance.AllPlayers)
+        {
+            if (info == null || !isDeadCache.TryGetValue(info.PlayerId, out var val)) continue;
+            info.IsDead = val.isDead || PlayerState.GetByPlayerId(info.PlayerId)?.IsDead == true;
+            info.Disconnected = val.Disconnected || PlayerState.GetByPlayerId(info.PlayerId)?.DeathReason == CustomDeathReason.Disconnected;
+        }
+        isDeadCache.Clear();
+        NowUse = false;
+        NowState = AssassinMeeting.EndMeeting;
+        GameDataSerializePatch.DontTouch = false;
+        GameDataSerializePatch.SerializeMessageCount++;
+        AntiBlackout.SendGameData();
+        GameDataSerializePatch.SerializeMessageCount--;
+        // 役職名の見え方は NowState で変わるので出し直す
+        Utils.NotifyRoles();
+        return true;
     }
     public override void OnStartMeeting()
     {
