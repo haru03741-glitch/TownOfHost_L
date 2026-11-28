@@ -113,6 +113,13 @@ public sealed class MadAvenger : RoleBase, IKillFlashSeeable, IDeathReasonSeeabl
         var user = physics.myPlayer;
         physics.RpcBootFromVent(ventId);
         user?.ReportDeadBody(null);
+        // サボ中・ボタンの上限などで会議が捨てられたら、革命会議の旗を下ろす (残すと次の普通の会議が革命会議になる)。預かられた通報は後で会議になるので下ろさない
+        if (!MeetingStates.MeetingCalled && !Revive.HasHeldReport)
+        {
+            Skill = false;
+            Logger.Info("会議が開かなかったので革命会議を取りやめる", "MadAvenger");
+            return true;
+        }
         Logger.Info("ショータイムの時間だ。", "MadAvenger");
         return true;
     }
