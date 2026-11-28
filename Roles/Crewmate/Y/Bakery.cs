@@ -225,7 +225,7 @@ public sealed class Bakery : RoleBase, ISoloWinner
         var PlayerId = Player.PlayerId;
         //第三パン屋でない
         if (!nBakeries.Contains(this)) return;
-        // 死んだ (吊られた・ほかの死) 闇パン屋の毒は取り消す (残すと毒の印が試合の終わりまで出続ける)
+        // 死んだ (吊られた・ほかの死) 覚醒パン屋の毒は取り消す (残すと毒の印が試合の終わりまで出続ける)
         if (!Player.IsAlive())
         {
             PoisonPlayer = null;
