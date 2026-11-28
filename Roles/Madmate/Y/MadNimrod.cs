@@ -69,9 +69,7 @@ public sealed class MadNimrod : RoleBase
             Logger.Info($"{nimrod.GetNameWithRole()} : ニムロッド会議", "Nimrod");
             // バニラ側の表示更新
             Utils.NotifyRoles(true, ForceLoop: true);
-            // 自分を対象にした会議は通報の前置きの判定を通らず本編へ渡るので、会議中の印では開いたかを見られない (後で見ない)
-            if (nimrod.AmOwner) nimrod.ReportDeadBody(Exiled);
-            else if (!nimrod.NoCheckStartMeeting(Exiled)) ExecutionMeetingPlayerId = byte.MaxValue;
+            nimrod.ReportDeadBody(Exiled);
         }, 14.5f, "NimrodExiled");
 
         // 一旦誰も追放されずに終わる
