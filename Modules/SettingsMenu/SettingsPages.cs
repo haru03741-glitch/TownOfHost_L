@@ -162,6 +162,7 @@ internal static class SettingsPages
         ["AddonShowMode"] = "SettingsUI.Sec.Display",
         ["AntiCheat"] = "SettingsUI.Sec.Safety",
         ["TeamChat"] = "SettingsUI.Sec.TeamChat",
+        ["RoleComboNotTogether"] = "SettingsUI.Sec.RoleCombo",
     };
 
     private static bool IsGeneral(OptionItem head) => head != null && GeneralHeads.Contains(head.Name);

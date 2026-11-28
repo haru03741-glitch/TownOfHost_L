@@ -79,6 +79,12 @@ namespace TownOfHostL
                     var rb = mr.bounds;
                     // 字の右上の角の、字の位置からのずれ (字の中身が変わっても位置と一緒に動くので、毎フレーム測り直す)
                     float topOff = rb.max.y - t.position.y, rightOff = rb.max.x - t.position.x;
+                    // 字の形 (メッシュ) は字を書き換えた後まで古いことがあるので、右上寄せの字の枠の右上の角とも比べ、大きい方を使う
+                    // IL2CPP では普通の配列を渡すと写しに書かれて戻らないので、IL2CPP の配列で受ける
+                    var corners = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<Vector3>(4);
+                    ping.text.rectTransform.GetWorldCorners(corners);
+                    topOff = Mathf.Max(topOff, corners[2].y - t.position.y);
+                    rightOff = Mathf.Max(rightOff, corners[2].x - t.position.x);
                     // 本来の位置へ戻してから決める (ずらしを積み重ねない)
                     aspect.AdjustPosition();
                     shiftedForButtons = false;

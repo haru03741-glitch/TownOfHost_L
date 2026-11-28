@@ -10,8 +10,6 @@ namespace TownOfHostL
     public class MainMenuManagerPatch
     {
         private static SimpleButton discordButton;
-        private static SimpleButton twitterButton;
-        private static SimpleButton wikiwikiButton;
         private static SimpleButton roleDictionaryButton;
         private static SimpleButton gitHubButton;
         public static SimpleButton UpdateButton { get; private set; }
@@ -25,7 +23,7 @@ namespace TownOfHostL
             {
                 discordButton = CreateButton(
                     "DiscordButton",
-                    new(-1.95f, -2.7f, 1f),
+                    new(-0.2f, -2.7f, 1f),
                     new(86, 98, 246, byte.MaxValue),
                     new(173, 179, 244, byte.MaxValue),
                     () => Application.OpenURL(Main.DiscordInviteUrl),
@@ -34,30 +32,6 @@ namespace TownOfHostL
                     isActive: Main.ShowDiscordButton);
             }
 
-            // Twitterボタンを生成
-            if (SimpleButton.IsNullOrDestroyed(twitterButton))
-            {
-                twitterButton = CreateButton(
-                    "TwitterButton",
-                    new(-0.2f, -2.7f, 1f),
-                    new(29, 160, 241, byte.MaxValue),
-                    new(169, 215, 242, byte.MaxValue),
-                    () => Application.OpenURL("https://twitter.com/yumeno_AmongUs"),
-                    "Twitter/X",
-                    new(1.85f, 0.5f));
-            }
-            // WIKIWIKIボタンを生成
-            if (SimpleButton.IsNullOrDestroyed(wikiwikiButton))
-            {
-                wikiwikiButton = CreateButton(
-                    "WikiwikiButton",
-                    new(1.55f, -2.7f, 1f),
-                    new(255, 142, 168, byte.MaxValue),
-                    new(255, 226, 153, byte.MaxValue),
-                    () => Application.OpenURL("https://wikiwiki.jp/tohy_amongus"),
-                    "WIKIWIKI",
-                    new(1.85f, 0.5f));
-            }
             // GitHubボタンを生成
             if (SimpleButton.IsNullOrDestroyed(gitHubButton))
             {
@@ -126,12 +100,14 @@ namespace TownOfHostL
             return button;
         }
 
-        // プレイメニュー，アカウントメニュー，クレジット画面が開かれたらロゴとボタンを消す
+        // プレイメニュー，アカウントメニュー，クレジット画面，報酬のコードの画面が開かれたらロゴとボタンを消す
         [HarmonyPatch(nameof(MainMenuManager.OpenGameModeMenu))]
         [HarmonyPatch(nameof(MainMenuManager.OpenOnlineMenu))]
         [HarmonyPatch(nameof(MainMenuManager.ClickBackOnline))]
         [HarmonyPatch(nameof(MainMenuManager.OpenAccountMenu))]
         [HarmonyPatch(nameof(MainMenuManager.OpenCredits))]
+        [HarmonyPatch(nameof(MainMenuManager.OpenRedeemCodeMenu))]
+        [HarmonyPatch(nameof(MainMenuManager.OpenEnterCodeMenu))]
         [HarmonyPostfix]
         public static void OpenMenuPostfix()
         {

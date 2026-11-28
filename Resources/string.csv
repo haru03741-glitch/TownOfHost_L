@@ -6763,3 +6763,7 @@ CCYellowCatInfo,You have become the YellowCat,黄陣営に所属した,你成为
 "RoleCombo.ThenB","Rule {0}: this role also appears","組{0}: この役職も必ず出る"
 "MenuCat.Assign","Role Assignment","配役設定"
 "MenuDescriptionText.Assign","How roles are assigned: assignment mode, team counts, and role combinations (roles that never appear together / roles that always appear together).","役職の配り方の設定。アサインの方法・陣営ごとの人数と、役職の組み合わせ (同時に出ない役職・一緒に必ず出る役職)。"
+"SpawnPin.Reset","Reset to default positions","配置を初期にする"
+"SpawnPin.ResetConfirm","Press again to reset to the default positions","もう一度押すと初期の配置にする"
+"SpawnPin.ResetDone","Placed pins at the default spawn positions (same as TownOfHost-hamo)","初期の配置 (TownOfHost-hamo と同じスポーン位置) にしました"
+"SettingsUI.Sec.RoleCombo","Role combinations","役職の組み合わせ"

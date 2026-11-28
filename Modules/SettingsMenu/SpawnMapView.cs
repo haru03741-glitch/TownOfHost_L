@@ -46,7 +46,72 @@ internal sealed class SpawnMapView : Widget
         foreach (var s in SpawnPinEditor.Sheets) if (s.Id == id) sheet = s;
         if (sheet == null || !SpawnPinEditor.Load(sheet)) return null;
         var view = new SpawnMapView(sheet, rowW - OptEditor.PlatePad * 2f);
-        return OptEditor.Plated(view, rowW, 1);
+        // 地図の下に、別の行で「ピンを全部消す」「初期の配置にする」 (どちらも 2 回押しで実行)
+        float inner = rowW - OptEditor.PlatePad * 2f;
+        return new Stack(false,
+            OptEditor.Plated(view, rowW, 1),
+            OptEditor.Plated(view.ActionRow(Translator.GetString("SpawnPin.Clear"), inner, view.Clear), rowW, 0),
+            OptEditor.Plated(view.ActionRow(Translator.GetString("SpawnPin.Reset"), inner, view.ResetToDefault), rowW, 1))
+        { Gap = 0.04f, Width = rowW, Align = Align.Start };
+    }
+
+    private const float ActBtnW = 1.5f, ActBtnH = 0.32f;
+    private static readonly Color ActColor = new(1f, 0.72f, 0.3f, 1f), ConfirmColor = new(1f, 0.38f, 0.38f, 1f);
+    private string _pending;   // もう一度押すと実行する操作の名前
+
+    private Widget ActionRow(string name, float width, System.Action run)
+    {
+        var label = new Label(name, OptEditor.NarrowFont) { Width = width - ActBtnW - 0.08f, Bold = true, NoWrap = true, MinFontSize = 0.8f, Color = Color.white };
+        Button btn = null;
+        btn = new Button(name, () =>
+        {
+            if (!SettingsPages.CanEdit()) return;
+            if (_pending != name)
+            {
+                // 1 回目: 確かめる
+                _pending = name;
+                btn.SetColor(ConfirmColor);
+                _info?.SetText(InfoText(Translator.GetString(name == Translator.GetString("SpawnPin.Clear") ? "SpawnPin.ClearConfirm" : "SpawnPin.ResetConfirm")));
+                return;
+            }
+            _pending = null;
+            btn.SetColor(ActColor);
+            run();
+        }, 1.1f) { Size = new Vector2(ActBtnW, ActBtnH), Color = ActColor };
+        return new Stack(true, label, btn) { Gap = 0.08f, Align = Align.Start };
+    }
+
+    // このマップのピンを全部外す
+    private void Clear()
+    {
+        var points = Points(false);
+        points?.Clear();
+        SpawnStore.Save();
+        DrawPins(true);
+        _info?.SetText(InfoText(Translator.GetString("SpawnPin.Cleared")));
+    }
+
+    // TownOfHost-hamo のランダムスポーンの部屋の位置 (Patches/RandomSpawnPatch.cs) をピンにする
+    private static readonly Dictionary<int, (string name, float x, float y)[]> HamoDefaults = new()
+    {
+        [0] = new (string, float, float)[] { ("Cafeteria", -1.0f, 3.0f), ("Weapons", 9.3f, 1.0f), ("LifeSupp", 6.5f, -3.8f), ("Nav", 16.5f, -4.8f), ("Shields", 9.3f, -12.3f), ("Comms", 4.0f, -15.5f), ("Storage", -1.5f, -15.5f), ("Admin", 4.5f, -7.9f), ("Electrical", -7.5f, -8.8f), ("LowerEngine", -17.0f, -13.5f), ("UpperEngine", -17.0f, -1.3f), ("Security", -13.5f, -5.5f), ("Reactor", -20.5f, -5.5f), ("MedBay", -9.0f, -4.0f) },
+        [1] = new (string, float, float)[] { ("Cafeteria", 25.5f, 2.0f), ("Balcony", 24.0f, -2.0f), ("Storage", 19.5f, 4.0f), ("Junction", 17.8f, 11.5f), ("Comms", 15.3f, 3.8f), ("MedBay", 15.5f, -0.5f), ("LockerRoom", 9.0f, 1.0f), ("Decontamination", 6.1f, 6.0f), ("Laboratory", 9.5f, 12.0f), ("Reactor", 2.5f, 10.5f), ("Launchpad", -4.5f, 2.0f), ("Admin", 21.0f, 17.5f), ("Office", 15.0f, 19.0f), ("Greenhouse", 17.8f, 23.0f) },
+        [2] = new (string, float, float)[] { ("OfficeLeft", 19.5f, -18.0f), ("OfficeRight", 26.0f, -17.0f), ("Admin", 24.0f, -22.5f), ("Comms", 12.5f, -16.0f), ("Weapons", 12.0f, -23.5f), ("BoilerRoom", 2.3f, -24.0f), ("LifeSupp", 2.0f, -17.5f), ("Electrical", 9.5f, -12.5f), ("Security", 3.0f, -12.0f), ("Dropship", 16.7f, -3.0f), ("Storage", 20.5f, -12.0f), ("Rocket", 26.7f, -8.5f), ("Laboratory", 36.5f, -7.5f), ("Toilet", 34.0f, -10.0f), ("Specimens", 36.5f, -22.0f) },
+        [4] = new (string, float, float)[] { ("Brig", -0.7f, 8.5f), ("Engine", -0.7f, -1.0f), ("Kitchen", -7.0f, -11.5f), ("CargoBay", 33.5f, -1.5f), ("Records", 20.0f, 10.5f), ("MainHall", 15.5f, 0.0f), ("NapRoom", 6.3f, 2.5f), ("MeetingRoom", 17.1f, 14.9f), ("GapRoom", 12.0f, 8.5f), ("VaultRoom", -8.9f, 12.2f), ("Comms", -13.3f, 1.3f), ("Cockpit", -23.5f, -1.6f), ("Armory", -10.3f, -5.9f), ("ViewingDeck", -13.7f, -12.6f), ("Security", 5.8f, -10.8f), ("Electrical", 16.3f, -8.8f), ("Medical", 29.0f, -6.2f), ("Toilet", 30.9f, 6.8f), ("Showers", 21.2f, -0.8f) },
+        [5] = new (string, float, float)[] { ("Kitchen", -17.8f, -7.3f), ("Beach", -21.3f, 3.0f), ("Cafeteria", -16.9f, 5.5f), ("RecRoom", -17.7f, 0.0f), ("Bonfire", -9.7f, 2.7f), ("Dropship", -7.6f, 10.4f), ("Storage", 2.3f, 4.3f), ("MeetingRoom", -4.2f, -2.2f), ("SleepingQuarters", 1.7f, -1.4f), ("Laboratory", -4.2f, -7.9f), ("Greenhouse", 9.2f, -11.8f), ("Reactor", 21.8f, -7.2f), ("JungleTop", 4.2f, -5.3f), ("JungleBottom", 15.9f, -14.8f), ("Lookout", 6.4f, 3.1f), ("MiningPit", 12.5f, 9.6f), ("Highlands", 15.5f, 3.9f), ("UpperEngine", 21.9f, 3.2f), ("Precipice", 19.8f, 7.3f), ("Comms", 20.9f, 13.4f) },
+    };
+
+    // ピンを hamo のスポーン位置と同じ並びに置き直す
+    private void ResetToDefault()
+    {
+        if (!HamoDefaults.TryGetValue(_sheet.Id, out var defs)) return;
+        var list = Points(true);
+        list.Clear();
+        for (int i = 0; i < defs.Length && i < SpawnPinEditor.MaxPins; i++)
+            list.Add(new SpawnPoint { Name = defs[i].name, Color = i + 1, X = defs[i].x, Y = defs[i].y });
+        SpawnStore.Save();
+        DrawPins(true);
+        _info?.SetText(InfoText(Translator.GetString("SpawnPin.ResetDone")));
     }
 
     private List<SpawnPoint> Points(bool create) => SpawnStore.Library.Current.GetPoints(_sheet.Id, create);
