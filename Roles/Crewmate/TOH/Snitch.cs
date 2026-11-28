@@ -171,6 +171,8 @@ public class Snitch : RoleBase
     /// <summary>
     /// タスクの進行状況の管理
     /// </summary>
+    // 試合の途中で就いた時も、もう条件を満たしていれば次のタスクを待たずに効かせる
+    public override void OnAddedMidGame() => OnCompleteTask();
     public override bool OnCompleteTask()
     {
         var update = false;

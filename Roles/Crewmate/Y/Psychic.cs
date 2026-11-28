@@ -92,6 +92,12 @@ public sealed class Psychic : RoleBase
         && DivinationLeftCount > 0
         && MyTaskState.HasCompletedEnoughCountOfTasks(TaskTrigger);
 
+    // 試合の途中で就いた時も、もう条件を満たしていれば次のタスクを待たずに効かせる
+    public override void OnAddedMidGame()
+    {
+        if (Player.IsAlive() && (MyTaskState.HasCompletedEnoughCountOfTasks(TaskTrigger) || IsTaskFinished))
+            Player.RpcResetAbilityCooldown(sync: true);
+    }
     public override bool OnCompleteTask()
     {
         // 使えない間はベントの待ち時間を 255 秒にしてあり、客の手元ではそれを数え続けている。

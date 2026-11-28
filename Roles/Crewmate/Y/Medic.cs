@@ -124,6 +124,12 @@ public sealed class Medic : RoleBase
         return true;
     }
 
+    // 試合の途中で就いた時も、もう条件を満たしていれば次のタスクを待たずに効かせる
+    public override void OnAddedMidGame()
+    {
+        if (Player.IsAlive() && (MyTaskState.HasCompletedEnoughCountOfTasks(TaskTrigger) || IsTaskFinished))
+            Player.RpcResetAbilityCooldown(sync: true);
+    }
     public override bool OnCompleteTask()
     {
         if (!Player.IsAlive()) return true;
