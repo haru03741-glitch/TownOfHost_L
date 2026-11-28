@@ -329,7 +329,7 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
     bool HasLeft() => Player == null || Player.Data == null || Player.Data.Disconnected;
     /// <summary>
     /// 全員を生きているとして送った後、会議を開く前にアサシンが抜けた時は、控えた生死を戻してアサシン会議を取りやめる
-    /// (抜けた人を通報者にした会議は捨てられ、全員が生き返って見えたまま残る)
+    /// (抜けた人を通報者にした会議は捨てられ、全員が生き返って見えたまま残る)。待つ間に役職が外れた (Player が空の) 時も同じく取りやめる
     /// </summary>
     bool AbortIfLeft()
     {
