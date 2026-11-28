@@ -358,11 +358,11 @@ public static partial class Options
     public static readonly string[] suffixModes =
     {
         "SuffixMode.None",
-        //"SuffixMode.Version",
-        //"SuffixMode.Streaming",
-        //"SuffixMode.Recording",
-        //"SuffixMode.RoomHost",
-        //"SuffixMode.OriginalName"
+        "SuffixMode.Version",
+        "SuffixMode.Streaming",
+        "SuffixMode.Recording",
+        "SuffixMode.RoomHost",
+        "SuffixMode.OriginalName"
     };
     public static readonly string[] RoleAssigningAlgorithms =
     {
