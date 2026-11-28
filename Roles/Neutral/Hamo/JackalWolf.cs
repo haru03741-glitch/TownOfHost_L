@@ -317,6 +317,8 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
     public override void OnShapeshift(PlayerControl target) => AddRole?.OnShapeshift(target);
 
     public override bool OnCheckShapeshift(PlayerControl target, ref bool shouldAnimate) => AddRole?.OnCheckShapeshift(target, ref shouldAnimate) ?? true;
+    // 付けた役職がファントムの能力を消える時に使う物なら、その処理へ渡す (渡さないと能力が働かずに消えるだけになる)
+    public override bool OnCheckVanish(ref float killCooldown, ref bool canResetAbilityCooldown) => AddRole?.OnCheckVanish(ref killCooldown, ref canResetAbilityCooldown) ?? true;
 
     public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target) => AddRole?.OnReportDeadBody(reporter, target);
 
