@@ -822,8 +822,6 @@ public sealed class Stand : RoleBase, ILNKiller
 
 {
     public override bool NeedsSeenNames => OwnerId != byte.MaxValue;
-
-    // 役職の元: TownOfHost_Pko (TownOfHost-hamo 経由)
     public static readonly SimpleRoleInfo RoleInfo =
 
         SimpleRoleInfo.Create(
@@ -834,7 +832,8 @@ public sealed class Stand : RoleBase, ILNKiller
             CustomRoleTypes.Neutral,
             (int)Options.offsetId.Hamo + 54500,
             SetupOptionItem,
-            "stnd",
+            "std",
+            "#8B4513",
             countType: CountTypes.StandMaster
         );
 
