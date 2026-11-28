@@ -61,15 +61,21 @@ public sealed class MadNimrod : RoleBase
         // 会議終了後にニムロッド会議を開く
         _ = new LateTask(() =>
         {
-            if (!Exiled.IsDead)
+            // 待つ間に抜けた・別の会議が始まった・試合が終わった時は開かない (開くと、始まっている会議がニムロッド会議として振る舞う)
+            var nimrod = Utils.GetPlayerById(Exiled.PlayerId);
+            if (nimrod == null || Exiled.IsDead || Exiled.Disconnected || !GameStates.IsInTask || MeetingStates.MeetingCalled) return;
+            // ニムロッド会議
+            ExecutionMeetingPlayerId = Exiled.PlayerId;
+            Logger.Info($"{nimrod.GetNameWithRole()} : ニムロッド会議", "Nimrod");
+            // バニラ側の表示更新
+            Utils.NotifyRoles(true, ForceLoop: true);
+            if (nimrod.AmOwner)
             {
-                // ニムロッド会議
-                ExecutionMeetingPlayerId = Exiled.PlayerId;
-                Logger.Info($"{Utils.GetPlayerById(ExecutionMeetingPlayerId).GetNameWithRole()} : ニムロッド会議", "Nimrod");
-                // バニラ側の表示更新
-                Utils.NotifyRoles(true, ForceLoop: true);
-                Utils.GetPlayerById(Exiled.PlayerId).ReportDeadBody(Exiled);
+                nimrod.ReportDeadBody(Exiled);
+                // 会議が捨てられたら、次の会議をニムロッド会議として扱わない
+                if (!MeetingStates.MeetingCalled && !Revive.HasHeldReport) ExecutionMeetingPlayerId = byte.MaxValue;
             }
+            else if (!nimrod.NoCheckStartMeeting(Exiled)) ExecutionMeetingPlayerId = byte.MaxValue;
         }, 14.5f, "NimrodExiled");
 
         // 一旦誰も追放されずに終わる
@@ -108,13 +114,14 @@ public sealed class MadNimrod : RoleBase
         // 自身は死亡する
         MeetingHudPatch.TryAddAfterMeetingDeathPlayers(CustomDeathReason.Vote, ExecutionMeetingPlayerId);
         // ニムロッド会議を解除する
-        ExecutionMeetingPlayerId = byte.MaxValue;
         Logger.Info($"{Utils.GetPlayerById(ExecutionMeetingPlayerId).GetNameWithRole()} : ニムロッド会議の解除", "Nimrod");
+        ExecutionMeetingPlayerId = byte.MaxValue;
     }
 
     public override void OnStartMeeting()
     {
-        if (!IsExecutionMeeting()) return;
+        // 案内は会議を開いた本人の分だけ送る (同じ役職が複数いても重ねない)
+        if (ExecutionMeetingPlayerId != Player.PlayerId) return;
 
         Utils.SendMessageAutoSplit(Translator.GetString("IsNimrodMeetingText"),
             true, $"<color={Utils.GetRoleColorCode(CustomRoles.Nimrod)}>{Translator.GetString("IsNimrodMeetingTitle")}</color>");
