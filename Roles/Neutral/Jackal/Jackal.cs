@@ -137,6 +137,8 @@ namespace TownOfHostL.Roles.Neutral
         {
             //サイドキックターゲットの解除 (跳ね返された時も外す)
             sidekickTarget.Remove(sidekick.PlayerId);
+            // 待ちの間にどちらかが死んだ・抜けた時はサイドキックにしない (死体の役職を替えて回数を使わない)
+            if (!jackal.IsAlive() || !sidekick.IsAlive()) return;
             // ワルキューレはサイドキックにされるのを跳ね返す
             if (Roles.Crewmate.Walkure.TryRejectRoleChange(jackal, sidekick, Roles.Crewmate.Walkure.RoleChangeSource.Jackal)) return;
             jackal.RpcProtectedMurderPlayer(sidekick);
