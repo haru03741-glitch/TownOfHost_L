@@ -549,7 +549,8 @@ public static partial class CustomRoleManager
         {
             if (!targetRole.OnCheckMurderAsTarget(info)) return false;
         }
-        if (info.KillPower > info.GuardPower && TownOfHostL.Roles.Crewmate.Guardian.FindGuardianFor(attemptTarget.PlayerId) != null)
+        // 相手の役職がもう自分でキルを止めた時 (追跡者の守りなど) は、守護者を身代わりにしない
+        if (info.CanKill && info.KillPower > info.GuardPower && TownOfHostL.Roles.Crewmate.Guardian.FindGuardianFor(attemptTarget.PlayerId) != null)
         {
             info.GuardPower = 1;
             guardianGuarded = true;
