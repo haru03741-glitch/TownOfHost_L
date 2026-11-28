@@ -16,7 +16,8 @@ public sealed class Analyzer : RoleBase
             typeof(Analyzer),
             player => new Analyzer(player),
             CustomRoles.Analyzer,
-            () => OptionAwakening.GetBool() ? RoleTypes.Crewmate : RoleTypes.Engineer,
+            // タスク数 0 なら目覚めを待たずに使える (コンストラクタの Awakened と揃える)
+            () => OptionAwakening.GetBool() && OptionCanTaskcount.GetInt() >= 1 ? RoleTypes.Crewmate : RoleTypes.Engineer,
             CustomRoleTypes.Crewmate,
             (int)Options.offsetId.Hamo + 30200,
             SetupOptionItem,
@@ -91,6 +92,8 @@ public sealed class Analyzer : RoleBase
     public override RoleTypes? AfterMeetingRole => !Awakened || Maximum <= Usecount ? RoleTypes.Crewmate : RoleTypes.Engineer;
     public override bool OnEnterVent(PlayerPhysics physics, int ventId)
     {
+        // 説明どおり、決めた数のタスクを終えるまでは調べられない (矢印も結果も出ないまま回数だけ減らさない)
+        if (!MyTaskState.HasCompletedEnoughCountOfTasks(cantaskcount)) return false;
         var oldfall = Isfall;
         Isfall = false;
         if (Maximum <= Usecount || turnmax <= turnusecount)
