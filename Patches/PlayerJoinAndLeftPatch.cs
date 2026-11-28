@@ -228,6 +228,8 @@ namespace TownOfHostL
                             AntiBlackout.OnDisconnect(info);
                         PlayerGameOptionsSender.RemoveSender(playerId);
                         if (wasAlive) Modules.AutoAbort.OnAliveDisconnected();
+                        // 役職の OnPlayerLeft と OnPlayerDead はイントロの後だけ届く。開始の時に決めた相手 (処刑人・弁護士など) の
+                        // 抜けは、上の SetDead が送る OnPlayerDeadOthers で拾う
                         if (AmongUsClient.Instance.AmHost && GameStates.IsInGame)
                         {
                             CustomRoleManager.NotifyPlayerLeft(playerId);
