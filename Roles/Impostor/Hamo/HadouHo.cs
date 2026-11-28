@@ -306,6 +306,8 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
             var perp = toTarget - proj;
             if (perp.magnitude > 1.3f) continue;
             HasHit = true;
+            // キルできない状態 (ベントの中・はしご・動く床) の相手は判定済みにせず、次のフレームで見直す
+            if (target.inVent || target.MyPhysics.Animations.IsPlayingEnterVentAnimation() || target.MyPhysics.Animations.IsPlayingAnyLadderAnimation() || target.inMovingPlat) continue;
             if (!beamJudged.Add(target.PlayerId)) continue;
             if (target.GetCustomRole().IsImpostor() && !target.GetCustomRole().IsLoneImpostor())
             {

@@ -1333,6 +1333,8 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             // 1 発で判定を通すのは 1 人 1 回 (ビームの間は毎フレーム当たりを見るので、守りに止められた相手へ判定とログを重ねない)
 
+            // キルできない状態 (ベントの中・はしご・動く床) の相手は判定済みにせず、次のフレームで見直す
+            if (target.inVent || target.MyPhysics.Animations.IsPlayingEnterVentAnimation() || target.MyPhysics.Animations.IsPlayingAnyLadderAnimation() || target.inMovingPlat) continue;
             if (!beamJudged.Add(target.PlayerId)) continue;
 
             CustomRoleManager.OnCheckMurder(Player, target, target, target, true, deathReason: CustomDeathReason.Evaporation);
@@ -1379,6 +1381,8 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             // 1 発で判定を通すのは 1 人 1 回 (ビームの間は毎フレーム当たりを見るので、守りに止められた相手へ判定とログを重ねない)
 
+            // キルできない状態 (ベントの中・はしご・動く床) の相手は判定済みにせず、次のフレームで見直す
+            if (target.inVent || target.MyPhysics.Animations.IsPlayingEnterVentAnimation() || target.MyPhysics.Animations.IsPlayingAnyLadderAnimation() || target.inMovingPlat) continue;
             if (!beamJudged.Add(target.PlayerId)) continue;
 
             CustomRoleManager.OnCheckMurder(Player, target, target, target, true, deathReason: CustomDeathReason.Evaporation);
