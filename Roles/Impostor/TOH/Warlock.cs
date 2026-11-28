@@ -105,8 +105,14 @@ public sealed class Warlock : RoleBase, IImpostor
                 var nearest = candidateList.OrderBy(c => c.Value).FirstOrDefault();
                 var killTarget = nearest.Key;
                 // 呪いのキルも、殺される人の守りを通す
-                if (Kill.Attempt(CursedPlayer, killTarget, realKiller: Player))
+                if (killTarget != null && Kill.Attempt(CursedPlayer, killTarget, realKiller: Player))
                     Logger.Info($"{killTarget.GetNameWithRole()}was killed", "Warlock");
+                Player.ResetKillCooldown();
+                CursedPlayer = null;
+            }
+            else if (CursedPlayer != null)
+            {
+                // 呪った相手が先に死んだ・抜けた時も、呪いで止めたキルボタンを戻す (戻さないと会議まで 255 秒のまま)
                 Player.ResetKillCooldown();
                 CursedPlayer = null;
             }
