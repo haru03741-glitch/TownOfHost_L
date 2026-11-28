@@ -125,10 +125,10 @@ public sealed class Elder : RoleBase
         if (Lifetime <= 0f)
         {
             // プレイヤーを死亡させる
-            // 死が届くまでの数フレームに、キルの予約と役職替えを重ねない
-            senilityStarted = true;
             MyState.DeathReason = CustomDeathReason.Senility; //死因：老衰
-            Kill.Suicide(Player);
+            // 死が届くまでの数フレームに、キルの予約と役職替えを重ねない (死を送れなかった時は次のフレームでもう一度)
+            senilityStarted = Kill.Suicide(Player);
+            if (!senilityStarted) return;
             // タスクが終わっていない場合、クルーメイトにする
             if (!IsTaskFinished) {
                 ChangeRole();
