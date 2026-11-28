@@ -107,6 +107,16 @@ public class RoleDictionary : MonoBehaviour
     static void MoveSelection(int delta)
     {
         if (listDirty) BuildList();
+        if (tab == Tab.Command)
+        {
+            if (cmdShown.Count == 0) return;
+            int ci = cmdShown.FindIndex(x => x.Name == selectedCmd);
+            ci = ci < 0 ? 0 : Mathf.Clamp(ci + delta, 0, cmdShown.Count - 1);
+            selectedCmd = cmdShown[ci].Name;
+            detailDirty = true;
+            scrollToSelected = true;
+            return;
+        }
         if (shown.Count == 0) return;
         int at = shown.FindIndex(x => x.Role == selected);
         at = at < 0 ? 0 : Mathf.Clamp(at + delta, 0, shown.Count - 1);
@@ -138,7 +148,7 @@ public class RoleDictionary : MonoBehaviour
     }
 
 
-    enum Tab { Mine, All, Crewmate, Impostor, Madmate, Neutral, Unit, AddOn }
+    enum Tab { Mine, All, Crewmate, Impostor, Madmate, Neutral, Unit, AddOn, Command }
     static readonly Tab[] Tabs = (Tab[])Enum.GetValues(typeof(Tab));
     static readonly Tab[] TabsNoMine = Tabs.Where(t => t != Tab.Mine).ToArray();
     static readonly Dictionary<Tab, int> teamCounts = new();
@@ -161,6 +171,12 @@ public class RoleDictionary : MonoBehaviour
     }
 
     static List<Entry> all;
+    // コマンドの欄 (ホスト用のコマンドもここで見る。/h ではホスト用をチャットに出さない)
+    static List<ChatCommandTable.DictionaryCommand> cmds;
+    static readonly List<ChatCommandTable.DictionaryCommand> cmdShown = new();
+    // コマンドの一覧の行。cmd が null の行は「誰が使えるか」の見出し
+    static readonly List<(ChatCommandTable.DictionaryCommand cmd, int audience, int count)> cmdRows = new();
+    static string selectedCmd;
     static readonly Dictionary<CustomRoles, Entry> extra = new();
     static readonly List<Entry> shown = new();
     // 一覧に並べる行。Entry が null の行は陣営の見出し (「すべて」と検索の時に陣営の境へ入れる)
@@ -255,6 +271,9 @@ public class RoleDictionary : MonoBehaviour
         teamCounts.Clear();
         teamCounts[Tab.All] = all.Count;
         foreach (var e in all) teamCounts[e.Team] = teamCounts.TryGetValue(e.Team, out var c) ? c + 1 : 1;
+        cmds = null;
+        try { teamCounts[Tab.Command] = (cmds = ChatCommandTable.ForDictionary()).Count; }
+        catch (Exception ex) { Logger.Warn($"役職辞典にコマンドを入れられませんでした: {ex.Message}", nameof(RoleDictionary)); cmds = new(); }
         builtLang = TranslationController.InstanceExists ? TranslationController.Instance.currentLanguage?.languageID.ToString() : "";
     }
 
@@ -278,6 +297,7 @@ public class RoleDictionary : MonoBehaviour
         shown.Clear();
         rows.Clear();
         var q = (search ?? "").Trim();
+        if (tab == Tab.Command) { BuildCmdList(q); return; }
         if (tab == Tab.Mine)
         {
             foreach (var r in MyRoles())
@@ -325,11 +345,44 @@ public class RoleDictionary : MonoBehaviour
         listScroll = Mathf.Min(listScroll, Mathf.Max(0f, ListHeight() - 1f));
     }
 
-    static float RowHeight(int i) => rows[i].entry == null ? HeadRowH : RowH;
+    static void BuildCmdList(string q)
+    {
+        cmds ??= ChatCommandTable.ForDictionary();
+        cmdShown.Clear();
+        cmdRows.Clear();
+        foreach (var c in cmds)
+        {
+            if (q.Length > 0
+                && c.Name.IndexOf(q, StringComparison.OrdinalIgnoreCase) < 0
+                && !c.Aliases.Any(a => a.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0)
+                && Plain(c.Help).IndexOf(q, StringComparison.OrdinalIgnoreCase) < 0)
+                continue;
+            cmdShown.Add(c);
+        }
+        for (int i = 0; i < cmdShown.Count; i++)
+        {
+            var c = cmdShown[i];
+            if (i == 0 || cmdShown[i - 1].Audience != c.Audience)
+            {
+                int n = 0;
+                for (int j = i; j < cmdShown.Count && cmdShown[j].Audience == c.Audience; j++) n++;
+                cmdRows.Add((null, c.Audience, n));
+            }
+            cmdRows.Add((c, c.Audience, 0));
+        }
+        if (cmdShown.Count > 0 && !cmdShown.Any(c => c.Name == selectedCmd)) { selectedCmd = cmdShown[0].Name; detailDirty = true; }
+        listScroll = Mathf.Min(listScroll, Mathf.Max(0f, ListHeight() - 1f));
+    }
+
+    static ChatCommandTable.DictionaryCommand SelectedCmd => cmdShown.FirstOrDefault(c => c.Name == selectedCmd);
+
+    static int RowCount => tab == Tab.Command ? cmdRows.Count : rows.Count;
+    static bool IsHeadRow(int i) => tab == Tab.Command ? cmdRows[i].cmd == null : rows[i].entry == null;
+    static float RowHeight(int i) => IsHeadRow(i) ? HeadRowH : RowH;
     static float ListHeight()
     {
         float h = 0f;
-        for (int i = 0; i < rows.Count; i++) h += RowHeight(i);
+        for (int i = 0; i < RowCount; i++) h += RowHeight(i);
         return h;
     }
 
@@ -348,6 +401,7 @@ public class RoleDictionary : MonoBehaviour
         Tab.Neutral => GetString("Neutral"),
         Tab.Unit => GetString("RoleDictionary.Unit"),
         Tab.AddOn => GetString("RoleDictionary.AddOn"),
+        Tab.Command => GetString("RoleDictionary.Command"),
         _ => "",
     };
 
@@ -360,6 +414,7 @@ public class RoleDictionary : MonoBehaviour
         Tab.Unit => new Color(0.6f, 1f, 0.6f),
         Tab.AddOn => new Color(1f, 0.85f, 0.4f),
         Tab.Mine => new Color(1f, 0.95f, 0.55f),
+        Tab.Command => new Color(0.5f, 0.86f, 1f),
         _ => Color.white,
     };
 
@@ -368,7 +423,12 @@ public class RoleDictionary : MonoBehaviour
         detailDirty = false;
         var sb = new StringBuilder();
         var roles = tab == Tab.Mine ? MyRoles() : null;
-        if (roles != null && roles.Count > 0)
+        if (tab == Tab.Command)
+        {
+            if (SelectedCmd is not { } c) { detailContent = GUIContent.none; detailHeight = 0; return; }
+            AppendCommand(sb, c);
+        }
+        else if (roles != null && roles.Count > 0)
         {
             sb.Append($"<color=#{ColorUtility.ToHtmlStringRGB(TeamColor(Tab.Mine))}><b>★ {GetString("RoleDictionary.MineTitle")}</b></color>\n");
             for (var i = 0; i < roles.Count; i++)
@@ -432,6 +492,19 @@ public class RoleDictionary : MonoBehaviour
         catch { }
     }
 
+
+    static void AppendCommand(StringBuilder sb, ChatCommandTable.DictionaryCommand c)
+    {
+        sb.Append($"<size={Mathf.RoundToInt(BigFont)}><b><color=#7fdcff>{c.Name}</color></b></size>\n");
+        sb.Append($"<b><color=#{c.AudienceColor}>★ {Plain(c.AudienceName)}</color></b>   <color=#{c.CategoryColor}>■ {Plain(c.CategoryName)}</color>\n");
+        if (c.Aliases.Length > 0)
+            sb.Append($"<color=#9fd7ff>{GetString("RoleDictionary.CmdAliases")}</color> ").Append(string.Join("  ", c.Aliases)).Append('\n');
+        sb.Append('\n').Append(Heading("RoleDictionary.CmdUsage"))
+            .Append("<color=#7fdcff>").Append(c.Name).Append("</color>");
+        if (c.Usage.Length > 0) sb.Append(' ').Append(Rich(c.Usage));
+        sb.Append('\n');
+        if (c.Help.Length > 0) sb.Append('\n').Append(Heading("RoleDictionary.CmdHelp")).Append(Rich(c.Help)).Append('\n');
+    }
 
     static string Heading(string key) => $"<b><color=#9fd7ff>▍{GetString(key)}</color></b>\n";
 
@@ -532,7 +605,7 @@ public class RoleDictionary : MonoBehaviour
         var ow = 230f * Scale;
         var ox = fx - 80f * Scale - ow;
         if (GUI.Button(new Rect(ox, wy + (titleH - fh) / 2f, ow, fh), (onlyEnabled ? "☑ " : "☐ ") + GetString("RoleDictionary.OnlyEnabled"), onlyEnabled ? sTabOn : sTab)) { onlyEnabled = !onlyEnabled; listDirty = true; }
-        if (FreePlayRole.Available && selected != CustomRoles.NotAssigned)
+        if (FreePlayRole.Available && tab != Tab.Command && selected != CustomRoles.NotAssigned)
         {
             var pw = 220f * Scale;
             if (GUI.Button(new Rect(ox - Pad - pw, wy + (titleH - fh) / 2f, pw, fh), "▶ " + GetString("RoleDictionary.PlayAs"), sTabOn))
@@ -588,12 +661,14 @@ public class RoleDictionary : MonoBehaviour
             // ↑↓ で選んだ役職が見える所まで一覧を送る
             scrollToSelected = false;
             float y0 = 0f;
-            for (int i = 0; i < rows.Count; i++)
+            for (int i = 0; i < RowCount; i++)
             {
-                if (rows[i].entry != null && rows[i].entry.Role == selected)
+                bool hit = tab == Tab.Command ? cmdRows[i].cmd != null && cmdRows[i].cmd.Name == selectedCmd
+                    : rows[i].entry != null && rows[i].entry.Role == selected;
+                if (hit)
                 {
                     // 一番上の役職の時は陣営の見出しも見せる
-                    float want = i > 0 && rows[i - 1].entry == null ? y0 - HeadRowH : y0;
+                    float want = i > 0 && IsHeadRow(i - 1) ? y0 - HeadRowH : y0;
                     if (want < listScroll) listScroll = want;
                     else if (y0 + RowH > listScroll + bodyH - Pad) listScroll = y0 + RowH - bodyH + Pad;
                     break;
@@ -607,7 +682,8 @@ public class RoleDictionary : MonoBehaviour
         {
             float y = top + Pad * 0.5f - listScroll;
             var rw = lw - Pad - 18f * Scale;
-            for (var i = 0; i < rows.Count; i++)
+            if (tab == Tab.Command) DrawCmdRows(type, lx, top, bodyH, rw, y);
+            else for (var i = 0; i < rows.Count; i++)
             {
                 var h = RowHeight(i);
                 if (y < top) { y += h; continue; }
@@ -655,14 +731,16 @@ public class RoleDictionary : MonoBehaviour
                 y += h;
             }
         }
-        if (shown.Count == 0) GUI.Label(new Rect(lx + Pad, top + Pad, lw - Pad * 2, RowH), GetString("RoleDictionary.None"), sSmall);
+        if ((tab == Tab.Command ? cmdShown.Count : shown.Count) == 0) GUI.Label(new Rect(lx + Pad, top + Pad, lw - Pad * 2, RowH), GetString("RoleDictionary.None"), sSmall);
 
         var dx = lx + lw + Pad; var dw = wx + ww - Pad - dx;
         GUI.Box(new Rect(dx, top, dw, bodyH), GUIContent.none, sPanel);
-        if (type == EventType.Repaint && selected != CustomRoles.NotAssigned)
+        if (type == EventType.Repaint && (tab == Tab.Command ? SelectedCmd != null : selected != CustomRoles.NotAssigned))
         {
             var old = GUI.color;
-            var rc = Readable(Utils.GetRoleColor(selected));
+            var rc = tab == Tab.Command
+                ? (ColorUtility.TryParseHtmlString("#" + SelectedCmd.AudienceColor, out var ac) ? ac : Color.white)
+                : Readable(Utils.GetRoleColor(selected));
             GUI.color = new Color(rc.r, rc.g, rc.b, 0.9f);
             ImguiTex.Draw(new Rect(dx + Pad * 0.5f, top + Pad, 6f * Scale, bodyH - Pad * 2f), Bar);
             GUI.color = old;
@@ -676,6 +754,55 @@ public class RoleDictionary : MonoBehaviour
         GUI.BeginGroup(new Rect(dx + Pad * 2f, top + Pad, textW, bodyH - Pad * 2f));
         GUI.Label(new Rect(0, -detailScroll, textW, detailHeight + 4f), detailContent, sDetail);
         GUI.EndGroup();
+    }
+
+    static void DrawCmdRows(EventType type, float lx, float top, float bodyH, float rw, float y)
+    {
+        for (var i = 0; i < cmdRows.Count; i++)
+        {
+            var h = RowHeight(i);
+            if (y < top) { y += h; continue; }
+            if (y + h > top + bodyH) break;
+            var (c, audience, count) = cmdRows[i];
+            if (c == null)
+            {
+                var hr = new Rect(lx + Pad * 0.5f, y + 2f * Scale, rw, h - 4f * Scale);
+                var first = cmds?.FirstOrDefault(x => x.Audience == audience);
+                var hex = first?.AudienceColor ?? "ffffff";
+                var hc = ColorUtility.TryParseHtmlString("#" + hex, out var parsed) ? parsed : Color.white;
+                if (type == EventType.Repaint)
+                {
+                    var old = GUI.color;
+                    GUI.color = new Color(hc.r, hc.g, hc.b, 0.18f);
+                    ImguiTex.Draw(hr, Bar);
+                    GUI.color = hc;
+                    ImguiTex.Draw(new Rect(hr.x, hr.yMax - 2f * Scale, hr.width, 2f * Scale), Bar);
+                    GUI.color = old;
+                }
+                GUI.Label(new Rect(hr.x + Pad, hr.y, hr.width - Pad * 2f, hr.height),
+                    $"<b><color=#{hex}>★ {Plain(first?.AudienceName ?? "")}</color></b>  <color=#8f9ab3>{count}</color>", sSmall);
+            }
+            else
+            {
+                var r = new Rect(lx + Pad * 0.5f, y, rw, h - 4f * Scale);
+                var help = Plain(c.Help);
+                if (help.Length > 34) help = help[..33] + "…";
+                var small = Mathf.RoundToInt(Font * 0.72f);
+                var name = $"<color=#7fdcff>{c.Name}</color>" + (c.Aliases.Length > 0 ? $" <size={small}><color=#8f9ab3>{string.Join(" ", c.Aliases)}</color></size>" : "");
+                var text = help.Length > 0
+                    ? $"  {name}\n  <size={small}><color=#9aa6c0>{help}</color></size>"
+                    : "  " + name;
+                if (GUI.Button(r, text, c.Name == selectedCmd ? sRowOn : sRow)) { selectedCmd = c.Name; detailDirty = true; }
+                if (type == EventType.Repaint && ColorUtility.TryParseHtmlString("#" + c.CategoryColor, out var cc))
+                {
+                    var old = GUI.color;
+                    GUI.color = cc;
+                    ImguiTex.Draw(new Rect(r.x + 4f * Scale, r.y + r.height * 0.15f, 6f * Scale, r.height * 0.7f), Bar);
+                    GUI.color = old;
+                }
+            }
+            y += h;
+        }
     }
 
     static bool Inside(Vector2 p, float x, float y, float w, float h) => p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h;

@@ -537,21 +537,70 @@ public static class ChatCommandTable
         }
         // ★ のまとまり (みんな / ホストとモデレーター / ホストのみ) ごとにチャットを分け、★ の見出しは大きな字でチャットの頭に出す。
         // 見出しの行には行の高さを付けない (付けると大きな字が次の行と重なる)
-        string[] mainKeys = { "CmdCat.Everyone", "CmdCat.ModeratorOnly", "CmdCat.HostOnly" };
-        string[] mainColors = { "8cffff", "7ee0a0", "ffd84a" };
         bool firstTitle = true;
         for (int who = 0; who < audiences.Length; who++)
         {
+            // ホストの /h では、ホスト用 (ホストとモデレーター・ホストだけ) はチャットに出さない。役職辞典のコマンドの欄で見る
+            if (asHost && who > 0) continue;
             var blocks = new List<string>();
             foreach (var (cat, lines) in audiences[who])
                 blocks.Add($"<#{CategoryColors[cat]}>■ {string.Format(GetString("CmdCat.Sub"), GetString("CmdCat." + CategoryKeys[cat]))}</color>\n" + string.Join("\n", lines));
+            if (asHost) blocks.Add("<#9a9a9a>" + GetString("CommandList.HostInDictionary") + "</color>");
             if (blocks.Count == 0) continue;
-            if (asHost && who == 2) blocks.Add("<#9a9a9a>" + GetString("CommandList.HostHint") + "</color>");
-            var title = $"<size=100%><b><#{mainColors[who]}>★ {GetString(mainKeys[who])}</color></b></size>";
+            var title = $"<size=100%><b><#{AudienceColors[who]}>★ {GetString(AudienceKeys[who])}</color></b></size>";
             if (firstTitle) title = $"<size=70%><#ffd84a>【{GetString("CommandList").TrimEnd(':', '：')}】</color></size>\n" + title;
             firstTitle = false;
             Utils.SendBlocks(blocks, title, to.PlayerId, "<size=70%><line-height=1.6pic>");
         }
+    }
+
+    private static readonly string[] AudienceKeys = { "CmdCat.Everyone", "CmdCat.ModeratorOnly", "CmdCat.HostOnly" };
+    private static readonly string[] AudienceColors = { "8cffff", "7ee0a0", "ffd84a" };
+
+    /// <summary>役職辞典のコマンドの欄に出す 1 つのコマンド</summary>
+    public sealed class DictionaryCommand
+    {
+        public string Name;
+        public string[] Aliases;
+        public string Usage;
+        public string Help;
+        /// <summary>0 みんな / 1 ホストとモデレーター / 2 ホストだけ</summary>
+        public int Audience;
+        public string AudienceName;
+        public string AudienceColor;
+        public string CategoryName;
+        public string CategoryColor;
+    }
+
+    /// <summary>
+    /// 役職辞典のコマンドの欄の中身。誰が使えるか (みんな / ホストとモデレーター / ホストだけ) → 種類の順に、全部のコマンドを並べる。
+    /// 分け方はホストの /h と同じ
+    /// </summary>
+    public static List<DictionaryCommand> ForDictionary()
+    {
+        var list = new List<(DictionaryCommand cmd, int cat, int order)>();
+        int order = 0;
+        foreach (var cmd in All)
+        {
+            order++;
+            if (cmd.Names[0] is "/dev" or "/log" && !DebugModeManager.AmDebugger) continue;
+            if (cmd.Host == null && cmd.Local == null && cmd.Remote == null) continue;
+            int who = cmd.ForModerator && cmd.Host != null && cmd.Remote == null ? 1 : cmd.Remote != null ? 0 : 2;
+            int cat = CategoryOf(cmd.Names[0]);
+            list.Add((new DictionaryCommand
+            {
+                Name = cmd.Names[0],
+                Aliases = cmd.Names.Skip(1).ToArray(),
+                Usage = cmd.UsageText,
+                Help = cmd.HelpText,
+                Audience = who,
+                AudienceName = GetString(AudienceKeys[who]),
+                AudienceColor = AudienceColors[who],
+                CategoryName = GetString("CmdCat." + CategoryKeys[cat]),
+                CategoryColor = CategoryColors[cat],
+            }, cat, order));
+        }
+        return list.OrderBy(x => x.cmd.Audience).ThenBy(x => x.cat).ThenBy(x => x.order).Select(x => x.cmd).ToList();
     }
 
     // /h の一覧のまとまり (並びもこの順)。どこにも当てはまらないコマンドは「その他」
