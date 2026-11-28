@@ -9,7 +9,14 @@ compatibility_date = "2025-01-01"
 # id = "ここに KV の id"
 
 # 秘密の値 (ここには書かない。npx wrangler secret put で入れる)
-#   DISCORD_WEBHOOK : 報告を送る Discord のチャンネルの Webhook の URL
-# 止めるフレンドコード (カンマ区切り)。変えたら npx wrangler deploy し直す
+#   DISCORD_BOT_TOKEN : 報告を送る bot のトークン (入れると「既読・修正中・修正済み」のボタンが付く)
+#   DISCORD_WEBHOOK   : bot を使わない時だけ。報告を送るチャンネルの Webhook の URL (ボタンは付かない)
 [vars]
+# 止めるフレンドコード (カンマ区切り)。変えたら npx wrangler deploy し直す
 BLOCKED = ""
+# 報告を送るチャンネルの ID (bot を使う時)
+DISCORD_CHANNEL_ID = ""
+# bot の「Public Key」(Discord の Developer Portal の General Information。秘密ではない)
+DISCORD_PUBLIC_KEY = ""
+# ボタンを押せる人の Discord のユーザー ID (カンマ区切り)。空ならサーバーの管理者の権限を持つ人
+ADMIN_IDS = ""

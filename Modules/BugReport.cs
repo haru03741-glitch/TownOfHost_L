@@ -135,9 +135,12 @@ public static class BugReport
             if (skipped.Count > 0) body += "\n" + string.Format(GetString("Report.TooBig"), string.Join(", ", skipped));
             DiscordWebhook.PostWithFiles(body, upload);
         }
-        SendToDeveloper(pc, name, fc, text, saved, isBug);
+        LastRelay = SendToDeveloper(pc, name, fc, text, saved, isBug);
         return name;
     }
+
+    /// <summary>最後に開発者へ送った結果 (null = 送っていない)。Task の中身は失敗の時の理由 (成功は null)</summary>
+    static Task<string> LastRelay;
 
     // 送った時の状況: ロビー / 試合中 (マップ・役職・生死)
     static string Situation(PlayerControl pc)
@@ -218,9 +221,9 @@ public static class BugReport
     static readonly System.Net.Http.HttpClient relayHttp = new() { Timeout = TimeSpan.FromSeconds(60) };
     static readonly HashSet<string> relayExt = new(StringComparer.OrdinalIgnoreCase) { ".zip", ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".mp4", ".mov", ".webm", ".mkv", ".avi" };
 
-    static void SendToDeveloper(PlayerControl pc, string name, string fc, string text, IReadOnlyList<string> saved, bool isBug)
+    static Task<string> SendToDeveloper(PlayerControl pc, string name, string fc, string text, IReadOnlyList<string> saved, bool isBug)
     {
-        if (string.IsNullOrEmpty(DevRelayUrl) || fc.Length == 0) return;
+        if (string.IsNullOrEmpty(DevRelayUrl) || fc.Length == 0) return null;
         bool fromHost = pc != null && pc == PlayerControl.LocalPlayer && AmHostOrAlone;
         var payload = JsonSerializer.Serialize(new Dictionary<string, string>
         {
@@ -229,6 +232,8 @@ public static class BugReport
             ["name"] = name,
             ["friendCode"] = fc,
             ["host"] = HostName(),
+            // 客からの報告は、部屋のホストのフレンドコードも送る (中継はホストのフレンドコードが無いと受け付けない)
+            ["hostFriendCode"] = HostFriendCode(),
             ["situation"] = Situation(pc),
             ["version"] = Main.PluginVersion,
             ["commit"] = ThisAssembly.Git.Commit,
@@ -243,7 +248,7 @@ public static class BugReport
             long len = new FileInfo(f).Length;
             if (total + len <= MaxUpload) { upload.Add(f); total += len; }
         }
-        Task.Run(async () =>
+        return Task.Run(async () =>
         {
             try
             {
@@ -251,11 +256,47 @@ public static class BugReport
                 foreach (var f in upload) form.Add(new System.Net.Http.ByteArrayContent(File.ReadAllBytes(f)), "files", Path.GetFileName(f));
                 using var res = await relayHttp.PostAsync(DevRelayUrl.TrimEnd('/') + "/report", form);
                 var body = await res.Content.ReadAsStringAsync();
-                if (res.IsSuccessStatusCode) Logger.Info("開発者へ報告を送った", nameof(BugReport));
-                else Logger.Warn($"開発者への報告を送れなかった: {(int)res.StatusCode} {body}", nameof(BugReport));
+                if (res.IsSuccessStatusCode) { Logger.Info("開発者へ報告を送った", nameof(BugReport)); return (string)null; }
+                Logger.Warn($"開発者への報告を送れなかった: {(int)res.StatusCode} {body}", nameof(BugReport));
+                try
+                {
+                    using var doc = JsonDocument.Parse(body);
+                    if (doc.RootElement.TryGetProperty("error", out var e)) return e.GetString() ?? "error";
+                }
+                catch { }
+                return "http_" + (int)res.StatusCode;
             }
-            catch (Exception ex) { Logger.Warn($"開発者への報告を送れなかった: {ex.Message}", nameof(BugReport)); }
+            catch (Exception ex)
+            {
+                Logger.Warn($"開発者への報告を送れなかった: {ex.Message}", nameof(BugReport));
+                return "network";
+            }
         });
+    }
+
+    /// <summary>中継が断った理由を、見せる文に</summary>
+    public static string RelayMessage(string error) => error switch
+    {
+        "too_many" => string.Format(GetString("Report.TooMany"), PerDay),
+        "too_fast" => GetString("Report.TooFast"),
+        "no_host_friend_code" => GetString("Report.NoHostFriendCode"),
+        "no_friend_code" => GetString("Report.NoFriendCode"),
+        "blocked" => GetString("Report.Blocked"),
+        _ => string.Format(GetString("Report.DevFailed"), error),
+    };
+
+    /// <summary>1 日に開発者へ送れる数 (中継の PER_DAY と同じ)。運営が Discord で既読などを押すと、その人はまた送れる</summary>
+    public const int PerDay = 5;
+
+    /// <summary>部屋のホストのフレンドコード (無ければ空)。自分がホストなら自分の</summary>
+    static string HostFriendCode()
+    {
+        if (AmHostOrAlone) return LocalFriendCode();
+        string fc = null;
+        try { fc = AmongUsClient.Instance?.GetHost()?.FriendCode; } catch { }
+        if (string.IsNullOrWhiteSpace(fc))
+            try { fc = FriendCodeOf(AmongUsClient.Instance?.GetHost()?.Character); } catch { }
+        return fc?.Trim() ?? "";
     }
 
     static string HostName()
@@ -300,17 +341,22 @@ public static class BugReport
     /// 窓で書いた報告を送る。ホスト (または 1 人で遊んでいる時) はこの PC に残して Webhook・開発者へ。
     /// 客は自分のログを付けて開発者へ直接送る (中継が無い時は、文だけをチャットの /bug でホストへ送る)
     /// </summary>
-    public static bool SendFromWindow(string text, IReadOnlyList<string> files, bool isBug, out string message)
+    public static bool SendFromWindow(string text, IReadOnlyList<string> files, bool isBug, out string message, out Task<string> relay)
     {
+        relay = null;
         if (text.Length > MaxLengthForm) text = text[..MaxLengthForm];
         var fc = LocalFriendCode();
         if (fc.Length == 0) { message = GetString("Report.NoFriendCode"); return false; }
+        // 客は、ホストがフレンドコードを持っていない部屋からは送れない
+        if (!AmHostOrAlone && SendsToDeveloper && HostFriendCode().Length == 0) { message = GetString("Report.NoHostFriendCode"); return false; }
         var now = UnityEngine.Time.realtimeSinceStartup;
         if (!AmHostOrAlone && now - lastWindowAt < Interval) { message = GetString("Report.TooFast"); return false; }
         lastWindowAt = now;
         try
         {
+            LastRelay = null;
             Submit(PlayerControl.LocalPlayer, text, files, isBug, fc);
+            relay = LastRelay;
             if (AmHostOrAlone)
                 message = SendsToDeveloper ? GetString("Report.SentDev") : DiscordWebhook.HasUrl ? GetString("Report.SentWebhook") : GetString("Report.Saved");
             else if (SendsToDeveloper)

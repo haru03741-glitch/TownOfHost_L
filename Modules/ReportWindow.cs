@@ -266,6 +266,7 @@ public class ReportWindow : MonoBehaviour
     public void Update()
     {
         if (!open) return;
+        RelayUpdate();
         if (closeAt > 0f && Time.unscaledTime >= closeAt) { closeAt = -1f; SetOpen(false); return; }
         ShotUpdate();
         PumpBackground();
@@ -315,17 +316,37 @@ public class ReportWindow : MonoBehaviour
         if (closeAt > 0f) return;
         if (!CanSend) { Snack(GetString("Report.WinEmpty"), true); return; }
         if (BugReport.LocalFriendCode().Length == 0) { Snack(GetString("Report.NoFriendCode"), true); return; }
-        if (BugReport.SendFromWindow(text.Trim(), files.ToArray(), isBug, out var message))
+        if (relaying != null) return;
+        if (BugReport.SendFromWindow(text.Trim(), files.ToArray(), isBug, out var message, out var relay))
         {
-            text = ""; cursor = 0; selAll = false;
-            files.Clear();
-            undo.Clear();
-            SetFocus(false);
-            Snack(message);
-            closeAt = Time.unscaledTime + 2.2f;
-            try { HostNote.Post(message); } catch { }
+            // 開発者へ送る時は、中継の返事 (1 日の回数の上限など) を待ってから閉じる
+            if (relay != null) { relaying = relay; relayMessage = message; Snack(GetString("Report.Sending")); return; }
+            Sent(message);
         }
         else Snack(message, true);
+    }
+
+    static System.Threading.Tasks.Task<string> relaying;
+    static string relayMessage;
+
+    static void Sent(string message)
+    {
+        text = ""; cursor = 0; selAll = false;
+        files.Clear();
+        undo.Clear();
+        SetFocus(false);
+        Snack(message);
+        closeAt = Time.unscaledTime + 2.2f;
+        try { HostNote.Post(message); } catch { }
+    }
+
+    static void RelayUpdate()
+    {
+        if (relaying == null || !relaying.IsCompleted) return;
+        string error = relaying.IsFaulted ? "network" : relaying.Result;
+        relaying = null;
+        if (error == null) Sent(relayMessage);
+        else Snack(BugReport.RelayMessage(error), true);
     }
 
     // =====================================================================
