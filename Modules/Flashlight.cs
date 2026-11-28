@@ -54,7 +54,6 @@ public static class Flashlight
     // 試合の始めの初期化で決めると、属性 (AddLight) の初期化より先に走った時に前の試合の値を読む
     private static bool activeThisGame;
     private static bool activeKnown;
-    private static bool officialWarned;
 
     private static bool GlobalOn => Options.FlashlightMode.GetBool();
 
@@ -218,17 +217,6 @@ public static class Flashlight
         {
             // ホストは手元の判定 (下のパッチ) で点くので、点け直しを促すだけ
             pc.AdjustLighting();
-            return;
-        }
-        // 公式サーバーは、通常の試合でかくれんぼ型の設定を送るとホストを Hacking で切断する
-        // (2026-11-27 公式 Asia: 会議明けに 1 回目を送った直後に 2 試合とも切られた)。公式では客へ送らない
-        if (Net.OfficialServer.IsActive)
-        {
-            if (!officialWarned)
-            {
-                officialWarned = true;
-                Logger.Warn("公式サーバーではかくれんぼ型の設定を送ると切断されるので、客の懐中電灯は点けない", nameof(Flashlight));
-            }
             return;
         }
         var sender = SenderOf(pc.PlayerId);
