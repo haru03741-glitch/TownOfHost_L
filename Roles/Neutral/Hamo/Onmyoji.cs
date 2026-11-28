@@ -11,6 +11,7 @@ using UnityEngine;
 
 using TownOfHostL.Core.Win;
 
+using TownOfHostL.Modules;
 using TownOfHostL.Roles.Core;
 
 using TownOfHostL.Roles.Core.Interfaces;
@@ -718,19 +719,15 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
             if (role.IsImpostor())
 
-                pc.RpcSetRoleDesync(
+                RoleView.SendIfChanged(pc, Player,
 
-                    toNominateMode ? RoleTypes.Scientist : role.GetRoleTypes(),
-
-                    Player.GetClientId());
+                    toNominateMode ? RoleTypes.Scientist : role.GetRoleTypes());
 
             if (Is(pc))
 
-                pc.RpcSetRoleDesync(
+                RoleView.SendIfChanged(pc, Player,
 
-                    toNominateMode ? RoleTypes.Impostor : baseRole,
-
-                    Player.GetClientId());
+                    toNominateMode ? RoleTypes.Impostor : baseRole);
 
         }
 

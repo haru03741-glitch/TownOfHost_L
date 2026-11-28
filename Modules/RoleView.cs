@@ -205,6 +205,22 @@ public static class RoleView
     }
 
     /// <summary>
+    /// seer の画面の target が既に role なら送らずに生きている時の見え方の表だけ書き、違う時だけ送る。送ったら true。
+    /// 同じ役職でも送ると客の手元で役職が作り直され、本人の画面なら能力のクール・探偵のメモ・トラッカーの矢印などが消える
+    /// </summary>
+    public static bool SendIfChanged(PlayerControl target, PlayerControl seer, RoleTypes role)
+    {
+        if (target == null || seer == null) return false;
+        if (TryGetOnScreen(seer, target, out var current) && current == role)
+        {
+            RestoreLiving(seer, target, role);
+            return false;
+        }
+        Send(target, seer, role);
+        return true;
+    }
+
+    /// <summary>
     /// 役職の基底が変わった人を、全員の画面で規則どおりに見せ、その人の画面の他の人も規則どおりにする (2n 本)。
     /// 役職 (CustomRoles) を替えてから呼ぶ
     /// </summary>

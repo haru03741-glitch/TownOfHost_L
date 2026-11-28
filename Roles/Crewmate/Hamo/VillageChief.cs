@@ -5,6 +5,7 @@ using AmongUs.GameOptions;
 
 using UnityEngine;
 
+using TownOfHostL.Modules;
 using TownOfHostL.Roles.Core;
 
 using TownOfHostL.Roles.Core.Interfaces;
@@ -619,19 +620,15 @@ public sealed class VillageChief : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
             if (role.IsImpostor())
 
-                pc.RpcSetRoleDesync(
+                RoleView.SendIfChanged(pc, Player,
 
-                    toAppointMode ? RoleTypes.Scientist : role.GetRoleTypes(),
-
-                    Player.GetClientId());
+                    toAppointMode ? RoleTypes.Scientist : role.GetRoleTypes());
 
             if (Is(pc))
 
-                pc.RpcSetRoleDesync(
+                RoleView.SendIfChanged(pc, Player,
 
-                    toAppointMode ? RoleTypes.Impostor : RoleTypes.Engineer,
-
-                    Player.GetClientId());
+                    toAppointMode ? RoleTypes.Impostor : RoleTypes.Engineer);
 
         }
 

@@ -97,7 +97,8 @@ public static class RoleHooks
             {
                 if (pc.GetRoleClass()?.AfterMeetingRole is not RoleTypes role) continue;
                 if ((pc.GetRoleClass() as IUsePhantomButton)?.IsPhantomRole is false && role is RoleTypes.Phantom) role = RoleTypes.Impostor;
-                RoleView.Send(pc, pc, role);
+                // 会議明けの役職の戻しで既に同じ役職になっていれば送らない (同じ役職でも送ると役職が作り直され、能力のクールが 0 に戻る)
+                RoleView.SendIfChanged(pc, pc, role);
             }
             catch (System.Exception ex) { Logger.Exception(ex, "AfterMeetingRole"); }
         }

@@ -184,13 +184,11 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
         {
             var role = pc.GetCustomRole();
             if (role.IsImpostor())
-                pc.RpcSetRoleDesync(
-                    toBeamMode ? RoleTypes.Scientist : role.GetRoleTypes(),
-                    Player.GetClientId());
+                RoleView.SendIfChanged(pc, Player,
+                    toBeamMode ? RoleTypes.Scientist : role.GetRoleTypes());
             if (Is(pc))
-                pc.RpcSetRoleDesync(
-                    toBeamMode ? RoleTypes.Phantom : RoleTypes.Engineer,
-                    Player.GetClientId());
+                RoleView.SendIfChanged(pc, Player,
+                    toBeamMode ? RoleTypes.Phantom : RoleTypes.Engineer);
         }
         _ = After(() =>
         {

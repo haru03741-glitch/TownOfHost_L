@@ -476,7 +476,8 @@ public static partial class MeetingHudPatch
                         // 暗転対策の身代わりのインポスターとして見せている画面には、追放の演出の後で AntiBlackout が戻す
                         if (roleInfo?.IsDesyncImpostor == true)
                         {
-                            if (!AntiBlackout.IsPendingDummy(pc, pc.GetClientId())) pc.RpcSetRoleDesync(baseRole, pc.GetClientId());
+                            // 画面の役職が既に戻す役職なら送らない (SendIfChanged)。本人へ送ると客の手元で役職が作り直される
+                            if (!AntiBlackout.IsPendingDummy(pc, pc.GetClientId())) RoleView.SendIfChanged(pc, pc, baseRole);
                             foreach (var viewer in Main.AllPlayerControls)
                             {
                                 if (viewer.PlayerId == pc.PlayerId) continue;
@@ -484,15 +485,14 @@ public static partial class MeetingHudPatch
                                 if (viewerClientId == -1) continue;
                                 if (viewer.PlayerId == PlayerControl.LocalPlayer.PlayerId) continue;
                                 if (AntiBlackout.IsPendingDummy(pc, viewerClientId)) continue;
-                                pc.RpcSetRoleDesync(RoleView.Living(pc, viewer), viewerClientId);
+                                RoleView.SendIfChanged(pc, viewer, RoleView.Living(pc, viewer));
                             }
                             return;
                         }
 
                         // 本人の画面の役職が既に戻す役職なら送らない。送ると客の手元で役職が作り直され、
                         // 探偵のメモ・トラッカーの矢印・科学者の電池などの役職の中の状態が消える (探偵は以後尋問できなくなる)
-                        if (RoleView.TryGetOnScreen(pc, pc, out var onScreen) && onScreen == baseRole) return;
-                        if (!AntiBlackout.IsPendingDummy(pc, pc.GetClientId())) pc.RpcSetRoleDesync(baseRole, pc.GetClientId());
+                        if (AntiBlackout.IsPendingDummy(pc, pc.GetClientId()) || !RoleView.SendIfChanged(pc, pc, baseRole)) return;
                         Logger.Info($"AfterMeeting baseRole: {pc.GetNameWithRole()} -> {baseRole}", "AfterMeeting_RoleSync");
                     }
 
