@@ -785,7 +785,8 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
             var stand = GetStand();
 
-            if (stand != null && !stand.IsAlive())
+            // スタンドが抜けた (引けない) 時も死んだのと同じに扱う (会議明けの処理と揃える)
+            if (stand == null || !stand.IsAlive())
 
             {
 
