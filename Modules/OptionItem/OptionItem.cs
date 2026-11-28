@@ -169,10 +169,13 @@ namespace TownOfHostL
         public OptionItem SetReplacementDictionary(Dictionary<string, string> value) => Do(i => i.ReplacementDictionary = value);
         public OptionItem SetKeyName(string value) => Do(i => i.KeyName = value);
 
+        // 作った後に親を付け替えた時は前の親の子から外す (残すと設定画面や /n の木で 2 回並ぶ)
         public OptionItem SetParent(OptionItem parent) => Do(i =>
         {
+            if (i.Parent == parent && parent?.Children.Contains(i) == true) return;
+            i.Parent?.Children.Remove(i);
             i.Parent = parent;
-            parent.SetChild(i);
+            parent?.SetChild(i);
         });
         public OptionItem SetChild(OptionItem child) => Do(i => i.Children.Add(child));
         // 設定の機能 (見出し・値の表示の差し替え)
