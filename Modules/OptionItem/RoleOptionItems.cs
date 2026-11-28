@@ -124,6 +124,8 @@ public class FilterOptionItem : StringOptionItem
         if (role is CustomRoles.NotAssigned) return true;
         if ((NotAssin?.Invoke() ?? Array.Empty<CustomRoles>()).Contains(role)) return false;
         if (role.AliasOf() != CustomRoles.NotAssigned) return false;
+        // 本編の役職は Normal 版 (インポスター → 通常インポスター) と同じ働きなので、名前が違っても Normal 版だけを出す
+        if (role.IsVanilla() && Enum.TryParse<CustomRoles>("Normal" + role, out var normal) && CustomRoleManager.AllRolesInfo.ContainsKey(normal)) return false;
         if (role > CustomRoles.StartAddon) return roles.addon;
         // 役職のクラスを持たない物 (別のモードの役職など) は選んでも能力が付かない
         if (!CustomRoleManager.AllRolesInfo.ContainsKey(role)) return false;
