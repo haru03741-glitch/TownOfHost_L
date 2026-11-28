@@ -46,7 +46,8 @@ public sealed class Bait : RoleBase
     }
     public override void OnMurderPlayerAsTarget(MurderInfo info)
     {
-        if (info.IsMeeting) return;
+        // 自殺ではキラーの警告の印を立てない (立てると本人の名前に印が残る)
+        if (info.IsMeeting || info.IsSuicide) return;
 
         var (killer, target) = info.AttemptTuple;
         BaitKillPlayer = killer;
