@@ -307,10 +307,11 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
 
                     AntiBlackout.SendGameData();
                     GameDataSerializePatch.SerializeMessageCount--;
-                    // アサシン会議の段取りなので役職が外れても走らせる
+                    // アサシン会議の段取りなので役職が外れても走らせる (外れると Player は空になるので番号を控える)
+                    var selfId = Player.PlayerId;
                     _ = new LateTask(() =>
                     {
-                        Main.AllPlayerControls.DoIf(pc => !pc.AmOwner && pc.PlayerId != Player.PlayerId && pc.GetClientId() >= 0,
+                        Main.AllPlayerControls.DoIf(pc => !pc.AmOwner && pc.PlayerId != selfId && pc.GetClientId() >= 0,
                         pc => Utils.GetPlayerById(0).RpcSetRoleDesync(RoleTypes.Crewmate, pc.GetClientId()));
                     }, 2.5f, "");
                     // アサシン会議の段取りなので役職が外れても走らせる
@@ -356,7 +357,8 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
         if (NowState is AssassinMeeting.Guessing)
         {
             if (!AmongUsClient.Instance.AmHost) return;
-            // アサシン会議の段取り (生死の控えを戻す) なので役職が外れても走らせる
+            // アサシン会議の段取り (生死の控えを戻す) なので役職が外れても走らせる (外れると Player は空になるので番号を控える)
+            var selfId = Player.PlayerId;
             _ = new LateTask(() =>
             {
                 foreach (var info in GameData.Instance.AllPlayers)
@@ -366,7 +368,7 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
                     {
                         // 控えを取った後に死んだ人 (待ちの間の遅延のキルなど) は、控えの「生きている」へ戻さない
                         info.IsDead = val.isDead
-                            || (info.PlayerId != Player.PlayerId && PlayerState.GetByPlayerId(info.PlayerId)?.IsDead == true);
+                            || (info.PlayerId != selfId && PlayerState.GetByPlayerId(info.PlayerId)?.IsDead == true);
                         info.Disconnected = val.Disconnected;
                     }
                 }
@@ -411,7 +413,8 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
             }
             Exiled = Player.Data;
             // アサシン会議の段取り (名前を戻す) なので役職が外れても走らせる
-            _ = new LateTask(() => Player.RpcSetName(name), 6f, "AssassinSetName");
+            var assassinPc = Player;
+            _ = new LateTask(() => { if (assassinPc) assassinPc.RpcSetName(name); }, 6f, "AssassinSetName");
             return true;
         }
         else

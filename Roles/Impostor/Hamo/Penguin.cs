@@ -226,23 +226,25 @@ class Penguin : RoleBase, IImpostor
                 if (!AbductVictim.MyPhysics.Animations.IsPlayingAnyLadderAnimation())
                 {
                     var abductVictim = AbductVictim;
+                    // 役職が外れると Player は空になるので、ペンギン本人を控える
+                    var penguin = Player;
                     // 会議の始まりに連れ去りを決着させるので役職が外れても走らせる
                     _ = new LateTask(() =>
                     {
-                        if (abductVictim == null || abductVictim.Data == null || abductVictim.Data.Disconnected) return;
+                        if (penguin == null || abductVictim == null || abductVictim.Data == null || abductVictim.Data.Disconnected) return;
                         var sId = abductVictim.NetTransform.lastSequenceId + 5;
-                        abductVictim.NetTransform.SnapTo(Player.transform.position, (ushort)sId);
-                        Player.MurderPlayer(abductVictim);
+                        abductVictim.NetTransform.SnapTo(penguin.transform.position, (ushort)sId);
+                        penguin.MurderPlayer(abductVictim);
 
                         var sender = CustomRpcSender.Create("PenguinMurder");
                         {
                             sender.AutoStartRpc(abductVictim.NetTransform.NetId, (byte)RpcCalls.SnapTo);
                             {
-                                NetHelpers.WriteVector2(Player.transform.position, sender.stream);
+                                NetHelpers.WriteVector2(penguin.transform.position, sender.stream);
                                 sender.Write(abductVictim.NetTransform.lastSequenceId);
                             }
                             sender.EndRpc();
-                            sender.AutoStartRpc(Player.NetId, (byte)RpcCalls.MurderPlayer);
+                            sender.AutoStartRpc(penguin.NetId, (byte)RpcCalls.MurderPlayer);
                             {
                                 sender.WriteNetObject(abductVictim);
                                 sender.Write((int)ExtendedPlayerControl.SucceededFlags);
