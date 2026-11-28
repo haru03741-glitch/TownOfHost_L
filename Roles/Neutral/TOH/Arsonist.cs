@@ -86,8 +86,10 @@ public sealed class Arsonist : RoleBase, IKiller
     {
         opt.SetVision(false);
     }
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // 塗りはキルでないので、守りの段より前に振り分ける (後だと守護者が身代わりになり、メディックなどの守りの回数も減る)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
+        if (info.IsSuicide) return true;
         var (killer, target) = info.AttemptTuple;
         // ガード持ちに関わらず能力発動する直接キル役職
 
@@ -99,6 +101,7 @@ public sealed class Arsonist : RoleBase, IKiller
             Utils.NotifyRoles(SpecifySeer: killer);
         }
         info.DoKill = false;
+        return false;
     }
     public override void OnReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target)
     {
