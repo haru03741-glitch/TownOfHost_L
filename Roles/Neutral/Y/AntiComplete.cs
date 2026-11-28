@@ -134,7 +134,8 @@ public sealed class AntiComplete : RoleBase
         // 既定値
         var (votedForId, numVotes, doVote) = base.ModifyVote(voterId, sourceVotedForId, isIntentional);
         var baseVote = (votedForId, numVotes, doVote);
-        if (voterId != Player.PlayerId              // 投票者がアンチコンプ自身でない
+        if (!isIntentional                          // 本人が選んでいない票 (天秤会議の強制の票など)
+            || voterId != Player.PlayerId              // 投票者がアンチコンプ自身でない
             || sourceVotedForId == Player.PlayerId  // 投票先がアンチコンプ自身(自投票)
             || sourceVotedForId >= 253              // 投票先がスキップ253/無投票254
             || !Player.IsAlive())                   // アンチコンプ自身が死亡
