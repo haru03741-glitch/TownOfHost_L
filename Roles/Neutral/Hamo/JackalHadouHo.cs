@@ -1140,7 +1140,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         IsCharging = false; chargeTimer = 0f;
 
-        HasHit = false; ShowBeamMark = true; IsSuperBeam = false;
+        HasHit = false; ShowBeamMark = true; IsSuperBeam = false; beamJudged.Clear();
 
 
         _prevCharging = false; _prevBeamMark = true;
@@ -1167,7 +1167,7 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         IsSuperCharging = false; superChargeTimer = 0f;
 
-        HasHit = false; ShowBeamMark = true; IsLoaded = false; IsSuperBeam = true;
+        HasHit = false; ShowBeamMark = true; IsLoaded = false; IsSuperBeam = true; beamJudged.Clear();
 
 
 
@@ -1300,6 +1300,9 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
 
 
+    // 1 発のビームでキルの判定を通した相手
+    readonly System.Collections.Generic.HashSet<byte> beamJudged = new();
+
     void ApplyBeamHit()
 
     {
@@ -1310,11 +1313,11 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         Vector2 dir = BeamFacingLeft ? Vector2.left : Vector2.right;
 
-        foreach (var target in Main.AllAlivePlayerControls)
+        foreach (var target in Main.AllAlivePlayerControls.ToArray())
 
         {
 
-            if (target.PlayerId == Player.PlayerId) continue;
+            if (target.PlayerId == Player.PlayerId || !target.IsAlive()) continue;
 
             if (!KillJackal && target.GetCustomRole() is CustomRoles.Jackal or CustomRoles.JackalMafia
 
@@ -1330,9 +1333,13 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             if ((toTarget - dir * dot).magnitude > 1.3f) continue;
 
-            CustomRoleManager.OnCheckMurder(Player, target, target, target, true, deathReason: CustomDeathReason.Evaporation);
-
             HasHit = true;
+
+            // 1 発で判定を通すのは 1 人 1 回 (ビームの間は毎フレーム当たりを見るので、守りに止められた相手へ判定とログを重ねない)
+
+            if (!beamJudged.Add(target.PlayerId)) continue;
+
+            CustomRoleManager.OnCheckMurder(Player, target, target, target, true, deathReason: CustomDeathReason.Evaporation);
 
             Utils.AddGameLog("JackalHadouHo", $"<color=#00b4eb>【波動砲】</color> {Player.ColoredName()} ═> {target.ColoredName()}");
 
@@ -1352,11 +1359,11 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
         Vector2 dir = BeamFacingLeft ? Vector2.left : Vector2.right;
 
-        foreach (var target in Main.AllAlivePlayerControls)
+        foreach (var target in Main.AllAlivePlayerControls.ToArray())
 
         {
 
-            if (target.PlayerId == Player.PlayerId) continue;
+            if (target.PlayerId == Player.PlayerId || !target.IsAlive()) continue;
 
             if (!KillJackal && target.GetCustomRole() is CustomRoles.Jackal or CustomRoles.JackalMafia
 
@@ -1372,9 +1379,13 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             if ((toTarget - dir * dot).magnitude > 4.0f) continue;
 
-            CustomRoleManager.OnCheckMurder(Player, target, target, target, true, deathReason: CustomDeathReason.Evaporation);
-
             HasHit = true;
+
+            // 1 発で判定を通すのは 1 人 1 回 (ビームの間は毎フレーム当たりを見るので、守りに止められた相手へ判定とログを重ねない)
+
+            if (!beamJudged.Add(target.PlayerId)) continue;
+
+            CustomRoleManager.OnCheckMurder(Player, target, target, target, true, deathReason: CustomDeathReason.Evaporation);
 
             Utils.AddGameLog("JackalHadouHo", $"<color=#ff0000>【超波動砲】</color> {Player.ColoredName()} ═> {target.ColoredName()}");
 

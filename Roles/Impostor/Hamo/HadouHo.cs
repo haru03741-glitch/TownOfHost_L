@@ -235,6 +235,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         beam?.Fire("#FF6600", HadouHoBeam.NormalSize);
         Utils.AllPlayerKillFlash();
         IsCharging = false; chargeTimer = 0f; HasHit = false; ShowBeamMark = true;
+        beamJudged.Clear();
         _prevCharging = false;
         _prevBeamMark = true;
         Utils.NotifyRoles(ForceLoop: true);
@@ -278,6 +279,8 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
         }, BeamTime);
     }
 
+    // 1 発のビームでキルの判定を通した相手。ビームの間は毎フレーム当たりを見るので、守りに止められた相手へ判定 (守りの回数・演出) を重ねない
+    readonly HashSet<byte> beamJudged = new();
     void ApplyBeamHit()
     {
         if (!AmongUsClient.Instance.AmHost || !Player.IsAlive()) return;
@@ -300,6 +303,8 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
             var proj = dir * dot;
             var perp = toTarget - proj;
             if (perp.magnitude > 1.3f) continue;
+            HasHit = true;
+            if (!beamJudged.Add(target.PlayerId)) continue;
             if (target.GetCustomRole().IsImpostor() && !target.GetCustomRole().IsLoneImpostor())
             {
                 // インポスター同士のキルはキルの判定で無効になるので、仲間に当てる設定の時は判定を通さずに死なせる
@@ -308,7 +313,6 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
                 Kill.Suicide(target);
             }
             else CustomRoleManager.OnCheckMurder(Player, target, target, target, true, deathReason: CustomDeathReason.Evaporation);
-            HasHit = true;
         }
     }
     public void OnCheckMurderAsKiller(MurderInfo info)
