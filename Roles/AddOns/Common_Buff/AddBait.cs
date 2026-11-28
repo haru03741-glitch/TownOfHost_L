@@ -47,7 +47,7 @@ public static class AddBait
             _ = new LateTask(() =>
             {
                 // 待つ間にキラーが抜けた時は通報させない
-                if (killer && killer.Data != null && !killer.Data.Disconnected && target.Data != null) killer.CmdReportDeadBody(target.Data);
+                if (killer && killer.Data != null && !killer.Data.Disconnected && target && target.Data != null) killer.CmdReportDeadBody(target.Data);
             }, 0.15f, "AddBait Self Report");
     }
 

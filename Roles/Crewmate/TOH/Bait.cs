@@ -55,7 +55,7 @@ public sealed class Bait : RoleBase
             _ = new LateTask(() =>
             {
                 // 待つ間にキラーが抜けた時は通報させない (例外で印の後始末まで止めない)。印は自分が立てた分だけ外す
-                if (killer && killer.Data != null && !killer.Data.Disconnected && target.Data != null) killer.CmdReportDeadBody(target.Data);
+                if (killer && killer.Data != null && !killer.Data.Disconnected && target && target.Data != null) killer.CmdReportDeadBody(target.Data);
                 if (BaitKillPlayer == killer) BaitKillPlayer = null;
             }, 0.15f + WaitTime, "Bait Self Report");
     }
