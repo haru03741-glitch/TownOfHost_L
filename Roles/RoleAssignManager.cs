@@ -440,8 +440,8 @@ namespace TownOfHostL.Roles
             {
                 var a = ComboRole(OptionNotTogether, $"NotTogether{i}A", "RoleCombo.NotA", i);
                 var b = ComboRole(OptionNotTogether, $"NotTogether{i}B", "RoleCombo.NotB", i);
-                // 2 つは順番の無い組なので、1 つの一覧で 2 つまで選ぶ
-                FilterOptionItem.Link(a, b);
+                // 2 つは順番の無い組なので、1 つの行・1 つの一覧で 2 つまで選ぶ
+                FilterOptionItem.LinkCollapsed(" × ", "RoleCombo.HintNot", a, b);
                 NotTogetherRules.Add((a, b));
             }
             OptionTogether = BooleanOptionItem.Create("RoleComboTogether", false, TabGroup.ModMainSettings, false)
@@ -450,6 +450,8 @@ namespace TownOfHostL.Roles
             {
                 var a = ComboRole(OptionTogether, $"Together{i}A", "RoleCombo.IfA", i);
                 var b = ComboRole(OptionTogether, $"Together{i}B", "RoleCombo.ThenB", i);
+                // 1 つの行で選ぶ。1 つ目に選んだのが「出たら」、2 つ目が「一緒に必ず出る」
+                FilterOptionItem.LinkCollapsed(" → ", "RoleCombo.HintTogether", a, b);
                 TogetherRules.Add((a, b));
             }
         }

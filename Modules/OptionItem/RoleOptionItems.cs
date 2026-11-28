@@ -47,6 +47,35 @@ public class FilterOptionItem : StringOptionItem
         var list = new List<FilterOptionItem>(items);
         foreach (var i in items) i.Linked = list;
     }
+    /// <summary>
+    /// 枠をまとめて 1 行で出す (2 つ目からの枠は画面に出さず、1 つ目の行に全部の枠の役職を joiner で並べる)。
+    /// 一覧の案内の字は hintKey (null なら既定)
+    /// </summary>
+    public static void LinkCollapsed(string joiner, string hintKey, params FilterOptionItem[] items)
+    {
+        Link(items);
+        foreach (var i in items)
+        {
+            i.LinkJoiner = joiner;
+            i.PickHintKey = hintKey;
+        }
+        for (int i = 1; i < items.Length; i++) items[i].SetHidden(true);
+    }
+    public string LinkJoiner;
+    public string PickHintKey;
+    /// <summary>枠の役職を枠の順に並べた字 (未設定の枠は「未設定」)</summary>
+    public string LinkedDisplay()
+    {
+        if (Linked == null) return GetSingle();
+        var parts = new List<string>();
+        foreach (var o in Linked) parts.Add(o.GetSingle());
+        return string.Join(LinkJoiner ?? " / ", parts);
+    }
+    string GetSingle()
+    {
+        var role = GetRole();
+        return role is CustomRoles.NotAssigned ? Translator.GetString("Unsettled") : Utils.GetRoleColorAndName(role);
+    }
     public (bool impostor, bool madmate, bool crewmate, bool neutral, bool addon) roles;
 
     public FilterOptionItem(string name, int defaultValue, TabGroup tab, bool isSingleValue, bool imp = false, bool mad = false, bool crew = false, bool neu = false, bool addon = false, Func<CustomRoles[]> notassing = null)
@@ -90,6 +119,12 @@ public class FilterOptionItem : StringOptionItem
     }
     public override string GetString()
     {
+        // まとめて 1 行で出す枠の 1 つ目は、全部の枠を並べる
+        if (LinkJoiner != null && Linked != null && Linked.Count > 0 && Linked[0] == this)
+        {
+            if (Linked.TrueForAll(o => o.GetRole() is CustomRoles.NotAssigned)) return Translator.GetString("Unsettled");
+            return LinkedDisplay();
+        }
         var role = GetRole();
         return role is CustomRoles.NotAssigned ? Translator.GetString("Unsettled") : Utils.GetRoleColorAndName(role);
     }
