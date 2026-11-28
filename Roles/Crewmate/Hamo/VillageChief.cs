@@ -437,7 +437,11 @@ public sealed class VillageChief : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
         if (spawnWaitTimer >= 0f && spawnWaitTimer < 3f)
 
+        {
             spawnWaitTimer += Time.fixedDeltaTime;
+            // 待機が明けた時に、名前の下の案内を「待機」から切り替える (任命の待ち時間が短い設定では、ほかに出し直す所が無い)
+            if (spawnWaitTimer >= 3f) Utils.NotifyRoles(SpecifySeer: player);
+        }
 
 
 
