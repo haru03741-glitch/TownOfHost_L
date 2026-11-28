@@ -8,7 +8,7 @@ public sealed class CandleLighter : RoleBase
 {
     public static readonly SimpleRoleInfo RoleInfo =
          SimpleRoleInfo.Create(
-            typeof(Lighter),
+            typeof(CandleLighter),
             player => new CandleLighter(player),
             CustomRoles.CandleLighter,
             () => RoleTypes.Crewmate,
