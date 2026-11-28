@@ -107,13 +107,16 @@ public sealed class Elder : RoleBase
 
         ChangeRole();
     }
+    bool senilityStarted;
     // 寿命の処理
     public override void OnFixedUpdate(PlayerControl player)
     {
         // 老衰設定でない、または長老が死んでいる時は関係ない
-        if (!DiaInLife || !Player.IsAlive()) return;
+        if (!DiaInLife || !Player.IsAlive() || senilityStarted) return;
         // 会議時間中に変化しない設定の場合はタスクターン以外返す
         if (!GameStates.IsInTask && !TimeMoveMeeting) return;
+        // 動けないイントロの間は寿命を減らさない
+        if (GameStates.Intro) return;
 
         // 寿命のカウントダウン
         Lifetime -= Time.fixedDeltaTime;
@@ -122,6 +125,8 @@ public sealed class Elder : RoleBase
         if (Lifetime <= 0f)
         {
             // プレイヤーを死亡させる
+            // 死が届くまでの数フレームに、キルの予約と役職替えを重ねない
+            senilityStarted = true;
             MyState.DeathReason = CustomDeathReason.Senility; //死因：老衰
             Kill.Suicide(Player);
             // タスクが終わっていない場合、クルーメイトにする
