@@ -670,11 +670,8 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
 
             (_, var target) = info.AttemptTuple;
-
-            DoSideKick(target);
-
-
-
+            // できない役職の相手だった時は、サイドキックの構えもクールもそのままにする
+            if (!DoSideKick(target)) return false;
             skMode = false;
 
             nowcool = SidekickCooldown;
@@ -1465,30 +1462,19 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
 
 
-    private void DoSideKick(PlayerControl target)
-
+    /// <summary>サイドキックにする。できない役職の相手だった時は何も使わずに false を返す</summary>
+    private bool DoSideKick(PlayerControl target)
     {
-
-        CanSideKick = false;
-
         var targetRole = target.GetCustomRole();
-
         if (targetRole is CustomRoles.King or CustomRoles.Autocrat or CustomRoles.Jackal or CustomRoles.JackalAlien
-
             or CustomRoles.Jackaldoll or CustomRoles.JackalMafia or CustomRoles.JackalHadouHo
-
             or CustomRoles.Merlin)
-
         {
-
             Utils.SendMessage("<color=#00b4eb>この役職はSKにできません。</color>", Player.PlayerId);
-
-            return;
-
+            return false;
         }
-
-
-
+        // 1 試合 1 回の機会は、サイドキックにできると決まってから使う
+        CanSideKick = false;
         Player.RpcProtectedMurderPlayer(target);
 
         target.RpcProtectedMurderPlayer(Player);
@@ -1521,15 +1507,10 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
         {
 
             AURoleOptions.PhantomCooldown = Cooldown;
-
             Player.RpcResetAbilityCooldown();
-
         }
-
-
-
         Utils.NotifyRoles();
-
+        return true;
     }
 
 
