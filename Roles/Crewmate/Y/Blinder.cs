@@ -84,6 +84,12 @@ public sealed class Blinder : RoleBase
     {
         (var killer, var target) = info.AttemptTuple;
 
+        // 生き返ってもう一度殺された時は、前の人の目隠しを外してから付け替える (外す所が最新の 1 人分しか無い)
+        if (blindPlayer != null && blindPlayer != killer)
+        {
+            BlindPlayerIdList.Remove(blindPlayer.PlayerId);
+            blindPlayer.MarkDirtySettings();
+        }
         blindPlayer = killer;
         BlindPlayerIdList.Add(killer.PlayerId);
         killer.MarkDirtySettings();
