@@ -395,6 +395,7 @@ namespace TownOfHostL.Roles
         private static int GetAssignCount(this CustomRoles role)
         {
             int maximumCount = role.GetCount();
+            if (role.GetRoleAssignInfo()?.AssignWholeCountAsUnit == true) return maximumCount > 0 ? 1 : 0;
             int assignUnitCount = role.GetRoleAssignInfo()?.AssignUnitCount ??
                 role switch
                 {
@@ -625,5 +626,10 @@ namespace TownOfHostL.Roles
         /// 配る役職の内訳を、配る時に決める (設定で組の相手が変わる役職)。あれば AssignUnitRoles より先に使う
         /// </summary>
         public Func<CustomRoles[]> AssignUnitRolesGetter { get; init; }
+        /// <summary>
+        /// 設定した人数をまとめて 1 組として配る (1 人ずつ抽選すると、枠の残りしだいで組の一部だけ配られる)。
+        /// 組の内訳は AssignUnitRolesGetter で人数分を返す
+        /// </summary>
+        public bool AssignWholeCountAsUnit { get; init; }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
@@ -28,6 +29,8 @@ public sealed class Telepathisters : RoleBase, IImpostor, IKillFlashSeeable
             assignInfo: new RoleAssignInfo(CustomRoles.Telepathisters, CustomRoleTypes.Impostor)
             {
                 AssignCountRule = new(2, 3, 1),
+                AssignWholeCountAsUnit = true,
+                AssignUnitRolesGetter = () => Enumerable.Repeat(CustomRoles.Telepathisters, Math.Max(2, CustomRoles.Telepathisters.GetCount())).ToArray(),
             }
         );
 
