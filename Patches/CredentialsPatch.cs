@@ -40,24 +40,34 @@ namespace TownOfHostL
 
                 // 位置調整
                 // 毎フレーム通るので、部品は PingTracker が替わった時だけ引き直す
-                if (aspectOwner != __instance) { aspectOwner = __instance; aspect = __instance.GetComponent<AspectPosition>(); nextBuildAt = 0f; }
+                if (aspectOwner != __instance)
+                {
+                    aspectOwner = __instance; aspect = __instance.GetComponent<AspectPosition>(); pingMesh = __instance.text.GetComponent<MeshRenderer>();
+                    nextBuildAt = 0f; nextAvoidAt = 0f; shiftedForButtons = false;
+                }
+                float now = Time.unscaledTime;
                 if (aspect)
                 {
                     if (!aspectSaved) { aspectSaved = true; baseAlign = aspect.Alignment; }
                     var align = inMenu ? AspectPosition.EdgeAlignments.RightBottom : baseAlign;
                     var dist = inMenu ? new Vector3(0.35f, 0.12f, 0f) : new Vector3(1.8f, 6.0f, 0f);
-                    if (aspect.Alignment != align || aspect.DistanceFromEdge != dist)
+                    // ボタンをよけてずらした時は、ずらした距離を保つ (毎フレーム元へ戻さない)
+                    var want = !inMenu && shiftedForButtons ? shiftedDist : dist;
+                    if (aspect.Alignment != align || aspect.DistanceFromEdge != want)
                     {
                         aspect.Alignment = align;
-                        aspect.DistanceFromEdge = dist;
+                        aspect.DistanceFromEdge = want;
                         aspect.AdjustPosition();
                     }
-                    // 右上の報告・辞典のボタンに字が重なる時は、字をボタンの下へずらす
-                    if (!inMenu) AvoidAddedButtons(__instance, dist);
+                    // 右上の報告・辞典のボタンに字が重なる時は、字をボタンの左へずらす。測り直しは 0.25 秒ごと
+                    if (!inMenu && now >= nextAvoidAt)
+                    {
+                        nextAvoidAt = now + 0.25f;
+                        AvoidAddedButtons(__instance, dist);
+                    }
                 }
 
                 // 本編は毎フレーム Ping の字を書き直すので、足す字も毎フレーム付ける。足す字の中身は設定や状態が変わった時にしか変わらないので、組み直すのは 0.25 秒ごと
-                float now = Time.unscaledTime;
                 if (now >= nextBuildAt)
                 {
                     nextBuildAt = now + 0.25f;
@@ -66,6 +76,11 @@ namespace TownOfHostL
                 __instance.text.text += suffix;
             }
             static bool shiftedForButtons;
+            static Vector3 shiftedDist;
+            static float nextAvoidAt;
+            static MeshRenderer pingMesh;
+            // IL2CPP では普通の配列を渡すと写しに書かれて戻らないので、IL2CPP の配列で受ける (使い回す)
+            static Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<Vector3> corners;
             static float shiftSign = 1f;
             static void AvoidAddedButtons(PingTracker ping, Vector3 dist)
             {
@@ -75,14 +90,13 @@ namespace TownOfHostL
                     if (!has && !shiftedForButtons) return;
                     var t = ping.transform;
                     // TMP_Text.renderer は IL2CPP では古い Component.renderer に当たって例外になるので、部品から直接取る
-                    var mr = ping.text.GetComponent<MeshRenderer>();
+                    var mr = pingMesh;
                     if (!mr) return;
                     var rb = mr.bounds;
                     // 字の右上の角の、字の位置からのずれ (字の中身が変わっても位置と一緒に動くので、毎フレーム測り直す)
                     float topOff = rb.max.y - t.position.y, rightOff = rb.max.x - t.position.x;
                     // 字の形 (メッシュ) は字を書き換えた後まで古いことがあるので、右上寄せの字の枠の右上の角とも比べ、大きい方を使う
-                    // IL2CPP では普通の配列を渡すと写しに書かれて戻らないので、IL2CPP の配列で受ける
-                    var corners = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<Vector3>(4);
+                    corners ??= new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<Vector3>(4);
                     ping.text.rectTransform.GetWorldCorners(corners);
                     topOff = Mathf.Max(topOff, corners[2].y - t.position.y);
                     rightOff = Mathf.Max(rightOff, corners[2].x - t.position.x);
@@ -107,6 +121,7 @@ namespace TownOfHostL
                         aspect.AdjustPosition();
                     }
                     shiftedForButtons = true;
+                    shiftedDist = aspect.DistanceFromEdge;
                     if (!avoidLogged) { avoidLogged = true; Logger.Info($"右上の字をボタンの左へ: 字の右 {p.x + rightOff:0.00} → {left - 0.05f:0.00} (字の上 {p.y + topOff:0.00}・ボタンの下 {bottom:0.00})", "Credentials"); }
                 }
                 catch (System.Exception ex)
