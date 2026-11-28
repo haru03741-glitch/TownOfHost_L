@@ -161,7 +161,17 @@ public static class SurrogateSystem
     public static void CheckOwnerDeath(PlayerControl owner)
     {
         if (!AmongUsClient.Instance.AmHost || owner == null || owner.IsAlive()) return;
-        if (!OwnerToProxy.TryGetValue(owner.PlayerId, out var proxyId)) return;
+        FollowOwner(owner.PlayerId);
+    }
+    /// <summary>主が抜けた時。抜けた人の PlayerControl は見張りが回らないので、番号で後追いさせる</summary>
+    public static void OnOwnerLeft(byte ownerId)
+    {
+        if (!AmongUsClient.Instance.AmHost) return;
+        FollowOwner(ownerId);
+    }
+    private static void FollowOwner(byte ownerId)
+    {
+        if (!OwnerToProxy.TryGetValue(ownerId, out var proxyId)) return;
         if (!FollowingDeathProcessed.Add(proxyId)) return;
 
         var proxy = Utils.GetPlayerById(proxyId);
@@ -237,9 +247,10 @@ public sealed class Surrogate : RoleBase, IImpostor, IKiller, IUsePhantomButton
         ResetCooldown = true;
         if (!AmongUsClient.Instance.AmHost || !Player.IsAlive()) return;
 
+        // 入れ替え・代理づくりが起きなかった時 (キルのクール中・ベントの中など) はクールを使わせない
         if (SurrogateSystem.TryGetProxy(Player.PlayerId, out var proxy))
         {
-            SurrogateSystem.TrySwap(Player);
+            ResetCooldown = SurrogateSystem.TrySwap(Player);
             return;
         }
 
@@ -249,7 +260,7 @@ public sealed class Surrogate : RoleBase, IImpostor, IKiller, IUsePhantomButton
             ResetCooldown = false;
             return;
         }
-        SurrogateSystem.CreateProxy(Player, target);
+        ResetCooldown = SurrogateSystem.CreateProxy(Player, target);
     }
 
     public override string GetAbilityButtonText() => SurrogateSystem.TryGetProxy(Player.PlayerId, out _) ? GetString("SurrogateSwap") : "SK";
@@ -264,6 +275,12 @@ public sealed class Surrogate : RoleBase, IImpostor, IKiller, IUsePhantomButton
 
     public override void OnRevived()
         => SurrogateSystem.OnOwnerRevived(Player.PlayerId);
+
+    // 抜けた時はキルも見張りも通らないので、ここで代理を後追いさせる
+    public override void OnPlayerLeft(byte playerId)
+    {
+        if (playerId == Player.PlayerId) SurrogateSystem.OnOwnerLeft(playerId);
+    }
 
     public override void OnFixedUpdate(PlayerControl player)
         => SurrogateSystem.CheckOwnerDeath(Player);
