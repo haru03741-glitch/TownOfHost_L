@@ -256,6 +256,8 @@ public sealed class GrudgeSheriff : RoleBase
     {
         KillWaitPlayerSelect = null;
         KillWaitPlayer = null;
+        // 選んでいる途中で会議になった時も、ベントのクールを設定の秒数へ戻す (会議明けの設定の配り直しで届く)
+        IsCoolTimeOn = true;
     }
 
     public override string GetLowerText(PlayerControl seer, PlayerControl seen = null, bool isForMeeting = false, bool isForHud = false)
