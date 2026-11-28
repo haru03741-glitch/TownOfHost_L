@@ -149,8 +149,10 @@ public sealed class PlagueDoctor : RoleBase, IKiller
         //ペスト医師でないか、自己感染可能かつ感染者作成済み
         return pd == null || (CanInfectSelf && pd.InfectCount == 0);
     }
-    public void OnCheckMurderAsKiller(MurderInfo info)
+    // 感染はキルでないので、守りの段より前に振り分ける (後だと守護者が身代わりになり、メディックなどの守りの回数も減る)
+    public bool OnCheckMurderBeforeGuards(MurderInfo info)
     {
+        if (info.IsSuicide) return true;
         var (killer, target) = info.AttemptTuple;
         info.DoKill = false;
         if (InfectCount > 0)
@@ -159,7 +161,7 @@ public sealed class PlagueDoctor : RoleBase, IKiller
             killer.RpcProtectedMurderPlayer(target);
             DirectInfect(target);
         }
-        info.DoKill = false;
+        return false;
     }
     public override void OnMurderPlayerAsTarget(MurderInfo info)
     {
@@ -183,7 +185,8 @@ public sealed class PlagueDoctor : RoleBase, IKiller
     {
         if (!AmongUsClient.Instance.AmHost) return;
 
-        if (!GameStates.IsInTask) return;
+        // 全員が出発地点に集まって動けないイントロの間は、感染を進めない
+        if (!GameStates.IsInTask || GameStates.Intro) return;
         if (NonPlague) return;//ペスト不在だと感染しない...理由付けがむずいけど自然消滅ってこと..
         if (DestroyPlague && !PlagueDoctors.Any(pla => pla?.Player?.GetCustomRole() is CustomRoles.PlagueDoctor))
         {
