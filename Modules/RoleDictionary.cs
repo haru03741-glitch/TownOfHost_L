@@ -100,8 +100,12 @@ public class RoleDictionary : MonoBehaviour
     [TownOfHostL.Core.Modes.PatchBundle(TownOfHostL.Core.Modes.PatchBundles.Core)]
     static class MovePatch
     {
-        // 開いている間は矢印キーで辞典を動かすので、自分のキャラは動かさない
-        public static bool Prefix() => !open;
+        // 検索欄に字を打っている間は、キーで自分のキャラを動かさない。
+        // 開いている間は矢印キーで辞典を動かすので、矢印キーを押している間だけ止める (WASD での移動や使用・通報のキーは通す)
+        public static bool Prefix() => !Typing && !(open && ArrowHeld());
+
+        static bool ArrowHeld() => Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow)
+            || Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.RightArrow);
     }
 
     static void MoveSelection(int delta)
