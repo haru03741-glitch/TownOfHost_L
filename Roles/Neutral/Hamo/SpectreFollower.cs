@@ -71,7 +71,8 @@ public sealed class SpectreFollower : RoleBase
     public override void OnFixedUpdate(PlayerControl _)
     {
         if (!AmongUsClient.Instance.AmHost) return;
-        if (!GameStates.IsInTask || GameStates.InMeetingWindow) return;
+        // 動けないイントロの間は数えを進めない
+        if (!GameStates.IsInTask || GameStates.InMeetingWindow || GameStates.Intro) return;
         SpectreTeam.CheckFollowDeath(Player);
         if (!Player.IsAlive()) return;
         var spectre = Spectre.GetMySpectre(Player.PlayerId);
@@ -146,7 +147,8 @@ public sealed class SpectreImmoralist : RoleBase, IKillFlashSeeable, IUsePetButt
     public override void OnFixedUpdate(PlayerControl _)
     {
         if (!AmongUsClient.Instance.AmHost) return;
-        if (!GameStates.IsInTask || GameStates.InMeetingWindow) return;
+        // 動けないイントロの間は数えを進めない
+        if (!GameStates.IsInTask || GameStates.InMeetingWindow || GameStates.Intro) return;
         SpectreTeam.CheckFollowDeath(Player);
 
         if (Player.IsAlive())
