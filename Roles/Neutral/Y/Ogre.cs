@@ -74,7 +74,8 @@ namespace TownOfHostL.Roles.Neutral
 
         public void OnCheckMurderAsKiller(MurderInfo info)
         {
-            if (!Is(info.AttemptKiller) || info.IsSuicide || !info.CanKill) return;
+            // 守りで止まるキルでは確率の判定も演出もしない (止めるのは守りの側)
+            if (!Is(info.AttemptKiller) || info.IsSuicide || !info.CanKill || info.CheckHasGuard()) return;
             (var killer, var target) = info.AttemptTuple;
 
             int chance = IRandom.Instance.Next(1, 101);
