@@ -111,6 +111,8 @@ public sealed class Lawyer : RoleBase, ILateWinner
         foreach (var lawyer in Lawyers.ToArray())
         {
             if (lawyer.Target?.PlayerId != playerId) continue;
+            // 死んだ弁護士は弁護士のまま残す (死んでいても依頼人の勝ちに乗れる。追放の時と同じ)
+            if (!lawyer.Player.IsAlive()) continue;
 
             // 同じ依頼人の弁護士が何人いても、全員変える
             lawyer.ChangeRole();
