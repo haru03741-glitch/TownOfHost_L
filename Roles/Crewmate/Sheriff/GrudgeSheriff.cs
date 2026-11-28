@@ -217,8 +217,8 @@ public sealed class GrudgeSheriff : RoleBase
             // 近づいた時の直撃も、キルボタンのキルと同じく相手の守りを通す
             Kill.Attempt(Player, target, realKiller: Player);
 
-            Player.RpcResetAbilityCooldown();
-            Player.MarkDirtySettings();
+            // 弾を使い切った時の待ち時間 (255 秒) を送ってから数え直す
+            Player.RpcResetAbilityCooldown(sync: true);
             KillWaitPlayerSelect = null;
             KillWaitPlayer = null;
             Utils.NotifyRoles();

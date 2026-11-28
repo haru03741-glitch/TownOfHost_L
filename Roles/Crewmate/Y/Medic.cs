@@ -116,6 +116,8 @@ public sealed class Medic : RoleBase
         GuardPlayer = Player.VentPlayerSelect(() =>
         {
             UseVent = false;
+            // 使い切った後の待ち時間 (255 秒) を送ってから数え直す。送らないと、本人の手元ではベントのボタンが使えるように見え続ける
+            Player.RpcResetAbilityCooldown(sync: true);
         });
 
         Utils.NotifyRoles(SpecifySeer: Player);
