@@ -150,7 +150,10 @@ public sealed class EvilTracker : RoleBase, IImpostor, IKillFlashSeeable, ISidek
 
         SetTarget(target.PlayerId);
         Logger.Info($"{Player.GetNameWithRole()}のターゲットを{target.GetNameWithRole()}に設定", "EvilTrackerTarget");
-        Player.MarkDirtySettings();
+        // 狙いを決め直せない設定では、使えない間の待ち時間 (255 秒) を送ってから数え直す。
+        // 送るだけだと、本人の手元では前の待ち時間で数え直され、ボタンが使えるように見える
+        if (!CanSetTarget) Player.RpcResetAbilityCooldown(sync: true);
+        else Player.MarkDirtySettings();
         Utils.NotifyRoles();
         return false;
     }
