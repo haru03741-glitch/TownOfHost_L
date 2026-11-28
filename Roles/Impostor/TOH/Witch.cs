@@ -104,6 +104,8 @@ namespace TownOfHostL.Roles.Impostor
         }
         public void SetSpelled(PlayerControl target)
         {
+            // 1 回押しの待ちの間にどちらかが死んだ・抜けた時は呪わない
+            if (!Player.IsAlive() || !target.IsAlive()) return;
             if (!IsSpelled(target.PlayerId))
             {
                 SpelledPlayer.Add(target.PlayerId);

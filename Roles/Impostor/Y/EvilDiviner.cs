@@ -70,6 +70,8 @@ public sealed class EvilDiviner : RoleBase, IImpostor
     }
     void SetDivination(PlayerControl killer, PlayerControl target)
     {
+        // 1 回押しの待ちの間にどちらかが死んだ・抜けた時は占わない (回数を使わない)
+        if (!killer.IsAlive() || !target.IsAlive()) return;
         if (divinationTargets.Add(target.PlayerId))
         {
             divinationCount--;
