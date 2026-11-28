@@ -566,11 +566,16 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
     {
 
+        // スタンドを呼ばなかった時 (スタンドがいない・死んだ・呼び出し中) は、クールも使わせない
+        AdjustKillCooldown = false;
+        ResetCooldown = false;
         if (!Player.IsAlive() || !standCreated) return;
 
         var stand = GetStand();
 
         if (stand == null || !stand.IsAlive() || standSummoned) return;
+        AdjustKillCooldown = true;
+        ResetCooldown = true;
 
 
 

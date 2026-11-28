@@ -89,7 +89,8 @@ public sealed class JackalBusker : RoleBase, ILNKiller, IUsePhantomButton, ISchr
     public override void ApplyGameOptions(IGameOptions opt)
     {
         opt.SetVision(hasImpostorVision);
-        AURoleOptions.PhantomCooldown = cooldown;
+        // 使い切った後は押せるボタンを残さない (キルで回数が戻ったら元のクールへ)
+        AURoleOptions.PhantomCooldown = uses > 0 ? cooldown : 200f;
         AURoleOptions.GuardianAngelCooldown = TempGhost.LockedGuardianAngelCooldown;
     }
     public void ApplySchrodingerCatOptions(IGameOptions option) => option.SetVision(hasImpostorVision);
@@ -110,7 +111,12 @@ public sealed class JackalBusker : RoleBase, ILNKiller, IUsePhantomButton, ISchr
 
     public void OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
     {
-        if (pet != null || !TryBecomeGhost(null)) return;
+        // 回数切れやペットで使う設定の時は何も起きないので、クールも使わせない
+        if (pet != null || !TryBecomeGhost(null))
+        {
+            ResetCooldown = false;
+            return;
+        }
         // 戻った時にキルと能力のクールを立て直すので、ここでは役職の送り直しもクールの調整もしない
         AdjustKillCooldown = false;
         ResetCooldown = null;
@@ -122,6 +128,7 @@ public sealed class JackalBusker : RoleBase, ILNKiller, IUsePhantomButton, ISchr
         if (++killsTowardUse < killsPerUse) return;
         killsTowardUse = 0;
         uses++;
+        if (uses == 1) Player.MarkDirtySettings();
         Utils.NotifyRoles(SpecifySeer: Player);
     }
 
