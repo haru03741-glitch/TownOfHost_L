@@ -73,10 +73,11 @@ public sealed class Samurai : RoleBase, IImpostor, IUsePhantomButton
 
     public override void ApplyGameOptions(IGameOptions opt)
     {
-        AURoleOptions.PhantomCooldown = AbilityCooldown;
+        // 使い切った後は押せるボタンを残さない (1 試合に 1 回)
+        AURoleOptions.PhantomCooldown = CanUse ? AbilityCooldown : 200f;
     }
 
-    bool IUsePhantomButton.IsPhantomRole => true;
+    bool IUsePhantomButton.IsPhantomRole => CanUse;
     bool IUsePhantomButton.IsresetAfterKill => false;
 
     void IUsePhantomButton.OnClick(ref bool AdjustKillCooldown, ref bool? ResetCooldown)
@@ -93,6 +94,7 @@ public sealed class Samurai : RoleBase, IImpostor, IUsePhantomButton
             if (killedCount <= 0) return;
 
             CanUse = false;
+            Player.MarkDirtySettings();
 
             Utils.NotifyRoles(SpecifySeer: Player);
         }
