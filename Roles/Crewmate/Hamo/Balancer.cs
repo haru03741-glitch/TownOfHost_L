@@ -790,7 +790,7 @@ public sealed class Balancer : RoleBase, ISelfVoter
     /// 天秤会議を開きに行った後、開いたかを見る。開いていなければ予約を取り下げ、止めていた会議明けの処理を流す
     /// (残すと会議明けの処理が止まったまま日が進まず、次の普通の会議が天秤会議として扱われる)
     /// </summary>
-    static void CancelIfNotOpened(int tries)
+    static void CancelIfNotOpened(int tries, bool lastLooked = false)
     {
         if (!Scheduled || !GameStates.IsInGame) return;
         // 会議が始まった後は開いた会議の側が予約を外す
@@ -799,6 +799,12 @@ public sealed class Balancer : RoleBase, ISelfVoter
         if ((ExileController.Instance != null || TownOfHostL.Modules.Revive.HasHeldReport) && tries < 25)
         {
             _ = new LateTask(() => CancelIfNotOpened(tries + 1), 1f, "Balancer.CheckOpened");
+            return;
+        }
+        // 追放の画面が消えた直後は、会議を開く側の待ち (0.5 秒ごと) がまだ開いていないことがあるので、もう 1 回だけ見る
+        if (!lastLooked)
+        {
+            _ = new LateTask(() => CancelIfNotOpened(tries + 1, true), 1f, "Balancer.CheckOpened");
             return;
         }
         Logger.Info("天秤会議が開かなかったので取りやめる", "Balancer");
