@@ -27,6 +27,19 @@ public static class ChainShifterAddon
     private static float postMeetingTime = 0f;
     private static bool shiftActive = false;
 
+    // 交換の状態は試合ごとに戻す (チェインシフターのいない試合で、前の試合の予約が働かないように)。
+    // 他視点の処理の登録は、チェインシフターが居る時の Init だけで行う
+    [TownOfHostL.Attributes.GameModuleInitializer]
+    public static void ResetState()
+    {
+        ShiftInfo = new();
+        prePlayerId = byte.MaxValue;
+        Player = null;
+        nextPlayer = null;
+        nextPlayerByKill = null;
+        postMeetingTime = 0f;
+        shiftActive = false;
+    }
     public static void Init()
     {
         ShiftInfo = new();
