@@ -667,7 +667,8 @@ public sealed class Balancer : RoleBase, ISelfVoter
                 RestoreName(Target2);
                 MeetingTargets = new[] { Target1, Target2 };
                 ReportDeadBodyPatch.ExReportDeadBody(reporter, oniku.Data, false, "Balancer.meeting", Utils.GetRoleColorCode(CustomRoles.Balancer));
-
+                // 会議が捨てられた (通報者が抜けた・勝ちが決まった・追放の画面が終わらない) 時に、予約を残さない
+                _ = new LateTask(() => CancelIfNotOpened(0), 1f, "Balancer.CheckOpened");
             }, 2f, "BalanerMeeting");
 
 
@@ -784,6 +785,30 @@ public sealed class Balancer : RoleBase, ISelfVoter
         if (Utils.GetPlayerById(target1).IsAlive() && Utils.GetPlayerById(target2).IsAlive()) return;
         closedByTargetLoss = true;
         TownOfHostL.Modules.MeetingVoteManager.Instance.EndMeeting(false);
+    }
+    /// <summary>
+    /// 天秤会議を開きに行った後、開いたかを見る。開いていなければ予約を取り下げ、止めていた会議明けの処理を流す
+    /// (残すと会議明けの処理が止まったまま日が進まず、次の普通の会議が天秤会議として扱われる)
+    /// </summary>
+    static void CancelIfNotOpened(int tries)
+    {
+        if (!Scheduled || !GameStates.IsInGame) return;
+        // 会議が始まった後は開いた会議の側が予約を外す
+        if (GameStates.IsMeeting || MeetingStates.MeetingCalled) return;
+        // 追放の画面を待っている・通報を預かっている間は、もう少し待つ (追放の画面は最大 20 秒待つ)
+        if ((ExileController.Instance != null || TownOfHostL.Modules.Revive.HasHeldReport) && tries < 25)
+        {
+            _ = new LateTask(() => CancelIfNotOpened(tries + 1), 1f, "Balancer.CheckOpened");
+            return;
+        }
+        Logger.Info("天秤会議が開かなかったので取りやめる", "Balancer");
+        Scheduled = false;
+        MeetingTargets = System.Array.Empty<byte>();
+        foreach (var role in CustomRoleManager.AllActiveRoles.Values)
+            if (role is Balancer balancer) { balancer.Target1 = 255; balancer.Target2 = 255; }
+        AfterMeetingReset();
+        Utils.AfterMeetingTasks();
+        Utils.NotifyRoles(ForceLoop: true);
     }
     /// <summary>天秤会議を開く予約をしてから、実際に開くまでの間</summary>
     public static bool Scheduled;
