@@ -522,7 +522,12 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
         {
 
-            if (target.GetRoleClass() is Stand stand) stand.SetOwner(Player.PlayerId);
+            if (target.GetRoleClass() is Stand stand)
+            {
+                stand.SetOwner(Player.PlayerId);
+                // 主が決まって初めて、主とスタンドが互いの役職名を見られる。役職替えの時の名前は主が決まる前に組まれている
+                Utils.NotifyRoles();
+            }
 
         }, 0.2f, "StandMaster.SetOwner");
 
