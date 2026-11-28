@@ -253,7 +253,7 @@ public sealed class HadouHo : RoleBase, IImpostor, IUsePhantomButton
                 ShowBeamMark = false; _prevBeamMark = false;
                 beam?.End(); IsFiring = false;
                 Holdings.RemoveSpeed(firerId, nameof(HadouHo));
-                Player?.MarkDirtySettings();
+                if (Player) Player.MarkDirtySettings();
                 Utils.NotifyRoles(); return;
             }
 

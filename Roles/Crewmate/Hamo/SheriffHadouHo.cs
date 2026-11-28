@@ -346,7 +346,7 @@ public sealed class SheriffHadouHo : RoleBase, IUsePhantomButton, IUsePetButton
                 ShowBeamMark = false; _prevBeamMark = false;
                 beam?.End(); IsFiring = false;
                 Holdings.RemoveSpeed(firerId, nameof(SheriffHadouHo));
-                Player?.MarkDirtySettings();
+                if (Player) Player.MarkDirtySettings();
                 Utils.NotifyRoles(); return;
             }
 
