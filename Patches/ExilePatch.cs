@@ -42,6 +42,10 @@ namespace TownOfHostL
                 {
                     yield return original.Current;
                 }
+                // 追放の演出の終わりの印 (ExiledAnimate) を下ろす。本編が WrapUpAndSpawn を呼ばないので、ここで呼ぶ。
+                // 下ろさないと、会議明けの通報とボタンが「追放の演出の間」として預かられたまま通らなくなる
+                try { AirshipExileWrapUpStatePatch.Run(); }
+                catch (System.Exception ex) { Logger.Exception(ex, "AirshipExileWrapUpState"); }
                 try
                 {
                     WrapUpPostfix(instance.initData.networkedPlayer);

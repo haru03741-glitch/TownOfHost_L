@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using AmongUs.GameOptions;
 using HarmonyLib;
 using TownOfHostL.Attributes;
@@ -47,6 +47,9 @@ public static class Revive
     private static NetworkedPlayerInfo heldTarget;
     private static bool hasHeldReport;
     private static bool heldForce;
+    private static float heldAt;
+    // 預かった通報をこれ以上待たせない秒数 (会議明けの印が下りないまま残っても、通報とボタンが止まり続けないように)
+    private const float MaxHoldSeconds = 15f;
 
     [GameModuleInitializer]
     public static void Init()
@@ -107,6 +110,7 @@ public static class Revive
             heldTarget = target;
             heldForce = force;
             hasHeldReport = true;
+            heldAt = Time.realtimeSinceStartup;
             Logger.Info($"{(window ? "会議明けの暗転対策の戻しの前" : "役職の SetRole の直後")}なので通報を預かる: {reporter?.GetNameWithRole()} => {target?.PlayerName ?? "ボタン"}", "Revive");
         }
         return true;
@@ -150,6 +154,14 @@ public static class Revive
         // 預かっている間に別の経路で会議が開いたら、預かった通報は捨てる (追放の演出の間に預かった物は残す)
         if (MeetingHud.Instance && hasHeldReport) ClearHeldReport();
         if (hasHeldReport && !IsSettling && !InAfterMeetingWindow && GameStates.IsInTask && !GameStates.IsMeeting) FlushHeldReport();
+        else if (hasHeldReport && now - heldAt >= MaxHoldSeconds && GameStates.IsInTask && !GameStates.IsMeeting
+            && !MeetingHud.Instance && !ExileController.Instance)
+        {
+            Logger.Warn($"預かった通報が {MaxHoldSeconds} 秒たっても通せないので通す (ExiledAnimate={GameStates.ExiledAnimate}, Cached={AntiBlackout.IsCached}, RevertPending={AntiBlackout.IsRevertPending})", "Revive");
+            // 残った印も下ろす (次の通報も止めない)
+            GameStates.ExiledAnimate = false;
+            FlushHeldReport();
+        }
 
         if (pending.Count == 0 || now < nextReviveAt || !CanRunNow(now)) return;
         while (pending.Count > 0)

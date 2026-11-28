@@ -104,6 +104,8 @@ class MeetingStartStatePatch
     {
         GameStates.ExiledAnimate = false;
         SpawnState.SetAll(false);
+        // 会議ごとに、追放の締めの処理を 1 回だけ走らせる準備をする
+        AirshipExileWrapUpStatePatch.Arm();
     }
 }
 [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.VotingComplete))]
@@ -127,8 +129,15 @@ class ExileWrapUpStatePatch
 [HarmonyPatch(typeof(AirshipExileController), nameof(AirshipExileController.WrapUpAndSpawn))]
 class AirshipExileWrapUpStatePatch
 {
-    public static void Postfix()
+    // 今の本編では WrapUpAndSpawn が呼ばれない (追放の演出のコルーチンの中で済む) ので、
+    // 追放の締め (ExilePatch の Animate の包み) からも呼ぶ。1 回の追放で 2 度走らせない
+    static bool armed;
+    public static void Arm() => armed = true;
+    public static void Postfix() => Run();
+    public static void Run()
     {
+        if (!armed) return;
+        armed = false;
         GameStates.CalledMeeting = false;
         _ = new LateTask(() => GameStates.ExiledAnimate = false, 3f + Main.LagTime, "Tuihoufin");
         SpawnState.SetAll(true);
