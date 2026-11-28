@@ -14,10 +14,12 @@ static class SpectreTeam
     {
         if (!me.IsAlive()) return;
         var spectre = Spectre.GetMySpectre(me.PlayerId);
-        if (spectre == null || spectre.Player.IsAlive()) return;
+        // 親が部屋を抜けた時も後を追う (抜けた人は役職を引けないので、組の表で見る)
+        bool parentGone = spectre == null && Spectre.IsMySpectreGone(me.PlayerId);
+        if (!parentGone && (spectre == null || spectre.Player.IsAlive())) return;
         var state = PlayerState.GetByPlayerId(me.PlayerId);
         if (state != null) state.DeathReason = CustomDeathReason.FollowingSuicide;
-        me.SetRealKiller(spectre.Player);
+        if (spectre != null) me.SetRealKiller(spectre.Player);
         Kill.Suicide(me);
         Logger.Info($"{me.GetNameWithRole()}: 妖狐の後を追った", "SpectreTeam");
     }
@@ -26,7 +28,11 @@ static class SpectreTeam
     {
         if (!AmongUsClient.Instance.AmHost || !me.IsAlive()) return;
         var spectre = Spectre.GetMySpectre(me.PlayerId);
-        if (spectre == null) return;
+        if (spectre == null)
+        {
+            if (Spectre.IsMySpectreGone(me.PlayerId)) Main.AfterMeetingDeathPlayers.TryAdd(me.PlayerId, CustomDeathReason.FollowingSuicide);
+            return;
+        }
         if (spectre.Player.IsAlive() && !Main.AfterMeetingDeathPlayers.ContainsKey(spectre.Player.PlayerId)) return;
         Main.AfterMeetingDeathPlayers.TryAdd(me.PlayerId, CustomDeathReason.FollowingSuicide);
     }
