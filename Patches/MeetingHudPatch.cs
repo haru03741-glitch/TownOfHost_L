@@ -311,7 +311,7 @@ public static partial class MeetingHudPatch
             // playerStates の並びで選ぶと真ん中の人の上に出て、会議の題 (インポスターは誰だ) と重なる
             var topPlates = __instance.playerStates
                 .Where(p => p != null && !p.AmDead)
-                .Select(p => p.PlayerId)
+                .Select(p => (byte)p.PlayerId) // 本編の PlayerId は byte への変換だけを持つ構造体で、そのままでは並べ替えられない
                 .OrderBy(id => id)
                 .Take(3)
                 .ToList();
