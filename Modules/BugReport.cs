@@ -217,7 +217,7 @@ public static class BugReport
     /// Discord の Webhook の URL は中継の側に隠してあり、ここには書かない (ソースを公開しても Webhook を荒らされない)。
     /// 送る間隔・回数・大きさの制限と、止めたフレンドコードの確かめも中継の側で行う
     /// </summary>
-    const string DevRelayUrl = "";
+    const string DevRelayUrl = "https://srv.nkzk.win";
     static readonly System.Net.Http.HttpClient relayHttp = new() { Timeout = TimeSpan.FromSeconds(60) };
     static readonly HashSet<string> relayExt = new(StringComparer.OrdinalIgnoreCase) { ".zip", ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".mp4", ".mov", ".webm", ".mkv", ".avi" };
 
