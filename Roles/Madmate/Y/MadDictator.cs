@@ -42,7 +42,8 @@ public sealed class MadDictator : RoleBase
         var (votedForId, numVotes, doVote) = base.ModifyVote(voterId, sourceVotedForId, isIntentional);
         var baseVote = (votedForId, numVotes, doVote);
         //死んでいないディクテーターが投票済み
-        if (voterId != Player.PlayerId || sourceVotedForId == Player.PlayerId || sourceVotedForId >= 253 || !Player.IsAlive())
+        // 本人が選んでいない票 (天秤会議の強制の票など) では能力を使わない
+        if (!isIntentional || voterId != Player.PlayerId || sourceVotedForId == Player.PlayerId || sourceVotedForId >= 253 || !Player.IsAlive())
         {
             return baseVote;
         }
