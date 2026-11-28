@@ -53,7 +53,7 @@ namespace TownOfHostL
                         aspect.AdjustPosition();
                     }
                     // 右上の報告・辞典のボタンに字が重なる時は、字をボタンの下へずらす
-                    if (!inMenu) AvoidAddedButtons(__instance);
+                    if (!inMenu) AvoidAddedButtons(__instance, dist);
                 }
 
                 // 本編は毎フレーム Ping の字を書き直すので、足す字も毎フレーム付ける。足す字の中身は設定や状態が変わった時にしか変わらないので、組み直すのは 0.25 秒ごと
@@ -66,7 +66,8 @@ namespace TownOfHostL
                 __instance.text.text += suffix;
             }
             static bool shiftedForButtons;
-            static void AvoidAddedButtons(PingTracker ping)
+            static float shiftSign = 1f;
+            static void AvoidAddedButtons(PingTracker ping, Vector3 dist)
             {
                 try
                 {
@@ -86,13 +87,24 @@ namespace TownOfHostL
                     topOff = Mathf.Max(topOff, corners[2].y - t.position.y);
                     rightOff = Mathf.Max(rightOff, corners[2].x - t.position.x);
                     // 本来の位置へ戻してから決める (ずらしを積み重ねない)
+                    aspect.DistanceFromEdge = dist;
                     aspect.AdjustPosition();
                     shiftedForButtons = false;
                     if (!has) return;
                     var p = t.position;
                     // 字は右寄せで右上のボタンの真下まで伸びるので、横の重なりは見ずに縦だけ見る (横の測り方がずれて重なったままになっていた)
                     if (p.y + topOff <= bottom - 0.05f) return;
-                    t.position = new Vector3(p.x, bottom - 0.05f - topOff, p.z);
+                    float need = p.y + topOff - (bottom - 0.05f);
+                    // 位置を直接動かしても、端に合わせる部品 (AspectPosition) が後で元へ戻すので、端からの距離を変えて下げる。
+                    // 距離を足すと下がるか上がるかは寄せる端で変わるので、動かして確かめ、逆なら向きを替える
+                    aspect.DistanceFromEdge = dist + new Vector3(0f, need * shiftSign, 0f);
+                    aspect.AdjustPosition();
+                    if (t.position.y > p.y - need * 0.5f)
+                    {
+                        shiftSign = -shiftSign;
+                        aspect.DistanceFromEdge = dist + new Vector3(0f, need * shiftSign, 0f);
+                        aspect.AdjustPosition();
+                    }
                     shiftedForButtons = true;
                     if (!avoidLogged) { avoidLogged = true; Logger.Info($"右上の字をボタンの下へ: 字の上 {p.y + topOff:0.00} → {bottom - 0.05f:0.00} (ボタンの左 {left:0.00}・字の右 {p.x + rightOff:0.00})", "Credentials"); }
                 }

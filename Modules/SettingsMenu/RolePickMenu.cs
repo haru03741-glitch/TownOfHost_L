@@ -20,8 +20,6 @@ internal static class RolePickMenu
     private static readonly Color OnFill = new(0.12f, 0.36f, 0.18f, 1f);
     private static readonly Color TabFill = new(0.2f, 0.3f, 0.45f, 1f);
     private static readonly Color PanelFill = new(0.07f, 0.075f, 0.09f, 0.98f);
-    // 後ろは暗くしない (開くたびに暗くなるのが煩わしい)。押すと閉じるための透明な幕だけ置く
-    private static readonly Color Shade = new(0f, 0f, 0f, 0f);
     private static readonly Color Ink = new(0.88f, 0.9f, 0.94f, 1f);
     private static readonly Color Sub = new(0.7f, 0.72f, 0.76f, 1f);
 
@@ -162,7 +160,13 @@ internal static class RolePickMenu
         var groups = Groups();
 
         if (first)
-            _shade.Set(new Button(new Spacer(20f, 12f), Close) { Size = new Vector2(20f, 12f), Padding = Vector2.zero, Color = Color.clear, Fill = Shade });
+        {
+            // ボタンはマウスが乗ると縁の色を不透明な緑に塗り替える。中が黒い箱だと、一覧の隙間や外にマウスが乗るたびに
+            // 画面いっぱいが黒くなって点滅していたので、中を透かした箱にし、乗っても透明のままにする
+            var shade = new Button(new Spacer(20f, 12f), Close) { Size = new Vector2(20f, 12f), Padding = Vector2.zero, Color = Color.clear, Hollow = true };
+            shade.OnHover = () => { if (shade.BackRenderer) shade.BackRenderer.color = Color.clear; };
+            _shade.Set(shade);
+        }
 
         float innerW = PanelW - Pad * 2f;
         var col = new Stack(false) { Gap = 0.09f, Width = innerW, Align = Align.Start };
