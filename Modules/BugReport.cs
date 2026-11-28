@@ -88,7 +88,7 @@ public static class BugReport
         var fc = string.IsNullOrEmpty(fcOverride) ? FriendCodeOf(pc) : fcOverride;
         var stamp = DateTime.Now;
         var kindLabel = GetString(isBug ? "Report.KindBug" : "Report.KindRequest");
-        var line = $"[{stamp:yyyy-MM-dd HH:mm:ss}] [{kindLabel}] {name} <{fc}> ({Situation(pc)}) {text.Replace("\r", "").Replace("\n", " / ")}";
+        var line = $"[{stamp:yyyy-MM-dd HH:mm:ss}] [{kindLabel}] {name} <{fc}> [{Versions}] ({Situation(pc)}) {text.Replace("\r", "").Replace("\n", " / ")}";
 
         // 付けたファイルを写す (元のファイルが消えても残るように)。バグの報告には、ホストのゲームのログを自動で付ける
         var saved = new List<string>();
@@ -224,7 +224,8 @@ public static class BugReport
     static Task<string> SendToDeveloper(PlayerControl pc, string name, string fc, string text, IReadOnlyList<string> saved, bool isBug)
     {
         if (string.IsNullOrEmpty(DevRelayUrl) || fc.Length == 0) return null;
-        bool fromHost = pc != null && pc == PlayerControl.LocalPlayer && AmHostOrAlone;
+        bool fromSelf = pc != null && pc == PlayerControl.LocalPlayer;
+        bool fromHost = fromSelf && AmHostOrAlone;
         var payload = JsonSerializer.Serialize(new Dictionary<string, string>
         {
             ["kind"] = fromHost ? "host" : "player",
@@ -237,6 +238,8 @@ public static class BugReport
             ["situation"] = Situation(pc),
             ["version"] = Main.PluginVersion,
             ["commit"] = ThisAssembly.Git.Commit,
+            ["gameVersion"] = GameVersion,
+            ["platform"] = Platform,
             ["text"] = text,
         });
         // 画像と動画だけを、中継の上限 (合計 9.5MB・5 個) までにする
@@ -256,7 +259,23 @@ public static class BugReport
                 foreach (var f in upload) form.Add(new System.Net.Http.ByteArrayContent(File.ReadAllBytes(f)), "files", Path.GetFileName(f));
                 using var res = await relayHttp.PostAsync(DevRelayUrl.TrimEnd('/') + "/report", form);
                 var body = await res.Content.ReadAsStringAsync();
-                if (res.IsSuccessStatusCode) { Logger.Info("開発者へ報告を送った", nameof(BugReport)); return (string)null; }
+                if (res.IsSuccessStatusCode)
+                {
+                    Logger.Info("開発者へ報告を送った", nameof(BugReport));
+                    // 自分の報告なら、運営とやりとりできるよう投稿の ID と合言葉を残す
+                    if (fromSelf)
+                    {
+                        try
+                        {
+                            using var ok = JsonDocument.Parse(body);
+                            var root = ok.RootElement;
+                            if (root.TryGetProperty("id", out var rid) && root.TryGetProperty("token", out var rtk))
+                                ReportChat.Added(rid.GetString(), rtk.GetString(), text, isBug);
+                        }
+                        catch { }
+                    }
+                    return (string)null;
+                }
                 Logger.Warn($"開発者への報告を送れなかった: {(int)res.StatusCode} {body}", nameof(BugReport));
                 try
                 {
@@ -273,6 +292,27 @@ public static class BugReport
             }
         });
     }
+
+    /// <summary>Among Us のバージョン</summary>
+    static string GameVersion
+    {
+        get
+        {
+            try { return UnityEngine.Application.version; } catch { return "?"; }
+        }
+    }
+
+    /// <summary>遊んでいる所 (Steam / Epic など)</summary>
+    static string Platform
+    {
+        get
+        {
+            try { return Constants.GetPurchasingPlatformType().ToString(); } catch { return ""; }
+        }
+    }
+
+    /// <summary>報告に書くバージョン: MOD と Among Us</summary>
+    static string Versions => $"TOHL {Main.PluginVersion} ({ThisAssembly.Git.Commit}) / Among Us {GameVersion}{(Platform.Length > 0 ? $" {Platform}" : "")}";
 
     /// <summary>中継が断った理由を、見せる文に</summary>
     public static string RelayMessage(string error) => error switch
@@ -307,6 +347,8 @@ public static class BugReport
 
     /// <summary>開発者へも届く設定になっているか (入力画面の案内に使う)</summary>
     public static bool SendsToDeveloper => !string.IsNullOrEmpty(DevRelayUrl);
+    /// <summary>中継の URL (最後の / 無し)。空なら開発者へは送らない</summary>
+    public static string RelayUrl => DevRelayUrl.TrimEnd('/');
 
     public static void OpenFolder()
     {

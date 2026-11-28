@@ -14,7 +14,9 @@ compatibility_date = "2025-01-01"
 [vars]
 # 止めるフレンドコード (カンマ区切り)。変えたら npx wrangler deploy し直す
 BLOCKED = ""
-# 報告を送るチャンネルの ID (bot を使う時)
+# 報告ごとに投稿を作るフォーラムの ID (bot を使う時。おすすめ)
+DISCORD_FORUM_ID = ""
+# フォーラムを使わない時: 報告を送るチャンネルの ID (送ったメッセージからスレッドを作る)
 DISCORD_CHANNEL_ID = ""
 # bot の「Public Key」(Discord の Developer Portal の General Information。秘密ではない)
 DISCORD_PUBLIC_KEY = ""

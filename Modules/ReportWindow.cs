@@ -109,8 +109,8 @@ public class ReportWindow : MonoBehaviour
         if (s.Length == 0) return;
         Snapshot(s.Length > 1);
         if (selAll) { text = ""; cursor = 0; selAll = false; }
-        var room = MaxLen - text.Length;
-        if (room <= 0) { Snack(string.Format(GetString("Report.WinFull"), MaxLen), true); return; }
+        var room = Limit - text.Length;
+        if (room <= 0) { Snack(string.Format(GetString("Report.WinFull"), Limit), true); return; }
         if (s.Length > room) s = s[..room];
         cursor = Mathf.Clamp(cursor, 0, text.Length);
         text = text.Insert(cursor, s);
@@ -229,7 +229,9 @@ public class ReportWindow : MonoBehaviour
         // 変換を決めた Enter で改行しないよう、前のフレームまで変換中だった時の Enter は使わない
         if (enter && !composing && !wasComposing)
         {
-            if (ctrl) { Send(); wasComposing = composing; return; }
+            var shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            // やりとりは Enter で送る (Shift+Enter で改行)。報告は Ctrl+Enter で送る
+            if (ctrl || chatMode && !shift) { Send(); wasComposing = composing; return; }
             Insert("\n");
         }
         if (ctrl)
@@ -267,6 +269,13 @@ public class ReportWindow : MonoBehaviour
     {
         if (!open) return;
         RelayUpdate();
+        ReportChat.Pump();
+        if (BugReport.SendsToDeveloper)
+        {
+            var now = Time.unscaledTime;
+            ReportChat.RefreshAllSometimes(now, 45f);
+            if (chatMode && chatSel != null && now >= nextPollAt) { nextPollAt = now + 6f; ReportChat.Refresh(chatSel); }
+        }
         if (closeAt > 0f && Time.unscaledTime >= closeAt) { closeAt = -1f; SetOpen(false); return; }
         ShotUpdate();
         PumpBackground();
@@ -313,6 +322,7 @@ public class ReportWindow : MonoBehaviour
 
     static void Send()
     {
+        if (chatMode) { SendChat(); return; }
         if (closeAt > 0f) return;
         if (!CanSend) { Snack(GetString("Report.WinEmpty"), true); return; }
         if (BugReport.LocalFriendCode().Length == 0) { Snack(GetString("Report.NoFriendCode"), true); return; }
@@ -698,6 +708,45 @@ public class ReportWindow : MonoBehaviour
         GUI.Label(new Rect(x0, y, cw, 30f * S), note, sSub);
         y += 44f * S;
 
+        // 書く / やりとり (開発者へ送る時だけ)
+        if (BugReport.SendsToDeveloper)
+        {
+            var tabH = 46f * S;
+            var tx = x0;
+            for (int i = 0; i < 3; i++)
+            {
+                bool chat = i == 1;
+                var unread = chat ? ReportChat.TotalUnread : 0;
+                var label = GetString(i switch { 1 => "Report.TabChat", 2 => "Report.TabList", _ => "Report.TabWrite" }) + (unread > 0 ? $"  ({unread})" : "");
+                var r = new Rect(tx, y, Width(sChip, label) + 48f * S, tabH);
+                bool on = tab == i;
+                if (on) Fill(r, cChipOn, 12f * S);
+                else if (Hover(r)) Fill(r, cHover, 12f * S);
+                var st = sChip; var old = st.normal.textColor;
+                st.normal.textColor = on ? Hex(0xd2e3fc) : unread > 0 ? cRed : cSub;
+                GUI.Label(r, label, st);
+                st.normal.textColor = old;
+                if (on) Fill(new Rect(r.x + 12f * S, r.yMax - 4f * S, r.width - 24f * S, 4f * S), cBlue, 2f * S);
+                if (Click(r) && !on) SetTab(i);
+                tx = r.xMax + 8f * S;
+            }
+            y += tabH + 18f * S;
+        }
+
+        if (tab == 2)
+        {
+            DrawList(new Rect(x0, y, cw, wy + wh - pad * 0.8f - y));
+            DrawSnack(cw, wy + wh - pad * 0.8f);
+            return;
+        }
+        if (chatMode)
+        {
+            DrawChat(new Rect(x0, y, cw, wy + wh - pad * 0.8f - y));
+            if (live && ev.type == EventType.MouseDown && ev.button == 0) SetFocus(false);
+            DrawSnack(cw, wy + wh - pad * 0.8f - 120f * S);
+            return;
+        }
+
         // バグ / 要望 (Google の選ぶチップ)
         var chipH = 42f * S;
         var cx = x0;
@@ -734,9 +783,9 @@ public class ReportWindow : MonoBehaviour
         DrawField(new Rect(x0, fieldY, cw, fieldH));
         var hy = fieldY + fieldH + 6f * S;
         GUI.Label(new Rect(x0 + 16f * S, hy, cw * 0.7f, helperH), GetString("Report.WinHint"), sLabelSmall);
-        var counter = $"{text.Length} / {MaxLen}";
+        var counter = $"{text.Length} / {Limit}";
         var sc = sSubRight; var oc = sc.normal.textColor;
-        if (text.Length >= MaxLen) sc.normal.textColor = cRed;
+        if (text.Length >= Limit) sc.normal.textColor = cRed;
         GUI.Label(new Rect(x0, hy, cw - 16f * S, helperH), counter, sc);
         sc.normal.textColor = oc;
 
@@ -760,14 +809,320 @@ public class ReportWindow : MonoBehaviour
 
         if (pickerOpen) DrawPicker();
 
-        // お知らせ
-        if (Time.unscaledTime < snackUntil && snack.Length > 0)
+        DrawSnack(cw, footY);
+    }
+
+    // お知らせ
+    static void DrawSnack(float cw, float footY)
+    {
+        if (Time.unscaledTime >= snackUntil || snack.Length == 0) return;
+        var sw2 = Mathf.Min(cw, Width(sSnack, snack) + 64f * S);
+        var sr = new Rect(wx + (ww - sw2) / 2f, footY - 70f * S, sw2, 52f * S);
+        Fill(sr, snackBad ? Hex(0xf6aea9) : cText, 10f * S);
+        GUI.Label(sr, snack, sSnack);
+    }
+
+    // =====================================================================
+    // やりとり (自分の報告の中で、運営と話す)
+    // =====================================================================
+
+    // 0: 書く / 1: やりとり / 2: みんなの報告の一覧
+    static int tab;
+    static bool chatMode => tab == 1;
+    // 書く欄に今入っているのが、やりとりの欄の中身か
+    static bool chatBuf;
+    static int Limit => chatMode ? ChatMaxLen : MaxLen;
+    const int ChatMaxLen = 500;
+    // 書く欄の中身は、書く / やりとり で別々に持つ
+    static string otherText = "";
+    static int otherCursor;
+    static ReportChat.Report chatSel;
+    static float nextPollAt, listScroll, chatBack;
+    static bool chatSending;
+
+    static void SetTab(int t)
+    {
+        if (tab == t) return;
+        bool wantChat = t == 1;
+        if (t != 2 && wantChat != chatBuf)
         {
-            var sw2 = Mathf.Min(cw, Width(sSnack, snack) + 64f * S);
-            var sr = new Rect(wx + (ww - sw2) / 2f, footY - 70f * S, sw2, 52f * S);
-            Fill(sr, snackBad ? Hex(0xf6aea9) : cText, 10f * S);
-            GUI.Label(sr, snack, sSnack);
+            (text, otherText) = (otherText, text);
+            (cursor, otherCursor) = (otherCursor, cursor);
+            chatBuf = wantChat;
+            undo.Clear();
         }
+        tab = t;
+        selAll = false;
+        fieldScroll = 0f;
+        caretMoved = true;
+        SetFocus(t != 2);
+        if (t == 1 && chatSel == null && ReportChat.Reports.Count > 0) Select(ReportChat.Reports[0]);
+        if (t == 2) ReportChat.RefreshList(Time.unscaledTime, true);
+    }
+
+    // ---- みんなの報告の一覧 ----
+    static int listKind; // 0: 全部 / 1: バグ / 2: 要望
+    static bool listShowFixed;
+    static float listAllScroll;
+    static string listOpenId;
+
+    static void DrawList(Rect area)
+    {
+        ReportChat.RefreshList(Time.unscaledTime);
+        // 絞り込み
+        var chipH = 38f * S;
+        var cx = area.x;
+        for (int i = 0; i < 3; i++)
+        {
+            var label = GetString(i switch { 1 => "Report.KindBug", 2 => "Report.KindRequest", _ => "Report.ListAll" });
+            var r = new Rect(cx, area.y, Width(sChip, label) + 36f * S, chipH);
+            bool on = listKind == i;
+            if (on) Fill(r, cChipOn, chipH / 2f); else Outline(r, cLine, Hover(r) ? cHover : cBg, chipH / 2f, Mathf.Max(1f, S));
+            GUI.Label(r, label, sChip);
+            if (Click(r)) { listKind = i; listAllScroll = 0f; }
+            cx = r.xMax + 8f * S;
+        }
+        {
+            var label = (listShowFixed ? "✓  " : "") + GetString("Report.ListShowFixed");
+            var r = new Rect(cx + 8f * S, area.y, Width(sChip, label) + 36f * S, chipH);
+            if (listShowFixed) Fill(r, cChipOn, chipH / 2f); else Outline(r, cLine, Hover(r) ? cHover : cBg, chipH / 2f, Mathf.Max(1f, S));
+            GUI.Label(r, label, sChip);
+            if (Click(r)) { listShowFixed = !listShowFixed; listAllScroll = 0f; }
+            var rr = new Rect(area.xMax - 120f * S, area.y, 120f * S, chipH);
+            if (Button(rr, ReportChat.ListBusy ? "…" : GetString("Report.ListReload"), 2, !ReportChat.ListBusy)) ReportChat.RefreshList(Time.unscaledTime, true);
+        }
+
+        var box = new Rect(area.x, area.y + chipH + 14f * S, area.width, area.height - chipH - 14f * S);
+        Outline(box, cLine, cBg, 12f * S, Mathf.Max(1f, S));
+        var items = ReportChat.List.Where(x => (listKind == 0 || (listKind == 1) == x.IsBug) && (listShowFixed || x.Status != "fixed"))
+            .OrderBy(x => x.Status == "fixed" ? 1 : 0).ThenByDescending(x => x.At).ToList();
+        if (items.Count == 0)
+        {
+            var msg = !ReportChat.ListLoaded ? GetString(ReportChat.ListBusy ? "Report.ChatLoading" : "Report.ListFailed") : GetString("Report.ListEmpty");
+            GUI.Label(box, msg, sCenter);
+            return;
+        }
+        var inner = new Rect(box.x + 8f * S, box.y + 8f * S, box.width - 16f * S, box.height - 16f * S);
+        var sTitle2 = Style(F(18), cText, TextAnchor.MiddleLeft, bold: true);
+        var sBody = Style(F(16), cSub, TextAnchor.UpperLeft, wrap: true);
+        var heights = new float[items.Count];
+        float total = 0f;
+        for (int i = 0; i < items.Count; i++)
+        {
+            float h = 64f * S;
+            if (items[i].Id == listOpenId && items[i].Summary.Length > 0) h += sBody.CalcHeight(new GUIContent(items[i].Summary), inner.width - 40f * S) + 12f * S;
+            heights[i] = h;
+            total += h + 6f * S;
+        }
+        if (Hover(inner) && ev.type == EventType.ScrollWheel) { listAllScroll += ev.delta.y * 30f * S; ev.Use(); }
+        listAllScroll = Mathf.Clamp(listAllScroll, 0f, Mathf.Max(0f, total - inner.height));
+        GUI.BeginGroup(inner);
+        var mouse = ev.mousePosition;
+        float y = -listAllScroll;
+        for (int i = 0; i < items.Count; i++)
+        {
+            var it = items[i];
+            var r = new Rect(0f, y, inner.width, heights[i]);
+            y += heights[i] + 6f * S;
+            if (r.yMax < 0f || r.y > inner.height) continue;
+            bool hover = live && r.Contains(mouse) && mouse.y >= 0f && mouse.y <= inner.height;
+            bool opened = it.Id == listOpenId;
+            Fill(r, opened ? cChipOn : hover ? cHover : cSurface, 10f * S);
+            var st = StatusText(it.Status);
+            var stW = Width(sChip, st) + 28f * S;
+            var when = DateTimeOffset.FromUnixTimeMilliseconds(it.At).ToLocalTime().ToString("MM/dd");
+            GUI.Label(new Rect(r.x + 16f * S, r.y, r.width - stW - 110f * S, 64f * S), (it.IsBug ? "🐞 " : "💡 ") + it.Title, sTitle2);
+            GUI.Label(new Rect(r.xMax - stW - 90f * S, r.y, 70f * S, 64f * S), when, sSubRight);
+            var stR = new Rect(r.xMax - stW - 12f * S, r.y + 14f * S, stW, 36f * S);
+            Outline(stR, StatusColor(it.Status), opened ? cChipOn : hover ? cHover : cSurface, 18f * S, Mathf.Max(1f, S));
+            GUI.Label(stR, st, Style(F(15), StatusColor(it.Status), TextAnchor.MiddleCenter, bold: true));
+            if (opened && it.Summary.Length > 0)
+                GUI.Label(new Rect(r.x + 20f * S, r.y + 60f * S, r.width - 40f * S, r.height - 64f * S), it.Summary, sBody);
+            if (hover && ev.type == EventType.MouseDown && ev.button == 0) { ev.Use(); listOpenId = opened ? null : it.Id; }
+        }
+        GUI.EndGroup();
+    }
+
+    static void Select(ReportChat.Report r)
+    {
+        chatSel = r;
+        chatBack = 0f;
+        nextPollAt = 0f;
+    }
+
+    static void SendChat()
+    {
+        if (chatSel == null || chatSending) return;
+        var t = text.Trim();
+        if (t.Length == 0) return;
+        chatSending = true;
+        var target = chatSel;
+        ReportChat.Send(target, t, error =>
+        {
+            chatSending = false;
+            if (error == null)
+            {
+                if (chatMode) { text = ""; cursor = 0; } else { otherText = ""; otherCursor = 0; }
+                undo.Clear();
+                chatBack = 0f;
+                caretMoved = true;
+            }
+            else Snack(error == "too_fast" ? GetString("Report.TooFast") : string.Format(GetString("Report.ChatFailed"), error), true);
+        });
+    }
+
+    static string StatusText(string s) => GetString("Report.St." + (s is "read" or "doing" or "fixed" ? s : "open"));
+    static Color StatusColor(string s) => s switch
+    {
+        "read" => Hex(0x8ab4f8),
+        "doing" => Hex(0xfdd663),
+        "fixed" => Hex(0x81c995),
+        _ => Hex(0x9aa0a6),
+    };
+
+    static void DrawChat(Rect area)
+    {
+        var reports = ReportChat.Reports;
+        var gap = 16f * S;
+        var listW = Mathf.Round(area.width * 0.34f);
+        var list = new Rect(area.x, area.y, listW, area.height);
+        var right = new Rect(list.xMax + gap, area.y, area.width - listW - gap, area.height);
+
+        // ---- 左: 自分の報告 ----
+        Outline(list, cLine, cBg, 12f * S, Mathf.Max(1f, S));
+        if (reports.Count == 0)
+        {
+            GUI.Label(new Rect(list.x + 16f * S, list.y, list.width - 32f * S, list.height), GetString("Report.ChatNone"), sCenter);
+        }
+        else
+        {
+            var itemH = 84f * S;
+            var inner = new Rect(list.x + 6f * S, list.y + 6f * S, list.width - 12f * S, list.height - 12f * S);
+            var totalH = reports.Count * (itemH + 6f * S);
+            if (Hover(inner) && ev.type == EventType.ScrollWheel) { listScroll += ev.delta.y * 30f * S; ev.Use(); }
+            listScroll = Mathf.Clamp(listScroll, 0f, Mathf.Max(0f, totalH - inner.height));
+            GUI.BeginGroup(inner);
+            var mouse = ev.mousePosition;
+            for (int i = 0; i < reports.Count; i++)
+            {
+                var rep = reports[i];
+                var r = new Rect(0f, i * (itemH + 6f * S) - listScroll, inner.width, itemH);
+                if (r.yMax < 0f || r.y > inner.height) continue;
+                bool sel = rep == chatSel;
+                bool hover = live && r.Contains(mouse) && mouse.y >= 0f && mouse.y <= inner.height;
+                if (sel) Fill(r, cChipOn, 10f * S);
+                else if (hover) Fill(r, cHover, 10f * S);
+                var title = (rep.IsBug ? "🐞 " : "💡 ") + (rep.Title.Length > 0 ? rep.Title : "-");
+                GUI.Label(new Rect(r.x + 14f * S, r.y + 8f * S, r.width - 60f * S, 34f * S), title, Style(F(18), cText, TextAnchor.MiddleLeft, bold: true));
+                var st = Style(F(15), StatusColor(rep.Status), TextAnchor.MiddleLeft, bold: true);
+                GUI.Label(new Rect(r.x + 14f * S, r.y + 44f * S, r.width * 0.5f, 28f * S), StatusText(rep.Status), st);
+                var when = DateTimeOffset.FromUnixTimeMilliseconds(rep.At).ToLocalTime().ToString("MM/dd HH:mm");
+                GUI.Label(new Rect(r.x, r.y + 44f * S, r.width - 14f * S, 28f * S), when, sSubRight);
+                var unread = rep.Unread;
+                if (unread > 0)
+                {
+                    var b = new Rect(r.xMax - 44f * S, r.y + 12f * S, 30f * S, 26f * S);
+                    Fill(b, cRed, 13f * S);
+                    GUI.Label(b, unread > 9 ? "9+" : unread.ToString(), Style(F(14), cDark, TextAnchor.MiddleCenter, bold: true));
+                }
+                if (hover && ev.type == EventType.MouseDown && ev.button == 0) { ev.Use(); Select(rep); }
+            }
+            GUI.EndGroup();
+        }
+
+        // ---- 右: やりとり ----
+        if (chatSel == null)
+        {
+            GUI.Label(right, GetString(reports.Count == 0 ? "Report.ChatHowTo" : "Report.ChatPick"), sCenter);
+            return;
+        }
+        var head = new Rect(right.x, right.y, right.width, 40f * S);
+        GUI.Label(new Rect(head.x, head.y, head.width - 150f * S, head.height), (chatSel.IsBug ? "🐞 " : "💡 ") + chatSel.Title, Style(F(20), cText, TextAnchor.MiddleLeft, bold: true));
+        var stText = StatusText(chatSel.Status);
+        var stW = Width(sChip, stText) + 32f * S;
+        var stR = new Rect(head.xMax - stW, head.y + 4f * S, stW, head.height - 8f * S);
+        Outline(stR, StatusColor(chatSel.Status), cBg, stR.height / 2f, Mathf.Max(1f, S));
+        GUI.Label(stR, stText, Style(F(15), StatusColor(chatSel.Status), TextAnchor.MiddleCenter, bold: true));
+
+        var inputH = 96f * S;
+        var sendW = Mathf.Max(110f * S, Width(sBtnDark, GetString("Report.FormSend")) + 48f * S);
+        var input = new Rect(right.x, right.yMax - inputH, right.width - sendW - 12f * S, inputH);
+        var msgs = new Rect(right.x, head.yMax + 10f * S, right.width, input.y - 26f * S - head.yMax - 10f * S);
+        Fill(msgs, cSurface, 12f * S);
+        DrawMessages(new Rect(msgs.x + 12f * S, msgs.y + 10f * S, msgs.width - 24f * S, msgs.height - 20f * S));
+        GUI.Label(new Rect(right.x + 6f * S, input.y - 24f * S, right.width, 20f * S), GetString("Report.ChatHint"), Style(F(14), cSub, TextAnchor.MiddleLeft));
+
+        DrawField(input);
+        var sendR = new Rect(right.xMax - sendW, input.yMax - 52f * S, sendW, 52f * S);
+        if (Button(sendR, chatSending ? "…" : GetString("Report.FormSend"), 1, text.Trim().Length > 0 && !chatSending)) SendChat();
+        ReportChat.MarkSeen(chatSel);
+    }
+
+    static void DrawMessages(Rect view)
+    {
+        var list = chatSel.Messages;
+        var bubbleMax = view.width * 0.74f;
+        var sMsg = Style(F(18), cText, TextAnchor.UpperLeft, wrap: true);
+        var sName = Style(F(14), cBlue, TextAnchor.MiddleLeft, bold: true);
+        var sSys = Style(F(14), cSub, TextAnchor.MiddleCenter, wrap: true);
+        var sTime = Style(F(12), cSub, TextAnchor.MiddleLeft);
+        var padX = 14f * S; var padY = 10f * S; var gapY = 12f * S;
+
+        // 高さを測る
+        var heights = new float[list.Count];
+        float total = 0f;
+        for (int i = 0; i < list.Count; i++)
+        {
+            var m = list[i];
+            float h;
+            if (m.From == "system") h = sSys.CalcHeight(new GUIContent(m.Text), view.width) + 4f * S;
+            else
+            {
+                var w = Mathf.Min(bubbleMax, sMsg.CalcSize(new GUIContent(m.Text)).x + padX * 2f);
+                h = sMsg.CalcHeight(new GUIContent(m.Text), w - padX * 2f) + padY * 2f + 20f * S;
+            }
+            heights[i] = h;
+            total += h + gapY;
+        }
+        if (list.Count == 0)
+        {
+            GUI.Label(view, GetString(ReportChat.Busy(chatSel) ? "Report.ChatLoading" : "Report.ChatEmpty"), sCenter);
+            return;
+        }
+        // 下に付けて並べる (chatBack = 下から戻した量)
+        if (Hover(view) && ev.type == EventType.ScrollWheel) { chatBack -= ev.delta.y * 30f * S; ev.Use(); }
+        var maxBack = Mathf.Max(0f, total - view.height);
+        chatBack = Mathf.Clamp(chatBack, 0f, maxBack);
+        float y = view.height - total + chatBack;
+        if (total < view.height) y = 0f;
+
+        GUI.BeginGroup(view);
+        for (int i = 0; i < list.Count; i++)
+        {
+            var m = list[i];
+            var h = heights[i];
+            if (y + h >= 0f && y <= view.height)
+            {
+                var time = m.At > 0 ? DateTimeOffset.FromUnixTimeMilliseconds(m.At).ToLocalTime().ToString("MM/dd HH:mm") : "";
+                if (m.From == "system")
+                {
+                    GUI.Label(new Rect(0f, y, view.width, h), m.Text.Replace("**", "") + (time.Length > 0 ? "  " + time : ""), sSys);
+                }
+                else
+                {
+                    bool me = m.From == "me";
+                    var w = Mathf.Min(bubbleMax, sMsg.CalcSize(new GUIContent(m.Text)).x + padX * 2f);
+                    var bx = me ? view.width - w : 0f;
+                    var label = me ? GetString("Report.ChatMe") : m.Name;
+                    GUI.Label(new Rect(bx + 4f * S, y, Mathf.Max(w, 200f * S), 18f * S), $"{label}  <color=#9aa0a6>{time}</color>", new GUIStyle(me ? sTime : sName) { richText = true, alignment = me ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft, fixedWidth = 0 });
+                    var br = new Rect(bx, y + 20f * S, w, h - 20f * S);
+                    Fill(br, me ? cChipOn : Hex(0x3c4043), 14f * S);
+                    GUI.Label(new Rect(br.x + padX, br.y + padY, br.width - padX * 2f, br.height - padY * 2f), m.Text, sMsg);
+                }
+            }
+            y += h + gapY;
+        }
+        GUI.EndGroup();
     }
 
     // ---- Google の枠の線の入力欄 ----
@@ -779,7 +1134,7 @@ public class ReportWindow : MonoBehaviour
 
         var comp = focused ? Input.compositionString ?? "" : "";
         var inner = new Rect(r.x + 18f * S, r.y + 20f * S, r.width - 18f * S - 26f * S, r.height - 32f * S);
-        var labelText = GetString(isBug ? "Report.WinLabelBug" : "Report.WinLabelReq");
+        var labelText = GetString(chatMode ? "Report.ChatLabel" : isBug ? "Report.WinLabelBug" : "Report.WinLabelReq");
         var floating = focused || text.Length > 0 || comp.Length > 0;
         if (floating)
         {
