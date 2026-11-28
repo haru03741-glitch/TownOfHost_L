@@ -182,6 +182,8 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
         GetArrow.Add(Player.PlayerId, pos);
         // ヴァイパーの死体は溶け切ると客の画面から消えるので、その頃に矢印を外す (OnFixedUpdate)
         if (info.AppearanceKiller.Is(RoleTypes.Viper)) Viperkilledplayers[info.AppearanceTarget.PlayerId] = DissolveKill.ViperSeconds + DissolveKill.KillSettle;
+        // 生き返った人が別の死に方でもう一度死んだ時は、前の溶ける時間を残さない (残すと新しい死体の矢印を早く外す)
+        else Viperkilledplayers.Remove(info.AppearanceTarget.PlayerId);
 
         return OptionShowArrow.GetBool();
     }
