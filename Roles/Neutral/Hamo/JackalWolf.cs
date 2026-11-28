@@ -21,7 +21,7 @@ namespace TownOfHostL.Roles.Neutral;
 
 
 
-public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDoubleTrigger, IKillFlashSeeable, ISidekickable, ISchrodingerCatOwner
+public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDoubleTrigger, IKillFlashSeeable, ISidekickable, ISchrodingerCatOwner, IUsePetButton, IDissolvingKiller, ITeammateKiller
 
 {
 
@@ -437,6 +437,18 @@ public sealed class JackalWolf : RoleBase, ILNKiller, IUsePhantomButton, IDouble
 
     public SchrodingerCat.TeamType SchrodingerCatChangeTo => SchrodingerCat.TeamType.Jackal;
 
+    // 中の役職の能力・表示の窓口 (渡さないと、中の役職の能力が働かない・残り回数が出ない)
+    public override bool RevengesOnExile => AddRole?.RevengesOnExile ?? false;
+    public override bool CanRevengeOn(PlayerControl candidate) => AddRole?.CanRevengeOn(candidate) ?? true;
+    public override bool ShowsRoleColorToAll(bool isMeeting) => AddRole?.ShowsRoleColorToAll(isMeeting) ?? false;
+    public override int? UsesRemaining => AddRole?.UsesRemaining;
+    public override bool UsesOnKillButton => AddRole?.UsesOnKillButton ?? base.UsesOnKillButton;
+    bool IUsePetButton.UsesPet => AddRole is IUsePetButton pet && pet.UsesPet;
+    void IUsePetButton.OnPet() { if (AddRole is IUsePetButton pet) pet.OnPet(); }
+    bool IDissolvingKiller.DissolvesBody(PlayerControl target) => AddRole is IDissolvingKiller dissolver && dissolver.DissolvesBody(target);
+    bool ITeammateKiller.CanKillTeammates => AddRole is ITeammateKiller teammateKiller && teammateKiller.CanKillTeammates;
+    bool IUsePhantomButton.SyncAbilityCooldownWithKillCooldown => AddRole is IUsePhantomButton synced && synced.SyncAbilityCooldownWithKillCooldown;
+    void IUsePhantomButton.SetSyncedAbilityCooldown(float cooldown) { if (AddRole is IUsePhantomButton synced) synced.SetSyncedAbilityCooldown(cooldown); }
     bool IUsePhantomButton.IsPhantomRole => AddRole is IUsePhantomButton iusephantom && iusephantom?.IsPhantomRole is true;
 
     bool IUsePhantomButton.UseOneclickButton => AddRole is IUsePhantomButton iusephantom && iusephantom?.UseOneclickButton is true;

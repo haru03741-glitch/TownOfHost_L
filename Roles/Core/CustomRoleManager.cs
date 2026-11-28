@@ -363,7 +363,7 @@ public static partial class CustomRoleManager
             if (Main.introDestroyed && GameStates.IsInGame && roleClass != null)
             {
                 roleClass.OnAddedMidGame();
-                if (roleClass is TownOfHostL.Roles.Core.Interfaces.IUsePetButton) TownOfHostL.Modules.PetAbility.EnsurePet(player);
+                if (roleClass is TownOfHostL.Roles.Core.Interfaces.IUsePetButton { UsesPet: true }) TownOfHostL.Modules.PetAbility.EnsurePet(player);
             }
             if (roleClass is TownOfHostL.Roles.Core.Interfaces.ISelfVoter selfVoter) selfVoter.AddSelfVoter(player);
             if (roleClass is TownOfHostL.Roles.Core.Interfaces.IRoomTasker roomTasker) roomTasker.AddRoomTaker(player.PlayerId);

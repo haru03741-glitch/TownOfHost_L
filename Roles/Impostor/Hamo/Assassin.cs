@@ -14,7 +14,7 @@ using static TownOfHostL.Translator;
 
 namespace TownOfHostL.Roles.Impostor;
 
-public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTrigger, IKillFlashSeeable
+public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTrigger, IKillFlashSeeable, IUsePetButton, IDissolvingKiller, ITeammateKiller
 {
     // 役職の元: ExtremeRoles (TownOfHost-hamo 経由)
     public static readonly SimpleRoleInfo RoleInfo =
@@ -535,6 +535,21 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
         return false;
     }
 
+    // 中の役職の能力・表示の窓口 (渡さないと、中の役職の能力が働かない・残り回数が出ない)
+    public override bool RevengesOnExile => AddRole?.RevengesOnExile ?? false;
+    public override bool CanRevengeOn(PlayerControl candidate) => AddRole?.CanRevengeOn(candidate) ?? true;
+    public override bool ShowsRoleColorToAll(bool isMeeting) => AddRole?.ShowsRoleColorToAll(isMeeting) ?? false;
+    public override int? UsesRemaining => AddRole?.UsesRemaining;
+    public override bool UsesOnKillButton => AddRole?.UsesOnKillButton ?? base.UsesOnKillButton;
+    bool IUsePetButton.UsesPet => AddRole is IUsePetButton pet && pet.UsesPet;
+    void IUsePetButton.OnPet() { if (AddRole is IUsePetButton pet) pet.OnPet(); }
+    bool IDissolvingKiller.DissolvesBody(PlayerControl target) => AddRole is IDissolvingKiller dissolver && dissolver.DissolvesBody(target);
+    bool ITeammateKiller.CanKillTeammates => AddRole is ITeammateKiller teammateKiller && teammateKiller.CanKillTeammates;
+    bool IUsePhantomButton.SyncAbilityCooldownWithKillCooldown => AddRole is IUsePhantomButton synced && synced.SyncAbilityCooldownWithKillCooldown;
+    void IUsePhantomButton.SetSyncedAbilityCooldown(float cooldown) { if (AddRole is IUsePhantomButton synced) synced.SetSyncedAbilityCooldown(cooldown); }
+    public override bool OnCheckVanish(ref float killCooldown, ref bool canResetAbilityCooldown) => AddRole?.OnCheckVanish(ref killCooldown, ref canResetAbilityCooldown) ?? true;
+    public override bool KnowsRoleOf(PlayerControl seen, bool isMeeting) => AddRole?.KnowsRoleOf(seen, isMeeting) ?? false;
+    public override bool OnCheckPressAsTarget(MurderInfo info) => AddRole?.OnCheckPressAsTarget(info) ?? true;
     bool IUsePhantomButton.IsPhantomRole => AddRole is IUsePhantomButton iusephantom && iusephantom?.IsPhantomRole is true;
     bool IUsePhantomButton.UseOneclickButton => AddRole is IUsePhantomButton iusephantom && iusephantom?.UseOneclickButton is true;
     bool IUsePhantomButton.IsresetAfterKill => AddRole is IUsePhantomButton iusephantom && iusephantom.IsresetAfterKill;
