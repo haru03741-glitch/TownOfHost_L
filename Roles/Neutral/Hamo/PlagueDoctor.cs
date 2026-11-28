@@ -149,10 +149,8 @@ public sealed class PlagueDoctor : RoleBase, IKiller
         //ペスト医師でないか、自己感染可能かつ感染者作成済み
         return pd == null || (CanInfectSelf && pd.InfectCount == 0);
     }
-    // 感染はキルでないので、守りの段より前に振り分ける (後だと守護者が身代わりになり、メディックなどの守りの回数も減る)
-    public bool OnCheckMurderBeforeGuards(MurderInfo info)
+    public void OnCheckMurderAsKiller(MurderInfo info)
     {
-        if (info.IsSuicide) return true;
         var (killer, target) = info.AttemptTuple;
         info.DoKill = false;
         if (InfectCount > 0)
@@ -161,7 +159,7 @@ public sealed class PlagueDoctor : RoleBase, IKiller
             killer.RpcProtectedMurderPlayer(target);
             DirectInfect(target);
         }
-        return false;
+        info.DoKill = false;
     }
     public override void OnMurderPlayerAsTarget(MurderInfo info)
     {
