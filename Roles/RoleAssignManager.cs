@@ -91,7 +91,7 @@ namespace TownOfHostL.Roles
                 if (setCount > playerCount) WarnOverPlayers(setCount, playerCount);
                 return true;
             }
-            else range = t => (RandomAssignOptionsCollection[t].Min, RandomAssignOptionsCollection[t].Max);
+            else range = RandomRange;
             var result = true;
 
             // インポスターの数は本編の「インポスター数」ではなく、ここの最少と最多で決める (本編の数で頭打ちにしない)
@@ -147,6 +147,18 @@ namespace TownOfHostL.Roles
         /// ランダムのアサイン (と人数ごとの構成) で決めたインポスターの数。
         /// 本編の「インポスター数」の代わりに、本編の役職の割り当てで使う (ロビーに戻ったら消す)
         /// </summary>
+        /// <summary>ランダムのアサインの陣営ごとの最少と最多</summary>
+        private static (int min, int max) RandomRange(CustomRoleTypes type)
+        {
+            var o = RandomAssignOptionsCollection[type];
+            // インポスターの最多が 0 (既定のまま) の時は本編の「インポスター数」を使う。インポスター 0 人の試合にしない
+            if (type == CustomRoleTypes.Impostor && o.Max <= 0)
+            {
+                int n = Main.NormalOptions?.NumImpostors ?? 1;
+                return (n, n);
+            }
+            return (o.Min, o.Max);
+        }
         public static int? ImpostorCountOverride;
         public static void SelectAssignRoles()
         {
@@ -173,7 +185,7 @@ namespace TownOfHostL.Roles
                     SetAddOnsList(true);
                     break;
                 case AssignAlgorithm.Random:
-                    SetRandomAssignCount(t => (RandomAssignOptionsCollection[t].Min, RandomAssignOptionsCollection[t].Max));
+                    SetRandomAssignCount(RandomRange);
                     SetRandomAssignRoleList();
                     SetAddOnsList(false);
                     break;
