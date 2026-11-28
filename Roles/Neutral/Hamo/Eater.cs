@@ -277,6 +277,13 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
 
     public override bool CancelReportDeadBody(PlayerControl reporter, NetworkedPlayerInfo target, ref DontReportReason reason)
     {
+        // 食べた死体は誰にも通報させない (イーター自身の構えやクールによらない)
+        if (reporter?.PlayerId != target?.PlayerId && target != null && EatenBodies.Contains(target?.PlayerId ?? (byte)250))
+        {
+            reason = DontReportReason.Eat;
+            Logger.Info($"{target?.PlayerName ?? "???"}は食事済みだからキャンセル", "Vulture");
+            return true;
+        }
         if (!eatMode || pendingSwallow != null)
         {
             return false;
@@ -300,12 +307,6 @@ public sealed class Eater : RoleBase, IKiller, IUsePhantomButton, IKillFlashSeea
                 Win();
             }
             eatCooldownTimer = 0f;
-            return true;
-        }
-        if (reporter?.PlayerId != target?.PlayerId && target != null && EatenBodies.Contains(target?.PlayerId ?? (byte)250))
-        {
-            reason = DontReportReason.Eat;
-            Logger.Info($"{target?.PlayerName ?? "???"}は食事済みだからキャンセル", "Vulture");
             return true;
         }
         return false;
