@@ -164,7 +164,8 @@ public sealed class Pirate : RoleBase, IKiller
     {
         // ガード持ちに関わらず能力発動する直接キル役職 (役職に関わらない守りは通らない)。
         // それでも守護者などで守りの力が勝ったキルでは一味にしない (相手が死なないのに一味に数えてしまう)
-        if (!info.CanKill || info.CheckHasGuard()) return;
+        // セージの守りのように、役職がキルを止めた (DoKill を下ろした) 時も一味にしない
+        if (!info.IsCanKilling) return;
         if (isMadeGang) return;
 
         var (killer, target) = info.AttemptTuple;
