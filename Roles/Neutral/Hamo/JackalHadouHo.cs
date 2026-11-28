@@ -936,11 +936,20 @@ public sealed class JackalHadouHo : RoleBase, ILNKiller, IUsePhantomButton, ISel
 
             if (skSpawnWaitTimer >= 0f && skSpawnWaitTimer < 3f)
 
+            {
                 skSpawnWaitTimer += Time.fixedDeltaTime;
+                // 待機が明けた時に、名前の下の案内を「待機中」から切り替える
+                if (skSpawnWaitTimer >= 3f) Utils.NotifyRoles(SpecifySeer: Player);
+            }
 
             if (skCooldownTimer > 0f)
 
+            {
+                // 案内に出す残り秒が変わった時 (0 になった時も) に出し直す
+                int before = Mathf.CeilToInt(skCooldownTimer);
                 skCooldownTimer -= Time.fixedDeltaTime;
+                if (Mathf.CeilToInt(Mathf.Max(0f, skCooldownTimer)) != before) Utils.NotifyRoles(SpecifySeer: Player);
+            }
 
         }
 

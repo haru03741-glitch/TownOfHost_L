@@ -618,7 +618,11 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
         if (spawnWaitTimer >= 0f && spawnWaitTimer < 3f)
 
+        {
             spawnWaitTimer = Mathf.Min(spawnWaitTimer + Time.fixedDeltaTime, 3f);
+            // 待機が明けた時に、名前の下の案内を「待機中」から切り替える (作成の待ち時間が短い設定では、ほかに出し直す所が無い)
+            if (spawnWaitTimer >= 3f) Utils.NotifyRoles(SpecifySeer: Player);
+        }
 
 
 
