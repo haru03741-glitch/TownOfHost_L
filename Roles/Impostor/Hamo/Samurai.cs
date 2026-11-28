@@ -138,11 +138,10 @@ public sealed class Samurai : RoleBase, IImpostor, IUsePhantomButton
 
         // 戻しは予算で取りやめない (取りやめると斬った先に取り残される)
         Player.RpcSnapTo(origin, force: true);
-        _ = new LateTask(() =>
+        _ = After(() =>
         {
-            if (!Player.IsAlive()) return;
             Player.RpcSnapTo(origin);
-        }, 0.12f, "SamuraiRestorePosition");
+        }, 0.12f, "SamuraiRestorePosition", LateTaskUntil.Death);
     }
 
     void ForceResetKillCooldown()
@@ -153,13 +152,12 @@ public sealed class Samurai : RoleBase, IImpostor, IUsePhantomButton
         Player.SyncSettings();
         Player.RpcResetAbilityCooldown(sync: true);
 
-        _ = new LateTask(() =>
+        _ = After(() =>
         {
-            if (!Player.IsAlive()) return;
             Player.ResetKillCooldown();
             Player.SyncSettings();
             Player.RpcResetAbilityCooldown(sync: true);
-        }, 0.15f, "SamuraiForceResetKillCooldown");
+        }, 0.15f, "SamuraiForceResetKillCooldown", LateTaskUntil.Death);
     }
 
     bool IsTargetInSlashArea(PlayerControl target, Vector2 origin, Vector2 forward)

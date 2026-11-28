@@ -93,6 +93,7 @@ public sealed class EvilHacker : RoleBase, IImpostor
         var lastPosition = (Vector2)Player.transform.position;
         Freeze();
 
+        // ワープの後始末 (続けられなければ CanContinueWarp が終わらせる) なので役職が外れても走らせる
         _ = new LateTask(() =>
         {
             if (!CanContinueWarp(id)) return;
@@ -101,6 +102,7 @@ public sealed class EvilHacker : RoleBase, IImpostor
                 EndWarp();
                 return;
             }
+            // ワープの後始末なので役職が外れても走らせる
             _ = new LateTask(() =>
             {
                 if (!CanContinueWarp(id)) return;

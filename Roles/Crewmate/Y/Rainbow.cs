@@ -74,6 +74,22 @@ public sealed class Rainbow : RoleBase
         colorchange += Time.fixedDeltaTime;
     }
 
+    // 試合の途中で役職が替わった時は、虹の途中の色とネームプレートを残さず試合の始めの物へ戻す
+    // (試合の始めに取った控えを使う。ネームプレートが空なら、付けていなかったので「なし」に戻す)
+    public override void OnDestroy()
+    {
+        if (!AmongUsClient.Instance.AmHost || !AmongUsClient.Instance.AmConnected || !GameStates.InGame || GameEndChecker.EndingStarted || Player.Data == null || Player.Data.Disconnected) return;
+        if (!Camouflage.PlayerSkins.TryGetValue(Player.PlayerId, out var outfit)) return;
+        if (!Camouflage.IsCamouflage) Player.RpcSetColor((byte)outfit.ColorId);
+        var namePlate = string.IsNullOrEmpty(outfit.NamePlateId) ? "nameplate_NoPlate" : outfit.NamePlateId;
+        Player.SetNamePlate(namePlate);
+        CustomRpcSender.Create(name: $"RpcSetNamePlate({Player.Data.PlayerName})").AutoStartRpc(Player.NetId, (byte)RpcCalls.SetNamePlateStr)
+            .Write(namePlate)
+            .Write(Player.GetNextRpcSequenceId(RpcCalls.SetNamePlateStr))
+            .EndRpc()
+            .SendMessage();
+    }
+
     public override bool ShowsRoleColorToAll(bool isMeeting) => true;
     public override bool KeepsOwnNameInSyncColorMeeting => true;
 

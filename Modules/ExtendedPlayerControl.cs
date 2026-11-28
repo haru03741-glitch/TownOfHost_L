@@ -165,9 +165,12 @@ static partial class ExtendedPlayerControl
         }
         NameRpcBatcher.Enqueue(clientId, player.NetId, player.Data.NetId, name, DontShowOnModdedClient);
     }
-    public static void RpcSetRoleDesync(this PlayerControl player, RoleTypes role, int clientId, bool canOverrideRole = false)
+    /// <summary>
+    /// clientId の客の画面で、player の本編の役職を role にする (いつも上書き可で送る)。
+    /// transient: 一時の見え方 (後で戻す) で、生きている時の見え方の表には書かない
+    /// </summary>
+    public static void RpcSetRoleDesync(this PlayerControl player, RoleTypes role, int clientId, bool transient = false)
     {
-        //player: 名前の変更対象
 
         if (player == null) return;
         // -1 は全員宛てになり、見る人ごとの役職 (デシンク) が全員に効いてしまう
@@ -176,7 +179,7 @@ static partial class ExtendedPlayerControl
             NoClientWarning.Report(player, $"RpcSetRoleDesync({role})");
             return;
         }
-        RoleView.RecordByClientId(clientId, player, role);
+        RoleView.NoteByClientId(clientId, player, role, transient);
         if (AmongUsClient.Instance.ClientId == clientId)
         {
             // ホスト自身への役職設定: 非ホスト向け RPC と同様に canOverrideRole = true を使う
@@ -678,6 +681,8 @@ static partial class ExtendedPlayerControl
             // ほかの役職の SetRole (時間切れで幽霊から戻ったなど) が落ち着く前も待つ (通報の経路は Revive が預かる)
             // (ほかの役職が SetRole を出し続けても会議が来なくならないよう、待つのは 8 回まで)
             if (Revive.IsSettling && noCheckMeetingSettleWaits < 8) hold = true;
+            // 会議明けの暗転対策の戻しが終わるまでも待つ (通報の経路は Revive が預かる。この間に開くと、戻しの予約が次の会議の中で走る)
+            if (Revive.InAfterMeetingWindow && noCheckMeetingSettleWaits < 8) hold = true;
             if (hold)
             {
                 noCheckMeetingSettleWaits++;
@@ -721,8 +726,8 @@ static partial class ExtendedPlayerControl
         // nullチェック追加
         if (player?.Data?.Role == null)
             return rangePlayers;
-        // 鬼の体の窓の間は GameManager が無いか、かくれんぼの物で、本編が能力の距離を引けない
-        if (SeekerBody.InWindow)
+        // GameManager を差し替えている窓の間は GameManager が無いか、かくれんぼの物で、本編が能力の距離を引けない
+        if (GameManagerWindow.InWindow)
             return rangePlayers;
 
         player.Data.Role.GetPlayersInAbilityRangeSorted(rangePlayersIL, ignoreColliders);
@@ -899,6 +904,18 @@ static partial class ExtendedPlayerControl
     public static void RpcExileV3(this PlayerControl player, CustomDeathReason reason, bool keepExisting = false)
     {
         if (player == null) return;
+        // ホストの追放の締めから暗転対策の戻しまでの新しい死は、戻しの後まで待たせる
+        // (本編の客がまだ追放の締めの頭数の判定をしていないことがあり、先に死が届くと暗転しうる。キルの送り口と同じ)
+        if (AntiBlackout.InRevertWindow && player.Data != null && !player.Data.IsDead)
+        {
+            Logger.Info($"{player.GetNameWithRole().RemoveHtmlTags()}: 暗転対策の戻しの前なので、死を戻しの後まで待たせます ({reason})", "RpcExileV3");
+            AntiBlackout.RunAfterRevert(() =>
+            {
+                if (player == null || player.Data == null || player.Data.Disconnected || player.Data.IsDead) return;
+                player.RpcExileV3(reason, keepExisting);
+            });
+            return;
+        }
         player.Exiled();
         PlayerState.GetByPlayerId(player.PlayerId).SetDead(reason, keepExisting);
         player.Data.IsDead = true;

@@ -154,7 +154,7 @@ public static class DissolveKill
                 var bytes = options.BuildBytes();
                 if (bytes == null) throw new InvalidOperationException("設定を組み立てられませんでした");
                 Send(clientId, killer, RoleTypes.Viper, bytes);
-                RoleView.RecordByClientId(clientId, killer, RoleTypes.Viper);
+                RoleView.NoteByClientId(clientId, killer, RoleTypes.Viper, transient: true);
                 // 送った物として覚える (戻す前に会議になっても、会議明けの送り直しが元の秒数を送る)
                 options.NoteSent(bytes);
             }
@@ -197,10 +197,9 @@ public static class DissolveKill
                 var options = PlayerGameOptionsSender.Of(seerId);
                 // まだ同じ殺し手の手当てが重なっているなら、見え方はその戻しに任せる
                 RoleTypes? role = alive ? original : null;
-                // 会議中は会議の配り直しが役職を送る。記録だけ戻し、設定は送り直しを頼む
+                // 会議中は役職を送らない (見せは生きている時の見え方の表に書いていないので、表は戻さなくてよい)。設定は送り直しを頼む
                 if (GameStates.IsMeeting)
                 {
-                    if (role.HasValue) RoleView.RecordByClientId(clientId, killer, role.Value);
                     options?.SetDirty();
                     continue;
                 }
@@ -232,7 +231,7 @@ public static class DissolveKill
             {
                 m.StartMessage(2);
                 m.WritePacked(killer.NetId);
-                m.Write((byte)RpcCalls.SetRole);
+                m.Write((byte)RpcCalls.SetRole); // 画面の表は呼び元が送った後で覚える
                 m.Write((ushort)role.Value);
                 m.Write(true);
                 m.EndMessage();
@@ -251,7 +250,7 @@ public static class DissolveKill
         optionHolds[seerId] = optionHolds.GetValueOrDefault(seerId) + 1;
         var key = (seerId, killerId);
         if (roleHolds.TryGetValue(key, out var h)) roleHolds[key] = (h.Count + 1, h.Original);
-        else roleHolds[key] = (1, was == RoleTypes.Viper ? RoleTypes.Impostor : was);
+        else roleHolds[key] = (1, was);
     }
 
     // 手当てを 1 つ外す。同じ (見る人, 殺し手) の手当てが無くなったら、手当ての前の見え方を返す

@@ -415,15 +415,15 @@ public sealed class VillageChief : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
                 Player.MarkDirtySettings();
 
-                _ = new LateTask(() =>
+                _ = After(() =>
 
                 {
 
-                    if (Player.IsAlive() && !appointMode)
+                    if (!appointMode)
 
                         Player.RpcResetAbilityCooldown(sync: true);
 
-                }, 0.1f, "VillageChief.VentCDSync");
+                }, 0.1f, "VillageChief.VentCDSync", LateTaskUntil.Death);
 
             }
 
@@ -647,15 +647,15 @@ public sealed class VillageChief : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
             Player.MarkDirtySettings();
 
-            _ = new LateTask(() =>
+            _ = After(() =>
 
             {
 
-                if (!Player.IsAlive() || appointMode) return;
+                if (appointMode) return;
 
                 Player.RpcResetAbilityCooldown(sync: true);
 
-            }, 0.1f, "VillageChief.EngineerReset");
+            }, 0.1f, "VillageChief.EngineerReset", LateTaskUntil.Death);
 
         }
 
@@ -681,7 +681,7 @@ public sealed class VillageChief : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
         if (!Player.IsAlive()) return;
 
-        _ = new LateTask(() =>
+        _ = After(() =>
 
         {
 

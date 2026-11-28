@@ -21,6 +21,20 @@ public static partial class GameStates
         => CalledMeeting || ExiledAnimate || MeetingHud.Instance || ExileController.Instance
         || AntiBlackout.IsCached || AntiBlackout.IsRevertPending;
 
+    /// <summary>
+    /// 通報を受けてから暗転対策の戻し (追放の締めの 2 秒後) までの間か。InMeetingWindow から、戻しの後の追放の演出の残り (ExiledAnimate だけが立っている間) を除いた物。
+    /// 他人の操作を変える仕組み (歩かせる・閉じ込める・死体を隠すなど) は、この間は動かさない
+    /// </summary>
+    public static bool InMeetingUntilRevert
+        => MeetingHud.Instance || ExileController.Instance || MeetingStates.MeetingCalled
+        || AntiBlackout.IsCached || AntiBlackout.IsRevertPending;
+
+    /// <summary>
+    /// 通報を受けてから追放の締め (退避した生死を戻す所) までの間か。変身・消えるの能力はこの間は使えない
+    /// </summary>
+    public static bool InMeetingUntilWrapUp
+        => MeetingHud.Instance || MeetingStates.MeetingCalled || ExileController.Instance || AntiBlackout.IsCached;
+
     [GameModuleInitializer]
     public static void InitPhaseFlags()
     {

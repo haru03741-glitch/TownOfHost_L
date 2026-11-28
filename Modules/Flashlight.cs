@@ -153,8 +153,8 @@ public static class Flashlight
             activeKnown = true;
         }
         if (!activeThisGame || !AmongUsClient.Instance.AmHost) return;
-        // 鬼の体の窓の間は設定を送れない
-        if (SeekerBody.InWindow) return;
+        // GameManager を差し替えている窓の間は設定を送れない
+        if (GameManagerWindow.InWindow) return;
         float now = Time.realtimeSinceStartup;
 
         bool inTask = InTaskNow();

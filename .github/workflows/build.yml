@@ -36,6 +36,14 @@ jobs:
         shell: pwsh
         run: ./tools/check-kill-entry.ps1
 
+      - name: Check game option swaps
+        shell: pwsh
+        run: ./tools/check-room-options.ps1
+
+      - name: Check role sends
+        shell: pwsh
+        run: ./tools/check-setrole-entry.ps1
+
       - name: Build (Release)
         run: dotnet build TownOfHost.csproj -c Release -o build/
 

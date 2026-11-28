@@ -63,8 +63,8 @@ class CheckMurderPatch
     public static bool Prefix(PlayerControl __instance, [HarmonyArgument(0)] PlayerControl target)
     {
         if (!AmongUsClient.Instance.AmHost || AmongUsClient.Instance.IsGameOver) return false;
-        // 鬼の体の窓の間 (GameManager を差し替えている間) は、客がキルの電文を処理できないのでキルを通さない
-        if (SeekerBody.InWindow) return false;
+        // GameManager を差し替えている窓の間は、客がキルの電文を処理できないのでキルを通さない
+        if (GameManagerWindow.InWindow) return false;
         // CNO へのキルは Core の前置で捨てている (前置は全部走るので、ここでも見る)
         if (Core.CustomNetObject.Is(target) || Core.CustomNetObject.Is(__instance)) return false;
 
@@ -82,7 +82,7 @@ class CheckMurderPatch
         bool killerIsViper = killer.Is(RoleTypes.Viper);
         if (killerIsViper)
         {
-            // 2 秒後に、見せる前の見え方へ戻す (続けてキルして Viper を見せている間なら Impostor)
+            // 2 秒後に、見せる前の見え方へ戻す。見せは生きている時の見え方の表に書かないので、続けてキルしても表は見せる前のまま
             var before = new Dictionary<byte, RoleTypes>();
             foreach (var seer in Main.AllPlayerControls)
             {
@@ -91,8 +91,8 @@ class CheckMurderPatch
                 var was = RoleView.Living(killer, seer);
                 // 自分の画面でキルを持つ人 (デシンクの役職) にキル役で見せると、インポスターの仲間になってキルの対象から外れる
                 if (RoleView.IsDesync(seer) && !RoleView.IsKillerRole(was)) continue;
-                before[seer.PlayerId] = was == RoleTypes.Viper ? RoleTypes.Impostor : was;
-                killer.RpcSetRoleDesync(RoleTypes.Viper, seer.GetClientId());
+                before[seer.PlayerId] = was;
+                killer.RpcSetRoleDesync(RoleTypes.Viper, seer.GetClientId(), transient: true);
             }
 
             var capKiller = killer;
@@ -267,18 +267,8 @@ class MurderPlayerPatch
         }, 0.5f, "PostMurderSetRoleChange");
         // 上の送り直しで外れた鬼の体を付け直す
         SeekerBody.OnAnyMurder();
-        var killer = __instance;
-        bool killerIsViper = killer.Is(RoleTypes.Viper);
-        if (killerIsViper)
-        {
-            foreach (var seer in Main.AllPlayerControls)
-            {
-                if (seer.GetClientId() == -1) continue;
-                // 本人の手元が既にヴァイパーなら送らない。送ると本編が役職を作り直し、キルの直後に始まったキルクールを 10 秒にする
-                if (seer.PlayerId == killer.PlayerId && RoleView.Living(killer, killer) == RoleTypes.Viper) continue;
-                killer.RpcSetRoleDesync(RoleTypes.Viper, seer.GetClientId());
-            }
-        }
+        // ヴァイパーの見せはキルの前に送り、2 秒後に戻す (RevealVisualRoleBeforeMurder)。
+        // キルの後に全員へ送り直すと、見せを飛ばした画面 (デシンクの役職) に戻らないヴァイパーが残る
     }
 }
 [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.CheckShapeshift))]
@@ -486,7 +476,7 @@ public static class PlayerControlCheckVanishPatch
         var phantom = __instance;
         Logger.Info($"{phantom.GetNameWithRole()} : CheckVanishStart", "CheckVanish");
         // 死んだ後や会議・追放の演出の間に届いた要求では、役職の能力 (ワンクリックのボタンなど) を起こさず、消えさせもしない
-        if (!phantom.IsAlive() || MeetingHud.Instance || MeetingStates.MeetingCalled || ExileController.Instance || AntiBlackout.IsCached)
+        if (!phantom.IsAlive() || GameStates.InMeetingUntilWrapUp)
         {
             Logger.Info($"{phantom.GetNameWithRole()} : 死後か会議の間なので捨てる", "CheckVanish");
             return false;
@@ -764,6 +754,7 @@ partial class ReportDeadBodyPatch
         // MeetingCalled を立てた後だと、VentCage は会議中と見て送らずに記録だけ消す
         if (AmongUsClient.Instance.AmHost) VentCage.ReleaseAllForMeeting();
         MeetingStates.MeetingCalled = true;
+        MeetingStates.AdvanceSerial();
         // バイタルの嘘は、暗転対策の退避や会議の札より前に本物へ戻す
         if (AmongUsClient.Instance.AmHost)
         {
@@ -900,7 +891,7 @@ class CoEnterVentPatch
         // 誰かがベントに入った時の処理・今いるベントの記録
         RoleHooks.NowVentId[user.PlayerId] = (byte)id;
         // 死んだ後や会議・追放の演出の間に届いたベントの要求では、役職の能力 (放火魔の焼殺・回数の消費・会議を開くベントなど) を起こさない
-        if (!user.IsAlive() || MeetingHud.Instance || MeetingStates.MeetingCalled || ExileController.Instance || AntiBlackout.IsCached)
+        if (!user.IsAlive() || GameStates.InMeetingUntilWrapUp)
         {
             Logger.Info($"{user.GetNameWithRole()}: 死後か会議の間のベントなので、役職の能力を起こさない", "EnterVent");
             return;
@@ -1095,6 +1086,7 @@ public static class PlayerControlDiePatch
         {
             // 死者の最終位置にペットが残るバグ対応
             PetAbility.RemovePet(__instance);
+            RoleView.OnDied(__instance);
         }
     }
 }

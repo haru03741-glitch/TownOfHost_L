@@ -214,7 +214,8 @@ class Penguin : RoleBase, IImpostor
                 RemoveVictim();
                 return;
             }
-            if (AbductTimer <= 0f && !Player.MyPhysics.Animations.IsPlayingAnyLadderAnimation())
+            // ホストの追放の締めから暗転対策の戻しまでは死を送らない (本編の客の追放の締めの頭数の判定より先に届くと暗転しうる)。戻した後のフレームで進む
+            if (AbductTimer <= 0f && !Player.MyPhysics.Animations.IsPlayingAnyLadderAnimation() && !AntiBlackout.InRevertWindow)
             {
                 // 先にIsDeadをtrueにする(はしごチェイス封じ)。相手がはしごを降りるまで毎フレームここへ来るので、送るのは 1 回だけ
                 if (!AbductVictim.Data.IsDead)
@@ -226,6 +227,7 @@ class Penguin : RoleBase, IImpostor
                 if (!AbductVictim.MyPhysics.Animations.IsPlayingAnyLadderAnimation())
                 {
                     var abductVictim = AbductVictim;
+                    // 会議の始まりに連れ去りを決着させるので役職が外れても走らせる
                     _ = new LateTask(() =>
                     {
                         if (abductVictim == null || abductVictim.Data == null || abductVictim.Data.Disconnected) return;

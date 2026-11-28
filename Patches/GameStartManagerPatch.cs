@@ -243,6 +243,8 @@ namespace TownOfHostL
                     TownOfHostL.Modules.Streaming.MapVote.ApplyAtGameStart();
                     TownOfHostL.Modules.Streaming.MapVote.EndStart();
 
+                    // ここから先の書き換え (変身のクール 0 など) は試合の間だけの写しへ入れ、部屋の設定の器には書かない
+                    RoomOptions.Enter();
                     if (Main.NormalOptions != null)
                     {
                         Options.DefaultKillCooldown = Main.NormalOptions.KillCooldown;
@@ -303,7 +305,7 @@ namespace TownOfHostL
                     TownOfHostL.Modules.Streaming.MapVote.EndStart();
                     if (GameStates.IsCountDown)
                     {
-                        if (Main.NormalOptions != null) Main.NormalOptions.KillCooldown = Options.DefaultKillCooldown;
+                        RoomOptions.Exit("秒読みの取り消し");
                         if (PlayerControl.LocalPlayer != null && GameOptionsManager.Instance != null)
                             PlayerControl.LocalPlayer.RpcSyncSettings(GameOptionsManager.Instance.gameOptionsFactory.ToBytes(GameOptionsManager.Instance.CurrentGameOptions, AprilFoolsMode.IsAprilFoolsModeToggledOn));
                     }

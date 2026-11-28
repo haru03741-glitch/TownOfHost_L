@@ -118,7 +118,7 @@ public sealed class Rabbit : RoleBase
         showArrow = Arrows[index];
         Logger.Info($"{Player.GetNameWithRole()} target:{target.GetNameWithRole()}[{Arrows[index]}]", "Rabbit");
 
-        _ = new LateTask(() =>
+        _ = After(() =>
         {
             showArrow = string.Empty;
             Utils.NotifyRoles(SpecifySeer: Player);

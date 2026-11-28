@@ -200,6 +200,7 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
                 return;
             }
 
+            // アサシン会議の段取りなので役職が外れても走らせる
             _ = new LateTask(() =>
             {
                 // 待つ 1 秒の間に別の会議が始まった時は、全員を生きているとして送らず、その会議が明けてから開き直す
@@ -237,6 +238,7 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
                 {
                     GameDataSerializePatch.DontTouch = true;
                 }, 1, "DontTuch", true);
+                // アサシン会議の段取りなので役職が外れても走らせる
                 _ = new LateTask(() =>
                 {
                     MyState.IsDead = false;
@@ -298,11 +300,13 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
 
                     AntiBlackout.SendGameData();
                     GameDataSerializePatch.SerializeMessageCount--;
+                    // アサシン会議の段取りなので役職が外れても走らせる
                     _ = new LateTask(() =>
                     {
                         Main.AllPlayerControls.DoIf(pc => !pc.AmOwner && pc.PlayerId != Player.PlayerId && pc.GetClientId() >= 0,
                         pc => Utils.GetPlayerById(0).RpcSetRoleDesync(RoleTypes.Crewmate, pc.GetClientId()));
                     }, 2.5f, "");
+                    // アサシン会議の段取りなので役職が外れても走らせる
                     _ = new LateTask(() =>
                     {//ホストだけSetRoleして復活させる。
                         Main.AllPlayerControls.DoIf(pc => !pc.AmOwner && pc.PlayerId != Player.PlayerId && pc.GetClientId() >= 0,
@@ -318,6 +322,7 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
         if (NowState is AssassinMeeting.Guessing)
         {
             if (!AmongUsClient.Instance.AmHost) return;
+            // アサシン会議の段取り (生死の控えを戻す) なので役職が外れても走らせる
             _ = new LateTask(() =>
             {
                 foreach (var info in GameData.Instance.AllPlayers)
@@ -371,6 +376,7 @@ public sealed class Assassin : RoleBase, IImpostor, IUsePhantomButton, IDoubleTr
                 MeetingVoteManager.Voteresult = string.Format(GetString("AssassinGuessNonCollect"), tage);
             }
             Exiled = Player.Data;
+            // アサシン会議の段取り (名前を戻す) なので役職が外れても走らせる
             _ = new LateTask(() => Player.RpcSetName(name), 6f, "AssassinSetName");
             return true;
         }

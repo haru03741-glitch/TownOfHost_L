@@ -43,6 +43,8 @@ class ChangeRoleSettings
 
             Logger.Info($"GameOptions 初期化確認: OK", "ChangeRoleSettings");
             Logger.Info($"NormalOptions: {GameOptionsManager.Instance.currentNormalGameOptions != null}", "ChangeRoleSettings");
+            // 下の書き換えを部屋の設定の器へ入れない (秒読みを通らずに始まった時はここで写しへ差し替える)
+            RoomOptions.Enter();
 
             Main.NormalOptions.roleOptions.SetRoleRate(RoleTypes.Shapeshifter, 0, 0);
             Main.NormalOptions.roleOptions.SetRoleRate(RoleTypes.Phantom, 0, 0);
@@ -75,7 +77,7 @@ class ChangeRoleSettings
             MeetingHudPatch.RevengeTargetPlayer = new();
             Options.UsedButtonCount = 0;
 
-            Main.RealOptionsData = new OptionBackupData(GameOptionsManager.Instance.CurrentGameOptions);
+            RoomOptions.Capture();
 
             if (Main.RealOptionsData == null)
             {
@@ -769,6 +771,7 @@ public class RpcSetRoleReplacer
         writer.Write((ushort)role);
         writer.Write(true);
         AmongUsClient.Instance.FinishRpcImmediately(writer);
+        RoleView.Note(sendTo, target, role, transient: true);
     }
 
     public static bool Prefix(PlayerControl __instance, [HarmonyArgument(0)] RoleTypes roleType)
@@ -831,6 +834,7 @@ public class RpcSetRoleReplacer
                     .Write((ushort)pair.Item2)
                     .Write(false)
                     .EndRpc();
+                RoleView.Note(targetPc, pair.Item1, pair.Item2, transient: true);
             }
             sender.EndMessage();
         }
@@ -882,7 +886,7 @@ public static class StandardIntroHelper
         }
         stream.StartMessage(2);
         stream.WritePacked(PlayerControl.LocalPlayer.NetId);
-        stream.Write((byte)RpcCalls.SetRole);
+        stream.Write((byte)RpcCalls.SetRole); // 画面の表は送った後で、全員の画面のホストを分からないにする (下の Unknown)
         stream.Write((ushort)RoleTypes.Crewmate);
         stream.Write(true);
         stream.EndMessage();
@@ -908,6 +912,7 @@ public static class StandardIntroHelper
         stream.EndMessage();
         AmongUsClient.Instance.SendOrDisconnect(stream);
         stream.Recycle();
+        RoleView.Unknown(null, PlayerControl.LocalPlayer);
 
 
 

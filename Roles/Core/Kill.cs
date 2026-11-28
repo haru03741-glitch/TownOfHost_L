@@ -75,6 +75,24 @@ public static class Kill
     /// </summary>
     internal static void Send(PlayerControl appearanceKiller, PlayerControl appearanceTarget, bool dissolveBody, bool noBody)
     {
+        // ホストの追放の締めから暗転対策の戻しまで (2 秒) は、本編の客がまだ追放の締めの判定 (生存インポスターと生存クルーの数) をしていないことがある。
+        // この間に死を送ると客の手元の頭数が減って暗転しうる (殺されたのが最後のインポスターなら 0 人になる) ので、戻しの後まで待たせる
+        if (AntiBlackout.IsRevertPending)
+        {
+            Logger.Info($"{appearanceKiller.GetNameWithRole().RemoveHtmlTags()} → {appearanceTarget.GetNameWithRole().RemoveHtmlTags()}: 暗転対策の戻しの前なので、キルを戻しの後まで待たせます", "Kill");
+            AntiBlackout.RunAfterRevert(() =>
+            {
+                if (appearanceKiller == null || appearanceTarget == null) return;
+                // 待つ間に相手が別の手で死んだ・抜けた時は送らない。キルボタンのキルなら殺し手の客はキルの返事を待っているので、失敗の返事を送る
+                if (appearanceTarget.Data == null || appearanceTarget.Data.Disconnected || !appearanceTarget.IsAlive())
+                {
+                    if (appearanceKiller.IsAlive() && appearanceTarget.Data != null) appearanceKiller.RpcMurderPlayer(appearanceTarget, false);
+                    return;
+                }
+                Send(appearanceKiller, appearanceTarget, dissolveBody, noBody);
+            });
+            return;
+        }
         if (noBody)
         {
             DeadBodyEraser.ExileInsteadOfMurder(appearanceKiller, appearanceTarget);

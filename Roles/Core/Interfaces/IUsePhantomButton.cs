@@ -118,13 +118,13 @@ public static class PhantomButton
         writer.StartMessage(player.GetClientId());
         if (ResetCooldown is not null)
         {
-            writer.StartRpc(player.NetId, (byte)RpcCalls.SetRole)
+            writer.StartRpc(player.NetId, (byte)RpcCalls.SetRole) // 画面の表は送った後で覚える (下の Record)
                 .Write((ushort)RoleTypes.Impostor)
                 .Write(true)
                 .EndRpc();
             if (pb.IsPhantomRole)
             {
-                writer.StartRpc(player.NetId, (byte)RpcCalls.SetRole)
+                writer.StartRpc(player.NetId, (byte)RpcCalls.SetRole) // 画面の表は送った後で覚える (下の Record)
                     .Write((ushort)RoleTypes.Phantom)
                     .Write(true)
                     .EndRpc();

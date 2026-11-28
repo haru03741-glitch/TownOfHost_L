@@ -134,11 +134,10 @@ public sealed class GrudgeSheriff : RoleBase
         // 会議の間に変わった分は、会議明けに本編が数え直す
         if (usable && !lastUsable && GameStates.IsInTask)
         {
-            var self = Player;
-            _ = new LateTask(() =>
+            _ = After(() =>
             {
-                if (self != null && self.IsAlive()) self.RpcResetAbilityCooldown();
-            }, 0.2f, "GrudgeSheriff.Unlock");
+                Player.RpcResetAbilityCooldown();
+            }, 0.2f, "GrudgeSheriff.Unlock", LateTaskUntil.Death);
         }
         lastUsable = usable;
         AURoleOptions.EngineerCooldown = usable ? (IsCoolTimeOn ? KillCooldown : 0f) : 255f;

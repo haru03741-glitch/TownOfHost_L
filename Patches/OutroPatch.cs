@@ -51,8 +51,6 @@ class EndGamePatch
             Record(Modules.MeetingExtras.OnGameEnd, "MeetingExtras.OnGameEnd");
             Record(Modules.PlayerStats.OnGameEnd, "PlayerStats.OnGameEnd");
 
-            if (Main.NormalOptions != null)
-                Main.NormalOptions.KillCooldown = Options.DefaultKillCooldown;
             //winnerListリセット
             EndGameResult.CachedWinners = new Il2CppSystem.Collections.Generic.List<CachedPlayerData>();
             Main.winnerList = new();
@@ -63,24 +61,7 @@ class EndGamePatch
             }
 
             Main.VisibleTasksCount = false;
-            if (AmongUsClient.Instance.AmHost)
-            {
-                try
-                {
-                    Main.RealOptionsData.Restore(GameOptionsManager.Instance.CurrentGameOptions);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Warn($"Failed to restore RealOptionsData: {ex.Message}", "EndGamePatch");
-                }
-
-                try
-                {
-                    GameOptionsSender.AllSenders.Clear();
-                    GameOptionsSender.AllSenders.Add(new NormalGameOptionsSender());
-                }
-                catch { }
-            }
+            if (AmongUsClient.Instance.AmHost) RoomOptions.Exit("試合の終わり");
             //オブジェクト破棄
             CustomRoleManager.Dispose();
 
@@ -102,17 +83,7 @@ class EndGamePatch
             Logger.Error($"EndGamePatch.Postfix で例外: {ex.Message}", "EndGamePatch");
             Logger.Exception(ex, "EndGamePatch");
             // 途中で失敗しても、試合の設定・役職ごとの設定の送信器・役職インスタンスを次の試合やロビーに残さない
-            if (AmongUsClient.Instance.AmHost)
-            {
-                try { Main.RealOptionsData?.Restore(GameOptionsManager.Instance.CurrentGameOptions); }
-                catch (Exception e) { Logger.Exception(e, "EndGamePatch.Restore"); }
-                try
-                {
-                    GameOptionsSender.AllSenders.Clear();
-                    GameOptionsSender.AllSenders.Add(new NormalGameOptionsSender());
-                }
-                catch (Exception e) { Logger.Exception(e, "EndGamePatch.AllSenders"); }
-            }
+            if (AmongUsClient.Instance.AmHost) RoomOptions.Exit("試合の終わり (例外の後)");
             try { CustomRoleManager.Dispose(); }
             catch (Exception e) { Logger.Exception(e, "EndGamePatch.Dispose"); }
         }

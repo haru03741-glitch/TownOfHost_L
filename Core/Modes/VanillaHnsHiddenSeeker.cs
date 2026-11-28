@@ -60,6 +60,8 @@ public static class VanillaHnsHiddenSeeker
                     writer.Write((ushort)shown);
                     writer.Write(canOverride);
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
+                    // 本編のかくれんぼは生きている時の見え方の表を使わないので、画面の表にだけ書く
+                    TownOfHostL.Modules.RoleView.Note(pc, seeker, shown, transient: true);
                 }
                 Logger.Info($"{seeker.Data.PlayerName}: 鬼 ({role}) を隠れる側にはエンジニアとして配った", nameof(VanillaHnsHiddenSeeker));
             }

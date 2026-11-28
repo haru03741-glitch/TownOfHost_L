@@ -109,7 +109,7 @@ public sealed class CharismaStar : RoleBase, IImpostor
         // ホストが集合後のキルクールが0.1のままになってしまう為ここでもリセット
         if (Player == PlayerControl.LocalPlayer)
         {
-            _ = new LateTask(() =>
+            _ = After(() =>
             {
                 Player.SetKillCooldown(KillCooldown);
             }, 0.2f, "CharismaStar_HostSetKillCooldown");

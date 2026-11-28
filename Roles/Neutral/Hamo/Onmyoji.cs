@@ -756,15 +756,15 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
             Player.MarkDirtySettings();
 
-            _ = new LateTask(() =>
+            _ = After(() =>
 
             {
 
-                if (!Player.IsAlive() || nominateMode) return;
+                if (nominateMode) return;
 
                 Player.RpcResetAbilityCooldown(sync: true);
 
-            }, 0.1f, "Onmyoji.VentReset");
+            }, 0.1f, "Onmyoji.VentReset", LateTaskUntil.Death);
 
         }
 
@@ -813,7 +813,7 @@ public sealed class Onmyoji : RoleBase, IKiller, ISelfVoter, IUsePetButton
 
         target.RpcChangeRole(CustomRoles.Shikigami);
 
-        _ = new LateTask(() =>
+        _ = After(() =>
 
         {
 
@@ -1376,11 +1376,13 @@ public sealed class Shikigami : RoleBase, IUsePhantomButton, IKillFlashSeeable, 
         if (info.AppearanceKiller != null && info.AppearanceKiller.Is(RoleTypes.Viper))
         {
             byte id = dead.PlayerId;
+            var seer = Player;
+            // 死体の矢印を外す後始末なので役職が外れても走らせる
             _ = new LateTask(() =>
             {
                 if (!deadBodyPositions.TryGetValue(id, out var now) || now != pos) return;
                 RemoveDeadBodyArrow(id);
-                Utils.NotifyRoles(SpecifySeer: Player);
+                if (seer != null) Utils.NotifyRoles(SpecifySeer: seer);
             }, TownOfHostL.Modules.DissolveKill.ViperSeconds + TownOfHostL.Modules.DissolveKill.KillSettle, "OnmyojiViperBodyArrow", true);
         }
 

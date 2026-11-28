@@ -10,15 +10,33 @@ using UnityEngine;
 namespace TownOfHostL
 {
     /// <summary>
+    /// 役職が持つ予約 (<see cref="Roles.Core.RoleBase"/> の After) を、走る前に捨てる場面。役職が外れた時は必ず捨てる
+    /// </summary>
+    [Flags]
+    public enum LateTaskUntil
+    {
+        /// <summary>持ち主の役職が外れたら捨てる (役職替え・試合の終わり)</summary>
+        RoleGone = 0,
+        /// <summary>作った後に会議が始まったら捨てる (会議中・追放の演出中に作った物は、その会議では捨てない)</summary>
+        Meeting = 1 << 0,
+        /// <summary>走る時に持ち主が死んでいたら捨てる (途中で死んで生き返っていれば走る)</summary>
+        Death = 1 << 1,
+    }
+
+    /// <summary>
     /// 指定した秒数の後にメインスレッドで 1 回だけ走る処理。
     /// 試合中に作った物はその試合 (GameSession) に属し、試合が閉じたら (ロビーに戻った・切断) 走らせずに捨てる。
+    /// 役職が作る物は RoleBase.After から作ると、役職が外れた時・会議・死でも捨てられる。
     /// </summary>
-    partial class LateTask
+    public partial class LateTask
     {
         public string name;
         public float timer;
         public Action action;
         private readonly GameSession owner;
+        private readonly Roles.Core.RoleBase role;
+        private readonly LateTaskUntil until;
+        private readonly int meetingSerial;
         private readonly string callerFile;
         private readonly int callerLine;
         private bool done;
@@ -31,11 +49,27 @@ namespace TownOfHostL
             timer -= deltaTime;
             if (timer <= 0)
             {
+                if (DiscardReason() is { } reason)
+                {
+                    if (name != "") Log.Info("LateTask", $"\"{name}\" は{reason}ので捨てる");
+                    return true;
+                }
                 action();
                 return true;
             }
             return false;
         }
+        // 走る時にだけ見る (毎フレームは見ない)
+        private string DiscardReason()
+        {
+            if (role == null) return null;
+            if (role.IsGone) return "役職が外れた";
+            if ((until & LateTaskUntil.Meeting) != 0 && MeetingStates.Serial != meetingSerial) return "会議が始まった";
+            if ((until & LateTaskUntil.Death) != 0 && !role.Player.IsAlive()) return "持ち主が死んでいる";
+            return null;
+        }
+        /// <summary>走らせずに捨てる</summary>
+        public void Cancel() => done = true;
         /// <param name="outlivesSession">true なら試合が閉じても捨てない。試合の外まで残る static な状態を戻す処理に使う。</param>
         /// <param name="callerFile">作った場所。例外の記録に出す (呼び元は渡さない)。</param>
         public LateTask(Action action, float time, string name = "No Name Task", bool outlivesSession = false,
@@ -50,6 +84,14 @@ namespace TownOfHostL
             Tasks.Add(this);
             if (name != "")
                 Log.Info("LateTask", $"\"{name}\" is created");
+        }
+        // 役職が持つ予約 (RoleBase.After から作る)
+        internal LateTask(Action action, float time, string name, Roles.Core.RoleBase role, LateTaskUntil until, string callerFile, int callerLine)
+            : this(action, time, name, false, callerFile, callerLine)
+        {
+            this.role = role;
+            this.until = until;
+            meetingSerial = MeetingStates.Serial;
         }
         public static void Update(float deltaTime)
         {

@@ -47,7 +47,7 @@ public static class VentCage
         if (pc == null || !AmongUsClient.Instance.AmHost) return "host";
         if (ShipStatus.Instance == null || !GameStates.IsInTask || !Main.IsSetRoleFinished) return "not in task";
         if (AmongUsClient.Instance.IsGameOver || GameEndChecker.EndingStarted) return "game over";
-        if (MeetingHud.Instance || ExileController.Instance || MeetingStates.MeetingCalled || AntiBlackout.IsCached || AntiBlackout.IsRevertPending) return "meeting";
+        if (GameStates.InMeetingUntilRevert) return "meeting";
         if (!pc.IsAlive() || pc.Data == null || pc.Data.Disconnected) return "dead";
         if (IsCaged(pc)) return "already caged";
         if (caged.Count >= MaxCaged) return "too many";
@@ -117,7 +117,7 @@ public static class VentCage
     public static bool BootToNearestVent(PlayerControl pc)
     {
         if (pc == null || !AmongUsClient.Instance.AmHost || ShipStatus.Instance == null || !GameStates.IsInTask) return false;
-        if (MeetingHud.Instance || ExileController.Instance || MeetingStates.MeetingCalled || AntiBlackout.IsCached || AntiBlackout.IsRevertPending) return false;
+        if (GameStates.InMeetingUntilRevert) return false;
         if (!pc.IsAlive() || pc.Data == null || pc.Data.Disconnected) return false;
         if (pc.onLadder || pc.inMovingPlat || pc.MyPhysics.Animations.IsPlayingAnyLadderAnimation()) return false;
         var vent = NearestVent(pc.GetTruePosition());

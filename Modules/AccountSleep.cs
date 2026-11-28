@@ -165,7 +165,9 @@ internal static class AccountSleep
     [HarmonyPatch(typeof(MainMenuManager), nameof(MainMenuManager.OpenAccountMenu)), HarmonyPrefix]
     private static void OpenAccountMenu() => Wake("my account");
 
-    // 本編のアカウント画面を出す入口。asleep の bool だけ見て抜けるので、メニュー以外で呼ばれても軽い
+    // 本編のアカウント画面を出す入口。asleep の bool だけ見て抜けるので、メニュー以外で呼ばれても軽い。
+    // SignInScreen.Open は本編の機械語で RegionMenu.Open・ActionButton.Show など 11 個と同じ番地に畳まれている
+    // (2026-11-28 PC 版で確認)。前置はその全部の呼び出しで走るので、__instance を受け取らず、起こす以外のことをしない
     [HarmonyPatch]
     private static class DialogPatches
     {

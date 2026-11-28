@@ -56,8 +56,8 @@ namespace TownOfHostL
         {
             if (GameStates.IsFreePlay) return false;
             if (!AmongUsClient.Instance.AmHost) return true;
-            // 鬼の体の窓の間は GameManager を差し替えていて、試合を終わらせる電文を出せない
-            if (Modules.SeekerBody.InWindow) return false;
+            // GameManager を差し替えている窓の間は、試合を終わらせる電文を出せない
+            if (Modules.GameManagerWindow.InWindow) return false;
 
             //ゲーム終了判定済みなら中断
             if (predicate == null) return false;

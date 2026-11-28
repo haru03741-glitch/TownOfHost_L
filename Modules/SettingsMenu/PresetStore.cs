@@ -171,16 +171,18 @@ internal static class PresetStore
         {
             var gm = GameOptionsManager.Instance;
             if (gm == null || string.IsNullOrEmpty(b64)) return;
+            // 試合の間は今の設定が試合用の写しなので、部屋の設定は置き換えない (試合を出る時に入った時の値へ戻る)
+            if (TownOfHostL.Modules.RoomOptions.Entered) { Logger.Warn("試合の間は本編の設定を読み込みません", "PresetStore"); return; }
             var opts = gm.gameOptionsFactory.FromBytes(Convert.FromBase64String(b64));
             if (opts == null || gm.CurrentGameOptions == null || opts.GameMode != gm.CurrentGameOptions.GameMode) return;
             // 人が入った時に本編のおすすめの値で上書きされないように
             VanillaGame.MarkCustom(opts);
             VanillaGame.KeepRoomLanguage(opts, gm.CurrentGameOptions);
             // 保存されるのはホストの設定の方 (今の設定と別に持っている) なので両方を置き換える
-            gm.GameHostOptions = opts;
-            gm.CurrentGameOptions = opts;
+            gm.GameHostOptions = opts; // ロビーで部屋の設定を置き換える
+            gm.CurrentGameOptions = opts; // ロビーで部屋の設定を置き換える
             // 試合の進行側が持つ設定も差し替える (同期はこれを読んで送る)
-            if (GameManager.Instance) GameManager.Instance.LogicOptions.SetGameOptions(opts);
+            if (GameManager.Instance) GameManager.Instance.LogicOptions.SetGameOptions(opts); // ロビーで部屋の設定を置き換える
             VanillaGame.Dirty = true;
             VanillaGame.OnMenuClosed();
         }

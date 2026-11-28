@@ -296,7 +296,7 @@ public static class ClientBodySync
         if (ShipStatus.Instance == null || !GameStates.IsInTask || !Main.IsSetRoleFinished) return "not in task";
         if (AmongUsClient.Instance.IsGameOver || GameEndChecker.EndingStarted) return "game over";
         // 本物の会議の画面が客に在る時に届くと、本物の会議を壊す
-        if (MeetingHud.Instance || ExileController.Instance || MeetingStates.MeetingCalled || AntiBlackout.IsCached || AntiBlackout.IsRevertPending) return "meeting";
+        if (GameStates.InMeetingUntilRevert) return "meeting";
         // 役職の送り直しが落ち着く前は、本人の役職の送り直しを重ねない
         if (Revive.IsSettling) return "revive";
         // 動かしている途中の死体は、作り直しが 2 つ重なる
@@ -611,13 +611,13 @@ public static class ClientBodySync
                 WriteFakeMeeting(m, r.Reporter.NetId);
                 snaps = WritePositions(m, pc, sids, dead);
                 if (frozen != null) PlayerGameOptionsSender.WriteOptions(m, frozen);
-                WriteRpc(m, pc.NetId, RpcCalls.SetRole);
+                WriteRpc(m, pc.NetId, RpcCalls.SetRole); // 画面の表は送った後で覚える
                 m.Write((ushort)role);
                 m.Write(true);
                 m.EndMessage();
                 if (dead)
                 {
-                    WriteRpc(m, pc.NetId, RpcCalls.SetRole);
+                    WriteRpc(m, pc.NetId, RpcCalls.SetRole); // 画面の表は送った後で覚える
                     m.Write((ushort)RoleView.Ghost(pc, pc));
                     m.Write(true);
                     m.EndMessage();
@@ -655,6 +655,9 @@ public static class ClientBodySync
             for (int i = 0; i < snaps + keep.Count; i++) SnapToBudget.Record();
             if (current != null) options.NoteSent(current);
 
+            // 同じ包みの守護の電文が能力のクールを残りの秒から始め直すので、数えた残りは消さない
+            RoleView.Note(pc, pc, role, transient: true, keepsCooldown: true);
+            if (dead) RoleView.Note(pc, pc, RoleView.Ghost(pc, pc), transient: true, keepsCooldown: true);
             synced.Add(pc);
             pending.Remove(pc.OwnerId);
             awaitingAck[pc.NetTransform.NetId] = (pc.OwnerId, pc.PlayerId, now);

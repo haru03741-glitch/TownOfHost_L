@@ -469,8 +469,8 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
         {
             CreateStand(target);
 
-            _ = new LateTask(() => { if (Player.IsAlive()) Player.RpcResetAbilityCooldown(); },
-                0.1f, "StandMaster.ResetPhantomCD");
+            _ = After(() => Player.RpcResetAbilityCooldown(),
+                0.1f, "StandMaster.ResetPhantomCD", LateTaskUntil.Death);
 
             return false;
         }
@@ -518,7 +518,7 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
 
 
-        _ = new LateTask(() =>
+        _ = After(() =>
 
         {
 
@@ -595,11 +595,10 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
         RefreshNames();
 
-        _ = new LateTask(() =>
+        _ = After(() =>
 
         {
 
-            if (!Player.IsAlive()) return;
 
             AURoleOptions.PhantomCooldown = StandStayTime;
 
@@ -607,7 +606,7 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
             if (stand != null && stand.IsAlive()) stand.RpcResetAbilityCooldown();
 
-        }, 0.1f, "StandMaster.ResetCD");
+        }, 0.1f, "StandMaster.ResetCD", LateTaskUntil.Death);
 
     }
 
@@ -645,7 +644,7 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
 
 
-        _ = new LateTask(() =>
+        _ = After(() =>
 
         {
 
@@ -754,9 +753,9 @@ public sealed class StandMaster : RoleBase, ILNKiller, IUsePhantomButton
 
         AURoleOptions.PhantomCooldown = SummonCooldown;
 
-        _ = new LateTask(() => { if (Player.IsAlive()) Player.RpcResetAbilityCooldown(); },
+        _ = After(() => Player.RpcResetAbilityCooldown(),
 
-            0.1f, "StandMaster.AfterMeetingCD");
+            0.1f, "StandMaster.AfterMeetingCD", LateTaskUntil.Death);
 
     }
 

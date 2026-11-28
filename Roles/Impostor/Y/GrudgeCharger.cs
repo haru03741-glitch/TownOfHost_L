@@ -151,11 +151,10 @@ public sealed class GrudgeCharger : RoleBase, IImpostor
             // (間に別の設定の送りが入っても 0 のまま送る)
             killThisTurn = true;
             Player.SyncSettings();
-            var self = Player;
-            _ = new LateTask(() =>
+            _ = After(() =>
             {
                 killThisTurn = false;
-                if (self != null && self.IsAlive()) self.RpcResetAbilityCooldown();
+                if (Player.IsAlive()) Player.RpcResetAbilityCooldown();
             }, 0.2f, "GrudgeCharger.ResetAfterKill");
         }
     }

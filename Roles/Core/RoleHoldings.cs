@@ -57,6 +57,28 @@ public sealed class RoleHoldings
         speeds.Add((playerId, key));
     }
 
+    // ---- 名前の色 (Modules.NameColorManager) ----
+
+    // 付けた名前の色 (見る人, 見られる人) → 色。外す時に、まだ同じ色なら外す (後から別の役職が付け直した色は残す)
+    private readonly Dictionary<(byte seerId, byte targetId), string> nameColors = new();
+
+    /// <summary>
+    /// seer から見た target の名前に色を付ける (色を空にすると target の今の役職の色)。役職が外れる時に外す。
+    /// 役職が外れても残すのが正しい色 (陣営のつながり・得た知識) は NameColorManager.Add を直に使う
+    /// </summary>
+    public void NameColor(byte seerId, byte targetId, string colorCode = "")
+    {
+        if (IsReleased) return;
+        NameColorManager.Add(seerId, targetId, colorCode);
+        nameColors[(seerId, targetId)] = colorCode;
+    }
+    /// <summary>この役職が付けた名前の色を外す</summary>
+    public void RemoveNameColor(byte seerId, byte targetId)
+    {
+        if (!nameColors.Remove((seerId, targetId))) return;
+        NameColorManager.Remove(seerId, targetId);
+    }
+
     // ---- 他の人向けの登録 (CustomRoleManager の *Others) ----
 
     /// <summary>
@@ -109,6 +131,12 @@ public sealed class RoleHoldings
         // 足した順の逆に外す (後から付けた物ほど前の物に頼っている)
         for (int i = releases.Count - 1; i >= 0; i--) Run(releases[i], ownerName);
         releases.Clear();
+        foreach (var ((seerId, targetId), colorCode) in nameColors)
+            Run(() =>
+            {
+                if (NameColorManager.TryGetCode(seerId, targetId, out var now) && now == colorCode) NameColorManager.Remove(seerId, targetId);
+            }, ownerName);
+        nameColors.Clear();
         if (speeds.Count == 0) return;
         // 試合の終わりの後始末では送らない (速さは次の試合に持ち越されず、相手が先に壊れていることもある)
         bool send = GameStates.IsInTask && !GameEndChecker.EndingStarted;

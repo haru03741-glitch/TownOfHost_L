@@ -194,11 +194,13 @@ public sealed class Dollmaster : RoleBase, IImpostor
             Logger.Info($"{Player.GetNameWithRole()}: ベントを押したので操るのをやめる", nameof(Dollmaster));
             physics.RpcBootFromVent(ventId);
             var target = puppet;
+            // 人形を放す後始末なので役職が外れても走らせる
             _ = new LateTask(() =>
             {
                 if (puppet != target) return;
                 var back = home;
                 Release(send: true);
+                // 位置を戻す後始末なので役職が外れても走らせる
                 _ = new LateTask(() =>
                 {
                     if (Player != null && Player.IsAlive() && GameStates.IsInTask && puppet == null) Player.RpcSnapTo(back, force: true);

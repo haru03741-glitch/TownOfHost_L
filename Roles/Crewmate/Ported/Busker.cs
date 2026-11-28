@@ -108,9 +108,9 @@ public sealed class Busker : RoleBase, IUsePetButton
     {
         if (pet != null || uses <= 0 || !TempGhost.CanBeginIgnoringVent(Player)) return true;
         physics.RpcBootFromVent(ventId);
-        _ = new LateTask(() =>
+        _ = After(() =>
         {
-            if (uses <= 0 || Player == null || !TempGhost.Begin(Player, duration, ignoreVent: true)) return;
+            if (uses <= 0 || !TempGhost.Begin(Player, duration, ignoreVent: true)) return;
             uses--;
             Player.MarkDirtySettings();
         }, AfterBootDelay, "Busker_BecomeGhost");
