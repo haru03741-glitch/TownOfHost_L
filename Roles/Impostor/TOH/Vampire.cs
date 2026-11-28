@@ -138,6 +138,8 @@ namespace TownOfHostL.Roles.Impostor
             var vampire = Player;
             // 噛まれた人が抜けた時は何もしない (null のまま下へ進むと、毎フレーム例外になる)
             if (target == null) return;
+            // 噛んだ時に止めた動く床を戻す (守りやベントでキルが通らず生き残った時も、試合の最後まで乗れないままにしない)
+            PlayerState.GetByPlayerId(target.PlayerId).CanUseMovingPlatform = true;
             if (target.IsAlive())
             {
 
