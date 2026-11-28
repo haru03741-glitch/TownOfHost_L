@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -198,13 +199,14 @@ public sealed class EvilTracker : RoleBase, IImpostor, IKillFlashSeeable, ISidek
 
         var trackerId = Player.PlayerId;
 
-        ImpostorsId.RemoveWhere(id => PlayerState.GetByPlayerId(id).IsDead);
+        // 死んだ仲間は飛ばすだけで一覧からは外さない (外すと生き返った後に矢印が戻らない)
+        var aliveIds = ImpostorsId.Where(id => !PlayerState.GetByPlayerId(id).IsDead).ToArray();
 
         var sb = new StringBuilder(80);
-        if (ImpostorsId.Count > 0)
+        if (aliveIds.Length > 0)
         {
             sb.Append($"<color={Utils.GetRoleColorCode(CustomRoles.Impostor)}>");
-            foreach (var impostorId in ImpostorsId)
+            foreach (var impostorId in aliveIds)
             {
                 sb.Append(TargetArrow.GetArrows(Player, impostorId));
             }
