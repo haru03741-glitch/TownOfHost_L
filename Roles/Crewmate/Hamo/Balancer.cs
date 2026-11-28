@@ -804,10 +804,25 @@ public sealed class Balancer : RoleBase, ISelfVoter
         Logger.Info("天秤会議が開かなかったので取りやめる", "Balancer");
         Scheduled = false;
         foreach (var role in CustomRoleManager.AllActiveRoles.Values)
-            if (role is Balancer balancer) { balancer.Target1 = 255; balancer.Target2 = 255; }
+        {
+            if (role is not Balancer balancer) continue;
+            // 天秤会議は開かなかったので、2 人を選んだ天秤の能力は使っていない扱いに戻す
+            if (balancer.Target1 != 255 && balancer.Target2 != 255) balancer.used = false;
+            balancer.Target1 = 255;
+            balancer.Target2 = 255;
+        }
         AfterMeetingReset();
         Utils.AfterMeetingTasks();
         Utils.NotifyRoles(ForceLoop: true);
+    }
+    // 天秤会議でない会議の始まりに、前の会議で 1 人だけ選んだ途中の状態と天秤モードを下ろす
+    // (残すと次の会議の普通の票が 2 人目として数えられ、天秤会議が始まる)
+    public override void OnStartMeeting()
+    {
+        if (Id != 255 || Scheduled) return;
+        Target1 = 255;
+        Target2 = 255;
+        SetMode(Player, false);
     }
     /// <summary>天秤会議を開く予約をしてから、実際に開くまでの間</summary>
     public static bool Scheduled;
