@@ -69,12 +69,8 @@ public sealed class MadNimrod : RoleBase
             Logger.Info($"{nimrod.GetNameWithRole()} : ニムロッド会議", "Nimrod");
             // バニラ側の表示更新
             Utils.NotifyRoles(true, ForceLoop: true);
-            if (nimrod.AmOwner)
-            {
-                nimrod.ReportDeadBody(Exiled);
-                // 会議が捨てられたら、次の会議をニムロッド会議として扱わない
-                if (!MeetingStates.MeetingCalled && !Revive.HasHeldReport) ExecutionMeetingPlayerId = byte.MaxValue;
-            }
+            // 自分を対象にした会議は通報の前置きの判定を通らず本編へ渡るので、会議中の印では開いたかを見られない (後で見ない)
+            if (nimrod.AmOwner) nimrod.ReportDeadBody(Exiled);
             else if (!nimrod.NoCheckStartMeeting(Exiled)) ExecutionMeetingPlayerId = byte.MaxValue;
         }, 14.5f, "NimrodExiled");
 
