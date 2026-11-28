@@ -189,11 +189,10 @@ class Penguin : RoleBase, IImpostor
     }
     public void RestartAbduct()
     {
+        // 会議の始まりで止めた数えは、連れ去っていなくても会議明けに戻す (戻さないと次の連れ去りの制限時間が進まない)
+        stopCount = false;
         if (AbductVictim != null)
-        {
-            stopCount = false;
             nextTpAt = 0f;
-        }
     }
     // 連れ回しの TP は 0.2 秒以上あけ、前に送った位置から 0.3 以上動いた時だけ送る (止まっている間も送り続けると SnapTo の予算が尽きる)
     const float TpInterval = 0.2f, TpMinMove = 0.3f;
