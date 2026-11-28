@@ -55,8 +55,8 @@ public static class SettingCommand
         foreach (var opt in OptionItem.AllOptions)
         {
             if (!Settable(opt)) continue;
-            // 客のコマンドの制限はホストだけが変える
-            if (by != null && !by.AmOwner && opt.Key.StartsWith("RestrictGuestCommands")) continue;
+            // プレイヤーとモデレーターのコマンドの制限 (親と、コマンドごとの子) はホストだけが変える
+            if (by != null && !by.AmOwner && IsCommandRestriction(opt.Key)) continue;
             var own = SettingsSearch.Normalize(PlainName(opt));
             var path = Path(opt);
             // 親の名前も探す対象に入れる (役職の名前 + 設定の名前で指せるように)
@@ -185,6 +185,10 @@ public static class SettingCommand
         var opt = Main.NormalOptions.Cast<AmongUs.GameOptions.IGameOptions>();
         PlayerControl.LocalPlayer.RpcSyncSettings(GameOptionsManager.Instance.gameOptionsFactory.ToBytes(opt, AprilFoolsMode.IsAprilFoolsModeToggledOn));
     }
+
+    static bool IsCommandRestriction(string key) =>
+        key.StartsWith("RestrictGuestCommands") || key.StartsWith("RestrictCommand.")
+        || key.StartsWith("RestrictModeratorCommands") || key.StartsWith("RestrictModCommand.");
 
     static bool Settable(OptionItem opt)
         => opt is not TextOptionItem and not PresetOptionItem && !opt.IsFixValue && opt.IsShown()
