@@ -169,7 +169,8 @@ public sealed class GrudgeSheriff : RoleBase
     public override void OnFixedUpdate(PlayerControl player)
     {
         if (!GameStates.IsInTask) return;
-        if (KillWaitPlayer == null) return;
+        // 抜けた人の PlayerControl は壊されて Unity の null になる。それも下の「死んだり抜けたりしたら外す」へ通す
+        if (KillWaitPlayer is null) return;
 
         if (Player == null || !Player.IsAlive())
         {
