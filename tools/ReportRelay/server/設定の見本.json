@@ -1,0 +1,27 @@
+{
+  "_説明": "空の欄は使わない。書いたら保存して 起動.bat を押し直す。くわしくは はじめに.txt",
+
+  "_1": "Discord の bot のトークン (Developer Portal → Bot → Reset Token)。誰にも見せない",
+  "DISCORD_BOT_TOKEN": "",
+
+  "_2": "bot の Public Key (Developer Portal → General Information)",
+  "DISCORD_PUBLIC_KEY": "",
+
+  "_3": "報告ごとに投稿を作るフォーラムの ID (フォーラムを右クリック → チャンネル ID をコピー)",
+  "DISCORD_FORUM_ID": "",
+
+  "_4": "フォーラムを使わない時だけ: 報告を送るチャンネルの ID",
+  "DISCORD_CHANNEL_ID": "",
+
+  "_5": "ボタンを押せる人の Discord のユーザー ID (カンマ区切り)。空ならサーバーの管理者の権限を持つ人",
+  "ADMIN_IDS": "",
+
+  "_6": "報告を受け付けないフレンドコード (カンマ区切り。例: aaa#1111,bbb#2222)",
+  "BLOCKED": "",
+
+  "_7": "bot を使わない時だけ: Webhook の URL (ボタン・やりとりは無し)",
+  "DISCORD_WEBHOOK": "",
+
+  "_8": "待ち受けるポート (Cloudflare のトンネルの行き先と同じにする)",
+  "PORT": "8082"
+}

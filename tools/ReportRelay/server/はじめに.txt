@@ -1,0 +1,46 @@
+TOHL 報告の鯖
+==============
+
+ゲームの中の「バグ・要望の報告」を受け取って Discord のフォーラムに投稿し、
+運営のボタン (既読・修正中・修正済み)・ゲームの中のやりとり・一覧を動かす鯖です。
+このフォルダを VM の好きな場所 (例: C:\TOHL報告鯖) に置いて、起動.bat を押すだけで動きます。
+
+■ 中身
+  起動.bat             … 押すと鯖が動く。Node.js が無ければ入れる・落ちたら立ち上げ直す。止めるときは窓を閉じる
+  設定.json            … 最初に 起動.bat を押すと作られる。bot のトークンなどを書く (誰にも見せない)
+  設定の見本.json      … 設定.json の元
+  PCの起動で動かす.bat … Windows にサインインしたら 起動.bat が勝手に動くようにする (もう一度押すと外す)
+  server.mjs・relay\   … 鯖の中身
+  data\kv.json         … 送った回数・報告の記録 (勝手に作られる。消すと記録が消える)
+
+■ 最初にやること
+  1. 起動.bat を押す → 設定.json が作られてメモ帳で開く
+  2. 設定.json に書いて保存 (書き方は中の説明と下の「Discord の準備」)
+  3. もう一度 起動.bat を押す →「報告の中継を http://localhost:8082 で動かしています」と出れば OK
+
+■ Discord の準備
+  1. https://discord.com/developers/applications →「New Application」で bot のアプリを作る (他の bot とは別にする)
+  2. Bot → Reset Token → トークンを 設定.json の DISCORD_BOT_TOKEN へ
+  3. General Information の Public Key → DISCORD_PUBLIC_KEY へ
+  4. Installation (または OAuth2 → URL Generator) で bot を自分のサーバーに入れる
+     権限: メッセージを送る・スレッドでメッセージを送る・投稿を作る・メッセージ履歴を読む・ファイルを添付・チャンネルの管理
+  5. Discord でフォーラムのチャンネルを作る → 右クリック → チャンネル ID をコピー → DISCORD_FORUM_ID へ
+     (ID のコピーは 設定 → 詳細設定 → 開発者モード を ON にすると出る)
+  6. ボタンを押せる人を決めるなら、その人を右クリック → ユーザー ID をコピー → ADMIN_IDS へ (カンマ区切り)
+  7. 鯖を動かしてから、General Information の「Interactions Endpoint URL」に
+       https://srv.nkzk.win/interactions
+     を入れて保存 (鯖が動いていないと保存できない)
+
+■ 外から届くようにする (Cloudflare のトンネル)
+  ・トンネル「TOH-L server」のルートで https://srv.nkzk.win → http://localhost:8082 にしておく
+  ・ブラウザで https://srv.nkzk.win/ を開いて {"ok":true,"service":"tohl-report-relay"} と出れば届いている
+
+■ MOD の側
+  Modules/BugReport.cs の DevRelayUrl に、鯖のアドレスを書いてビルドする
+    const string DevRelayUrl = "https://srv.nkzk.win";
+
+■ 困った時
+  ・「ポート 8082 はもう使われています」 … 前の鯖の窓が開いたまま。閉じてから押す
+  ・Interactions Endpoint URL を保存できない … 鯖が動いているか・DISCORD_PUBLIC_KEY が合っているか・トンネルが届いているか
+  ・ボタンを押すと「このボタンは運営だけが押せます」 … ADMIN_IDS に自分の ID を入れる
+  ・タグが付かない … bot に「チャンネルの管理」の権限が無い

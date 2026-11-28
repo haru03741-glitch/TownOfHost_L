@@ -1,0 +1,7 @@
+{
+  "name": "tohl-report-server",
+  "private": true,
+  "type": "module",
+  "description": "TOHL の報告の中継を自分の PC / VM で動かす鯖",
+  "engines": { "node": ">=20" }
+}
