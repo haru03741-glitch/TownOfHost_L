@@ -36,6 +36,10 @@ namespace TownOfHostL
         public static void AddDoubleTrigger(this PlayerControl killer) => players.Add(killer.PlayerId);
         public static bool CanDoubleTrigger(this PlayerControl killer) => players.Contains(killer.PlayerId);
 
+        /// <summary>killer の 1 回押しが、target を相手に待ちに入っているか</summary>
+        public static bool IsDoubleTriggerPendingFor(this PlayerControl killer, PlayerControl target)
+            => pending.TryGetValue(killer.PlayerId, out var p) && p.Target == target.PlayerId;
+
         /// <summary>1 回目の押しで false (firstAction は待ち時間の後に動く)、待ち時間の内に同じ相手へ 2 回目を押すと true</summary>
         public static bool CheckDoubleTrigger(this PlayerControl killer, PlayerControl target, Action firstAction)
         {

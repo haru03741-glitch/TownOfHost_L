@@ -127,13 +127,16 @@ namespace TownOfHostL.Roles.Neutral
                 return true;
             }
 
-            //サイドキック中のターゲットはキルができない
-            sidekickTarget.Add(target.PlayerId);
+            //サイドキック中のターゲットはキルができない。待ちに入った相手だけを覚える
+            // (待ちの間に別の相手を押した時は、待ちは最初の相手のままなので、覚えると外す所が無い)
+            if (killer.IsDoubleTriggerPendingFor(target)) sidekickTarget.Add(target.PlayerId);
 
             return false;
         }
         public void SetSidekick(PlayerControl jackal, PlayerControl sidekick)
         {
+            //サイドキックターゲットの解除 (跳ね返された時も外す)
+            sidekickTarget.Remove(sidekick.PlayerId);
             // ワルキューレはサイドキックにされるのを跳ね返す
             if (Roles.Crewmate.Walkure.TryRejectRoleChange(jackal, sidekick, Roles.Crewmate.Walkure.RoleChangeSource.Jackal)) return;
             jackal.RpcProtectedMurderPlayer(sidekick);
@@ -172,6 +175,8 @@ namespace TownOfHostL.Roles.Neutral
 
             return true;
         }
+        // 待ちの間に会議が始まると 1 回押しの処理は走らないので、覚えた相手をここで外す
+        public override void OnStartMeeting() => sidekickTarget.Clear();
         public override void AfterMeetingTasks()
         {
             if (!AmongUsClient.Instance.AmHost) return;
