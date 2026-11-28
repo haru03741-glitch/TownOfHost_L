@@ -308,7 +308,7 @@ class BeginCrewmatePatch
         {
             __instance.TeamTitle.text = Main.ModName;
             __instance.ImpostorText.gameObject.SetActive(true);
-            __instance.ImpostorText.text = "https://github.com/tukasa0001/TownOfHost" +
+            __instance.ImpostorText.text = "https://github.com/haru03741-glitch/TownOfHost_L" +
                 "\r\nOut Now on Github";
             __instance.TeamTitle.color = Color.cyan;
             StartFadeIntro(__instance, Color.cyan, Color.yellow);
