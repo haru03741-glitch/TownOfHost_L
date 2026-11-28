@@ -489,6 +489,9 @@ public static partial class MeetingHudPatch
                             return;
                         }
 
+                        // 本人の画面の役職が既に戻す役職なら送らない。送ると客の手元で役職が作り直され、
+                        // 探偵のメモ・トラッカーの矢印・科学者の電池などの役職の中の状態が消える (探偵は以後尋問できなくなる)
+                        if (RoleView.TryGetOnScreen(pc, pc, out var onScreen) && onScreen == baseRole) return;
                         if (!AntiBlackout.IsPendingDummy(pc, pc.GetClientId())) pc.RpcSetRoleDesync(baseRole, pc.GetClientId());
                         Logger.Info($"AfterMeeting baseRole: {pc.GetNameWithRole()} -> {baseRole}", "AfterMeeting_RoleSync");
                     }
