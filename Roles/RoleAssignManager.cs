@@ -76,6 +76,7 @@ namespace TownOfHostL.Roles
             RandomAssignOptions.Create(OptionAssignMode, CustomRoleTypes.Crewmate);
             RandomAssignOptions.Create(OptionAssignMode, CustomRoleTypes.Neutral);
             PlayerCountComposition.SetupOptionItem();
+            SetupComboOptions();
         }
         public static bool CheckRoleCount()
         {
@@ -177,6 +178,11 @@ namespace TownOfHostL.Roles
                     break;
             }
 
+            ApplyComboRules();
+            // 固定のアサインの枠数は配る役職から数えたので、組み合わせで変えた後に数え直す
+            if (!PlayerCountComposition.IsOn && AssignMode == AssignAlgorithm.Fixed)
+                foreach (var roleType in CustomRolesHelper.AllRoleTypes)
+                    AssignCount[roleType] = AssignRoleList.Count(role => role < CustomRoles.StartAddon && role.GetAssignRoleType() == roleType);
             SuddenDeath.AdjustAssignList(AssignRoleList);
             AssignRoleList.Sort();
             Logger.Info($"{string.Join(", ", AssignCount)}", "AssignCount");
@@ -408,6 +414,154 @@ namespace TownOfHostL.Roles
                 CustomRoles.Lovers => new CustomRoles[2] { CustomRoles.Lovers, CustomRoles.Lovers },
                 _ => new CustomRoles[1] { role },
             };
+        // ===== 役職の組み合わせ: 同時に出ない役職・一緒に必ず出る役職 =====
+        private const int ComboSlots = 6;
+        public static OptionItem OptionNotTogether, OptionTogether;
+        private static readonly List<(FilterOptionItem a, FilterOptionItem b)> NotTogetherRules = new();
+        private static readonly List<(FilterOptionItem a, FilterOptionItem b)> TogetherRules = new();
+
+        private static FilterOptionItem ComboRole(OptionItem parent, string key, string labelKey, int n)
+        {
+            var o = new FilterOptionItem("RoleComboRole", 0, TabGroup.ModMainSettings, false, true, true, true, true, false);
+            o.SetParent(parent);
+            o.SetKeyName(key);
+            o.SetOptionName(() => string.Format(GetString(labelKey), n));
+            o.SetGameMode(CustomGameMode.Standard);
+            return o;
+        }
+
+        private static void SetupComboOptions()
+        {
+            NotTogetherRules.Clear();
+            TogetherRules.Clear();
+            OptionNotTogether = BooleanOptionItem.Create("RoleComboNotTogether", false, TabGroup.ModMainSettings, false)
+                .SetColor(Palette.LightBlue).SetGameMode(CustomGameMode.Standard);
+            for (int i = 1; i <= ComboSlots; i++)
+            {
+                var a = ComboRole(OptionNotTogether, $"NotTogether{i}A", "RoleCombo.NotA", i);
+                var b = ComboRole(OptionNotTogether, $"NotTogether{i}B", "RoleCombo.NotB", i);
+                // 2 つは順番の無い組なので、1 つの一覧で 2 つまで選ぶ
+                FilterOptionItem.Link(a, b);
+                NotTogetherRules.Add((a, b));
+            }
+            OptionTogether = BooleanOptionItem.Create("RoleComboTogether", false, TabGroup.ModMainSettings, false)
+                .SetColor(Palette.LightBlue).SetGameMode(CustomGameMode.Standard);
+            for (int i = 1; i <= ComboSlots; i++)
+            {
+                var a = ComboRole(OptionTogether, $"Together{i}A", "RoleCombo.IfA", i);
+                var b = ComboRole(OptionTogether, $"Together{i}B", "RoleCombo.ThenB", i);
+                TogetherRules.Add((a, b));
+            }
+        }
+
+        private static List<(CustomRoles a, CustomRoles b)> ActiveRules(OptionItem parent, List<(FilterOptionItem a, FilterOptionItem b)> rules)
+        {
+            var list = new List<(CustomRoles a, CustomRoles b)>();
+            if (parent == null || !parent.GetBool() || Options.CurrentGameMode != CustomGameMode.Standard) return list;
+            foreach (var (a, b) in rules)
+            {
+                var ra = a.GetRole();
+                var rb = b.GetRole();
+                if (ra == CustomRoles.NotAssigned || rb == CustomRoles.NotAssigned || ra == rb) continue;
+                list.Add((ra, rb));
+            }
+            return list;
+        }
+
+        private static bool Conflicts(CustomRoles role, IEnumerable<CustomRoles> present, List<(CustomRoles a, CustomRoles b)> notTogether)
+            => notTogether.Any(r => (r.a == role && present.Contains(r.b)) || (r.b == role && present.Contains(r.a)));
+
+        // 一人で配る役職か (組で配る役職は差し替えの候補にしない)
+        private static bool IsSingle(CustomRoles role) => role < CustomRoles.StartAddon && role.GetAssignUnitRolesArray().Length == 1;
+
+        // 抜いた役職の代わり: 同じ枠を使い、出現率が 0 でなく、まだ出ておらず、同時に出ない組にも当たらない役職をくじで
+        private static CustomRoles PickReplacement(CustomRoleTypes type, List<(CustomRoles a, CustomRoles b)> notTogether, HashSet<CustomRoles> banned)
+        {
+            var pool = AllMainRoles.Where(r => r.IsAssignable() && IsSingle(r) && r.GetChance() > 0 && r.GetAssignCount() > 0
+                    && r.GetAssignRoleType() == type && !AssignRoleList.Contains(r) && !banned.Contains(r)
+                    && (!Options.CustomRoleSpawnChances.TryGetValue(r, out var o) || ModeCatalog.Current.ShowsOption(o))
+                    && !Conflicts(r, AssignRoleList, notTogether))
+                .ToList();
+            return pool.Count == 0 ? CustomRoles.NotAssigned : pool[IRandom.Instance.Next(pool.Count)];
+        }
+
+        private static void ApplyComboRules()
+        {
+            var notTogether = ActiveRules(OptionNotTogether, NotTogetherRules);
+            var together = ActiveRules(OptionTogether, TogetherRules);
+            if (notTogether.Count == 0 && together.Count == 0) return;
+            var rand = IRandom.Instance;
+            var removed = new HashSet<CustomRoles>();
+
+            // 同時に出ない組: 両方出ていたら、くじでどちらかを抜き、同じ枠の別の役職を入れる
+            foreach (var (a, b) in notTogether)
+            {
+                if (!AssignRoleList.Contains(a) || !AssignRoleList.Contains(b)) continue;
+                // 一緒に必ず出る組で守られている方は抜かない
+                bool keepA = together.Any(t => t.b == a && AssignRoleList.Contains(t.a));
+                bool keepB = together.Any(t => t.b == b && AssignRoleList.Contains(t.a));
+                var drop = keepA && !keepB ? b : keepB && !keepA ? a : rand.Next(2) == 0 ? a : b;
+                int slots = AssignRoleList.RemoveAll(r => r == drop);
+                removed.Add(drop);
+                Logger.Info($"同時に出ない組 {a} / {b}: {drop} を抜く", "RoleCombo");
+                if (!IsSingle(drop)) continue;
+                for (int i = 0; i < slots; i++)
+                {
+                    var rep = PickReplacement(drop.GetAssignRoleType(), notTogether, removed);
+                    if (rep == CustomRoles.NotAssigned) break;
+                    AssignRoleList.Add(rep);
+                    Logger.Info($"代わりに {rep}", "RoleCombo");
+                }
+            }
+
+            // 一緒に必ず出る組: A が出ていて B が出ていなければ、B を入れる
+            int players = GameData.Instance.PlayerCount;
+            int impCap = (AssignMode == AssignAlgorithm.Random || PlayerCountComposition.IsOn) && AssignCount.TryGetValue(CustomRoleTypes.Impostor, out var ic)
+                ? ic : Math.Min(players, Main.RealOptionsData.GetInt(Int32OptionNames.NumImpostors));
+            // B が別の組の A の時のため 2 周
+            for (int pass = 0; pass < 2; pass++)
+            {
+                foreach (var (a, b) in together)
+                {
+                    if (!AssignRoleList.Contains(a) || AssignRoleList.Contains(b)) continue;
+                    if (!IsSingle(b) || Conflicts(b, AssignRoleList.Where(r => r != a), notTogether))
+                    {
+                        Logger.Info($"一緒に出る組 {a} → {b}: {b} を入れられないので {a} を抜く", "RoleCombo");
+                        AssignRoleList.RemoveAll(r => r == a);
+                        continue;
+                    }
+                    var type = b.GetAssignRoleType();
+                    // 守る役職 (出ている組の A と、その B)
+                    var keep = new HashSet<CustomRoles>(together.Where(t => AssignRoleList.Contains(t.a)).SelectMany(t => new[] { t.a, t.b }));
+                    var swap = Enumerable.Range(0, AssignRoleList.Count)
+                        .Where(i => AssignRoleList[i] < CustomRoles.StartAddon && IsSingle(AssignRoleList[i])
+                            && AssignRoleList[i].GetAssignRoleType() == type && !keep.Contains(AssignRoleList[i]))
+                        .ToList();
+                    if (swap.Count > 0)
+                    {
+                        int i = swap[rand.Next(swap.Count)];
+                        Logger.Info($"一緒に出る組 {a} → {b}: {AssignRoleList[i]} を {b} に替える", "RoleCombo");
+                        AssignRoleList[i] = b;
+                        continue;
+                    }
+                    var mains = AssignRoleList.Where(r => r < CustomRoles.StartAddon).ToList();
+                    int imps = mains.Count(r => r.GetAssignRoleType() == CustomRoleTypes.Impostor);
+                    bool free = type == CustomRoleTypes.Impostor ? imps < impCap : mains.Count - imps < players - impCap;
+                    if (free)
+                    {
+                        Logger.Info($"一緒に出る組 {a} → {b}: 空いた枠に {b} を足す", "RoleCombo");
+                        AssignRoleList.Add(b);
+                        if (AssignCount.ContainsKey(type)) AssignCount[type]++;
+                    }
+                    else
+                    {
+                        Logger.Info($"一緒に出る組 {a} → {b}: 枠が無いので {a} を抜く", "RoleCombo");
+                        AssignRoleList.RemoveAll(r => r == a);
+                    }
+                }
+            }
+        }
+
         public static bool IsPresent(this CustomRoles role) => AssignRoleList.Any(x => x == role) || LaterAddOnList.Any(x => x == role);
         public static int GetRealCount(this CustomRoles role) => AssignRoleList.Count(x => x == role) + LaterAddOnList.Count(x => x == role);
         public static List<CustomRoles> GetAssignRoleList() => new(AssignRoleList);

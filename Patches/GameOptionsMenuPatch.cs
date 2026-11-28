@@ -17,6 +17,8 @@ public static class ModGameOptionsMenu
     public static readonly int SearchTab = FirstModTab + Enum.GetValues(typeof(TabGroup)).Length;
     public static readonly int PresetTab = SearchTab + 1;
     public static readonly int ModeTab = PresetTab + 1;
+    // 配役設定の頁 (役職の割り当ての決まり)
+    public static readonly int AssignTab = ModeTab + 1;
     public static int TabIndex = 0;
     public static bool IsModTab(int tabNum) => tabNum >= FirstModTab;
 }
@@ -67,6 +69,7 @@ public static class GameOptionsMenuPatch
             else if (GameSettingMenuPatch.IsRoleHost(__instance)) SettingsUI.RolePage.Build(__instance);
             else if (GameSettingMenuPatch.IsModTabMenu(__instance)) SettingsUI.SettingsPages.General.Build(__instance);
             else if (GameSettingMenuPatch.IsModeHost(__instance)) SettingsUI.SettingsPages.Mode.Build(__instance);
+            else if (GameSettingMenuPatch.IsAssignHost(__instance)) SettingsUI.SettingsPages.Assign.Build(__instance);
             else return true;
         }
         catch (Exception e) { Logger.Exception(e, "GameOptionsMenuPatch.Page"); }

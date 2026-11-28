@@ -22,7 +22,11 @@ internal static class SettingsPages
     // 今のモードだけの設定の頁。題と色は今のモードで替わる (通常モードでは出す設定が無く、左の列にも出さない)
     public static readonly SectionPage Mode = new("modepage", ModeTitle, ModeColor, ModeGroups);
 
-    public static bool AnyBuilt => General.Built || Game.Built || Mode.Built || RolePage.Built;
+    // 配役設定の頁 (役職の割り当ての決まり・同時に出ない役職・一緒に出る役職)
+    internal static readonly Color AssignColor = new(0.55f, 0.75f, 1f, 1f);
+    public static readonly SectionPage Assign = new("assignpage", () => Translator.GetString("MenuCat.Assign"), () => AssignColor, AssignGroups);
+
+    public static bool AnyBuilt => General.Built || Game.Built || Mode.Built || Assign.Built || RolePage.Built;
 
     // ゲームの頁を作った本編の画面 (マップの絵を借りる)
     public static GameOptionsMenu GameTab;
@@ -35,6 +39,7 @@ internal static class SettingsPages
         General.Forget();
         Game.Forget();
         Mode.Forget();
+        Assign.Forget();
         RolePage.Forget();
         PresetPage.Forget();
         Footage.ReleaseAll();
@@ -50,6 +55,7 @@ internal static class SettingsPages
         General.RefreshMarks();
         Game.RefreshMarks();
         Mode.RefreshMarks();
+        Assign.RefreshMarks();
     }
 
     // 外 (プリセット・コマンド・取り消し) で値を変えた後
@@ -66,6 +72,7 @@ internal static class SettingsPages
         General.RefreshFromOutside();
         Game.RefreshFromOutside();
         Mode.RefreshFromOutside();
+        Assign.RefreshFromOutside();
     }
 
     // 値をまとめて書き換える間 (設定の文字列の読み込みなど) は値ごとに頁を書き直さず、終わった後に 1 回だけ書き直す
@@ -159,6 +166,17 @@ internal static class SettingsPages
 
     private static bool IsGeneral(OptionItem head) => head != null && GeneralHeads.Contains(head.Name);
 
+    // 配役設定の頁に置く節 (役職割り当て設定の見出しの節)
+    private static bool IsAssign(OptionItem head) => head != null && head.Name == "Head.RoleAssign";
+
+    internal static List<SectionPage.Group> AssignGroups()
+    {
+        var list = new List<SectionPage.Group>();
+        foreach (var (g, head) in TohlSections())
+            if (IsAssign(head) && !IsModeOnly(head)) list.Add(g);
+        return list;
+    }
+
     // モードの頁に置く節: 見出しが特定のモードだけの設定の節 (かくれんぼの決まり・専用の役職・タスクバトルなど)。
     // どのモードの節も同じ頁に入れておき、今のモードの物だけが出る (モードを変えても節の組み分けは変わらない)
     private static bool IsModeOnly(OptionItem head)
@@ -209,7 +227,7 @@ internal static class SettingsPages
         var rest = new List<SectionPage.Group>();
         foreach (var (g, head) in tohl)
         {
-            if (IsGeneral(head) || IsModeOnly(head)) continue;
+            if (IsGeneral(head) || IsModeOnly(head) || IsAssign(head)) continue;
             if (head == Options.GameMode) list.Add(g);
             else rest.Add(g);
         }
@@ -320,6 +338,7 @@ internal static class SettingsPagesTick
         SettingsPages.Game.Tick();
         SettingsPages.General.Tick();
         SettingsPages.Mode.Tick();
+        SettingsPages.Assign.Tick();
         RolePage.Tick();
         SettingsCover.Tick();
         JumpMenu.Tick();

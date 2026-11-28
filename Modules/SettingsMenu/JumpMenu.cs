@@ -54,7 +54,7 @@ internal static class JumpMenu
 
     private static SectionPage Current =>
         SettingsPages.Game.Visible ? SettingsPages.Game : SettingsPages.General.Visible ? SettingsPages.General
-        : SettingsPages.Mode.Visible ? SettingsPages.Mode : null;
+        : SettingsPages.Mode.Visible ? SettingsPages.Mode : SettingsPages.Assign.Visible ? SettingsPages.Assign : null;
 
     public static void Tick()
     {
