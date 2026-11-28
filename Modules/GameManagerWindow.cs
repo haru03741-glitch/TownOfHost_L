@@ -20,6 +20,10 @@ namespace TownOfHostL.Modules;
 ///   自分の周りだけまで狭め、窓が閉じるまで暗くする (0 にすると自分の姿と名前の下の文字も見えなくなる)。
 /// - 通常の GameManager の部品の OnGameStart は空なので、出し直した物に StartGame が無くても困らない。
 /// - 途中で失敗したら、通常の GameManager を必ず戻して窓を閉じる。閉じた時の処理は失敗の時も呼ぶ。
+/// - 客がかくれんぼの物の Despawn と通常の物の Spawn を同じフレームで処理すると (窓の最中に 1.6 秒以上固まった時など)、
+///   通常の物は Awake で消え、Instance は消えたかくれんぼの物を指したまま残る。その客は試合の終わりまで設定が引けず、
+///   ボタンも押せず、SetRole も受けない (CoSetRole が GameManager を待ち続ける)。窓の後で間を空けてもう一度、
+///   通常の物だけを出し直す (直し)。消えた物は Awake の判定で無いことになるので、固まった客にも新しい物が入る。
 /// </summary>
 public static class GameManagerWindow
 {
@@ -34,6 +38,9 @@ public static class GameManagerWindow
     private const float BetweenWindows = 1f;
     // 暗転させてから GameManager を消すまで (視界が暗くなり終えるまで)
     private const float CoverLead = 0.4f;
+    // 窓を閉じてから直しを始めるまで。客の固まりが明けてから出し直す。
+    // 閉じた時の Revive.BeginSettling (SettleTime) より短くして、直しが終わるまで通報を預からせる
+    private const float RepairDelay = 2f;
 
     private enum Phase { Idle, Cover, SpawnTemp, Send, DespawnTemp, SpawnNormal }
 
@@ -45,6 +52,10 @@ public static class GameManagerWindow
     private static GameModes tempMode;
     private static Action onSend;
     private static Action onClosed;
+    // 直しの最中か (差し替えの物を出さず、通常の物を出し直すだけ)
+    private static bool repairing;
+    // 直しを始める時刻 (Time.realtimeSinceStartup)。無ければ正の無限大
+    private static float repairAt = float.PositiveInfinity;
 
     /// <summary>窓の間の視界の倍率 (自分の周りだけが見える)</summary>
     public const float DimVision = 0.15f;
@@ -83,6 +94,8 @@ public static class GameManagerWindow
         recoverTries = 0;
         onSend = null;
         onClosed = null;
+        repairing = false;
+        repairAt = float.PositiveInfinity;
         dimmed.Clear();
     }
 
@@ -110,17 +123,48 @@ public static class GameManagerWindow
         tempMode = mode;
         onSend = send;
         onClosed = closed;
+        // この窓でも通常の物を出し直すので、待っている直しはこの窓の後へ回す
+        repairing = false;
+        repairAt = float.PositiveInfinity;
         try { StartWindow(); }
         catch (Exception ex) { Fail(client, ex); }
     }
 
-    // 試合中は毎フレーム呼ばれるので、窓が無い間は何も作らずに返す
+    // 試合中は毎フレーム呼ばれるので、窓も直しの予約も無い間は何も作らずに返す
     private static void Update()
     {
-        if (phase == Phase.Idle || Time.realtimeSinceStartup < nextAt) return;
+        float now = Time.realtimeSinceStartup;
+        if (phase == Phase.Idle)
+        {
+            if (now >= repairAt) TryStartRepair();
+            return;
+        }
+        if (now < nextAt) return;
         var client = AmongUsClient.Instance;
         if (!client || !client.AmHost || !GameStates.IsInGame) return;
         try { Advance(client); }
+        catch (Exception ex) { Fail(client, ex); }
+    }
+
+    // 直しを始める。会議や試合の終わりが来ていたらやめ、懐中電灯の一時の設定を送っている間は待つ
+    private static void TryStartRepair()
+    {
+        var client = AmongUsClient.Instance;
+        if (!client || !client.AmHost || !GameStates.IsInGame || !GameStates.IsInTask || GameStates.IsMeeting
+            || MeetingHud.Instance || ExileController.Instance || !GameManager.Instance || !ShipStatus.Instance
+            || CustomWinnerHolder.WinnerTeam != CustomWinner.Default || client.IsGameOver
+            || GameOptionsManager.Instance.currentGameMode != GameModes.Normal)
+        {
+            repairAt = float.PositiveInfinity;
+            return;
+        }
+        if (Flashlight.AnyHolding) return;
+        repairAt = float.PositiveInfinity;
+        repairing = true;
+        onSend = null;
+        onClosed = null;
+        Logger.Info("通常の GameManager を出し直す", nameof(GameManagerWindow));
+        try { StartWindow(); }
         catch (Exception ex) { Fail(client, ex); }
     }
 
@@ -157,7 +201,7 @@ public static class GameManagerWindow
             case Phase.Cover:
                 client.Despawn(GameManager.Instance);
                 GameManager.Instance = null;
-                phase = Phase.SpawnTemp;
+                phase = repairing ? Phase.SpawnNormal : Phase.SpawnTemp;
                 nextAt = now + SpawnGap;
                 break;
             case Phase.SpawnTemp:
@@ -195,7 +239,10 @@ public static class GameManagerWindow
         phase = Phase.Idle;
         recoverTries = 0;
         idleSince = Time.realtimeSinceStartup;
-        Logger.Info("窓を閉じた", nameof(GameManagerWindow));
+        // 差し替えの窓の後にだけ直しを予約する (直しの後には予約しない)
+        repairAt = repairing ? float.PositiveInfinity : idleSince + RepairDelay;
+        Logger.Info(repairing ? "直しを終えた" : "窓を閉じた", nameof(GameManagerWindow));
+        repairing = false;
         // 暗転を明ける。出し直した GameManager は全員に同じ設定を配ったので、人ごとの設定を送り直す。懐中電灯も消えるので点け直す
         dimmed.Clear();
         // ここで例外が出ても、閉じた時の処理 (使い手の後始末) は必ず呼ぶ

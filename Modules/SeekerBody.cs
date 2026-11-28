@@ -125,6 +125,8 @@ public static class SeekerBody
         var client = AmongUsClient.Instance;
         if (!client || !client.AmHost || !GameStates.IsInGame || GameManagerWindow.InWindow) return;
         DropDead();
+        // 窓の後の直し (通常の GameManager の出し直し) の最中に外すと決めた人は、閉じた時の処理が呼ばれないのでここで外す
+        if (releaseAfterWindow.Count > 0) RestorePendingReleases();
         if (applyAt.Count == 0 || !GameManagerWindow.CanOpen()) return;
         float now = Time.realtimeSinceStartup;
         sending.Clear();
@@ -153,13 +155,15 @@ public static class SeekerBody
             }
         }
         sending.Clear();
-        if (releaseAfterWindow.Count > 0)
-        {
-            work.Clear();
-            work.AddRange(releaseAfterWindow);
-            releaseAfterWindow.Clear();
-            foreach (var id in work) Restore(id, notify: true);
-        }
+        if (releaseAfterWindow.Count > 0) RestorePendingReleases();
+    }
+
+    private static void RestorePendingReleases()
+    {
+        work.Clear();
+        work.AddRange(releaseAfterWindow);
+        releaseAfterWindow.Clear();
+        foreach (var id in work) Restore(id, notify: true);
     }
 
     // 死んだ人・抜けた人の印を消す (死ぬ時の幽霊の SetRole で体は戻っている)
