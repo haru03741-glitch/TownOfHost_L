@@ -43,6 +43,9 @@ public sealed class Chaser : RoleBase, IImpostor, ISidekickable
     private static float PositionTime;
 
     private Vector2 lastTransformPosition;
+    // 戻りの予約の世代。戻る前に続けて追った時は、最後の予約だけが戻す
+    private int returnGeneration;
+    private bool returnPending;
     private int chaseLimitCount;
     enum OptionName
     {
@@ -87,8 +90,8 @@ public sealed class Chaser : RoleBase, IImpostor, ISidekickable
         var shapeshifting = !Is(target);
         if (chaseLimitCount <= 0 || !shapeshifting) return false;
 
-        // 変身前の位置を記録する
-        lastTransformPosition = Player.transform.position;
+        // 変身前の位置を記録する (戻る前に続けて追った時は、最初の位置へ戻すので上書きしない)
+        if (!ReturnPosition || !returnPending) lastTransformPosition = Player.transform.position;
         // ベントの位置へ飛ばす。
         Player.MyPhysics.RpcExitVent(GetNearestVentId(target));
         // 変身クールダウンのリセット
@@ -104,11 +107,16 @@ public sealed class Chaser : RoleBase, IImpostor, ISidekickable
 
         // 元の位置に戻る時はぬーんを使わせない。
         MyState.CanUseMovingPlatform = false;
+        returnPending = true;
+        int generation = ++returnGeneration;
 
         // 戻る時間後の処理
         // 戻りの後始末 (ぬーんを使えるように戻す) なので役職が外れても走らせる
         _ = new LateTask(() =>
         {
+            // 後から追った分の予約が戻すので、古い予約は何もしない
+            if (generation != returnGeneration) return;
+            returnPending = false;
             // 戻れなかった時も、ぬーんは使えるように戻す
             if (Player == null || !Player.IsAlive() || !GameStates.IsInTask)
             {
