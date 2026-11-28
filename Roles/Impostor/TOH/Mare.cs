@@ -20,7 +20,10 @@ public sealed class Mare : RoleBase, IImpostor
             "メアー",
             assignInfo: new(CustomRoles.Mare, CustomRoleTypes.Impostor)
             {
-                IsInitiallyAssignableCallBack = () => ShipStatus.Instance.Systems.TryGetValue(SystemTypes.Electrical, out var systemType) && systemType.TryCast<SwitchSystem>(out _),  // 停電が存在する
+                // 停電が存在する。ロビー (開始前の人数の検査) では船がまだ無いので、マップで決める (停電が無いのはザ・ファングルだけ)
+                IsInitiallyAssignableCallBack = () => GameStates.IsInGame && ShipStatus.Instance != null
+                    ? ShipStatus.Instance.Systems.TryGetValue(SystemTypes.Electrical, out var systemType) && systemType.TryCast<SwitchSystem>(out _)
+                    : GameMap.Current is not MapNames.Fungle,
             }
         );
     public Mare(PlayerControl player)
